@@ -1,5 +1,6 @@
 wandb
 data
+*csv
 checkpoints
 results
 logs
