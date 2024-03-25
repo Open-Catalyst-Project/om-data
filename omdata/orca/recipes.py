@@ -1,6 +1,5 @@
 import os
 import pickle
-import shutil
 
 from quacc.recipes.orca.core import ase_relax_job, static_job
 from quacc.wflow_tools.customizers import strip_decorator
@@ -24,7 +23,7 @@ def single_point_calculation(
     orcasimpleinput=ORCA_SIMPLE_INPUT,
     orcablocks=ORCA_BLOCKS,
     nprocs=12,
-    outputdir=None,
+    outputdir=os.getcwd(),
 ):
     """
     Wrapper around QUACC's static job to standardize single-point calculations.
@@ -53,6 +52,9 @@ def single_point_calculation(
     outputdir: str
         Directory to move results to upon completion
     """
+    from quacc import SETTINGS
+
+    SETTINGS.RESULTS_DIR = outputdir
 
     o = strip_decorator(static_job)(
         atoms,
@@ -66,8 +68,6 @@ def single_point_calculation(
     )
     # TODO: how we want to handle what results to save out and where to store
     # them.
-    os.makedirs(outputdir, exist_ok=True)
-    shutil.move(o["dir_name"], outputdir)
     with open(os.path.join(outputdir, "quacc_results.pkl"), "wb") as f:
         pickle.dump(o, f)
 
@@ -82,7 +82,7 @@ def ase_relaxation(
     orcablocks=ORCA_BLOCKS,
     nprocs=12,
     opt_params=OPT_PARAMETERS,
-    outputdir=None,
+    outputdir=os.getcwd(),
 ):
     """
     Wrapper around QUACC's ase_relax_job to standardize geometry optimizations.
@@ -113,6 +113,10 @@ def ase_relaxation(
     outputdir: str
         Directory to move results to upon completion
     """
+    from quacc import SETTINGS
+
+    SETTINGS.RESULTS_DIR = outputdir
+
     o = strip_decorator(ase_relax_job)(
         atoms,
         charge=charge,
@@ -124,9 +128,6 @@ def ase_relaxation(
         opt_params=opt_params,
         nprocs=nprocs,
     )
-    # TODO: how we want to handle what results to save out and where to store
-    # them.
-    os.makedirs(outputdir, exist_ok=True)
-    shutil.move(o["dir_name"], outputdir)
+    # TODO: how we want to handle what results to save out and where to store them.
     with open(os.path.join(outputdir, "quacc_results.pkl"), "wb") as f:
         pickle.dump(o, f)
