@@ -38,6 +38,10 @@ def write_orca_inputs(
     orcasimpleinput=ORCA_ASE_SIMPLE_INPUT,
     orcablocks=" ".join(ORCA_BLOCKS),
 ):
+    """
+    One-off method to be used if you wanted to write inputs for an arbitrary
+    system. Primarily used for debugging.
+    """
 
     MyOrcaProfile = OrcaProfile([Field(Path(which("orca") or "orca")).default])
     calc = ORCA(
