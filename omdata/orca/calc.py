@@ -15,11 +15,9 @@ ORCA_SIMPLE_INPUT = [
     "DIIS",
     "NOSOSCF",
     "NormalConv",
-    "DEFGRID3",
+    "DEFGRID2",
 ]
-ORCA_SIMPLE_INPUT_QUACC_IGNORE = [
-    "#slowconv",
-]
+ORCA_SIMPLE_INPUT_QUACC_IGNORE = []
 ORCA_BLOCKS = ["%scf Convergence Tight maxiter 500 end"]
 ORCA_ASE_SIMPLE_INPUT = " ".join([ORCA_FUNCTIONAL] + [ORCA_BASIS] + ORCA_SIMPLE_INPUT)
 OPT_PARAMETERS = {
@@ -43,7 +41,7 @@ def write_orca_inputs(
     system. Primarily used for debugging.
     """
 
-    MyOrcaProfile = OrcaProfile([Field(Path(which("orca") or "orca")).default])
+    MyOrcaProfile = OrcaProfile([str(Field(Path(which("orca") or "orca")).default)])
     calc = ORCA(
         charge=charge,
         mult=mult,
