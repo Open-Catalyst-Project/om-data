@@ -55,6 +55,7 @@ def single_point_calculation(
     from quacc import SETTINGS
 
     SETTINGS.RESULTS_DIR = outputdir
+    SETTINGS.ORCA_CMD = str(which("orca"))
 
     o = strip_decorator(static_job)(
         atoms,
@@ -113,9 +114,12 @@ def ase_relaxation(
     outputdir: str
         Directory to move results to upon completion
     """
+    from shutil import which
+
     from quacc import SETTINGS
 
     SETTINGS.RESULTS_DIR = outputdir
+    SETTINGS.ORCA_CMD = str(which("orca"))
 
     o = strip_decorator(ase_relax_job)(
         atoms,
