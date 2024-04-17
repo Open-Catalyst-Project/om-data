@@ -12,7 +12,7 @@ def parse_args():
         "--base_path",
         type=str,
         required=True,
-        help="Path to where you untarred the rdkit folder i.e. path/to/rdkit_folder",
+        help="Path to where you untarred the rdkit folder id.e. path/to/rdkit_folder",
     )
     parser.add_argument(
         "--parent_path",
@@ -67,8 +67,8 @@ def main():
     with open(idmol_path, "rb") as f:
         idmol = pickle.load(f)
 
-    for i in tqdm.tqdm(geom_ids[start_idx:stop_idx]):
-        geom_id = str(i)
+    for id in tqdm.tqdm(geom_ids[start_idx:stop_idx]):
+        geom_id = str(id)
         outdir = os.path.join(parent_path, geom_id)
         if os.path.exists(outdir):
             print(f"Directory {outdir} already exists, skipping")
@@ -76,14 +76,15 @@ def main():
         # make the directory
         os.mkdir(outdir)
         # load pickle file to get the molecule
-        pp = os.path.join(base_path, idmol[i]["pickle_path"])
+        pp = os.path.join(base_path, idmol[id]["pickle_path"])
         with open(pp, "rb") as f:
             mol_dict = pickle.load(f)
-        # get charge and conformer index
-        charge = idmol[i]["charge"]
-        conf_idx = idmol[i]["conf_idx"]
-        # multiplicity is always 1
-        f_name = os.path.join(outdir, f"structure_{charge}_1.xyz")
+        # get charge, multiplicity, and conformer index
+        charge = idmol[id]["charge"]
+        # defaults to 1 if not explicitly set
+        multiplicity = idmol[id].get("multiplicity", 1)
+        conf_idx = idmol[id]["conf_idx"]
+        f_name = os.path.join(outdir, f"structure_{charge}_{multiplicity}.xyz")
         # write xyz file
         MolToXYZFile(mol_dict["conformers"][conf_idx]["rd_mol"], f_name)
 

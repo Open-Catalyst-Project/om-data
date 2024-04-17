@@ -46,7 +46,7 @@ def main():
     id_mol_dict = {}
     missing_drugs = []
 
-    for drug in tqdm.tqdm(drugs_summ.keys()):
+    for drug in tqdm.tqdm(list(drugs_summ.keys())[:1000]):
         # not all drugs have necessary keys
         try:
             charge = drugs_summ[drug]["charge"]
@@ -66,7 +66,7 @@ def main():
                 "charge": charge,
                 "molecule": drug,
             }
-          if charge == 0 and rand > 0.15:
+            if charge == 0 and rand > 0.15:
                train_id_list.append(c["geom_id"])
             # if charge != 0 or rand =< 0.15:
             else:
