@@ -16,7 +16,6 @@ ORCA_SIMPLE_INPUT = [
     "NOSOSCF",
     "NormalConv",
     "DEFGRID2",
-    "NormalPrint",
     "ALLPOP"
 ]
 ORCA_SIMPLE_INPUT_QUACC_IGNORE = []
