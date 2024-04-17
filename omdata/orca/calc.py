@@ -24,7 +24,7 @@ ORCA_ASE_SIMPLE_INPUT = " ".join([ORCA_FUNCTIONAL] + [ORCA_BASIS] + ORCA_SIMPLE_
 OPT_PARAMETERS = {
     "optimizer": Sella,
     "store_intermediate_results": True,
-    "fmax": 0.01,
+    "fmax": 0.05,
     "max_steps": 1000,
 }
 
