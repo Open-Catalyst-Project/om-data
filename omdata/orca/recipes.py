@@ -75,6 +75,8 @@ def single_point_calculation(
         **calc_kwargs,
     )
 
+    return doc
+
 
 def ase_relaxation(
     atoms,
@@ -139,3 +141,5 @@ def ase_relaxation(
         opt_params=opt_params,
         **calc_kwargs,
     )
+
+    return doc
