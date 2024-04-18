@@ -24,6 +24,7 @@ def single_point_calculation(
     orcablocks=ORCA_BLOCKS,
     nprocs=12,
     outputdir=os.getcwd(),
+    **calc_kwargs,
 ):
     """
     Wrapper around QUACC's static job to standardize single-point calculations.
@@ -65,6 +66,7 @@ def single_point_calculation(
         orcasimpleinput=orcasimpleinput + ORCA_SIMPLE_INPUT_QUACC_IGNORE,
         orcablocks=orcablocks,
         nprocs=nprocs,
+        **calc_kwargs,
     )
     # TODO: how we want to handle what results to save out and where to store
     # them.
@@ -83,6 +85,7 @@ def ase_relaxation(
     nprocs=12,
     opt_params=OPT_PARAMETERS,
     outputdir=os.getcwd(),
+    **calc_kwargs,
 ):
     """
     Wrapper around QUACC's ase_relax_job to standardize geometry optimizations.
@@ -127,6 +130,7 @@ def ase_relaxation(
         orcablocks=orcablocks,
         opt_params=opt_params,
         nprocs=nprocs,
+        **calc_kwargs,
     )
     # TODO: how we want to handle what results to save out and where to store them.
     with open(os.path.join(outputdir, "quacc_results.pkl"), "wb") as f:
