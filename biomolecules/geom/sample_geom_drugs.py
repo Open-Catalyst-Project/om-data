@@ -59,18 +59,26 @@ def main():
             mol_dict = pickle.load(f)
         rand = random.random()
         # generate train ids with 85% probability - ~5% charged
-        for i, c in enumerate(mol_dict["conformers"]):
-            id_mol_dict[c["geom_id"]] = {
-                "pickle_path": pickle_path,
-                "conf_idx": i,
-                "charge": charge,
-                "molecule": drug,
-            }
-            if charge == 0 and rand > 0.15:
+        # sampling happens at the molecule level
+        if charge == 0 and rand > 0.15:
+            for i, c in enumerate(mol_dict["conformers"]):
                 train_id_list.append(c["geom_id"])
-            # if charge != 0 or rand =< 0.15:
-            else:
+                id_mol_dict[c["geom_id"]] = {
+                    "pickle_path": drugs_summ[drug]["pickle_path"],
+                    "conf_idx": i,
+                    "charge": charge,
+                    "molecule": drug,
+                }
+        # if charge != 0 or rand =< 0.15:
+        else:
+            for i, c in enumerate(mol_dict["conformers"]):
                 val_id_list.append(c["geom_id"])
+                id_mol_dict[c["geom_id"]] = {
+                    "pickle_path": drugs_summ[drug]["pickle_path"],
+                    "conf_idx": i,
+                    "charge": charge,
+                    "molecule": drug,
+                }
     # shuffle train list
     for i in range(3):
         random.shuffle(train_id_list)
