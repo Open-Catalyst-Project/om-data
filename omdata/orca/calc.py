@@ -26,7 +26,11 @@ OPT_PARAMETERS = {
     "optimizer": Sella,
     "store_intermediate_results": True,
     "fmax": 0.05,
-    "max_steps": 1000,
+    "max_steps": 100,
+    "optimizer_kwargs": {
+        "order": 0,
+        "internal": True,
+    },
 }
 
 
