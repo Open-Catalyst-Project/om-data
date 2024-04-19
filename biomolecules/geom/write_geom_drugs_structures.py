@@ -67,15 +67,11 @@ def main():
     with open(idmol_path, "rb") as f:
         idmol = pickle.load(f)
 
+    outdir = os.path.join(parent_path, f"{start_idx}_{stop_idx}_geom_structures")
+    assert not os.path.exists(outdir), f"Directory {outdir} already exists"
+    os.makedirs(outdir)
+
     for id in tqdm.tqdm(geom_ids[start_idx:stop_idx]):
-        geom_id = str(id)
-        outdir = os.path.join(parent_path, geom_id)
-        if os.path.exists(outdir):
-            print(f"Directory {outdir} already exists, skipping")
-            continue
-        # make the directory
-        os.mkdir(outdir)
-        # load pickle file to get the molecule
         pp = os.path.join(base_path, idmol[id]["pickle_path"])
         with open(pp, "rb") as f:
             mol_dict = pickle.load(f)
@@ -84,7 +80,7 @@ def main():
         # defaults to 1 if not explicitly set
         multiplicity = idmol[id].get("multiplicity", 1)
         conf_idx = idmol[id]["conf_idx"]
-        f_name = os.path.join(outdir, f"structure_{charge}_{multiplicity}.xyz")
+        f_name = os.path.join(outdir, f"{id}_{charge}_{multiplicity}.xyz")
         # write xyz file
         MolToXYZFile(mol_dict["conformers"][conf_idx]["rd_mol"], f_name)
 
