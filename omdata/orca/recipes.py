@@ -3,15 +3,14 @@ from __future__ import annotations
 import os
 
 import psutil
+from quacc.recipes.orca.core import run_and_summarize, run_and_summarize_opt
 
-from omdata.orca._quacc import run_and_summarize, run_and_summarize_opt
 from omdata.orca.calc import (
     OPT_PARAMETERS,
     ORCA_BASIS,
     ORCA_BLOCKS,
     ORCA_FUNCTIONAL,
     ORCA_SIMPLE_INPUT,
-    ORCA_SIMPLE_INPUT_QUACC_IGNORE,
 )
 
 
@@ -21,8 +20,8 @@ def single_point_calculation(
     spin_multiplicity,
     xc=ORCA_FUNCTIONAL,
     basis=ORCA_BASIS,
-    orcasimpleinput=ORCA_SIMPLE_INPUT,
-    orcablocks=ORCA_BLOCKS,
+    orcasimpleinput=None,
+    orcablocks=None,
     nprocs=12,
     outputdir=os.getcwd(),
     **calc_kwargs,
@@ -60,6 +59,11 @@ def single_point_calculation(
 
     SETTINGS.RESULTS_DIR = outputdir
 
+    if orcasimpleinput is None:
+        orcasimpleinput = ORCA_SIMPLE_INPUT.copy()
+    if orcablocks is None:
+        orcablocks = ORCA_BLOCKS.copy()
+
     nprocs = psutil.cpu_count(logical=False) if nprocs == "max" else nprocs
     default_inputs = [xc, basis, "engrad", "normalprint"]
     default_blocks = [f"%pal nprocs {nprocs} end"]
@@ -70,7 +74,7 @@ def single_point_calculation(
         spin_multiplicity=spin_multiplicity,
         default_inputs=default_inputs,
         default_blocks=default_blocks,
-        input_swaps=orcasimpleinput + ORCA_SIMPLE_INPUT_QUACC_IGNORE,
+        input_swaps=orcasimpleinput,
         block_swaps=orcablocks,
         **calc_kwargs,
     )
@@ -84,10 +88,10 @@ def ase_relaxation(
     spin_multiplicity,
     xc=ORCA_FUNCTIONAL,
     basis=ORCA_BASIS,
-    orcasimpleinput=ORCA_SIMPLE_INPUT,
-    orcablocks=ORCA_BLOCKS,
+    orcasimpleinput=None,
+    orcablocks=None,
     nprocs=12,
-    opt_params=OPT_PARAMETERS,
+    opt_params=None,
     outputdir=os.getcwd(),
     **calc_kwargs,
 ):
@@ -126,9 +130,25 @@ def ase_relaxation(
 
     SETTINGS.RESULTS_DIR = outputdir
 
+    if orcasimpleinput is None:
+        orcasimpleinput = ORCA_SIMPLE_INPUT.copy()
+    if orcablocks is None:
+        orcablocks = ORCA_BLOCKS.copy()
+    if opt_params is None:
+        opt_params = OPT_PARAMETERS.copy()
+
     nprocs = psutil.cpu_count(logical=False) if nprocs == "max" else nprocs
     default_inputs = [xc, basis, "engrad", "normalprint"]
     default_blocks = [f"%pal nprocs {nprocs} end"]
+
+    if "feje_project" in calc_kwargs:
+        import quacc.recipes.orca._base
+        from fair_chemistry_workflows.quacc.internal.calculators.orca.feje_orca import (
+            FejeORCA,
+        )
+
+        # monkey patch Orca calculator
+        quacc.recipes.orca._base.ORCA = FejeORCA
 
     doc = run_and_summarize_opt(
         atoms,
@@ -136,7 +156,7 @@ def ase_relaxation(
         spin_multiplicity=spin_multiplicity,
         default_inputs=default_inputs,
         default_blocks=default_blocks,
-        input_swaps=orcasimpleinput + ORCA_SIMPLE_INPUT_QUACC_IGNORE,
+        input_swaps=orcasimpleinput,
         block_swaps=orcablocks,
         opt_params=opt_params,
         **calc_kwargs,

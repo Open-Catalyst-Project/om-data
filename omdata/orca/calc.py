@@ -16,7 +16,6 @@ ORCA_SIMPLE_INPUT = [
     "DEFGRID2",
     "ALLPOP",
 ]
-ORCA_SIMPLE_INPUT_QUACC_IGNORE = []
 ORCA_BLOCKS = [
     "%scf Convergence Tight maxiter 300 end",
     "%elprop Dipole true Quadrupole true end",
