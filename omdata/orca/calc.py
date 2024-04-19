@@ -15,6 +15,7 @@ ORCA_SIMPLE_INPUT = [
     "NormalConv",
     "DEFGRID2",
     "ALLPOP",
+    "NBO",
 ]
 ORCA_BLOCKS = [
     "%scf Convergence Tight maxiter 300 end",
