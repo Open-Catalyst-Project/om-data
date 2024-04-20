@@ -141,15 +141,6 @@ def ase_relaxation(
     default_inputs = [xc, basis, "engrad", "normalprint"]
     default_blocks = [f"%pal nprocs {nprocs} end"]
 
-    if "feje_project" in calc_kwargs:
-        import quacc.recipes.orca._base
-        from fair_chemistry_workflows.quacc.internal.calculators.orca.feje_orca import (
-            FejeORCA,
-        )
-
-        # monkey patch Orca calculator
-        quacc.recipes.orca._base.ORCA = FejeORCA
-
     doc = run_and_summarize_opt(
         atoms,
         charge=charge,
