@@ -52,7 +52,7 @@ def single_point_calculation(
         Number of processes to parallelize across
     outputdir: str
         Directory to move results to upon completion
-    calc kwargs: dict
+    calc_kwargs:
         Additional kwargs for the custom Orca calculator
     """
     from quacc import SETTINGS
@@ -123,7 +123,7 @@ def ase_relaxation(
         Dictionary of optimizer parameters
     outputdir: str
         Directory to move results to upon completion
-    calc kwargs: dict
+    calc_kwargs:
         Additional kwargs for the custom Orca calculator
     """
     from quacc import SETTINGS
