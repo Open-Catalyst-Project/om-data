@@ -4,6 +4,7 @@ checkpoints
 results
 logs
 *.traj
+*.pdb
 experimental
 
 # Byte-compiled / optimized / DLL files
