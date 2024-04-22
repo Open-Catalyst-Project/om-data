@@ -1,0 +1,125 @@
+C2F6NO4S2- inherits OPLSCM1A {
+  write("Data Atoms") {
+    $atom:c1_c2f6no4s2 $mol @atom:C_c2f6no4s2  0.35   -2.675   0.648   0.000
+    $atom:f1_c2f6no4s2 $mol @atom:F_c2f6no4s2 -0.16   -2.513   1.440  -1.142
+    $atom:f2_c2f6no4s2 $mol @atom:F_c2f6no4s2 -0.16   -2.513   1.440   1.142
+    $atom:f3_c2f6no4s2 $mol @atom:F_c2f6no4s2 -0.16   -3.956   0.086  -0.000
+    $atom:s1_c2f6no4s2 $mol @atom:S_c2f6no4s2  1.02   -1.434  -0.675   0.000 
+    $atom:o1_c2f6no4s2 $mol @atom:O_c2f6no4s2 -0.53   -1.401  -1.362   1.243 
+    $atom:o2_c2f6no4s2 $mol @atom:O_c2f6no4s2 -0.53   -1.401  -1.362  -1.243 
+    $atom:n1_c2f6no4s2 $mol @atom:N_c2f6no4s2 -0.66    0.000   0.153   0.000
+    $atom:s2_c2f6no4s2 $mol @atom:S_c2f6no4s2  1.02    1.434  -0.675  -0.000 
+    $atom:o3_c2f6no4s2 $mol @atom:O_c2f6no4s2 -0.53    1.401  -1.362   1.243 
+    $atom:o4_c2f6no4s2 $mol @atom:O_c2f6no4s2 -0.53    1.401  -1.362  -1.243 
+    $atom:c2_c2f6no4s2 $mol @atom:C_c2f6no4s2  0.35    2.675   0.648  -0.000
+    $atom:f4_c2f6no4s2 $mol @atom:F_c2f6no4s2 -0.16    2.513   1.440   1.142
+    $atom:f5_c2f6no4s2 $mol @atom:F_c2f6no4s2 -0.16    3.956   0.086  -0.000
+    $atom:f6_c2f6no4s2 $mol @atom:F_c2f6no4s2 -0.16    2.513   1.440  -1.142
+  }
+write_once("Data Masses") {
+    @atom:C_c2f6no4s2  12.011
+    @atom:S_c2f6no4s2  32.06
+    @atom:O_c2f6no4s2  15.999 
+    @atom:F_c2f6no4s2  18.998
+    @atom:N_c2f6no4s2  14.000
+  }
+  write("Data Bonds") {
+    $bond:ns1 @bond:NS_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s1_c2f6no4s2
+    $bond:ns2 @bond:NS_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s2_c2f6no4s2
+    $bond:so1 @bond:SO_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:o1_c2f6no4s2
+    $bond:so2 @bond:SO_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:o2_c2f6no4s2
+    $bond:so3 @bond:SO_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:o3_c2f6no4s2
+    $bond:so4 @bond:SO_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:o4_c2f6no4s2
+    $bond:sc1 @bond:SC_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2
+    $bond:sc2 @bond:SC_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2
+    $bond:cf1 @bond:CF_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f1_c2f6no4s2
+    $bond:cf2 @bond:CF_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f2_c2f6no4s2
+    $bond:cf3 @bond:CF_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f3_c2f6no4s2
+    $bond:cf4 @bond:CF_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f4_c2f6no4s2
+    $bond:cf5 @bond:CF_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f5_c2f6no4s2
+    $bond:cf6 @bond:CF_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f6_c2f6no4s2
+  }
+  write("Data Angles") {
+    $angle:nso1_c2f6no4s2 @angle:NSO_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:o1_c2f6no4s2
+    $angle:nso2_c2f6no4s2 @angle:NSO_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:o2_c2f6no4s2
+    $angle:nso3_c2f6no4s2 @angle:NSO_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:o3_c2f6no4s2
+    $angle:nso4_c2f6no4s2 @angle:NSO_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:o4_c2f6no4s2
+    $angle:nsc1_c2f6no4s2 @angle:NSC_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2
+    $angle:nsc2_c2f6no4s2 @angle:NSC_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2
+    $angle:scf1_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f1_c2f6no4s2
+    $angle:scf2_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f2_c2f6no4s2
+    $angle:scf3_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f3_c2f6no4s2
+    $angle:scf4_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f4_c2f6no4s2
+    $angle:scf5_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f5_c2f6no4s2
+    $angle:scf6_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f6_c2f6no4s2
+    $angle:sns1_c2f6no4s2 @angle:SNS_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s2_c2f6no4s2
+    $angle:cso1_c2f6no4s2 @angle:CSO_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:o1_c2f6no4s2
+    $angle:cso2_c2f6no4s2 @angle:CSO_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:o2_c2f6no4s2
+    $angle:cso3_c2f6no4s2 @angle:CSO_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:o3_c2f6no4s2
+    $angle:cso4_c2f6no4s2 @angle:CSO_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:o4_c2f6no4s2
+    $angle:oso1_c2f6no4s2 @angle:OSO_c2f6no4s2 $atom:o1_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:o2_c2f6no4s2
+    $angle:oso2_c2f6no4s2 @angle:OSO_c2f6no4s2 $atom:o4_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:o3_c2f6no4s2
+    $angle:scf1_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f1_c2f6no4s2
+    $angle:scf2_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f2_c2f6no4s2
+    $angle:scf3_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f3_c2f6no4s2
+    $angle:scf4_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f4_c2f6no4s2
+    $angle:scf5_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f5_c2f6no4s2
+    $angle:scf6_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f6_c2f6no4s2
+    $angle:fcf1_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:f1_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f2_c2f6no4s2
+    $angle:fcf2_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:f2_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f3_c2f6no4s2
+    $angle:fcf3_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:f3_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f1_c2f6no4s2
+    $angle:fcf3_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:f4_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f5_c2f6no4s2
+    $angle:fcf4_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:f5_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f6_c2f6no4s2
+    $angle:fcf5_c2f6no4s2 @angle:SCF_c2f6no4s2 $atom:f6_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f4_c2f6no4s2
+  }
+  write("Data Impropers") {
+    $improper:nscf1_c2f6no4s2 @improper:NSCF_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f1_c2f6no4s2
+    $improper:nscf2_c2f6no4s2 @improper:NSCF_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f2_c2f6no4s2
+    $improper:nscf3_c2f6no4s2 @improper:NSCF_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f3_c2f6no4s2
+    $improper:nscf3_c2f6no4s2 @improper:NSCF_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f4_c2f6no4s2
+    $improper:nscf4_c2f6no4s2 @improper:NSCF_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f5_c2f6no4s2
+    $improper:nscf5_c2f6no4s2 @improper:NSCF_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f6_c2f6no4s2
+    $improper:snso1_c2f6no4s2 @improper:SNSO_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:o3_c2f6no4s2
+    $improper:snso2_c2f6no4s2 @improper:SNSO_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:o4_c2f6no4s2
+    $improper:snso3_c2f6no4s2 @improper:SNSO_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:o1_c2f6no4s2
+    $improper:snso4_c2f6no4s2 @improper:SNSO_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:o2_c2f6no4s2
+    $improper:oscf1_c2f6no4s2 @improper:OSCF_c2f6no4s2 $atom:o1_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f1_c2f6no4s2
+    $improper:oscf2_c2f6no4s2 @improper:OSCF_c2f6no4s2 $atom:o1_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f2_c2f6no4s2
+    $improper:oscf3_c2f6no4s2 @improper:OSCF_c2f6no4s2 $atom:o1_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f3_c2f6no4s2
+    $improper:oscf4_c2f6no4s2 @improper:OSCF_c2f6no4s2 $atom:o2_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f1_c2f6no4s2
+    $improper:oscf5_c2f6no4s2 @improper:OSCF_c2f6no4s2 $atom:o2_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f2_c2f6no4s2
+    $improper:oscf6_c2f6no4s2 @improper:OSCF_c2f6no4s2 $atom:o2_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2 $atom:f3_c2f6no4s2
+    $improper:oscf7_c2f6no4s2 @improper:OSCF_c2f6no4s2 $atom:o3_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f4_c2f6no4s2
+    $improper:oscf8_c2f6no4s2 @improper:OSCF_c2f6no4s2 $atom:o3_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f5_c2f6no4s2
+    $improper:oscf9_c2f6no4s2 @improper:OSCF_c2f6no4s2 $atom:o3_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f6_c2f6no4s2
+    $improper:oscf10_c2f6no4s2 @improper:OSCF_c2f6no4s2 $atom:o4_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f4_c2f6no4s2
+    $improper:oscf11_c2f6no4s2 @improper:OSCF_c2f6no4s2 $atom:o4_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f5_c2f6no4s2
+    $improper:oscf12_c2f6no4s2 @improper:OSCF_c2f6no4s2 $atom:o4_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2 $atom:f6_c2f6no4s2
+  }
+  write("Data Dihedrals") {
+    $dihedral:snsc1_c2f6no4s2 @dihedral:SNSC_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:c1_c2f6no4s2
+    $dihedral:snsc2_c2f6no4s2 @dihedral:SNSC_c2f6no4s2 $atom:s1_c2f6no4s2 $atom:n1_c2f6no4s2 $atom:s2_c2f6no4s2 $atom:c2_c2f6no4s2
+  }
+  write_once("In Settings") {
+    bond_coeff   @bond:NS_c2f6no4s2         374.88    1.57
+    bond_coeff   @bond:SO_c2f6no4s2         637.07    1.437 
+    bond_coeff   @bond:SC_c2f6no4s2         233.03    1.818         
+    bond_coeff   @bond:CF_c2f6no4s2         441.92    1.323         
+    angle_coeff  @angle:NSO_c2f6no4s2       94.29     113.6      
+    angle_coeff  @angle:NSC_c2f6no4s2       91.30     103.5                
+    angle_coeff  @angle:SCF_c2f6no4s2       92.83     111.7                
+    angle_coeff  @angle:SNS_c2f6no4s2       80.19     125.6       
+    angle_coeff  @angle:CSO_c2f6no4s2       103.97    102.6    
+    angle_coeff  @angle:OSO_c2f6no4s2       115.80    118.5    
+    angle_coeff  @angle:SCF_c2f6no4s2       82.93     111.7    
+    improper_coeff  @improper:NSCF_c2f6no4s2    0.632 1 3       
+    improper_coeff  @improper:SNSO_c2f6no4s2   -0.008 1 3       
+    improper_coeff  @improper:OSCF_c2f6no4s2    0.694 1 3       
+    dihedral_coeff  @dihedral:SNSC_c2f6no4s2 fourier 3 15.666 1 0 -4.98 2 0 -1.528 3 0 
+    pair_coeff  @atom:C_c2f6no4s2  @atom:C_c2f6no4s2   0.066 3.5
+    pair_coeff  @atom:S_c2f6no4s2  @atom:S_c2f6no4s2   0.25 3.55
+    pair_coeff  @atom:O_c2f6no4s2  @atom:O_c2f6no4s2   0.21 2.96
+    pair_coeff  @atom:N_c2f6no4s2  @atom:N_c2f6no4s2   0.17 3.25
+    pair_coeff  @atom:F_c2f6no4s2  @atom:F_c2f6no4s2   0.053 2.95
+  }
+} # end of " C2F6NO4S2-" type definition

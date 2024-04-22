@@ -1,0 +1,13 @@
+Ag+ {
+    # AtomID  MolID  AtomType  charge   X       Y         Z
+    write("Data Atoms") {
+        $atom:Ag $mol @atom:Ag    1    0.00000  0.00000   0.000000
+    }
+    write_once("Data Masses") {
+        @atom:Ag 107.9
+    }
+    # The "In Settings" section stores force-field parameters for this molecule
+    write_once("In Settings") {
+        pair_coeff @atom:Ag @atom:Ag  0.00699604 2.366226995380741
+    }
+}

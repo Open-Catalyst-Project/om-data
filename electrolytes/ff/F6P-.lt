@@ -1,0 +1,44 @@
+F6P- inherits OPLSCM1A {
+  ### Inheriting from oplsaa.lt
+  write("Data Atoms") {
+    $atom:p1 $mol @atom:P  1.34   -0.000   0.000  -0.000 # P
+    $atom:f1 $mol @atom:F -0.39   -1.181  -0.000   1.181 # F
+    $atom:f2 $mol @atom:F -0.39    1.181   0.000  -1.181 # F
+    $atom:f3 $mol @atom:F -0.39    1.181   0.000   1.181 # F
+    $atom:f4 $mol @atom:F -0.39   -1.181  -0.000  -1.181 # F
+    $atom:f5 $mol @atom:F -0.39    0.000  -1.670  -0.000 # F
+    $atom:f6 $mol @atom:F -0.39   -0.000   1.670  -0.000 # F
+  }
+write_once("Data Masses") {
+    @atom:P  30.974
+    @atom:F  18.998
+  }
+  write("Data Bonds") {
+    $bond:pf1 @bond:PF $atom:p1 $atom:f1
+    $bond:pf2 @bond:PF $atom:p1 $atom:f2
+    $bond:pf3 @bond:PF $atom:p1 $atom:f3
+    $bond:pf4 @bond:PF $atom:p1 $atom:f4
+    $bond:pf5 @bond:PF $atom:p1 $atom:f5
+    $bond:pf6 @bond:PF $atom:p1 $atom:f6
+  }
+  write("Data Angles") {
+    $angle:fpf2 @angle:FPF $atom:f1 $atom:p1 $atom:f3
+    $angle:fpf3 @angle:FPF $atom:f1 $atom:p1 $atom:f4
+    $angle:fpf4 @angle:FPF $atom:f1 $atom:p1 $atom:f5
+    $angle:fpf5 @angle:FPF $atom:f1 $atom:p1 $atom:f6
+    $angle:fpf6 @angle:FPF $atom:f2 $atom:p1 $atom:f3
+    $angle:fpf7 @angle:FPF $atom:f2 $atom:p1 $atom:f4
+    $angle:fpf8 @angle:FPF $atom:f2 $atom:p1 $atom:f5
+    $angle:fpf9 @angle:FPF $atom:f2 $atom:p1 $atom:f6
+    $angle:fpf12 @angle:FPF $atom:f3 $atom:p1 $atom:f5
+    $angle:fpf13 @angle:FPF $atom:f3 $atom:p1 $atom:f6
+    $angle:fpf14 @angle:FPF $atom:f4 $atom:p1 $atom:f5
+    $angle:fpf15 @angle:FPF $atom:f4 $atom:p1 $atom:f6
+  }
+  write_once("In Settings") {
+    bond_coeff   @bond:PF         360.46 1.606
+    angle_coeff  @angle:FPF       139.22 90       
+    pair_coeff  @atom:P  @atom:P   0.20 3.74
+    pair_coeff  @atom:F  @atom:F   0.061  3.1181
+  }
+} # end of "F6P-" type definition
