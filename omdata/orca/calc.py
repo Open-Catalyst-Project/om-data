@@ -1,4 +1,5 @@
 from shutil import which
+from pathlib import Path
 
 from ase import Atoms
 from ase.calculators.orca import ORCA, OrcaProfile
@@ -25,7 +26,7 @@ ORCA_BLOCKS = [
     "%elprop Dipole true Quadrupole true end",
     '%nbo NBOKEYLIST = "$NBO NPA NBO E2PERT 0.1 $END" end',
     '%output Print[P_ReducedOrbPopMO_L] 1 Print[P_ReducedOrbPopMO_M] 1 Print[P_BondOrder_L] 1 Print[P_BondOrder_M] 1 end',
-    '%basis GTOName "PLEASE ADD PATH TO THE def2-tzvpd.bas" end'
+    f"%basis GTOName \"{str(Path(__file__).resolve().parent / 'def2-tzvpd.bas')}\" end"
 ]
 ORCA_ASE_SIMPLE_INPUT = " ".join([ORCA_FUNCTIONAL] + [ORCA_BASIS] + ORCA_SIMPLE_INPUT)
 OPT_PARAMETERS = {
