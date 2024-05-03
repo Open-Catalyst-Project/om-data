@@ -56,7 +56,7 @@ def get_symm_break_block(atoms: Atoms, charge: int)->str:
     ecp_electrons = sum(ECP_SIZE.get(at_num, 0) for at_num in atoms.get_atomic_numbers())
     n_electrons -= ecp_electrons
     lumo = n_electrons // 2
-    return f"%scf rotate \{{lumo-1}, {lumo}, 20, 1, 1\} end end"
+    return f"%scf rotate {{{lumo-1}, {lumo}, 20, 1, 1}} end end"
 
 def write_orca_inputs(
     atoms:Atoms,
