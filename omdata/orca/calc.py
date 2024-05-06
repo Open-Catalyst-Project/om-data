@@ -5,6 +5,7 @@ from ase import Atoms
 from ase.calculators.orca import ORCA, OrcaProfile
 from sella import Sella
 
+# ECP sizes taken from Table 6.5 in the Orca 5.0.3 manual
 ECP_SIZE = {**{i: 28 for i in range(37, 55)}, **{i: 46 for i in range(55, 58)}, **{i:28 for i in range(58, 72)}, **{i:60 for i in range(72, 87)}}
 
 ORCA_FUNCTIONAL = "wB97M-V"
@@ -40,6 +41,10 @@ OPT_PARAMETERS = {
     },
 }
 
+class Vertical(Enum):
+    Default = 'default'
+    MetalOrganics = 'metal-organics'
+
 def get_symm_break_block(atoms: Atoms, charge: int)->str:
     """
     Determine the ORCA Rotate block needed to break symmetry in a singlet
@@ -66,6 +71,7 @@ def write_orca_inputs(
     mult:int=1,
     orcasimpleinput:str=ORCA_ASE_SIMPLE_INPUT,
     orcablocks:str=" ".join(ORCA_BLOCKS),
+    vertical=Vertical.Default
 ):
     """
     One-off method to be used if you wanted to write inputs for an arbitrary
@@ -73,6 +79,10 @@ def write_orca_inputs(
     """
 
     MyOrcaProfile = OrcaProfile([which("orca")])
+    if vertical == Vertical.MetalOrganics and mult == 1:
+        orcasimpleinput += ' UKS'
+        orcablocks += f' {get_symm_break_block(atoms, charge)}'
+
     calc = ORCA(
         charge=charge,
         mult=mult,

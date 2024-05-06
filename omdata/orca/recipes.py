@@ -12,11 +12,8 @@ from omdata.orca.calc import (
     ORCA_BLOCKS,
     ORCA_FUNCTIONAL,
     ORCA_SIMPLE_INPUT,
+    Vertical
 )
-
-class Vertical(Enum):
-    Default = 'default'
-    MetalOrganics = 'metal-organics'
 
 def single_point_calculation(
     atoms,
