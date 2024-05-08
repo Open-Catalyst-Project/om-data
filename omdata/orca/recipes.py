@@ -27,6 +27,7 @@ def single_point_calculation(
     nprocs=12,
     outputdir=os.getcwd(),
     vertical=Vertical.Default,
+    copy_files=None,
     **calc_kwargs,
 ):
     """
@@ -82,6 +83,7 @@ def single_point_calculation(
         default_blocks=default_blocks,
         input_swaps=orcasimpleinput,
         block_swaps=orcablocks,
+        copy_files=copy_files,
         **calc_kwargs,
     )
 
@@ -100,6 +102,7 @@ def ase_relaxation(
     opt_params=None,
     outputdir=os.getcwd(),
     vertical=Vertical.Default,
+    copy_files=None,
     **calc_kwargs,
 ):
     """
@@ -161,6 +164,7 @@ def ase_relaxation(
         input_swaps=orcasimpleinput,
         block_swaps=orcablocks,
         opt_params=opt_params,
+        copy_files=copy_files,
         **calc_kwargs,
     )
 
