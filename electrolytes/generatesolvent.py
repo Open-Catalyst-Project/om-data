@@ -12,11 +12,10 @@ systems = list(csv.reader(f))
 # Choose the system to simulate
 i = sys.argv[1]
 system = systems[int(i)]
-
+print(system[0])
 # Get number of components not including the salt(Ncomp), number of ionic species in the salt (Nions), all molecular species in the system (species), stoichiometry for atomic species (stoichio))
 Ncomp = int(system[0])
 Nions = int(system[1])
-Ncomp -= Nions
 
 species = system[2:Ncomp+2]
 species = species[Nions:]
@@ -29,6 +28,7 @@ boxsize = 50
 
 num_solv = 500
 Nmols = []
+Ncomp -= Nions
 for j in range(Ncomp):
     Nmols.append(num_solv*stoichio[j]/np.sum(stoichio))
 

@@ -259,8 +259,9 @@ def write_forcefield(u,filename):
     torsion_out = []
     nonbond_out = []
     
+    # Load the *.in.settings file
     fname = filename+'.in.settings'
-    with open(fname, 'r') as params, open(omm_ff,"w") as ff:
+    with open(fname, 'r') as params:
         # Grab all force field parameters
         for line in params:
             cleaned_line = line.strip()
@@ -277,9 +278,9 @@ def write_forcefield(u,filename):
             else:
                 print(CGREY+cleaned_line+CEND)
 
-    # Load the *.in.settings file and srart writing the XML file
+    # Start writing the XML file
     omm_ff = filename+'.xml'
-    with open(fname, 'r') as params, open(omm_ff,"w") as ff:
+    with open(omm_ff,"w") as ff:
         ff.write("<ForceField>\n")
         
         # Write the Atom Types

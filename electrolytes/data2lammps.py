@@ -184,7 +184,7 @@ mol{j} = new {species[j]}[{Nmol}]
     #(4) Run Moltemplate
     bashCommand = f"cd {directory}; moltemplate.sh -pdb {filename}.pdb {filename}.lt; cd ..;"
     os.system(bashCommand)
-    bashCommand = f"cd {directory}; cleanup_moltemplate.sh; cd ..;"
+    bashCommand = f"cd {directory}; cleanup_moltemplate.sh -base {filename}; cd ..;"
     os.system(bashCommand)
     
     #(5) We have to do a bit of cleaning. 

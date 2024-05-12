@@ -13,6 +13,7 @@ pdb_file = filename+".pdb"
 # Load LAMMPS data file as a Universe object
 # Topology of the system is a bit screwed up but the new topology
 # for the PDB files will be rewritten later. 
+u = mda.Universe(lmpdata_file)
 Natoms = len(u.atoms)
 u.add_TopologyAttr('record_types',['HETATM']*Natoms)
 
