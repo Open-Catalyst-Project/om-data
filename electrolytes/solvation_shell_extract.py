@@ -10,7 +10,7 @@ import nglview as nv
 from solvation_analysis.solute import Solute
 from solvation_analysis._column_names import *
 from pymatgen.core.structure import Molecule
-from solvation_shell_utils import filter_by_rmsd
+from solvation_shell_utils import filter_by_rmse, wrap_positions
 
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
@@ -107,7 +107,7 @@ def extract_solvation_shells(
             if len(shell.atoms.elements) > len(shell_species):
                 shell_species = shell.atoms.elements
 
-            shell_positions.append(shell.atoms.positions)
+            shell_positions.append(wrap_positions(shell.atoms.positions, lattices))
 
         by_num_atoms = defaultdict(list)
         for sps in shell_positions:
@@ -115,21 +115,17 @@ def extract_solvation_shells(
 
         # filter by number of atoms per shell
         selections_by_num_atoms = {
-            k: filter_by_rmsd(v, top_n) for k, v in by_num_atoms.items()
+            num_atoms: filter_by_rmse(shells_with_num_atoms, top_n)
+            for num_atoms, shells_with_num_atoms in by_num_atoms.items()
         }
 
-        for shell_size, shells in selections_by_num_atoms.items(): #loop over sizes
-            import pdb; pdb.set_trace()
-            for idx, shell_pos in enumerate(shells):
+        for (
+            shell_size,
+            shell_positions,
+        ) in selections_by_num_atoms.items():  # loop over sizes
+            for idx, shell_pos in enumerate(shell_positions):
                 if shell_pos.shape[0] == shell_species.shape[0]:
-                    # Wrap positions
-                    displacements = (
-                        shell_pos[:, np.newaxis, :] - shell_pos[np.newaxis, :, :]
-                    )
-                    idx = np.where(displacements > lattices / 2)[0]
-                    dim = np.where(displacements > lattices / 2)[2]
-                    if idx.shape[0] > 0:
-                        shell_pos[idx, dim] -= lattices[0, 0, dim]
+
                     # Save shell as xyz file
                     mol = Molecule(shell_species, shell_pos, charge=-1)
                     mol.to(

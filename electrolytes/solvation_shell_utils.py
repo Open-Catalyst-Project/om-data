@@ -3,19 +3,20 @@ import itertools
 import numpy as np
 
 
-def rmsd(a, b):
+def rmse(a, b):
     """
-    Compute the root mean squared distance between two sets of coordinates
+    Compute the root mean squared error between two sets of pairwise displacements
     Args:
-        a: numpy array of positions, shape [N_atoms, 3]
-        b: numpy array of positions, shape [N_atoms, 3]
+        a: numpy array of pairwise displacements, shape [N_atoms, N_atoms, 3]
+        b: numpy array of pairwise displacements, shape [N_atoms, N_atoms, 3]
     """
-    return np.sqrt(np.mean(np.sum((b - a)**2, axis=1)))
+    return np.sqrt(np.mean(np.sum((b - a) ** 2, axis=2)))
 
 
-def filter_by_rmsd(coords, n=20):
+def filter_by_rmse(coords, n=20):
     """
-    From a set of coordinates, determine the n most diverse, where "most diverse" means "most different, in terms of minimum in-place RMSD.
+    From a set of coordinates, determine the n most diverse, where "most diverse" means "most different, in terms of minimum RMSE.
+    We operate on pairwise distances so that the function is invariant to translation and rotation.
     Note: The Max-Min Diversity Problem is in general NP-hard. This algorithm generates a candidate solution to MMDP for these coords
     by assuming that the point 0 is actually in the MMDP set (which there's no reason a priori to assume). As a result, if we shuffled the order of coords, we would likely get a different result.
 
@@ -24,23 +25,48 @@ def filter_by_rmsd(coords, n=20):
             Note that this latter requirement shouldn't be a problem, specifically when dealing with IonSolvR data.
         n: number of most diverse coordinates to return
     """
-
+    pairwise_disps = [
+        coord[np.newaxis, :, :] - coord[:, np.newaxis, :] for coord in coords
+    ]
     states = {0}
-    min_rmsds = np.array([rmsd(coords[0], coord) for coord in coords])
-    for i in range(n - 1):
+    min_rmsds = np.array(
+        [rmse(pairwise_disps[0], pairwise_disp) for pairwise_disp in pairwise_disps]
+    )
+    for _ in range(n - 1):
         best = np.argmax(min_rmsds)
         min_rmsds = np.minimum(
             min_rmsds,
-            np.array([rmsd(coords[best], coord) for coord in coords]),
+            np.array(
+                [
+                    rmse(pairwise_disps[best], pairwise_disp)
+                    for pairwise_disp in pairwise_disps
+                ]
+            ),
         )
         states.add(best)
 
     return [coords[i] for i in states]
 
 
+def wrap_positions(positions, lattices):
+    """
+    Wraps input positions based on periodic boundary conditions.
+    Args:
+        positions: numpy array of positions, shape [N_atoms, 3]
+        lattices: numpy array representing dimensions of simulation box, shape [1, 1, 3]
+    """
+    displacements = positions[:, np.newaxis, :] - positions[np.newaxis, :, :]
+    idx = np.where(displacements > lattices / 2)[0]
+    dim = np.where(displacements > lattices / 2)[2]
+    if idx.shape[0] > 0:
+        positions[idx, dim] -= lattices[0, 0, dim]
+    return positions
+
+
 def reorient(box_dimensions, coords, nsolute, solute_natoms, solvent_natoms):
     """
     This function is not currently used in the pdb-file based solvation analysis
+    TODO: remove once Evan clarifies
     """
 
     transforms = [
