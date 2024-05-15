@@ -1,6 +1,7 @@
 import os
 import logging
 import argparse
+import random
 import numpy as np
 from tqdm import tqdm
 from collections import defaultdict
@@ -10,8 +11,6 @@ from solvation_analysis.solute import Solute
 from solvation_analysis._column_names import *
 from pymatgen.core.structure import Molecule
 from solvation_shell_utils import filter_by_rmsd, wrap_positions
-
-logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 
 def extract_solvation_shells(
@@ -140,6 +139,8 @@ def extract_solvation_shells(
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+    random.seed(10)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--pdb_file_path", type=str, help="PDB trajectory file path")
