@@ -95,9 +95,8 @@ def sample(
     complex_charge = metal_row["ox"]
     ox = metal_row["ox"]
     metal = metal_row["metal"]
-    spin = (
-        mendeleev.__dict__[metal].ec.ionize(ox).unpaired_electrons()
-    )  # Use mendeleev to assign spin (assigns highest possible in all cases I've seen)
+    # Use mendeleev to assign spin (assigns highest possible in all cases I've seen)
+    spin = mendeleev.__dict__[metal].ec.ionize(ox).unpaired_electrons()
     uid = "{}_ox{}_cn{}_".format(metal, ox, cn)
     architector_input = {
         "core": {"metal": metal, "coreCN": int(cn)},
@@ -132,12 +131,10 @@ def sample(
                 coordsites_left - ligands_df.denticity >= 0
             )  # Can fit at the metal surface with remaining coordination sites.
         ]
-        if (
-            tdf.shape[0] > 0
-        ):  # Check that there's any ligands that match the constraints
-            add_row = tdf.sample(1, weights=tdf.denticity).iloc[
-                0
-            ]  # Sample from the ligands
+        # Check that there's any ligands that match the constraints
+        if tdf.shape[0] > 0:
+            # Sample from the ligands
+            add_row = tdf.sample(1, weights=tdf.denticity).iloc[0]
             # Weighting by denticity makes this equal likelihood PER coordination site.
             lig_dict = {"smiles": add_row["smiles"], "coordList": add_row["coordList"]}
             architector_input["ligands"] = architector_input["ligands"] + [lig_dict]
@@ -150,15 +147,14 @@ def sample(
             lig_frequencies.append(add_row["frequency"])
             lig_natoms.append(add_row["natoms"])
             lig_coord_atom_types.append(add_row["coord_atom_types"])
-            if (
-                coordsites_left == 0
-            ):  # Only finish when coordination environment filled.
+            # Only finish when coordination environment filled.
+            if coordsites_left == 0:
                 finished = True
         else:
             finished = True
-    liguids_order = np.argsort(
-        liguids
-    )  # Ensure the ligands are sorted for uid for checking for duplication.
+
+    # Ensure the ligands are sorted for uid for checking for duplication.
+    liguids_order = np.argsort(liguids)
     liguids = np.array(liguids)[liguids_order]
     lig_dents = np.array(lig_dents)[liguids_order]
     lig_charges = np.array(lig_charges)[liguids_order]
