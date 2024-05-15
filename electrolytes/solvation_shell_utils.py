@@ -10,14 +10,14 @@ def rmsd(a, b):
         a: numpy array of positions, shape [N_atoms, 3]
         b: numpy array of positions, shape [N_atoms, 3]
     """
-    return np.sqrt(np.mean(np.linalg.norm(b - a, axis=1)))
+    return np.sqrt(np.mean(np.sum((b - a)**2, axis=1)))
 
 
 def filter_by_rmsd(coords, n=20):
     """
-    From a set of coordinates, determine the n most diverse, where "most diverse" means "most different, in terms of RMSD"
-
-    Because of the way that IonSolvR data is organized, should be able to just directly calculate rmsd on numpy coordinate arrays
+    From a set of coordinates, determine the n most diverse, where "most diverse" means "most different, in terms of minimum in-place RMSD.
+    Note: The Max-Min Diversity Problem is in general NP-hard. This algorithm generates a candidate solution to MMDP for these coords
+    by assuming that the point 0 is actually in the MMDP set (which there's no reason a priori to assume). As a result, if we shuffled the order of coords, we would likely get a different result.
 
     Args:
         coords: list of np.ndarrays of atom coordinates. Must all have the same shape ([N_atoms, 3]), and must all reflect the same atom order!
@@ -26,12 +26,12 @@ def filter_by_rmsd(coords, n=20):
     """
 
     states = {0}
-    min_rmsds = np.array([rmsd(coords[0], coords[i]) for i in range(len(coords))])
+    min_rmsds = np.array([rmsd(coords[0], coord) for coord in coords])
     for i in range(n - 1):
         best = np.argmax(min_rmsds)
         min_rmsds = np.minimum(
             min_rmsds,
-            np.array([rmsd(coords[best], coords[i]) for i in range(len(coords))]),
+            np.array([rmsd(coords[best], coord) for coord in coords]),
         )
         states.add(best)
 

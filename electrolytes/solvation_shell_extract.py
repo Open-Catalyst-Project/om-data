@@ -94,8 +94,8 @@ def extract_solvation_shells(
             os.path.join(save_dir, system_name, solute_atom, f"coord={c}"),
             exist_ok=True,
         )
-        shell_species = list()
-        shell_positions = list()
+        shell_species = []
+        shell_positions = []
         for index, _ in tqdm(shells[c].iterrows()):
             ts = universe.trajectory[index[0]]
             universe.atoms.unwrap()
@@ -113,30 +113,32 @@ def extract_solvation_shells(
         for sps in shell_positions:
             by_num_atoms[len(sps)].append(sps)
 
+        # filter by number of atoms per shell
         selections_by_num_atoms = {
             k: filter_by_rmsd(v, top_n) for k, v in by_num_atoms.items()
         }
 
-        for k, v in selections_by_num_atoms.items():
-            for ii, positions in enumerate(v):
-                if positions.shape[0] == shell_species.shape[0]:
+        for shell_size, shells in selections_by_num_atoms.items(): #loop over sizes
+            import pdb; pdb.set_trace()
+            for idx, shell_pos in enumerate(shells):
+                if shell_pos.shape[0] == shell_species.shape[0]:
                     # Wrap positions
                     displacements = (
-                        positions[:, np.newaxis, :] - positions[np.newaxis, :, :]
+                        shell_pos[:, np.newaxis, :] - shell_pos[np.newaxis, :, :]
                     )
                     idx = np.where(displacements > lattices / 2)[0]
                     dim = np.where(displacements > lattices / 2)[2]
                     if idx.shape[0] > 0:
-                        positions[idx, dim] -= lattices[0, 0, dim]
+                        shell_pos[idx, dim] -= lattices[0, 0, dim]
                     # Save shell as xyz file
-                    mol = Molecule(shell_species, positions, charge=-1)
+                    mol = Molecule(shell_species, shell_pos, charge=-1)
                     mol.to(
                         os.path.join(
                             save_dir,
                             system_name,
                             solute_atom,
                             f"coord={c}",
-                            f"size{k}_selection{ii}.xyz",
+                            f"size{shell_size}_selection{idx}.xyz",
                         ),
                         "xyz",
                     )
