@@ -6,7 +6,6 @@ from tqdm import tqdm
 from collections import defaultdict
 import matplotlib.pyplot as plt
 import MDAnalysis as mda
-import nglview as nv
 from solvation_analysis.solute import Solute
 from solvation_analysis._column_names import *
 from pymatgen.core.structure import Molecule

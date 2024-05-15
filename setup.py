@@ -12,6 +12,15 @@ setup(
     description="Code for generating OMOL input configurations",
     url="http://github.com/Open-Catalyst-Project/om-data",
     packages=find_packages(),
-    install_requires=["ase", "quacc[sella]>=0.7.2"],
+    install_requires=[
+        "ase",
+        "quacc[sella]>=0.7.2",
+        "numpy",
+        "tqdm",
+        "rmsd",
+        "MDAnalysis",
+        "pymatgen",
+        "solvation-analysis",
+    ],
     include_package_data=True,
 )
