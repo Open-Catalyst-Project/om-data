@@ -4,7 +4,7 @@ import numpy as np
 from rmsd import kabsch_rmsd
 
 
-def filter_by_rmse(coords, n=20):
+def filter_by_rmsd(coords, n=20):
     """
     From a set of coordinates, determine the n most diverse, where "most diverse" means "most different, in terms of minimum RMSD.
     We use the Kabsch Algorithm (https://en.wikipedia.org/wiki/Kabsch_algorithm) to align coordinates based on rotation/translation before computing the RMSD.

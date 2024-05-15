@@ -9,7 +9,7 @@ import MDAnalysis as mda
 from solvation_analysis.solute import Solute
 from solvation_analysis._column_names import *
 from pymatgen.core.structure import Molecule
-from solvation_shell_utils import filter_by_rmse, wrap_positions
+from solvation_shell_utils import filter_by_rmsd, wrap_positions
 
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
@@ -114,7 +114,7 @@ def extract_solvation_shells(
 
         # filter by number of atoms per shell
         selections_by_num_atoms = {
-            num_atoms: filter_by_rmse(shells_with_num_atoms, top_n)
+            num_atoms: filter_by_rmsd(shells_with_num_atoms, top_n)
             for num_atoms, shells_with_num_atoms in by_num_atoms.items()
         }
 
