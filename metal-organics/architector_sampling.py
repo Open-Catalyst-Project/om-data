@@ -10,7 +10,7 @@ import pandas as pd
 
 MAX_N_ATOMS = 250
 # Set seed
-random_seed = 4612
+random_seed = 46139
 np.random.seed(random_seed)
 
 
