@@ -231,6 +231,11 @@ def parse_args():
         default=100,
         help="Number of samples to take",
     )
+    parser.add_argument(
+        "--history",
+        type=str,
+        help="Path to file storing previously used samples to avoid duplication",
+    )
 
     return parser.parse_args()
 
@@ -240,18 +245,24 @@ def main():
 
     metal_df = pd.read_pickle("metal_sample_dataframe.pkl")
     ligands_df = pd.read_pickle("ligand_sample_dataframe.pkl")
+    if args.history is not None:
+        with open(args.history, 'r') as fh:
+            history = eval(fh.read())
+    else:
+        history = None
 
     gen_metal_df = select_metals(metal_df)
     sdf, history = create_sample(
         metal_df=gen_metal_df,
         ligands_df=ligands_df,
         test=False,
+        history_uids=history,
         nsamples=args.n_samples,
     )
 
     sdf.to_pickle(f"{args.outname}.pkl")
     with open(f"{args.outname}_uids", "w") as fh:
-        fh.write(str(history))  # can be read by data=eval(fh.read())
+        fh.write(str(history))
 
 
 if __name__ == "__main__":

@@ -8,13 +8,13 @@ from architector import convert_io_molecule
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parse.add_argument("file_path")
+    parse.add_argument("output_path")
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-    path = pathlib.Path(args.file_path)
+    path = pathlib.Path(args.output_path)
     for fname in path.glob("*.pkl"):
         name = os.path.join("xyzs", os.path.splitext(os.path.basename(fname))[0])
         df = pd.read_pickle(fname)
