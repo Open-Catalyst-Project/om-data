@@ -91,26 +91,27 @@ def main():
     # Load input dataframe
     indf = pd.read_pickle(args.input_path)
 
-    # Add index as name of job from input dataframe.
-    newindf_rows = []
-    for i, row in indf.iterrows():
-        inp_dict = row["architector_input"]
-        inp_dict["name"] = str(i)
-        newindf_rows.append(inp_dict)
-
     # Check the output path to not duplicate
     # Finished/failed architector runs.
     op = pathlib.Path(args.outpath)
     done_list = [
         p.name.replace(".pkl", "").replace("_failed.txt", "") for p in op.glob("*")
     ]
+    # Add index as name of job from input dataframe.
+    newindf_rows = []
+    for i, row in indf.iterrows():
+        if str(i) in done_list:
+            continue
+        inp_dict = row["architector_input"]
+        inp_dict["name"] = str(i)
+        newindf_rows.append(inp_dict)
+
     with ProcessPoolExecutor(max_workers=n_workers) as exe:
         futs = []
         for d in newindf_rows[batch_idx * batch_size : (batch_idx + 1) * batch_size]:
-            if d["name"] not in done_list:
-                # print('Submitting: {}'.format(i))
-                fut = exe.submit(calc, d, args.outpath)
-                futs.append(fut)
+            # print('Submitting: {}'.format(i))
+            fut = exe.submit(calc, d, args.outpath)
+            futs.append(fut)
         # Track progress of completed jobs.
         for x in tqdm(as_completed(futs), total=len(futs)):
             res = x.result()
