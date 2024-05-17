@@ -61,10 +61,16 @@ def parse_args():
         help="Number of simultaneous jobs to run",
     )
     parser.add_argument(
+        "--batch_size",
+        type=int,
+        required=True,
+        help="Split up the pickle in to batches of this size",
+    )
+    parser.add_argument(
         "--batch_idx",
         type=int,
         required=True,
-        help="Given the number of workers specified, run the nth batch",
+        help="Given the batch size specified, run the nth batch",
     )
     parser.add_argument(
         "--outpath",
@@ -100,7 +106,7 @@ def main():
     ]
     with ProcessPoolExecutor(max_workers=n_workers) as exe:
         futs = []
-        for d in newindf_rows[batch_idx * n_workers : (batch_idx + 1) * n_workers]:
+        for d in newindf_rows[batch_idx * batch_size : (batch_idx + 1) * batch_size]:
             if d["name"] not in done_list:
                 # print('Submitting: {}'.format(i))
                 fut = exe.submit(calc, d, args.outpath)
