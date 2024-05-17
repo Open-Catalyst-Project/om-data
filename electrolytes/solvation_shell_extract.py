@@ -8,7 +8,7 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 import MDAnalysis as mda
 from solvation_analysis.solute import Solute
-from solvation_analysis._column_names import *
+from solvation_analysis._column_names import FRAME, SOLUTE_IX
 from pymatgen.core.structure import Molecule
 from solvation_shell_utils import filter_by_rmsd, wrap_positions
 
