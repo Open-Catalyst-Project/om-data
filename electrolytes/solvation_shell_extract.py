@@ -17,7 +17,7 @@ def extract_solvation_shells(
     pdb_file_path: str,
     save_dir: str,
     system_name: str,
-    solute_atom: str,
+    solute_atoms: str,
     min_coord: int,
     max_coord: int,
     top_n: int,
@@ -36,9 +36,9 @@ def extract_solvation_shells(
         max_coord: Maximum coordination number to consider
         top_n: Number of snapshots to extract per coordination number.
     """
-
+    solute_atoms_name = ' '.join(solute_atoms)
     # Create save directory
-    os.makedirs(os.path.join(save_dir, system_name, solute_atom), exist_ok=True)
+    os.makedirs(os.path.join(save_dir, system_name, solute_atoms_name), exist_ok=True)
 
     # Initialize MDA Universe
     universe = mda.Universe(pdb_file_path)
@@ -54,7 +54,9 @@ def extract_solvation_shells(
     lattices = np.array([a, b, c])[None][None]
 
     # Choose solute atom
-    solu = universe.select_atoms(f"name {solute_atom}")
+    # TODO: try to join multiple atoms in the same solute, doesn't currently work
+    query = ' or '.join(f'name {atom}' for atom in solute_atoms)
+    solu = universe.select_atoms(query)
 
     logging.info("Translating atoms to solute center of mass")
     for ts in tqdm(universe.trajectory):
@@ -68,15 +70,17 @@ def extract_solvation_shells(
 
     solvent = universe.atoms - solu
 
-    solv_anal = Solute.from_atoms(solu, {"solvent": solvent}, solute_name=solute_atom)
+    solv_anal = Solute.from_atoms(solu, {"solvent": solvent})
 
     # Identify the cutoff for the first solvation shell, based on the MD trajectory
     logging.info("Running solvation analysis")
+
+    #this line fails (can't find the radius)
     solv_anal.run()
 
     # Plot the RDF
     solv_anal.plot_solvation_radius("solute", "solvent")
-    plt.savefig(os.path.join(save_dir, system_name, solute_atom, "solvation_rdf.png"))
+    plt.savefig(os.path.join(save_dir, system_name, solute_atoms_name, "solvation_rdf.png"))
 
     # There's probably a much faster way to do this
     # But for now, we're prototyping, so slow is okay
@@ -89,7 +93,7 @@ def extract_solvation_shells(
     for c in range(min_coord, max_coord + 1):
         logging.info(f"Processing shells with coordination number {c}")
         os.makedirs(
-            os.path.join(save_dir, system_name, solute_atom, f"coord={c}"),
+            os.path.join(save_dir, system_name, solute_atoms_name, f"coord={c}"),
             exist_ok=True,
         )
         shell_species = []
@@ -130,7 +134,7 @@ def extract_solvation_shells(
                         os.path.join(
                             save_dir,
                             system_name,
-                            solute_atom,
+                            solute_atoms_name,
                             f"coord={c}",
                             f"size{shell_size}_selection{idx}.xyz",
                         ),
@@ -149,9 +153,10 @@ if __name__ == "__main__":
         "--system_name", type=str, help="Name of system used for directory naming"
     )
     parser.add_argument(
-        "--solute_atom",
+        "--solute_atoms",
         type=str,
-        help="Which solute atom to extract solvation shells for",
+        nargs='+',
+        help="Which solute atom(s) to extract solvation shells for (accepts multiple values)",
     )
     parser.add_argument(
         "--min_coord", type=int, help="Minimum shell coordination number to extract"
@@ -172,7 +177,7 @@ if __name__ == "__main__":
         args.pdb_file_path,
         args.save_dir,
         args.system_name,
-        args.solute_atom,
+        args.solute_atoms,
         args.min_coord,
         args.max_coord,
         args.top_n,
