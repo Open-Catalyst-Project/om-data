@@ -10,11 +10,15 @@ import MDAnalysis as mda
 from solvation_analysis.solute import Solute
 from solvation_analysis._column_names import FRAME, SOLUTE_IX
 from pymatgen.core.structure import Molecule
-from solvation_shell_utils import filter_by_rmsd, wrap_positions
+from solvation_shell_utils import (
+    filter_by_rmsd,
+    wrap_positions,
+    extract_charges_from_lammps_file,
+)
 
 
 def extract_solvation_shells(
-    pdb_file_path: str,
+    input_dir: str,
     save_dir: str,
     system_name: str,
     solute_atoms: str,
@@ -36,11 +40,16 @@ def extract_solvation_shells(
         max_coord: Maximum coordination number to consider
         top_n: Number of snapshots to extract per coordination number.
     """
-    solute_atoms_name = ' '.join(solute_atoms)
+    solute_atoms_name = " ".join(solute_atoms)
     # Create save directory
     os.makedirs(os.path.join(save_dir, system_name, solute_atoms_name), exist_ok=True)
 
+    # Read charges from LAMMPS file
+    lammps_file_path = os.path.join(input_dir, "system.data")
+    charges = extract_charges_from_lammps_file(lammps_file_path)
+
     # Initialize MDA Universe
+    pdb_file_path = os.path.join(input_dir, "system_output.pdb")
     universe = mda.Universe(pdb_file_path)
 
     # Add PBC box
@@ -55,7 +64,7 @@ def extract_solvation_shells(
 
     # Choose solute atom
     # TODO: try to join multiple atoms in the same solute, doesn't currently work
-    query = ' or '.join(f'name {atom}' for atom in solute_atoms)
+    query = " or ".join(f"name {atom}" for atom in solute_atoms)
     solu = universe.select_atoms(query)
 
     logging.info("Translating atoms to solute center of mass")
@@ -75,12 +84,14 @@ def extract_solvation_shells(
     # Identify the cutoff for the first solvation shell, based on the MD trajectory
     logging.info("Running solvation analysis")
 
-    #this line fails (can't find the radius)
+    # this line fails (can't find the radius)
     solv_anal.run()
 
     # Plot the RDF
     solv_anal.plot_solvation_radius("solute", "solvent")
-    plt.savefig(os.path.join(save_dir, system_name, solute_atoms_name, "solvation_rdf.png"))
+    plt.savefig(
+        os.path.join(save_dir, system_name, solute_atoms_name, "solvation_rdf.png")
+    )
 
     # There's probably a much faster way to do this
     # But for now, we're prototyping, so slow is okay
@@ -129,7 +140,7 @@ def extract_solvation_shells(
                 if shell_pos.shape[0] == shell_species.shape[0]:
 
                     # Save shell as xyz file
-                    mol = Molecule(shell_species, shell_pos, charge=-1)
+                    mol = Molecule(shell_species, shell_pos, charge=round(sum(charges)))
                     mol.to(
                         os.path.join(
                             save_dir,
@@ -147,7 +158,11 @@ if __name__ == "__main__":
     random.seed(10)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--pdb_file_path", type=str, help="PDB trajectory file path")
+    parser.add_argument(
+        "--input_dir",
+        type=str,
+        help="Path containing PDB trajectory and LAMMPS data files",
+    )
     parser.add_argument("--save_dir", type=str, help="Path to save xyz files")
     parser.add_argument(
         "--system_name", type=str, help="Name of system used for directory naming"
@@ -155,7 +170,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--solute_atoms",
         type=str,
-        nargs='+',
+        nargs="+",
         help="Which solute atom(s) to extract solvation shells for (accepts multiple values)",
     )
     parser.add_argument(
@@ -174,7 +189,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     extract_solvation_shells(
-        args.pdb_file_path,
+        args.input_dir,
         args.save_dir,
         args.system_name,
         args.solute_atoms,

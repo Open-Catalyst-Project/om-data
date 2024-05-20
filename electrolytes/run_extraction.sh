@@ -10,10 +10,10 @@
 #                                   --max_coord 5 \
 #                                   --top_n 20
 
-python solvation_shell_extract.py --pdb_file_path 'testfiles/al_clo4_example.pdb' \
+python solvation_shell_extract.py --input_dir 'testfiles/NaCl' \
                                   --save_dir 'results' \
-                                  --system_name 'Al_ClO4' \
-                                  --solute_atoms 'CL1' 'O00' 'O02' 'O03' 'O04'  \
+                                  --system_name 'NaCl' \
+                                  --solute_atoms 'NA0'  \
                                   --min_coord 2 \
                                   --max_coord 5 \
                                   --top_n 20
