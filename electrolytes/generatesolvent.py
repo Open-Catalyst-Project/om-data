@@ -1,3 +1,10 @@
+"""generatesolvent.py
+Author: Muhammad R. Hasyim
+
+Script to generate initial pure solvent configuration and LAMMPS files using 
+the data2lammps.py module. 
+"""
+
 import sys
 from data2lammps import *
 import os
@@ -12,8 +19,10 @@ systems = list(csv.reader(f))
 # Choose the system to simulate
 i = sys.argv[1]
 system = systems[int(i)]
-print(system[0])
-# Get number of components not including the salt(Ncomp), number of ionic species in the salt (Nions), all molecular species in the system (species), stoichiometry for atomic species (stoichio))
+
+# Get number of components not including the salt(Ncomp), 
+# number of ionic species in the salt (Nions), all molecular species in the system (species), 
+# and stoichiometry for atomic species (stoichio))
 Ncomp = int(system[0])
 Nions = int(system[1])
 

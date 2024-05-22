@@ -6,8 +6,6 @@ with Packmol and generate LAMMPS DATA and force field files with Moltemplate
 
 This module is sufficient to run a LAMMPS simulation. A second script (lammps2omm.py)
 is used to convert from LAMMPS to OpenMM
-
-TO-DO: Update the documentation strings and comments
 """
 
 import re 
@@ -15,7 +13,7 @@ import sys
 import os
 import csv 
 
-# Define a dictionary to store atomic masses
+# Dictionary of atomic masses
 atomic_masses = {
     'H': 1.008,
     'He': 4.0026,
@@ -129,21 +127,37 @@ atomic_masses = {
 }
 
 def run_packmol_moltemplate(species,boxsize,Nmols,filename,directory):
-    #(1) generate the packmol file to be run
-    #Use the command-line utility
+    """ Run Packmol and Moltemplate to generate system configuration (in LAMMPS data format) 
+        as well as files to run a LAMMPS simulation.
+
+        Args:
+            species (list): list of molecular species name (string) that we want to simulate
+            boxsize (float): size of the simulation box, using Angstrom units
+            Nmols (list): list of number of molecules we want to pack inside the simulation box
+            filename (string): a prefix name for all files we want to generate, including LAMMPS DATA files and PDB files.
+            directory (string): directory to generate all the output files
+    """
+    
+    # Copy-paste the LT file, which has the OPLS settings
+    general_ff = "oplscm1a.lt"
+    bashCommand = f'cp {general_ff} ./{directory}'
+    os.system(bashCommand)
+   
+
+    # Prepare the Packmol script
     packmolstring =f"""
     tolerance 2.0
     filetype pdb
     output {filename}.pdb
     """
-    general_ff = "oplscm1a.lt"
-    bashCommand = f'cp {general_ff} ./{directory}'
-    os.system(bashCommand)
     
-    solventlt = f"""import "{general_ff}"
+    # Prepare the LT file for the system we want to simulate 
+    systemlt = f"""import "{general_ff}"
     """
     
-    for j in range(len(Nmols)):#1,Ncomp+1):
+    # Go through every species and copy their PDB and LT files to the target directory
+    # And add the species to the Packmol script and the system LT file. 
+    for j in range(len(Nmols)):
         Nmol = int(Nmols[j])
         #Copy PDB files from the ff directory
         bashCommand = f'cp "./ff/{species[j]}.pdb" ./{directory}'
@@ -158,60 +172,55 @@ def run_packmol_moltemplate(species,boxsize,Nmols,filename,directory):
   inside box {-boxsize/2.0} {-boxsize/2.0} {-boxsize/2.0} {boxsize/2.0} {boxsize/2.0} {boxsize/2.0}
 end structure
         """
-        solventlt += f"""import "{species[j]}.lt"
+        systemlt += f"""import "{species[j]}.lt"
 mol{j} = new {species[j]}[{Nmol}]
         """
+    # Write the Packmol script and run it 
     f = open(directory+f"/{filename}.inp","w")
     f.write(packmolstring)
     f.close()
-
-    #(2) Run Packmol
     bashCommand = f"cd {directory}; packmol < {filename}.inp; cd ..;"
     os.system(bashCommand)
 
-    #(3) We now have a pdb file. Next, we generate system.lt file
-    solventlt += f"""write_once("Data Boundary") {{
+    # Write the system LT file
+    systemlt += f"""write_once("Data Boundary") {{
   {-boxsize/2} {boxsize/2} xlo xhi
   {-boxsize/2} {boxsize/2} ylo yhi
   {-boxsize/2} {boxsize/2} zlo zhi
 }}
     """
-
     f = open(directory+f"/{filename}.lt","w")
-    f.write(solventlt)
+    f.write(systemlt)
     f.close()
 
-    #(4) Run Moltemplate
+    # Given the system LT and PDB file, which is generated from Packmol, run Moltemplate
     bashCommand = f"cd {directory}; moltemplate.sh -pdb {filename}.pdb {filename}.lt; cd ..;"
     os.system(bashCommand)
+    
+    # Cleanup the files generated from moltemplate
     bashCommand = f"cd {directory}; cleanup_moltemplate.sh -base {filename}; cd ..;"
     os.system(bashCommand)
     
-    #(5) We have to do a bit of cleaning. 
-    #This file have mixed dihedral style!
-    
-    # Read the entire content of the file
+    # Next check the settings file and see if LAMMPS hybrid style is even necessarry
+    # Begin by reading the entire contents of the *in.settings file
     file = open(directory+f'/{filename}.in.settings', 'r')
     lines = file.readlines()
-    # Read each line in the file
     string = ""
     for i, line in enumerate(lines):
-        # Check if the line contains the keyword "improper_coeff"
         if "dihedral_coeff" in line:
-            print(line)# Perform your editing here
-            # For example, you can split the line and edit specific parts
+            print(line)
             if 'opls' or 'fourier' in line:
                 string += line.split()[2]
     file.close()
     
     if 'opls' in string and 'fourier' in string:
-        print("No modification")
+        print("No modification necesssarry. Hybrid style is present")
     else:
+        print("Modification necesssarry. Only either opls/fourier style present")
+        
+        #First we modify the lines containing dihedral_coeff and delete the keyword for opls and fourier
         for i, line in enumerate(lines):
-            # Check if the line contains the keyword "improper_coeff"
             if "dihedral_coeff" in line:
-                # Perform your editing here
-                # For example, you can split the line and edit specific parts
                 if 'opls' or 'fourier' in line:
                     modified_line = line.replace('opls', '')
                     modified_line = modified_line.replace('fourier', '')
@@ -219,15 +228,11 @@ mol{j} = new {species[j]}[{Nmol}]
         with open(directory+f'/{filename}.in.settings', 'w') as file:
             file.writelines(lines)
         
-        # Read the entire content of the file
+        # Next, modify the *in.init file. We need to remove the hybrid keyword from that file.
         with open(directory+f'/{filename}.in.init', 'r') as file:
             lines = file.readlines()
-        # Read each line in the file
         for i, line in enumerate(lines):
-            # Check if the line contains the keyword "improper_coeff"
             if "dihedral_style" in line:
-                # Perform your editing here
-                # For example, you can split the line and edit specific parts
                 if 'opls' or 'fourier' in line:
                     modified_line = line.replace('hybrid', '')
                     if 'opls' in string:
@@ -237,19 +242,24 @@ mol{j} = new {species[j]}[{Nmol}]
                     lines[i] = modified_line
         with open(directory+f'/{filename}.in.init', 'w') as file:
             file.writelines(lines)
-        # Write the modified content back to the same file
 
 def extract_elements_and_counts(formula):
+    """ Return the elements and stoichiometry of a chemical species, given its formula
+        
+        Args:
+            formula (string): a chemical formula, which may include their charge. 
+            Example: ethanol C2H6O or hexafluorophosphate F6P-
+    """
     # Split the formula based on + or - signs and take only the part before it
     formula = formula.split('+')[0].split('-')[0]
     
-    # Use regular expression to find elements and counts
+    # Use regular expression to find elements and stoich
     elements = re.findall('[A-Z][a-z]*[0-9]*', formula)
     
-    # Initialize a dictionary to store counts for each element
-    counts_dict = {}
+    # Initialize a dictionary to store stoich for each element
+    stoich_dict = {}
 
-    # Iterate through the elements to extract counts
+    # Iterate through the elements to extract stoich
     for element in elements:
         # Extract the element symbol and count (if present)
         match = re.match('([A-Za-z]+)([0-9]*)', element)
@@ -261,18 +271,24 @@ def extract_elements_and_counts(formula):
             count = '1'
         
         # Add the count to the dictionary
-        if symbol in counts_dict:
-            counts_dict[symbol] += int(count)
+        if symbol in stoich_dict:
+            stoich_dict[symbol] += int(count)
         else:
-            counts_dict[symbol] = int(count)
+            stoich_dict[symbol] = int(count)
     
-    # Convert the dictionary to lists of elements and counts
-    elements = list(counts_dict.keys())
-    counts = [str(counts_dict[element]) for element in elements]
+    # Convert the dictionary to lists of elements and stoich
+    elements = list(stoich_dict.keys())
+    stoich = [str(stoich_dict[element]) for element in elements]
 
-    return elements, counts
+    return elements, stoich
 
 def calculate_mw(formula):
+    """ Calculate molecular weight given the chemical formula
+        
+        Args:
+            formula (string): a chemical formula, which may include their charge. 
+            Example: ethanol C2H6O or hexafluorophosphate F6P-
+    """
     total_weight = 0.0
     elements, counts = extract_elements_and_counts(formula)
     print("Elements:", elements)
