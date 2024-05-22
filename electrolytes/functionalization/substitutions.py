@@ -741,13 +741,15 @@ if __name__ == "__main__":
     # Combine all substituents
     substituents = list(set(substituents_ilesw_cation + substituents_ilesw_anion))
 
-    dump_path = Path("/home/ewcss/data/omol24/20240521_small_mol_dump")
+    dump_path = Path("dump")
+    # If the directory doesn't exist, make it
+    dump_path.mkdir(exist_ok=True)
 
     # Generate library based on functional group substitution
     library = generate_library(
         templates=templates,
         substituents=substituents,
-        attempts_per_template=100,
+        attempts_per_template=1500,
         max_atoms=None,
         max_heavy_atoms=50,
         dump_to=dump_path / "initial_library_smiles.json",
