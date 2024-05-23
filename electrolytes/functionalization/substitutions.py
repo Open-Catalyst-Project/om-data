@@ -467,21 +467,13 @@ def select_substituent(
         if len(acceptable_subs) == 0:
             # If there are no substituents small enough, must replace with a hydrogen atom
             return Chem.MolFromSmiles("[H]")
-        else:
-            # Weight to prefer smaller substituents
-            # TODO: is there a more clever way to do this?
-            if weight:
-                weights = [1 / sub_num_atoms[e] for e in acceptable_subs]
-                choice = random.choices(acceptable_subs, weights=weights, k=1)[0]
-            else:
-                choice = random.choices(acceptable_subs, k=1)[0]
-
     else:
-        if weight:
-            weights = [1 / sub_num_atoms[e] for e in substituents]
-            choice = random.choices(list(substituents.keys()), weights=weights, k=1)[0]
-        else:
-            choice = random.choices(list(substituents.keys()), k=1)[0]
+        acceptable_subs = list(substituents)
+    if weight:
+        weights = [1 / sub_num_atoms[e] for e in acceptable_subs]
+        choice = random.choices(acceptable_subs, weights=weights, k=1)[0]
+    else:
+        choice = random.choices(acceptable_subs, k=1)[0]
     
     return substituents[choice]
 
