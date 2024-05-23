@@ -108,7 +108,7 @@ def main():
 
     with ProcessPoolExecutor(max_workers=n_workers) as exe:
         futs = []
-        for d in newindf_rows[batch_idx * batch_size : (batch_idx + 1) * batch_size]:
+        for d in newindf_rows[batch_idx * args.batch_size : (batch_idx + 1) * args.batch_size]:
             # print('Submitting: {}'.format(i))
             fut = exe.submit(calc, d, args.outpath)
             futs.append(fut)
