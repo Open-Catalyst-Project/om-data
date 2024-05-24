@@ -1,4 +1,4 @@
-F6P- inherits OPLSCM1A {
+PF6- inherits OPLSCM1A {
   ### Inheriting from oplsaa.lt
   write("Data Atoms") {
     $atom:p1 $mol @atom:P  1.34   -0.000   0.000  -0.000 # P
@@ -41,4 +41,4 @@ write_once("Data Masses") {
     pair_coeff  @atom:P  @atom:P   0.20 3.74
     pair_coeff  @atom:F  @atom:F   0.061  3.1181
   }
-} # end of "F6P-" type definition
+} # end of "PF6-" type definition

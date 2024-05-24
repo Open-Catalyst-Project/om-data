@@ -1,0 +1,4 @@
+category,comment/name,DOI,units,temperature,cation1,cation1_conc,cation2,cation2_conc,cation3,cation3_conc,cation4,cation4_conc,anion1,anion1_conc,anion2,anion2_conc,anion3,anion3_conc,anion4,anion4_conc,neutral1,neutral1_ratio,neutral2,neutral2_ratio,neutral3,neutral3_ratio,neutral4,neutral4_ratio,neutral5,neutral5_ratio
+Li,Gen2,10.1039/d1sc04265c,volume,300,Li+,1.2,,,,,,,PF6-,1.2,,,,,,,C3H4O3,1,C4H8O3,2,,,,,,
+,Water-in-salt-5,10.1126/science.aab1595,mass,300,Li+,5,,,,,,,C2F6NO4S2-,5,,,,,,,H2O,1,,,,,,,,
+,Lowconc1,10.1039/C8CC04433C,volume,300,K+,0.1,,,,,,,ClO4-,0.1,,,,,,,C4H6O3,1,,,,,,,,

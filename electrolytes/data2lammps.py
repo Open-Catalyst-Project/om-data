@@ -9,6 +9,7 @@ is used to convert from LAMMPS to OpenMM
 """
 
 import re 
+import numpy as np
 import sys
 import os
 import csv 
@@ -126,6 +127,30 @@ atomic_masses = {
     'Mt': 276.0,
 }
 
+
+def get_indices(comments, keyword):
+    """ Grab indices of labeled columns given a specific keyword. 
+        Args: 
+            comments (list): a list of strings, each of which is a label for a specific column
+            keyword (string): specific keyword we want to match with comments.
+
+        This helper function is specific to reading the elytes.csv file.
+    """
+    indices = [i for i, string in enumerate(comments) if keyword in string]
+    return indices[::2], indices[1::2]
+    
+def get_species_and_conc(systems, i, indices):
+    """ Grab list of species and their corresponding concentrations 
+        Args: 
+            systems (list): a list of lists, containing the full spreadhseet information from the CSV file. 
+            i (int): index of the row of the spreadsheet we want to access. Numbering starts from one. 
+            indices (list): index of columns that we want to access. 
+
+        This helper function is specific to reading the elytes.xls file.
+    """
+    species = np.array(systems[i])[indices]
+    return [name for name in species if name]
+
 def run_packmol_moltemplate(species,boxsize,Nmols,filename,directory):
     """ Run Packmol and Moltemplate to generate system configuration (in LAMMPS data format) 
         as well as files to run a LAMMPS simulation.
@@ -137,7 +162,10 @@ def run_packmol_moltemplate(species,boxsize,Nmols,filename,directory):
             filename (string): a prefix name for all files we want to generate, including LAMMPS DATA files and PDB files.
             directory (string): directory to generate all the output files
     """
-    
+    try:
+        os.mkdir(directory)
+    except Exception as e:
+        print(e)
     # Copy-paste the LT file, which has the OPLS settings
     general_ff = "oplscm1a.lt"
     bashCommand = f'cp {general_ff} ./{directory}'

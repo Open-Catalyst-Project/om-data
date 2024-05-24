@@ -1,7 +1,7 @@
 #!/bin/bash 
 
-num_lines=$(wc -l < systems.csv)
-
+num_lines=$(wc -l < elytes.csv)
+num_lines=$((num_lines-1))
 for ((i = 0; i < num_lines; i++)); do
     mkdir $i
     cp prepopenmmsim.py ./$i
