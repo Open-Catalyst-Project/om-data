@@ -71,7 +71,7 @@ for j, solv in enumerate(neut):#solvspecies):
 print(units)
 if 'volume' in units:
     # Solvent density in g/ml, obtained from averaging short MD run
-    data = list(csv.reader(open(f'{i}/solventdata.txt', 'r')))
+    data = list(csv.reader(open(f'{i-1}/solventdata.txt', 'r')))
     rho = np.array([float(row[3]) for row in data[1:]])
     rho = np.mean(rho[int(len(rho)/2):]) 
     rho *= 1000 #in g/L
