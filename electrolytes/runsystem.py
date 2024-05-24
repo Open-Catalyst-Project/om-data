@@ -17,7 +17,7 @@ simulation.context.setPositions(modeller.positions)
 simulation.minimizeEnergy()
 frames = 1000
 runtime = 250000000
-#5000000 #10 ns runs
+
 rate = int(runtime/frames)
 simulation.reporters.append(PDBReporter('system_output.pdb', rate, enforcePeriodicBox=True))
 simulation.reporters.append(StateDataReporter('data.txt', rate, progress=True, temperature=True, potentialEnergy=True, density=True,totalSteps=runtime,speed=True))
