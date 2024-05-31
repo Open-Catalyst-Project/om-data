@@ -42,7 +42,7 @@ def get_biolip_db(lig_type="reg"):
     types = {col: str for col in columns}
     types["ligand_serial_number"] = int
     biolip_df = pd.read_csv(
-        "/home/levineds/BioLiP.txt",
+        "BioLiP_05_31_2024.txt",
         sep="\t",
         names=columns,
         dtype=types,
@@ -63,7 +63,9 @@ def get_biolip_db(lig_type="reg"):
     biolip_df[["ligand_residue_number", "ligand_residue_end"]] = biolip_df[
         ["ligand_residue_number", "ligand_residue_end"]
     ].astype(int)
-    # biolip_df.drop_duplicates(subset=['ligand_id', 'binding_site_residues_pdb'], inplace=True)
+    biolip_df.drop_duplicates(
+        subset=["ligand_id", "binding_site_residues_pdb"], inplace=True
+    )
     biolip_df["has_binding_info"] = (
         biolip_df[
             [
@@ -281,7 +283,7 @@ def get_atom_lists(st, row, include_waters=False):
             print(f"missing expected residue: {res_name}")
             continue
         lig_ats.extend(res.getAtomIndices())
-    # Add in coodinating groups for ions
+    # Add in coordinating groups for ions
     if len(lig_ats) == 1:
         asl_str = f"fillres within 3 atom.num {lig_ats[0]}"
         coord_ats = analyze.evaluate_asl(st, asl_str)
@@ -327,8 +329,14 @@ def cap_termini(st, ligand_env):
             pass
 
 
-biolip_df = get_biolip_db()
-batch_size = 1000
-start_pdb = int(sys.argv[1])
-end_pdb = int(sys.argv[2])
-ligand_env = retreive_ligand_and_env(biolip_df, start_pdb=start_pdb, end_pdb=end_pdb)
+def main():
+    biolip_df = get_biolip_db()
+    start_pdb = int(sys.argv[1])
+    end_pdb = int(sys.argv[2])
+    ligand_env = retreive_ligand_and_env(
+        biolip_df, start_pdb=start_pdb, end_pdb=end_pdb
+    )
+
+
+if __name__ == "__main__":
+    main()
