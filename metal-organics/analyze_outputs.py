@@ -8,7 +8,7 @@ from architector import convert_io_molecule
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parse.add_argument("output_path")
+    parser.add_argument("output_path")
     return parser.parse_args()
 
 
