@@ -184,7 +184,7 @@ def get_mem_estimate(atoms: Atoms, vertical=Vertical.Default, mult=1) -> int:
     Get an estimate of the memory requirement for given input in MB.
 
     If the estimate is less than 1000MB, we return 1000MB.
-    
+
     :param atoms: atoms to compute the number of basis functions of
     :param vertical: Which vertical this is for (all metal-organics are
                      UKS, as are all regular open-shell calcs)
