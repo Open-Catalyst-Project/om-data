@@ -149,7 +149,6 @@ def ase_relaxation(
     if vertical == Vertical.MetalOrganics and spin_multiplicity == 1:
         orcasimpleinput.append("UKS")
         orcablocks.append(get_symm_break_block(atoms, charge))
-        opt_params["max_steps"] = 5  # I think this is what we settled on?
 
     nprocs = psutil.cpu_count(logical=False) if nprocs == "max" else nprocs
     default_inputs = [xc, basis, "engrad"]
