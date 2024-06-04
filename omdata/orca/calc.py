@@ -169,6 +169,9 @@ def get_n_basis(atoms: Atoms) -> int:
 
     We assume our basis is def2-tzvpd. The number of basis functions is used
     to estimate the memory requirments of a given job.
+
+    :param atoms: atoms to compute the number of basis functions of
+    :return: number of basis functions as printed by Orca
     """
     nbasis = 0
     for elt in atoms.get_chemical_symbols():
@@ -176,11 +179,17 @@ def get_n_basis(atoms: Atoms) -> int:
     return nbasis
 
 
-def get_mem_estimate(atoms: Atoms, vertical=Vertical.Default, mult=1):
+def get_mem_estimate(atoms: Atoms, vertical=Vertical.Default, mult=1) -> int:
     """
     Get an estimate of the memory requirement for given input in MB.
 
     If the estimate is less than 1000MB, we return 1000MB.
+    
+    :param atoms: atoms to compute the number of basis functions of
+    :param vertical: Which vertical this is for (all metal-organics are
+                     UKS, as are all regular open-shell calcs)
+    :param mult: spin multiplicity of input
+    :return: estimated (upper-bound) to the memory requirement of this Orca job
     """
     nbasis = get_n_basis(atoms)
     if vertical == Vertical.Default and mult == 1:
