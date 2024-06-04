@@ -112,7 +112,7 @@ def retreive_ligand_and_env(biolip_df, ligand_size_limit=50, start_pdb=0, end_pd
                 row["binding_site_number_code"] + row["receptor_chain"]
             )
             try:
-                lig_ats, res_ats, st = get_atom_lists(st, row)
+                lig_ats, res_ats = get_atom_lists(st, row)
             except RuntimeError as e:
                 print(f"Error on {pdb_id}, BS{binding_site_counter}: Atoms are missing")
                 print(e)
@@ -235,6 +235,40 @@ def deprotonate_phosphate_esters(st):
         st.atom[O_at].formal_charge -= 1
     st.deleteAtoms(H_ats)
 
+def make_gaps_gly(st, gap_res):
+    """
+    Turn gap residues into glycines
+
+    If we have a single residue which would not normally be included
+    which is between two which are, then the capping groups of those
+    two are going to overlap because they are both trying to fill in
+    the same missing CA. As such, we should just include that missing
+    single gap residue as a glycine (it's actually smaller than two
+    capping groups).
+
+    If that gap residue is something non-standard (and Schrodinger
+    considers a lot more than the 20 standard amino acids to be
+    "standard", e.g. selenomethionine, hydroxyproline are "standard"),
+    we just leave it as is.
+
+    :param st: Structure being modified
+    :param gap_res: list of residue numbers which are single gaps
+    """
+    for res_num in gap_res:
+        res = st.findResidue(f'{row["receptor_chain"]}:{res_num}')
+        ## You have to be pretty weird to not be a Standard Residue,
+        ## just keep these as is
+        if not res.isStandardResidue():
+            continue
+        # If the residue being turned to GLY is not just a simple amino
+        # acid, e.g. it is bound to a ligand, it can't be mutated properly
+        # and it will actually also garble the structure
+        if res.getBetaCarbon() is not None:
+            st.deleteBond(res.getBetaCarbon(), res.getAlphaCarbon())
+        try:
+            build.mutate(st, res.getAlphaCarbon(), "GLY")
+        except:
+            continue
 
 def get_atom_lists(st, row, include_waters=False):
     """
@@ -247,23 +281,7 @@ def get_atom_lists(st, row, include_waters=False):
     res_ats = []
     res_list = [res[1:] for res in row["binding_site_residues_pdb"].split()]
     gap_res = get_single_gaps(st, row["receptor_chain"], res_list)
-    for res_num in gap_res:
-        res = st.findResidue(f'{row["receptor_chain"]}:{res_num}')
-        st_copy = st.copy()
-        if not res.isStandardResidue():
-            ## You have to be pretty weird to not be a Standard Residue
-            continue
-        try:
-            build.mutate(st, res.getAlphaCarbon(), "GLY")
-        except:
-            # If the residue being turned to GLY is not just a simple amino
-            # acid, e.g. it is bound to a ligand, it can't be mutated properly
-            # and it will actually also garble the structure
-            st = st_copy
-            res = st.findResidue(f'{row["receptor_chain"]}:{res_num}')
-            if res.getBetaCarbon() is not None:
-                st.deleteBond(res.getBetaCarbon(), res.getAlphaCarbon())
-                build.mutate(st, res.getAlphaCarbon(), "GLY")
+    make_gaps_gly(st, gap_res)
 
     # Mutating residues can change the atom numbering so out of an abundance
     # of caution, let's retreive all the atom indices in a separate loop
@@ -296,7 +314,7 @@ def get_atom_lists(st, row, include_waters=False):
     for at in res_ats:
         st.atom[at].chain = "A"
 
-    return lig_ats, res_ats, st
+    return lig_ats, res_ats
 
 
 def get_single_gaps(st, rec_chain, res_list):
