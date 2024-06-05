@@ -1,16 +1,17 @@
-import pandas as pd
-import re
+import glob
 import os
 import random
-import subprocess
-import glob
+import re
 import shutil
+import subprocess
 import sys
-from schrodinger.structure import Structure, StructureReader, StructureWriter
-from schrodinger.structutils import build, analyze
-from schrodinger.protein.captermini import CapTermini
-from schrodinger.application import prepwizard
+
+import pandas as pd
 from schrodinger.adapter import evaluate_smarts
+from schrodinger.application import prepwizard
+from schrodinger.protein.captermini import CapTermini
+from schrodinger.structure import Structure, StructureReader, StructureWriter
+from schrodinger.structutils import analyze, build
 
 SCHRO = "/opt/schrodinger2024-1"
 
