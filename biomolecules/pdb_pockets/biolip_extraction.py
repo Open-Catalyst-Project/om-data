@@ -170,7 +170,7 @@ def retreive_ligand_and_env(
             os.remove(fname)
 
 
-def download_cif(pdb_id:str, chains:list[str]) -> str:
+def download_cif(pdb_id: str, chains: list[str]) -> str:
     """
     Download cif (as opposed to pdb) of a given protein and extract
     the needed chains.
@@ -216,7 +216,9 @@ def missing_backbone_check(st: Structure):
         raise OnlyCAError
 
 
-def get_prepped_protein(pdb_id:str, row:pd.Series, prep:bool=True) -> tuple[Structure, str]:
+def get_prepped_protein(
+    pdb_id: str, row: pd.Series, prep: bool = True
+) -> tuple[Structure, str]:
     baseoutname = f"{pdb_id}_prepped.maegz"
     pdb_name = pdb_id
     chains = {row["receptor_chain"], row["ligand_chain"]}
@@ -257,9 +259,9 @@ def get_prepped_protein(pdb_id:str, row:pd.Series, prep:bool=True) -> tuple[Stru
         try:
             run_prepwizard(fname, outname)
         except subprocess.TimeoutExpired:
-            raise RuntimeError('PrepWizard took longer than 2 hours, skipping')
+            raise RuntimeError("PrepWizard took longer than 2 hours, skipping")
     if not os.path.exists(outname):
-        raise RuntimeError('PrepWizard failed')
+        raise RuntimeError("PrepWizard failed")
 
     st = StructureReader.read(outname)
     deprotonate_phosphate_esters(st)
@@ -272,6 +274,7 @@ def get_prepped_protein(pdb_id:str, row:pd.Series, prep:bool=True) -> tuple[Stru
     for deldir in glob.glob(f"{basename}-???"):
         shutil.rmtree(deldir)
     return st, outname
+
 
 def run_prepwizard(fname: str, outname: str) -> None:
     """
@@ -298,7 +301,7 @@ def run_prepwizard(fname: str, outname: str) -> None:
                 "-disulfides",
                 "-NOJOBID",
             ],
-            timeout=3600*2 # Wait not more than 2 hours
+            timeout=3600 * 2,  # Wait not more than 2 hours
         )
     except subprocess.TimeoutExpired as e:
         # Try again without PROPKA (which seems to be where things get stuck)
@@ -314,9 +317,9 @@ def run_prepwizard(fname: str, outname: str) -> None:
                 "-nopropka",
                 "-NOJOBID",
             ],
-            timeout=3600*2 # Wait not more than 2 hours
+            timeout=3600 * 2,  # Wait not more than 2 hours
         )
-        
+
 
 def deprotonate_phosphate_esters(st: Structure) -> None:
     """
@@ -335,7 +338,7 @@ def deprotonate_phosphate_esters(st: Structure) -> None:
     st.deleteAtoms(H_ats)
 
 
-def make_gaps_gly(st: Structure, row: pd.Series, gap_res:list[str]) -> None:
+def make_gaps_gly(st: Structure, row: pd.Series, gap_res: list[str]) -> None:
     """
     Turn gap residues into glycines
 
@@ -369,7 +372,7 @@ def make_gaps_gly(st: Structure, row: pd.Series, gap_res:list[str]) -> None:
         build.mutate(st, res.getAlphaCarbon(), "GLY")
 
 
-def get_atom_lists(st:Structure, row: pd.Series) -> tuple[list[int], list[int]]:
+def get_atom_lists(st: Structure, row: pd.Series) -> tuple[list[int], list[int]]:
     """
     Get the lists of ligand atoms and receptor atoms
 
@@ -415,7 +418,7 @@ def get_atom_lists(st:Structure, row: pd.Series) -> tuple[list[int], list[int]]:
     return lig_ats, res_ats
 
 
-def get_single_gaps(st:Structure, rec_chain:str, res_list:list[str]) -> list[str]:
+def get_single_gaps(st: Structure, rec_chain: str, res_list: list[str]) -> list[str]:
     """
     Get residues that are not in a list of residues but are
     between two residues which are in the list.
