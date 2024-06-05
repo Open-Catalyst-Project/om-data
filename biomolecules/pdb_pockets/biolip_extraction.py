@@ -7,6 +7,7 @@ import subprocess
 import sys
 
 import pandas as pd
+from typing import Tuple, List
 from schrodinger.adapter import evaluate_smarts
 from schrodinger.application import prepwizard
 from schrodinger.protein.captermini import CapTermini
@@ -171,7 +172,7 @@ def retreive_ligand_and_env(
             os.remove(fname)
 
 
-def download_cif(pdb_id: str, chains: list[str]) -> str:
+def download_cif(pdb_id: str, chains: List[str]) -> str:
     """
     Download cif (as opposed to pdb) of a given protein and extract
     the needed chains.
@@ -219,7 +220,7 @@ def missing_backbone_check(st: Structure):
 
 def get_prepped_protein(
     pdb_id: str, row: pd.Series, prep: bool = True
-) -> tuple[Structure, str]:
+) -> Tuple[Structure, str]:
     """
     Obtain a structure of the protein suitable for atomistic calculations
 
@@ -352,7 +353,7 @@ def deprotonate_phosphate_esters(st: Structure) -> None:
     st.deleteAtoms(H_ats)
 
 
-def make_gaps_gly(st: Structure, row: pd.Series, gap_res: list[str]) -> None:
+def make_gaps_gly(st: Structure, row: pd.Series, gap_res: List[str]) -> None:
     """
     Turn gap residues into glycines
 
@@ -386,7 +387,7 @@ def make_gaps_gly(st: Structure, row: pd.Series, gap_res: list[str]) -> None:
         build.mutate(st, res.getAlphaCarbon(), "GLY")
 
 
-def get_atom_lists(st: Structure, row: pd.Series) -> tuple[list[int], list[int]]:
+def get_atom_lists(st: Structure, row: pd.Series) -> Tuple[List[int], List[int]]:
     """
     Get the lists of ligand atoms and receptor atoms
 
@@ -432,7 +433,7 @@ def get_atom_lists(st: Structure, row: pd.Series) -> tuple[list[int], list[int]]
     return lig_ats, res_ats
 
 
-def get_single_gaps(st: Structure, rec_chain: str, res_list: list[str]) -> list[str]:
+def get_single_gaps(st: Structure, rec_chain: str, res_list: List[str]) -> List[str]:
     """
     Get residues that are not in a list of residues but are
     between two residues which are in the list.
