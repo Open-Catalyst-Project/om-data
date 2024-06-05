@@ -220,6 +220,19 @@ def missing_backbone_check(st: Structure):
 def get_prepped_protein(
     pdb_id: str, row: pd.Series, prep: bool = True
 ) -> tuple[Structure, str]:
+    """
+    Obtain a structure of the protein suitable for atomistic calculations
+
+    This requires correct hydrogens on ligands and protein residues, proper
+    accounting for charge, formation of any disulfide bonds or zero-order bonds
+    to metals.
+
+    :param pdb_id: PDB name to be obtained
+    :param row: Series containing receptor and ligand information
+    :param prep: If False, preparation steps can be skipped and we only
+                 download a PDB as is
+    :return: Prepared structure and its filename for subsequent clean-up
+    """
     baseoutname = f"{pdb_id}_prepped.maegz"
     pdb_name = pdb_id
     chains = {row["receptor_chain"], row["ligand_chain"]}
