@@ -6,7 +6,7 @@ import subprocess
 import glob
 import shutil
 import sys
-from schrodinger.structure import StructureReader, StructureWriter
+from schrodinger.structure import Structure, StructureReader, StructureWriter
 from schrodinger.structutils import build, analyze
 from schrodinger.protein.captermini import CapTermini
 from schrodinger.application import prepwizard
@@ -170,7 +170,15 @@ def retreive_ligand_and_env(
             os.remove(fname)
 
 
-def download_cif(pdb_id, chains):
+def download_cif(pdb_id:str, chains:list[str]) -> str:
+    """
+    Download cif (as opposed to pdb) of a given protein and extract
+    the needed chains.
+
+    :param pdb_id: name of PDB to download
+    :param chains: list of relevant chain names to extract
+    :return: filename where structure has been downloaded
+    """
     subprocess.run(
         [os.path.join(SCHRO, "utilities", "getpdb"), pdb_id, "-format", "cif"]
     )
@@ -186,7 +194,17 @@ def download_cif(pdb_id, chains):
     return fname
 
 
-def missing_backbone_check(st):
+def missing_backbone_check(st: Structure):
+    """
+    Check if the protein backbone is present in the structure
+
+    Rarely, some protein structures are just C alpha positions. We check
+    for this by making sure that the structure doesn't contain lots of
+    isolated carbon atoms.
+
+    :param st: structure to check
+    :raises: OnlyCAError if structure seems like it is only CA
+    """
     if (
         sum(
             1
@@ -198,7 +216,7 @@ def missing_backbone_check(st):
         raise OnlyCAError
 
 
-def get_prepped_protein(pdb_id, row, prep=True):
+def get_prepped_protein(pdb_id:str, row:pd.Series, prep:bool=True) -> tuple[Structure, str]:
     baseoutname = f"{pdb_id}_prepped.maegz"
     pdb_name = pdb_id
     chains = {row["receptor_chain"], row["ligand_chain"]}
@@ -255,7 +273,19 @@ def get_prepped_protein(pdb_id, row, prep=True):
         shutil.rmtree(deldir)
     return st, outname
 
-def run_prepwizard(fname, outname):
+def run_prepwizard(fname: str, outname: str) -> None:
+    """
+    Run Schrodinger's PrepWizard
+
+    In most cases, this seems to run in a handful of seconds to a few minutes.
+    In a few extreme examples, it took hours or days. Since this holds up processing
+    for the entire batch, we will add a 2 hour time-limit with PROPKA and an additional
+    2 hour time-limit not using PROPKA (which seems to frequently be were things get bogged
+    down, though it may also be in H-Bond optimization).
+
+    :param fname: input file name for PrepWizard
+    :param outname: output file name from PrepWizard
+    """
     try:
         subprocess.run(
             [
@@ -288,11 +318,13 @@ def run_prepwizard(fname, outname):
         )
         
 
-def deprotonate_phosphate_esters(st):
+def deprotonate_phosphate_esters(st: Structure) -> None:
     """
     At physiological pH, it's a good assumption that any phosphate esters
     will be deprotonated. In the absence pKa's for ligands, we will make
     this assumption.
+
+    :param st: Structure with phosphate groups that can be deprotonated
     """
     phos_smarts = "[*;!#1][*][P](=[O])([O])([O][H])"
     matched_ats = evaluate_smarts(st, phos_smarts)
@@ -303,7 +335,7 @@ def deprotonate_phosphate_esters(st):
     st.deleteAtoms(H_ats)
 
 
-def make_gaps_gly(st, row, gap_res):
+def make_gaps_gly(st: Structure, row: pd.Series, gap_res:list[str]) -> None:
     """
     Turn gap residues into glycines
 
@@ -320,6 +352,7 @@ def make_gaps_gly(st, row, gap_res):
     we just leave it as is.
 
     :param st: Structure being modified
+    :param row: Series containing receptor and ligand information
     :param gap_res: list of residue numbers which are single gaps
     """
     for res_num in gap_res:
@@ -336,13 +369,12 @@ def make_gaps_gly(st, row, gap_res):
         build.mutate(st, res.getAlphaCarbon(), "GLY")
 
 
-def get_atom_lists(st, row, include_waters=False):
+def get_atom_lists(st:Structure, row: pd.Series) -> tuple[list[int], list[int]]:
     """
-    Extract the ligand as its own chain.
+    Get the lists of ligand atoms and receptor atoms
 
-    We extract a chain as DNA, RNA, peptides will have multiple residues.
-    We also include an option to extract waters in case we want the waters
-    associated with the ligand chain as well.
+    :param st: Structure to extract from
+    :param row: Series containing receptor and ligand information
     """
     res_ats = []
     res_list = [res[1:] for res in row["binding_site_residues_pdb"].split()]
@@ -383,7 +415,7 @@ def get_atom_lists(st, row, include_waters=False):
     return lig_ats, res_ats
 
 
-def get_single_gaps(st, rec_chain, res_list):
+def get_single_gaps(st:Structure, rec_chain:str, res_list:list[str]) -> list[str]:
     """
     Get residues that are not in a list of residues but are
     between two residues which are in the list.
@@ -413,7 +445,7 @@ def get_single_gaps(st, rec_chain, res_list):
     return gap_res
 
 
-def cap_termini(st, ligand_env):
+def cap_termini(st: Structure, ligand_env: Structure) -> None:
     """
     Cap termini for extracted receptor chains with NMA or ACE oriented to match
     the positions of neighboring residues in the original structure.
