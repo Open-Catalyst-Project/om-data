@@ -140,13 +140,7 @@ def get_minimal_pockets(group:pd.DataFrame) -> List[int]:
     rows.sort(key=lambda x:len(x['residue_list']))
     while len(rows) > 1:
         subset_rows.append(rows[0])
-        idx_to_delete = []
-        for idx, row in enumerate(list(rows[1:]),1):
-            if is_sublist(rows[0]['residue_list'], row['residue_list']):
-                idx_to_delete.append(idx)
-        for idx in reversed(idx_to_delete):
-            del rows[idx]
-        rows = rows[1:]
+        rows = [row for row in rows[1:] if not is_ordered_subset(rows[0]['residue_list'], row['residue_list'])]
     subset_rows.extend(rows)
     group.drop(columns=['residue_list'], inplace=True)
     return group.loc[[row.name for row in subset_rows]]
