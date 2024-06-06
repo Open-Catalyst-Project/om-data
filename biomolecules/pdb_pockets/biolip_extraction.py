@@ -171,7 +171,7 @@ def retreive_ligand_and_env(
     ligand_size_limit: int = 50,
     start_pdb: int = 0,
     end_pdb: int = 1000,
-    output_path: str = '.'
+    output_path: str = ".",
 ) -> None:
     """
     Extract ligand and its environment from BioLiP examples
@@ -238,7 +238,10 @@ def retreive_ligand_and_env(
                 print(e)
                 continue
             ligand_env = build.reorder_protein_atoms_by_sequence(ligand_env)
-            fname = os.path.join(output_path, f"{pdb_id}_{binding_site_counter}_{ligand_env.formal_charge}.pdb")
+            fname = os.path.join(
+                output_path,
+                f"{pdb_id}_{binding_site_counter}_{ligand_env.formal_charge}.pdb",
+            )
             ligand_env.write(fname)
 
         # Cleanup the remaining prepped files for this pdb_id
@@ -495,7 +498,9 @@ def get_atom_lists(st: Structure, row: pd.Series) -> Tuple[List[int], List[int]]
     coord_ats = []
     if len(lig_ats) == 1:
         asl_str = f"fillres within 3 atom.num {lig_ats[0]}"
-        coord_ats = [at for at in analyze.evaluate_asl(st, asl_str) if at not in res_ats]
+        coord_ats = [
+            at for at in analyze.evaluate_asl(st, asl_str) if at not in res_ats
+        ]
 
     # mark the ligand chain
     for at in lig_ats:
@@ -564,16 +569,20 @@ def cap_termini(st: Structure, ligand_env: Structure) -> None:
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--start_idx', type=int,required=True)
-    parser.add_argument('--end_idx', type=int, required=True)
-    parser.add_argument("--output_path", default='.')
+    parser.add_argument("--start_idx", type=int, required=True)
+    parser.add_argument("--end_idx", type=int, required=True)
+    parser.add_argument("--output_path", default=".")
     return parser.parse_args()
+
 
 def main():
     args = parse_args()
     biolip_df = get_biolip_db()
     ligand_env = retreive_ligand_and_env(
-        biolip_df, start_pdb=args.start_idx, end_pdb=args.end_idx, output_path=args.output_path
+        biolip_df,
+        start_pdb=args.start_idx,
+        end_pdb=args.end_idx,
+        output_path=args.output_path,
     )
 
 
