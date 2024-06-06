@@ -5,6 +5,7 @@ import re
 import shutil
 import subprocess
 import sys
+import argparse
 
 import pandas as pd
 from typing import Tuple, List
@@ -158,7 +159,7 @@ def get_minimal_pockets(group: pd.DataFrame) -> List[int]:
         rows = [
             row
             for row in rows[1:]
-            if not is_ordered_subset(rows[0]["residue_list"], row["residue_list"])
+            if not is_sublist(rows[0]["residue_list"], row["residue_list"])
         ]
     subset_rows.extend(rows)
     group.drop(columns=["residue_list"], inplace=True)
@@ -170,6 +171,7 @@ def retreive_ligand_and_env(
     ligand_size_limit: int = 50,
     start_pdb: int = 0,
     end_pdb: int = 1000,
+    output_path: str = '.'
 ) -> None:
     """
     Extract ligand and its environment from BioLiP examples
@@ -179,6 +181,12 @@ def retreive_ligand_and_env(
         2) Obtain list of atoms which are assigned as ligands or receptors in BioLiP
         3) Extract the receptor residues and cap them to match the source protein
         4) Write the extracted structure to a pdb file
+
+    :param biolip_df: Dataframe storing BioLiP database
+    :param ligand_size_limit: largest ligand size to extract from BioLiP
+    :param start_pdb: index of first pdb to run in the dataframe
+    :param end_pdb: index of last pdb to run in dataframe
+    :param output_path: where to store results
     """
     # random.seed(12341)
     grouped_biolip = biolip_df.groupby("pdb_id")
@@ -230,7 +238,7 @@ def retreive_ligand_and_env(
                 print(e)
                 continue
             ligand_env = build.reorder_protein_atoms_by_sequence(ligand_env)
-            fname = f"{pdb_id}_{binding_site_counter}_{ligand_env.formal_charge}.pdb"
+            fname = os.path.join(output_path, f"{pdb_id}_{binding_site_counter}_{ligand_env.formal_charge}.pdb")
             ligand_env.write(fname)
 
         # Cleanup the remaining prepped files for this pdb_id
@@ -484,19 +492,22 @@ def get_atom_lists(st: Structure, row: pd.Series) -> Tuple[List[int], List[int]]
             continue
         lig_ats.extend(res.getAtomIndices())
     # Add in coordinating groups for ions
+    coord_ats = []
     if len(lig_ats) == 1:
         asl_str = f"fillres within 3 atom.num {lig_ats[0]}"
-        coord_ats = analyze.evaluate_asl(st, asl_str)
-        lig_ats.extend([at for at in coord_ats if at not in res_ats])
+        coord_ats = [at for at in analyze.evaluate_asl(st, asl_str) if at not in res_ats]
 
     # mark the ligand chain
     for at in lig_ats:
         st.atom[at].chain = "l"
+    # mark the coord chain
+    for at in coord_ats:
+        st.atom[at].chain = "c"
     # mark the receptor chain
     for at in res_ats:
         st.atom[at].chain = "A"
 
-    return lig_ats, res_ats
+    return lig_ats + coord_ats, res_ats
 
 
 def get_single_gaps(st: Structure, rec_chain: str, res_list: List[str]) -> List[str]:
@@ -551,12 +562,18 @@ def cap_termini(st: Structure, ligand_env: Structure) -> None:
             pass
 
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--start_idx', type=int,required=True)
+    parser.add_argument('--end_idx', type=int, required=True)
+    parser.add_argument("--output_path", default='.')
+    return parser.parse_args()
+
 def main():
+    args = parse_args()
     biolip_df = get_biolip_db()
-    start_pdb = int(sys.argv[1])
-    end_pdb = int(sys.argv[2])
     ligand_env = retreive_ligand_and_env(
-        biolip_df, start_pdb=start_pdb, end_pdb=end_pdb
+        biolip_df, start_pdb=args.start_idx, end_pdb=args.end_idx, output_path=args.output_path
     )
 
 
