@@ -30,87 +30,94 @@ class MissingResiduesError(Exception):
 
 
 def get_biolip_db(lig_type: str = "reg") -> pd.DataFrame:
-    columns = [
-        "pdb_id",
-        "receptor_chain",
-        "resolution",
-        "binding_site_number_code",
-        "ligand_id",
-        "ligand_chain",
-        "ligand_serial_number",
-        "binding_site_residues_pdb",
-        "binding_site_residues_re-numbered",
-        "catalytic_site_residues_pdb",
-        "catalytic_site_residues_re-numbered",
-        "ec_number",
-        "go_terms",
-        "binding_affinity_manual",
-        "binding_affinity_binding_moad",
-        "binding_affinity_pdbbind_cn",
-        "binding_affinity_bindingdb",
-        "uniprot_ids",
-        "pubmed_id",
-        "ligand_residue_number",
-        "receptor_sequence",
-    ]
-    types = {col: str for col in columns}
-    types["ligand_serial_number"] = int
-    biolip_df = pd.read_csv(
-        "BioLiP_05_31_2024.txt",
-        sep="\t",
-        names=columns,
-        dtype=types,
-        keep_default_na=False,
-    )
-    # Parse the ligand specification
-    biolip_df[["ligand_residue_number", "ligand_residue_end"]] = biolip_df[
-        "ligand_residue_number"
-    ].str.split("~", expand=True)
-    biolip_df["ligand_residue_end"] = biolip_df["ligand_residue_end"].fillna(
-        biolip_df["ligand_residue_number"]
-    )
-    biolip_df[["ligand_residue_number", "ligand_residue_inscode"]] = biolip_df[
-        "ligand_residue_number"
-    ].str.extract(r"(-?\d+)([A-Z\s]+)$")
-    biolip_df["ligand_residue_end"] = biolip_df["ligand_residue_end"].str.extract(
-        r"(-?\d+)"
-    )
-    biolip_df[["ligand_residue_number", "ligand_residue_end"]] = biolip_df[
-        ["ligand_residue_number", "ligand_residue_end"]
-    ].astype(int)
-
-    # Remove duplicate pockets: These are pockets with the same ligand binding
-    # to exactly the same residues (including numbering). We don't require the
-    # PDB IDs to also match as closely related proteins or structures may have
-    # conserved binding sites which are still duplicates of each other.
-    biolip_df.drop_duplicates(
-        subset=["ligand_id", "binding_site_residues_pdb"], inplace=True
-    )
-    # Remove duplicate pockets: These are pockets with the same ligand in
-    # the same structure, often on different copies of the same chain. Sometimes
-    # there are residues that are right at the edge of inclusion, and so the
-    # pockets may be "different" by inclusion of an additional, marginal residue.
-    # We opt for only the smallest of such binding sites since these indicate the
-    # key interactions.
-    biolip_df = (
-        biolip_df.groupby(["pdb_id", "ligand_id"], group_keys=False)[biolip_df.columns]
-        .apply(get_minimal_pockets)
-        .sort_index()
-    )
-
-    # Note whether this molecule is drug-like by checking if it has any
-    # binding informations
-    biolip_df["has_binding_info"] = (
-        biolip_df[
-            [
-                "binding_affinity_manual",
-                "binding_affinity_binding_moad",
-                "binding_affinity_pdbbind_cn",
-                "binding_affinity_bindingdb",
-            ]
+    pkl_name = "biolip_df.pkl"
+    if os.path.exists(pkl_name):
+        biolip_df = pd.read_pickle(pkl_name)
+    else:
+        columns = [
+            "pdb_id",
+            "receptor_chain",
+            "resolution",
+            "binding_site_number_code",
+            "ligand_id",
+            "ligand_chain",
+            "ligand_serial_number",
+            "binding_site_residues_pdb",
+            "binding_site_residues_re-numbered",
+            "catalytic_site_residues_pdb",
+            "catalytic_site_residues_re-numbered",
+            "ec_number",
+            "go_terms",
+            "binding_affinity_manual",
+            "binding_affinity_binding_moad",
+            "binding_affinity_pdbbind_cn",
+            "binding_affinity_bindingdb",
+            "uniprot_ids",
+            "pubmed_id",
+            "ligand_residue_number",
+            "receptor_sequence",
         ]
-        != ""
-    ).any(axis=1)
+        types = {col: str for col in columns}
+        types["ligand_serial_number"] = int
+        biolip_df = pd.read_csv(
+            "BioLiP_05_31_2024.txt",
+            sep="\t",
+            names=columns,
+            dtype=types,
+            keep_default_na=False,
+        )
+        # Parse the ligand specification
+        biolip_df[["ligand_residue_number", "ligand_residue_end"]] = biolip_df[
+            "ligand_residue_number"
+        ].str.split("~", expand=True)
+        biolip_df["ligand_residue_end"] = biolip_df["ligand_residue_end"].fillna(
+            biolip_df["ligand_residue_number"]
+        )
+        biolip_df[["ligand_residue_number", "ligand_residue_inscode"]] = biolip_df[
+            "ligand_residue_number"
+        ].str.extract(r"(-?\d+)([A-Z\s]+)$")
+        biolip_df["ligand_residue_end"] = biolip_df["ligand_residue_end"].str.extract(
+            r"(-?\d+)"
+        )
+        biolip_df[["ligand_residue_number", "ligand_residue_end"]] = biolip_df[
+            ["ligand_residue_number", "ligand_residue_end"]
+        ].astype(int)
+
+        # Remove duplicate pockets: These are pockets with the same ligand binding
+        # to exactly the same residues (including numbering). We don't require the
+        # PDB IDs to also match as closely related proteins or structures may have
+        # conserved binding sites which are still duplicates of each other.
+        biolip_df.drop_duplicates(
+            subset=["ligand_id", "binding_site_residues_pdb"], inplace=True
+        )
+        # Remove duplicate pockets: These are pockets with the same ligand in
+        # the same structure, often on different copies of the same chain. Sometimes
+        # there are residues that are right at the edge of inclusion, and so the
+        # pockets may be "different" by inclusion of an additional, marginal residue.
+        # We opt for only the smallest of such binding sites since these indicate the
+        # key interactions.
+        biolip_df = (
+            biolip_df.groupby(["pdb_id", "ligand_id"], group_keys=False)[
+                biolip_df.columns
+            ]
+            .apply(get_minimal_pockets)
+            .sort_index()
+        )
+
+        # Note whether this molecule is drug-like by checking if it has any
+        # binding informations
+        biolip_df["has_binding_info"] = (
+            biolip_df[
+                [
+                    "binding_affinity_manual",
+                    "binding_affinity_binding_moad",
+                    "binding_affinity_pdbbind_cn",
+                    "binding_affinity_bindingdb",
+                ]
+            ]
+            != ""
+        ).any(axis=1)
+        biolip_df.to_pickle(pkl_name)
 
     if lig_type == "macromol":
         biolip_df = biolip_df[biolip_df["ligand_id"].isin(["dna", "rna", "peptide"])]
