@@ -92,7 +92,11 @@ def get_biolip_db(lig_type: str = "reg") -> pd.DataFrame:
     # pockets may be "different" by inclusion of an additional, marginal residue.
     # We opt for only the smallest of such binding sites since these indicate the
     # key interactions.
-    biolip_df = biolip_df.groupby(['pdb_id', 'ligand_id'], group_keys=False)[biolip_df.columns].apply(get_minimal_pockets).sort_index()
+    biolip_df = (
+        biolip_df.groupby(["pdb_id", "ligand_id"], group_keys=False)[biolip_df.columns]
+        .apply(get_minimal_pockets)
+        .sort_index()
+    )
 
     # Note whether this molecule is drug-like by checking if it has any
     # binding informations
@@ -114,7 +118,8 @@ def get_biolip_db(lig_type: str = "reg") -> pd.DataFrame:
         biolip_df = biolip_df[~biolip_df["ligand_id"].isin(["dna", "rna", "peptide"])]
     return biolip_df
 
-def is_sublist(smaller:List, larger:List) -> bool:
+
+def is_sublist(smaller: List, larger: List) -> bool:
     """
     Determine if the smaller list is a (not necessarily contiguous)
     sub-list of the larger list
@@ -126,7 +131,8 @@ def is_sublist(smaller:List, larger:List) -> bool:
     it = iter(larger)
     return all(item in it for item in smaller)
 
-def get_minimal_pockets(group:pd.DataFrame) -> List[int]:
+
+def get_minimal_pockets(group: pd.DataFrame) -> List[int]:
     """
     Filter BioLiP entries by selecting the smallest set of residues that
     bind a particular ligand in a particular protein.
@@ -134,16 +140,23 @@ def get_minimal_pockets(group:pd.DataFrame) -> List[int]:
     :param group: entries which share a pdb_id and ligand_id to filter
     :return: locations of entries in the group which are minimal binding pockets
     """
-    group['residue_list'] = group['binding_site_residues_pdb'].apply(lambda x: x.split())
+    group["residue_list"] = group["binding_site_residues_pdb"].apply(
+        lambda x: x.split()
+    )
     subset_rows = []
     rows = [row for _, row in group.iterrows()]
-    rows.sort(key=lambda x:len(x['residue_list']))
+    rows.sort(key=lambda x: len(x["residue_list"]))
     while len(rows) > 1:
         subset_rows.append(rows[0])
-        rows = [row for row in rows[1:] if not is_ordered_subset(rows[0]['residue_list'], row['residue_list'])]
+        rows = [
+            row
+            for row in rows[1:]
+            if not is_ordered_subset(rows[0]["residue_list"], row["residue_list"])
+        ]
     subset_rows.extend(rows)
-    group.drop(columns=['residue_list'], inplace=True)
+    group.drop(columns=["residue_list"], inplace=True)
     return group.loc[[row.name for row in subset_rows]]
+
 
 def retreive_ligand_and_env(
     biolip_df: pd.DataFrame,
