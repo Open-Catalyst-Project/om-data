@@ -62,6 +62,7 @@ def get_biolip_db(lig_type: str = "reg") -> pd.DataFrame:
         dtype=types,
         keep_default_na=False,
     )
+    # Parse the ligand specification
     biolip_df[["ligand_residue_number", "ligand_residue_end"]] = biolip_df[
         "ligand_residue_number"
     ].str.split("~", expand=True)
@@ -77,9 +78,24 @@ def get_biolip_db(lig_type: str = "reg") -> pd.DataFrame:
     biolip_df[["ligand_residue_number", "ligand_residue_end"]] = biolip_df[
         ["ligand_residue_number", "ligand_residue_end"]
     ].astype(int)
+
+    # Remove duplicate pockets: These are pockets with the same ligand binding
+    # to exactly the same residues (including numbering). We don't require the
+    # PDB IDs to also match as closely related proteins or structures may have
+    # conserved binding sites which are still duplicates of each other.
     biolip_df.drop_duplicates(
         subset=["ligand_id", "binding_site_residues_pdb"], inplace=True
     )
+    # Remove duplicate pockets: These are pockets with the same ligand in
+    # the same structure, often on different copies of the same chain. Sometimes
+    # there are residues that are right at the edge of inclusion, and so the
+    # pockets may be "different" by inclusion of an additional, marginal residue.
+    # We opt for only the smallest of such binding sites since these indicate the
+    # key interactions.
+    biolip_df = biolip_df.groupby(['pdb_id', 'ligand_id'], group_keys=False)[biolip_df.columns].apply(get_minimal_pockets).sort_index()
+
+    # Note whether this molecule is drug-like by checking if it has any
+    # binding informations
     biolip_df["has_binding_info"] = (
         biolip_df[
             [
@@ -98,6 +114,42 @@ def get_biolip_db(lig_type: str = "reg") -> pd.DataFrame:
         biolip_df = biolip_df[~biolip_df["ligand_id"].isin(["dna", "rna", "peptide"])]
     return biolip_df
 
+def is_sublist(smaller:List, larger:List) -> bool:
+    """
+    Determine if the smaller list is a (not necessarily contiguous)
+    sub-list of the larger list
+
+    :param smaller: smaller list
+    :param larger: larger list
+    :return: True if smaller is ordered sublist of larger
+    """
+    it = iter(larger)
+    return all(item in it for item in smaller)
+
+def get_minimal_pockets(group:pd.DataFrame) -> List[int]:
+    """
+    Filter BioLiP entries by selecting the smallest set of residues that
+    bind a particular ligand in a particular protein.
+
+    :param group: entries which share a pdb_id and ligand_id to filter
+    :return: locations of entries in the group which are minimal binding pockets
+    """
+    group['residue_list'] = group['binding_site_residues_pdb'].apply(lambda x: x.split())
+    subset_rows = []
+    rows = [row for _, row in group.iterrows()]
+    rows.sort(key=lambda x:len(x['residue_list']))
+    while len(rows) > 1:
+        subset_rows.append(rows[0])
+        idx_to_delete = []
+        for idx, row in enumerate(list(rows[1:]),1):
+            if is_sublist(rows[0]['residue_list'], row['residue_list']):
+                idx_to_delete.append(idx)
+        for idx in reversed(idx_to_delete):
+            del rows[idx]
+        rows = rows[1:]
+    subset_rows.extend(rows)
+    group.drop(columns=['residue_list'], inplace=True)
+    return group.loc[[row.name for row in subset_rows]]
 
 def retreive_ligand_and_env(
     biolip_df: pd.DataFrame,
