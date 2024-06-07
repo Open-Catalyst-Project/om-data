@@ -1,6 +1,6 @@
 # Electrolytes MD Workflow
 
-This README provides rough guide on how to prepare and run bulk electrolyte simulations. The workflow requires the following to be installed
+This README provides rough guide on how to prepare and run bulk electrolyte simulations. The workflow requires the following to be installed:
 1. NumPy
 2. Packmol: [https://m3g.github.io/packmol/](https://m3g.github.io/packmol/)
 3. Moltemplate: [https://www.moltemplate.org/](https://www.moltemplate.org/)
