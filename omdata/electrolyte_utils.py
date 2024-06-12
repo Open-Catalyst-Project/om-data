@@ -8,13 +8,13 @@ from pymatgen.io.babel import BabelMolAdaptor
 
 
 def info_from_smiles(
-    smiles: List[str] | Set[str]
+    smiles: Dict[str, str] | List[str] | Set[str]
     ) -> Dict[str, int]:
     """
     Generate Calculate the number of atoms in a molecule from SMILES.
 
     Args:
-        smiles (List[str] | Set[str]): Collection of SMILES, either as a dict {key: smiles},
+        smiles (Dict[str, str] | List[str] | Set[str]): Collection of SMILES, either as a dict {key: smiles},
             or as a list/set.
 
     Returns:
@@ -23,7 +23,12 @@ def info_from_smiles(
 
     data = dict()
 
-    for this_smiles in smiles:
+    if isinstance(smiles, dict):
+        names_smiles = smiles.items()
+    else:
+        names_smiles = [(s, s) for s in smiles]
+
+    for (name, this_smiles) in names_smiles:
         mol = BabelMolAdaptor.from_str(this_smiles, file_format="smi")
         charge = mol.pybel_mol.charge
         spin = mol.pybel_mol.spin
@@ -34,12 +39,14 @@ def info_from_smiles(
         ase_atoms.charge = charge
         ase_atoms.uhf = spin - 1
 
+        rdkit_mol = Chem.MolFromSmiles(this_smiles)
+        
         num_atoms = len(pmg_mol)
         num_heavy_atoms = len([s for s in pmg_mol.species if str(s) != "H"])
 
-        data[this_smiles] = {
-            "charge": charge, "num_atoms": num_atoms, "num_heavy_atoms": num_heavy_atoms, "pmg_mol": pmg_mol,
-            "rdkit_mol": Chem.MolFromSmiles(this_smiles), "ase_atoms": ase_atoms
+        data[name] = {
+            "smiles": this_smiles, "charge": charge, "num_atoms": num_atoms, "num_heavy_atoms": num_heavy_atoms,
+            "pmg_mol": pmg_mol, "rdkit_mol": rdkit_mol, "ase_atoms": ase_atoms
         }
     
     return data

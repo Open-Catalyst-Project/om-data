@@ -2,7 +2,7 @@ from collections import defaultdict
 from pathlib import Path
 import random
 import re
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
@@ -16,6 +16,8 @@ from openbabel import pybel
 import scine_molassembler
 
 from pymatgen.core.structure import Molecule
+
+from omdata.electrolyte_utils import info_from_smiles
 
 
 """
@@ -398,8 +400,8 @@ def select_replacement_points(template: str) -> List[str]:
 
 
 def select_substituent(
-    substituents: Dict[str, Mol],
-    sub_num_atoms: Dict[str, int],
+    substituent_info: Dict[str, Any],
+    sub_key: str,
     weight: bool = True,
     budget: Optional[int] = None) -> Mol:
 
@@ -407,9 +409,10 @@ def select_substituent(
     (Randomly) select a substituent from a predefined collection.
 
     Args:
-        substituents (Dict[str, Mol]): Collection of substituents; keys are substituent names or SMILES strings
-        sub_num_atoms (Dict[str, int]): Key-value pairs of number of atoms (or heavy atoms), where the key is the
-            substituent name or SMILES string
+        substituent_info (Dict[str, Any]): Key-value pairs of possible substituents, where the keys are names (or
+            SMILES strings) and the values are molecule representations, numbers of atoms, etc.
+        sub_key (str): Key in substituent_info used for weighting and budgeting purposes. Could be "num_atoms" or
+            "num_heavy_atoms"
         weight (bool): If True (default), use a weight function to prefer smaller substituents. Current weighing
             function is 1/n, where n is the number of atoms or number of heavy atoms
         budget (Optional[int]): Maximum size of substituent to be added, in terms of number of atoms or number of
@@ -420,34 +423,32 @@ def select_substituent(
 
     """
 
-    if budget is not None:
-        acceptable_subs = [e for e in substituents if sub_num_atoms[e] < budget]
-        if len(acceptable_subs) == 0:
-            # If there are no substituents small enough, must replace with a hydrogen atom
-            return Chem.MolFromSmiles("[H]")
-        else:
-            # Weight to prefer smaller substituents
-            # TODO: is there a more clever way to do this?
+    acceptable_subs = list()
+    weights = list()
+    for name, info in substituent_info.items():
+        if budget is None or info[sub_key] < budget:
+            acceptable_subs.append(info["rdkit_mol"])
             if weight:
-                weights = [1 / sub_num_atoms[e] for e in acceptable_subs]
-                choice = random.choices(acceptable_subs, weights=weights, k=1)[0]
-            else:
-                choice = random.choices(acceptable_subs, k=1)[0]
+                weights.append(1 / info[sub_key])
 
+    if len(acceptable_subs) == 0:
+        # If there are no substituents small enough, must replace with a hydrogen atom
+        return Chem.MolFromSmiles("[H]")
     else:
+        # Weight to prefer smaller substituents
+        # TODO: is there a more clever way to do this?
         if weight:
-            weights = [1 / sub_num_atoms[e] for e in substituents]
-            choice = random.choices(list(substituents.keys()), weights=weights, k=1)[0]
+            choice = random.choices(acceptable_subs, weights=weights, k=1)[0]
         else:
-            choice = random.choices(list(substituents.keys()), k=1)[0]
+            choice = random.choices(acceptable_subs, k=1)[0]
     
-    return substituents[choice]
+    return choice
 
 
 def generate_new_molecule(
     template: str,
-    substituents: Dict[str, Mol],
-    sub_num_atoms: Dict[str, int],
+    substituent_info: Dict[str, Any],
+    sub_key: str,
     weight_subs: bool = True,
     max_atoms: Optional[int] = None) -> str:
     
@@ -456,10 +457,10 @@ def generate_new_molecule(
 
     Args:
         template (str): SMILES string for a base template
-        substituents (Dict[str, Mol]): Key-value pairs of possible substituents, where the keys are names (or
-            SMILES strings) and the values are RDKit Mol objects.
-        sub_num_atoms (Dict[str, int]): Key-value pairs, where the keys are the substituent names and the values
-            are either the total number of atoms or the number of heavy atoms in each substituent
+        substituent_info (Dict[str, Any]): Key-value pairs of possible substituents, where the keys are names (or
+            SMILES strings) and the values are molecule representations, numbers of atoms, etc.
+        sub_key (str): Key in substituent_info used for weighting and budgeting purposes. Could be "num_atoms" or
+            "num_heavy_atoms"
         weight_subs (bool): If True (default), use a weight function to prefer smaller substituents. Current weighing
             function is 1/n, where n is the number of atoms or number of heavy atoms
         max_atoms (Optional[int]): Maximum size of substituent to be added, in terms of number of atoms or number of
@@ -482,8 +483,8 @@ def generate_new_molecule(
     # If the molecule gets too large, only H will be chosen
     for point in points:
         sub = select_substituent(
-            substituents,
-            sub_num_atoms,
+            substituent_info,
+            sub_key,
             weight=weight_subs,
             budget=max_atoms
         )
@@ -542,19 +543,20 @@ def generate_library(
     if max_atoms is not None and max_heavy_atoms is not None:
         raise ValueError("Both max_atoms and max_heavy_atoms were provided! Please provide only up to one criterion.")
 
-    sub_mols, sub_num_atoms, sub_num_heavy_atoms = generate_mols_from_smiles(substituents)
+    sub_info = info_from_smiles(substituents)
+
     if max_atoms is not None:
         do_weight = True
         maximum = max_atoms
-        sub_numbers = sub_num_atoms
+        sub_key = "num_atoms"
     elif max_heavy_atoms is not None:
         do_weight = True
         maximum = max_heavy_atoms
-        sub_numbers = sub_num_heavy_atoms
+        sub_key = "num_heavy_atoms"
     else:
         do_weight = False
         maximum = None
-        sub_numbers = sub_num_atoms
+        sub_key = "num_atoms"
 
     library = defaultdict(list)
 
@@ -563,8 +565,8 @@ def generate_library(
             library[temp_name].append(
                 generate_new_molecule(
                     temp_smiles,
-                    sub_mols,
-                    sub_numbers,
+                    sub_info,
+                    sub_key,
                     do_weight,
                     maximum
                 )
@@ -687,6 +689,9 @@ def dump_xyzs(
 
 if __name__ == "__main__":
     
+    # For reproducibility
+    random.seed(42)
+
     # Combine all of the templates
     templates = templates_solvent_additive
     templates.update(templates_ions)
@@ -697,9 +702,12 @@ if __name__ == "__main__":
     print("TOTAL NUMBER OF TEMPLATES:", len(templates))
 
     # Combine all substituents
-    substituents = list(set(substituents_ilesw_cation + substituents_ilesw_anion))
+    substituents = list(set(substituents))
 
-    dump_path = Path("dump")
+    print("TOTAL NUMBER OF SUBSTITUENTS:", len(substituents))
+
+    # dump_path = Path("dump")
+    dump_path = Path("/home/ewcss/data/omol24/20240521_small_mol_dump")
     # If the directory doesn't exist, make it
     dump_path.mkdir(exist_ok=True)
 
@@ -707,7 +715,7 @@ if __name__ == "__main__":
     library = generate_library(
         templates=templates,
         substituents=substituents,
-        attempts_per_template=1500,
+        attempts_per_template=50,
         max_atoms=None,
         max_heavy_atoms=50,
         dump_to=dump_path / "initial_library_smiles.json",
