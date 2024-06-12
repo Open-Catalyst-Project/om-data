@@ -2,9 +2,11 @@ from collections import defaultdict
 from pathlib import Path
 import random
 import re
+import statistics
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from monty.serialization import dumpfn
 
@@ -21,7 +23,7 @@ from omdata.electrolyte_utils import info_from_smiles
 
 
 """
-This module provides tools to generate reasonable small molecules via functional group substitution.
+This module provides tools to generate small, electrolyte-like molecules via functional group substitution.
 
 It requires a collection of SMILES strings of templates and substituents. Templates should be labeled with
 numeric sites (e.g. [1*]) where substitutions can occur. Substituents should not be so labeled.
@@ -29,6 +31,18 @@ numeric sites (e.g. [1*]) where substitutions can occur. Substituents should not
 This is also a stand-alone script to construct a collection of small molecules from predefined collections taken
 from the literature and from our own design.
 """
+
+
+SMALL_SIZE = 10
+MEDIUM_SIZE = 14
+LARGE_SIZE=18
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=MEDIUM_SIZE)     # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=MEDIUM_SIZE)    # legend fontsize
 
 
 ATTACH_PATTERN = re.compile(r"\[\d+\*\]")
@@ -471,6 +485,17 @@ def generate_new_molecule(
 
     """
     
+    def _calculate_budget(mol, sub_key, max_atoms):
+        budget = None
+        if sub_key == "num_atoms":
+            with_all_h = Chem.AddHs(mol)
+            budget = max_atoms - with_all_h.GetNumAtoms()
+        elif sub_key == "num_heavy_atoms":
+            no_h = Chem.RemoveHs(mol)
+            budget = max_atoms - no_h.GetNumAtoms()
+        
+        return budget
+
     points = select_replacement_points(template)
 
     # No valid points for substitution
@@ -479,6 +504,8 @@ def generate_new_molecule(
 
     mol = Chem.MolFromSmiles(template)
 
+    budget = _calculate_budget(mol, sub_key, max_atoms)
+
     # Perform substitutions iteratively
     # If the molecule gets too large, only H will be chosen
     for point in points:
@@ -486,7 +513,7 @@ def generate_new_molecule(
             substituent_info,
             sub_key,
             weight=weight_subs,
-            budget=max_atoms
+            budget=budget
         )
 
         mol = Chem.ReplaceSubstructs(
@@ -494,6 +521,8 @@ def generate_new_molecule(
             Chem.MolFromSmiles(point), 
             sub
         )[0]
+
+        budget = _calculate_budget(mol, sub_key, max_atoms)
 
     # Search for any remaining points that didn't see substitution, and replace them with H
     remaining_points = ATTACH_PATTERN.findall(Chem.MolToSmiles(mol))
@@ -687,6 +716,90 @@ def dump_xyzs(
             scine_molassembler.io.write((path / f"mol{ii}_{charge}_{spin}.xyz").resolve().as_posix(), mol, pos)
 
 
+def library_stats(xyz_dir: Path, fig_dir: Path):
+    """
+    Generate some plots containing information on element counts, distribution of number of atoms, etc.
+
+    Args:
+        xyz_dir (Path): Path where *.xyz files for generated molecules are stored
+        fig_dir (Path): Path where figures and associated data will be stored
+    """
+
+    data = {
+        "num_atoms": list(),
+        "num_heavy_atoms": list(),
+        "charges": list(),
+        "element_counts": defaultdict(int),
+        "element_appearances": defaultdict(int)
+    }
+
+    for subdir in xyz_dir.iterdir():
+        if not subdir.is_dir():
+            continue
+
+        for file in (xyz_dir / subdir).iterdir():
+            if not file.name.endswith(".xyz"):
+                continue
+
+            mol = Molecule.from_file(xyz_dir / subdir / file)
+            charge = int(file.name.split("_")[1])
+            data["charges"].append(charge)
+            num_atoms = len(mol)
+            data["num_atoms"].append(num_atoms)
+
+            num_heavy_atoms = 0
+            species = [str(s) for s in mol.species]
+            for s in species:
+                if s != "H":
+                    num_heavy_atoms += 1
+                data["element_counts"][s] += 1
+
+            data["num_heavy_atoms"].append(num_heavy_atoms)
+            for unique_s in set(species):
+                data["element_appearances"][unique_s] += 1
+
+    dumpfn(data, fig_dir / "library_stats.json")
+
+    fig, ax = plt.subplots()
+    ax.hist(data["num_atoms"], bins=20)
+    ax.set_xlabel("Number of atoms")
+    ax.set_ylabel("Count")
+    fig.savefig(fig_dir / "num_atoms.png", dpi=300)
+
+    fig, ax = plt.subplots()
+    ax.hist(data["num_heavy_atoms"], bins=20)
+    ax.set_xlabel("Number of heavy atoms")
+    ax.set_ylabel("Count")
+    fig.savefig(fig_dir / "num_heavy_atoms.png", dpi=300)
+
+    fig, ax = plt.subplots()
+    ax.hist(data["charges"], bins=20)
+    ax.set_xlabel("Charge")
+    ax.set_ylabel("Count")
+    fig.savefig(fig_dir / "num_heavy_atoms.png", dpi=300)
+
+    fig, ax = plt.subplots()
+    ax.hist(data["charges"], bins=6)
+    ax.set_yscale("log")
+    ax.set_xlabel("Charge")
+    ax.set_ylabel("Count")
+    fig.savefig(fig_dir / "charges.png", dpi=300)
+
+    fig, ax = plt.subplots()
+    names = list(data["element_counts"].keys())
+    values = list(data["element_counts"].values())
+    ax.set_yscale("log")
+    ax.bar(range(len(names)), values, tick_label=names)
+    fig.savefig(fig_dir / "element_counts.png", dpi=300)
+
+    fig, ax = plt.subplots()
+    names = list(data["element_appearances"].keys())
+    values = list(data["element_appearances"].values())
+    ax.set_yscale("log")
+    ax.bar(range(len(names)), values, tick_label=names)
+    fig.savefig(fig_dir / "element_appearances.png", dpi=300)
+
+
 if __name__ == "__main__":
     
     # For reproducibility
@@ -706,8 +819,7 @@ if __name__ == "__main__":
 
     print("TOTAL NUMBER OF SUBSTITUENTS:", len(substituents))
 
-    # dump_path = Path("dump")
-    dump_path = Path("/home/ewcss/data/omol24/20240521_small_mol_dump")
+    dump_path = Path("dump")
     # If the directory doesn't exist, make it
     dump_path.mkdir(exist_ok=True)
 
@@ -717,7 +829,7 @@ if __name__ == "__main__":
         substituents=substituents,
         attempts_per_template=50,
         max_atoms=None,
-        max_heavy_atoms=50,
+        max_heavy_atoms=75,
         dump_to=dump_path / "initial_library_smiles.json",
     )
 
@@ -726,7 +838,14 @@ if __name__ == "__main__":
         library
     )
 
+    # Dump library as *.xyz files
     dump_xyzs(
         library=filtered_library,
         base_dir=dump_path / "xyzs"
+    )
+
+    # Generate some plots describing library
+    library_stats(
+        xyz_dir=dump_path / "xyzs",
+        fig_dir=dump_path / "figures"
     )
