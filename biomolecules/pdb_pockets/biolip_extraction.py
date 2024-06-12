@@ -15,7 +15,7 @@ from schrodinger.protein.captermini import CapTermini
 from schrodinger.structure import Structure, StructureReader, StructureWriter
 from schrodinger.structutils import analyze, build
 
-SCHRO = "/opt/schrodinger2024-1"
+SCHRO = "/private/home/levineds/schrodinger2024-2"
 
 
 class OnlyCAError(Exception):
@@ -30,8 +30,8 @@ class MissingResiduesError(Exception):
     pass
 
 
-def get_biolip_db(lig_type: str = "reg") -> pd.DataFrame:
-    pkl_name = "biolip_df.pkl"
+def get_biolip_db(lig_type: str = "reg", pklpath:str = '.') -> pd.DataFrame:
+    pkl_name = os.path.join(pklpath, "biolip_df.pkl")
     if os.path.exists(pkl_name):
         biolip_df = pd.read_pickle(pkl_name)
     else:
@@ -577,7 +577,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    biolip_df = get_biolip_db()
+    biolip_df = get_biolip_db(pklpath=args.output_path)
     ligand_env = retreive_ligand_and_env(
         biolip_df,
         start_pdb=args.start_idx,
