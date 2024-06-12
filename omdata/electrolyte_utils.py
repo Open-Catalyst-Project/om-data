@@ -1,4 +1,4 @@
-from typing import Dict, List, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple
 
 from rdkit import Chem
 from rdkit.Chem.rdchem import Mol
@@ -9,7 +9,7 @@ from pymatgen.io.babel import BabelMolAdaptor
 
 def info_from_smiles(
     smiles: Dict[str, str] | List[str] | Set[str]
-    ) -> Dict[str, int]:
+    ) -> Dict[str, Any]:
     """
     Generate Calculate the number of atoms in a molecule from SMILES.
 
@@ -18,7 +18,7 @@ def info_from_smiles(
             or as a list/set.
 
     Returns:
-        num_atoms (Dict[str, int]): Map between SMILES and their size in terms of total number of atoms
+        num_atoms (Dict[str, Any]): Map between SMILES and their size in terms of total number of atoms
     """
 
     data = dict()
