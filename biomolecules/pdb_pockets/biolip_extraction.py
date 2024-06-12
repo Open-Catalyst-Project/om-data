@@ -168,7 +168,7 @@ def get_minimal_pockets(group: pd.DataFrame) -> List[int]:
 
 def retreive_ligand_and_env(
     biolip_df: pd.DataFrame,
-    ligand_size_limit: int = 50,
+    ligand_size_limit: int = 250,
     start_pdb: int = 0,
     end_pdb: int = 1000,
     output_path: str = ".",
