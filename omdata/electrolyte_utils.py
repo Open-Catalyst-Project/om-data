@@ -45,8 +45,8 @@ def info_from_smiles(
         num_heavy_atoms = len([s for s in pmg_mol.species if str(s) != "H"])
 
         data[name] = {
-            "smiles": this_smiles, "charge": charge, "num_atoms": num_atoms, "num_heavy_atoms": num_heavy_atoms,
-            "pmg_mol": pmg_mol, "rdkit_mol": rdkit_mol, "ase_atoms": ase_atoms
+            "smiles": this_smiles, "charge": charge, "spin": spin, "num_atoms": num_atoms,
+            "num_heavy_atoms": num_heavy_atoms, "pmg_mol": pmg_mol, "rdkit_mol": rdkit_mol, "ase_atoms": ase_atoms
         }
     
     return data
