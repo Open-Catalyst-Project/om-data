@@ -34,9 +34,10 @@ other_cations = [
     "CC(COC)[NH3+]", "C[N+](C)(C)CCO", "CC1(CCCC(N1[O+])(C)C)C", "[Be+2]", "C[N+]1=CC=C(C=C1)C2=CC=[N+](C=C2)C",
 ]
 
+# NOTE: removed AlH4- and BH4- because hydrogens were flying off in Architector
 anions = [
-    "F[Al-](F)(F)F", "[AlH4-]", "[B-]1(OC(=O)C(=O)O1)(F)F", "[B-]12(OC(=O)C(=O)O1)OC(=O)C(=O)O2", "[B-](F)(F)(F)F",
-    "[BH4-]", "[CH-]1234[BH]5%12%13[BH]1%10%11[BH]289[BH]367[BH]145[BH]6%14%15[BH]78%16[BH]9%10%17[BH]%11%12%18[BH]1%13%14[BH-]%15%16%17%18",
+    "F[Al-](F)(F)F", "[B-]1(OC(=O)C(=O)O1)(F)F", "[B-]12(OC(=O)C(=O)O1)OC(=O)C(=O)O2", "[B-](F)(F)(F)F",
+    "[CH-]1234[BH]5%12%13[BH]1%10%11[BH]289[BH]367[BH]145[BH]6%14%15[BH]78%16[BH]9%10%17[BH]%11%12%18[BH]1%13%14[BH-]%15%16%17%18",
     "[BH-]1234[BH]5%12%13[BH]1%10%11[BH]289[BH]367[BH]145[BH]6%14%15[BH]78%16[BH]9%10%17[BH]%11%12%18[BH]1%13%14[BH-]%15%16%17%18",
     "C[O-]", "CC[O-]", "CC(C)[O-]", "[O-]CC[O-]", "CCOC([O-])C(F)(F)F", "[Br-]", "C(F)(F)(F)S(=O)(=O)[O-]",
     "C(=O)(O)[O-]", "CC(=O)[O-]", "C(=O)([O-])[O-]", "C(F)(F)(F)S(=O)(=O)[N-]S(=O)(=O)C(F)(F)F",
@@ -223,7 +224,10 @@ def generate_random_solvated_mol(
         species_smiles.append(choice)
         total_num_atoms += choice_num_atoms
         total_charge += choice_charge
-            
+
+    if len(species_smiles) == 0:
+        return None
+
     shell, shell_charge, shell_spin = generate_solvated_mol(
         mol, charge, spin_multiplicity, species_smiles, architector_params=architector_params
     )
@@ -330,6 +334,8 @@ def dump_xyzs(
         None
     """
 
+    base_dir.mkdir(exist_ok=True)
+
     for ii, (atoms, charge, spin) in enumerate(complexes):
         write((base_dir / f"{prefix}_solv{ii}_{charge}_{spin}.xyz"), atoms, format="xyz")
 
@@ -342,11 +348,9 @@ if __name__ == "__main__":
     # TODO: CHANGE THESE
     # `xyz_dir` should point to a root-level directory with *.xyz files
     # *.xyz's can be nested multiple levels down - this will recursively search for them
-    # xyz_dir = Path("xyzs")
-    xyz_dir = Path("/home/ewcss/data/omol24/20240607_solvation/test")
+    xyz_dir = Path("xyzs")
     # `base_dir` should point to root-level directory where generated complexes will be dumped
-    base_dir = Path("/home/ewcss/data/omol24/20240607_solvation/test_output")
-    # base_dir = Path("dump")
+    base_dir = Path("dump")
 
     # Set-up: get info from predefined set of SMILES
     solvating_info = info_from_smiles(
@@ -370,6 +374,7 @@ if __name__ == "__main__":
     #    neutral species, etc.)
 
     # TODO: CHANGE THESE
+    # These numbers just for testing
     num_dimers = 3
     num_random_shells = 1
     max_core_molecule_size = 50
@@ -381,6 +386,8 @@ if __name__ == "__main__":
     architector_params={"species_location_method": "random"}
 
     for xyz_file in xyz_files:
+        if "29074" not in xyz_file.name:
+            continue
         mol = Molecule.from_file(xyz_file)
 
         # If molecule is too large, don't bother trying to make solvation complexes
@@ -430,7 +437,10 @@ if __name__ == "__main__":
             max_trials=10,
             architector_params=architector_params
         )
-        this_complexes.append(random_complex)
+
+        # Possible that you'll end up with no complex
+        if random_complex is not None:
+            this_complexes.append(random_complex)
 
         # Dump new complexes as *.xyz files
         dump_xyzs(

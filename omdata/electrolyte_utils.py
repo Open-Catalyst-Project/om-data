@@ -30,6 +30,7 @@ def info_from_smiles(
 
     for (name, this_smiles) in names_smiles:
         mol = BabelMolAdaptor.from_str(this_smiles, file_format="smi")
+        mol.add_hydrogen()
         charge = mol.pybel_mol.charge
         spin = mol.pybel_mol.spin
         pmg_mol = mol.pymatgen_mol
