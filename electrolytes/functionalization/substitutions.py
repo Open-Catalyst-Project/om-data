@@ -437,6 +437,7 @@ def select_substituent(
 
     """
 
+<<<<<<< HEAD
     acceptable_subs = list()
     weights = list()
     for name, info in substituent_info.items():
@@ -455,6 +456,20 @@ def select_substituent(
             choice = random.choices(acceptable_subs, weights=weights, k=1)[0]
         else:
             choice = random.choices(acceptable_subs, k=1)[0]
+=======
+    if budget is not None:
+        acceptable_subs = [e for e in substituents if sub_num_atoms[e] < budget]
+        if len(acceptable_subs) == 0:
+            # If there are no substituents small enough, must replace with a hydrogen atom
+            return Chem.MolFromSmiles("[H]")
+    else:
+        acceptable_subs = list(substituents)
+    if weight:
+        weights = [1 / sub_num_atoms[e] for e in acceptable_subs]
+        choice = random.choices(acceptable_subs, weights=weights, k=1)[0]
+    else:
+        choice = random.choices(acceptable_subs, k=1)[0]
+>>>>>>> refs/remotes/origin/functionalization
     
     return choice
 
