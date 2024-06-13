@@ -6,20 +6,15 @@ from typing import Dict, List, Optional, Set, Tuple
 
 # For molecule representations
 from ase import Atoms
+from ase.io import write
 from pymatgen.core.structure import Molecule
 from pymatgen.io.ase import AseAtomsAdaptor
-from pymatgen.io.babel import BabelMolAdaptor
-from rdkit import Chem
-from rdkit.Chem.rdchem import Mol
 
 from sella import Sella
 
 # For solvation shell formation
-from architector import (build_complex,
-                         view_structures,
-                         convert_io_molecule)
+from architector import convert_io_molecule
 import architector.io_arch_dock as io_arch_dock
-from architector.io_molecule import Molecule as ArchMol
 
 from omdata.electrolyte_utils import info_from_smiles
 
@@ -66,7 +61,7 @@ def generate_solvated_mol(
     spin_multiplicity: int,
     species_smiles: List[str],
     architector_params: Dict = dict()
-) -> Atoms:
+) -> Tuple[Atoms, int, int]:
     """
     Generate a solvation shell around a molecule using Architector.
 
@@ -79,6 +74,8 @@ def generate_solvated_mol(
 
     Returns:
         shell (Atoms): molecule with solvation shell
+        shell_charge (int): final charge of the solvated molecule
+        shell_spin (int): final spin multiplicity of the solvated molecule
     """
 
     # Convert to Architector internal molecule representation
@@ -95,8 +92,10 @@ def generate_solvated_mol(
 
     binding = io_arch_dock.add_non_covbound_species(atoms, parameters=architector_params)
     shell = binding[0].ase_atoms
+    shell_charge = int(binding[0].charge)
+    shell_spin = int(binding[0].uhf) + 1
     
-    return shell
+    return shell, shell_charge, shell_spin
 
 
 def generate_full_solvation_shell(
@@ -106,7 +105,7 @@ def generate_full_solvation_shell(
     solvent: str,
     max_atom_budget: int = 200,
     architector_params: Dict = dict()
-) -> Atoms:
+) -> Tuple[Atoms, int, int]:
     """
     Generate a solvation shell comprised of a single solvent around a molecule
 
@@ -119,6 +118,8 @@ def generate_full_solvation_shell(
 
     Returns:
         shell (Atoms): molecule with solvation shell
+        shell_charge (int): final charge of the solvated molecule
+        shell_spin (int): final spin multiplicity of the solvated molecule
     """
 
     solvent_info = info_from_smiles([solvent])[solvent]
@@ -140,9 +141,11 @@ def generate_full_solvation_shell(
 
     species_smiles = [solvent] * num_solvent_mols
 
-    shell = generate_solvated_mol(mol, charge, spin_multiplicity, species_smiles, architector_params=architector_params)
+    shell, shell_charge, shell_spin = generate_solvated_mol(
+        mol, charge, spin_multiplicity, species_smiles, architector_params=architector_params
+    )
     
-    return shell
+    return shell, shell_charge, shell_spin
     
 
 def generate_random_solvated_mol(
@@ -153,7 +156,7 @@ def generate_random_solvated_mol(
     max_atom_budget: int = 200,
     max_trials: int = 25,
     architector_params: Dict = dict()
-) -> Atoms:
+) -> Tuple[Atoms, int, int]:
     """
     Generate (quasi)random solvated molecule using Architector.
 
@@ -174,7 +177,8 @@ def generate_random_solvated_mol(
 
     Returns:
         shell (Atoms): molecule with solvation shell
-    
+        shell_charge (int): final charge of the solvated molecule
+        shell_spin (int): final spin multiplicity of the solvated molecule
     """
 
     # Select cap for number of atoms in this solvation shell
@@ -190,7 +194,7 @@ def generate_random_solvated_mol(
     species_smiles = list()
     total_num_atoms = len(mol)
     total_charge = charge
-    for trial in range(max_trials):
+    for _ in range(max_trials):
         budget = this_max_atoms - total_num_atoms
         if budget < 1:
             break
@@ -220,8 +224,10 @@ def generate_random_solvated_mol(
         total_num_atoms += choice_num_atoms
         total_charge += choice_charge
             
-    shell = generate_solvated_mol(mol, charge, spin_multiplicity, species_smiles, architector_params=architector_params)
-    return shell
+    shell, shell_charge, shell_spin = generate_solvated_mol(
+        mol, charge, spin_multiplicity, species_smiles, architector_params=architector_params
+    )
+    return shell, shell_charge, shell_spin
 
 
 def generate_random_dimers(
@@ -232,7 +238,7 @@ def generate_random_dimers(
     max_atom_budget: int = 200,
     num_selections: int = 5,
     architector_params: Dict = dict()
-) -> Atoms:
+) -> List[Tuple[Atoms, int, int]]:
     """
     Generate (quasi)random dimers (central molecule + 1 counter ion or ion) using Architector.
 
@@ -273,14 +279,14 @@ def generate_random_dimers(
 
     complexes = list()
     for candidate in choices:
-        this_complex = generate_solvated_mol(
+        this_complex, this_complex_charge, this_complex_spin = generate_solvated_mol(
             mol,
             charge,
             spin_multiplicity,
             [solvating_info[candidate]["smiles"]],
             architector_params
         )
-        complexes.append(this_complex)
+        complexes.append((this_complex, this_complex_charge, this_complex_spin))
 
     return complexes
 
@@ -306,36 +312,55 @@ def crawl_xyz(base_dir: Path) -> List[Path]:
     return xyz_paths
 
 
+def dump_xyzs(
+    complexes: List[Tuple[Atoms, int, int]],
+    prefix: str,
+    base_dir: Path
+):
+    """
+    Create *.xyz files for each complex in a set of solvated complexes
+
+    Args:
+        complexes (List[Tuple[Atoms, int, int]]): Collection of solvated molecules. Each entry is a molecular
+            structure, its charge, and its spin multiplicity
+        prefix (str): Prefix for all *.xyz files
+        base_dir (str | Path): Path in which to dump *.xyz files
+
+    Returns:
+        None
+    """
+
+    for ii, (atoms, charge, spin) in enumerate(complexes):
+        write((base_dir / f"{prefix}_solv{ii}_{charge}_{spin}.xyz"), atoms, format="xyz")
+
 
 if __name__ == "__main__":
     
     # For reproducibility
     random.seed(42)
 
-    # TODO: CHANGE THIS
-    # This path should point to a root-level directory with *.xyz files
+    # TODO: CHANGE THESE
+    # `xyz_dir` should point to a root-level directory with *.xyz files
     # *.xyz's can be nested multiple levels down - this will recursively search for them
-    base_dir = Path("dump")
+    # xyz_dir = Path("xyzs")
+    xyz_dir = Path("/home/ewcss/data/omol24/20240607_solvation/test")
+    # `base_dir` should point to root-level directory where generated complexes will be dumped
+    base_dir = Path("/home/ewcss/data/omol24/20240607_solvation/test_output")
+    # base_dir = Path("dump")
 
-    # Set-up
-    metal_info = info_from_smiles(metals)
-    other_cation_info = info_from_smiles(other_cation_info)
-    anion_info = info_from_smiles(anions)
-    neutral_info = info_from_smiles(neutrals)
+    # Set-up: get info from predefined set of SMILES
+    solvating_info = info_from_smiles(
+        metals + other_cations + anions + neutrals
+    )
 
-    all_cations = copy.deepcopy(metal_info)
-    all_cations.update(other_cation_info)
-
-    all_nonpositive = copy.deepcopy(anion_info)
-    all_nonpositive.update(neutral_info)
-
-    all_nonnegative = copy.deepcopy(all_cations)
-    all_nonnegative.update(neutral_info)
+    just_solvent_info = info_from_smiles(
+        neutrals
+    )
 
     # Identify all molecules for solvation
     # NOTE: it's important the files have the format "<NAME>_<charge>_<spin>.xyz(.gz)"
     # Because otherwise, we can't identify charge/spin information from the *.xyz format
-    xyz_files = crawl_xyz(base_dir)
+    xyz_files = crawl_xyz(xyz_dir)
     print("TOTAL NUMBER OF XYZ FILES:", len(xyz_files))
 
     # For now (2024/06/13), the plan is to do the following for each molecule:
@@ -344,60 +369,72 @@ if __name__ == "__main__":
     # 3. Generate `n` random solvation shells with combinations of random combinations of components (ions,
     #    neutral species, etc.)
 
+    # TODO: CHANGE THESE
+    num_dimers = 3
+    num_random_shells = 1
+    max_core_molecule_size = 50
+    max_atom_budget = 70
+
+    # TODO: play around with these more
+    # In initial testing, random placement seems to help better surround central molecule
+    # Sella might be helpful, but also really slows things down
+    architector_params={"species_location_method": "random"}
+
     for xyz_file in xyz_files:
         mol = Molecule.from_file(xyz_file)
-        contents = xyz_file.split(".")[0].split("_")
+
+        # If molecule is too large, don't bother trying to make solvation complexes
+        if len(mol) > max_core_molecule_size:
+            continue
+
+        name = xyz_file.name.split(".")[0]
+        contents = xyz_file.name.split(".")[0].split("_")
         charge = int(contents[-2])
         spin = int(contents[-1])
 
         mol.set_charge_and_spin(charge, spin)
 
-        # Step 1
+        this_dir = base_dir / name
 
-        # Step 2
+        # Step 1 - dimers
+        this_complexes = generate_random_dimers(
+            mol=mol,
+            charge=charge,
+            spin_multiplicity=spin,
+            solvating_info=solvating_info,
+            max_atom_budget=max_atom_budget,
+            num_selections=num_dimers,
+            architector_params=architector_params
+        )
 
+        # Step 2 - pure solvent shell
+        # Pick random solvent
+        solvent = random.choice(list(just_solvent_info.keys()))
+        solvent_complex = generate_full_solvation_shell(
+            mol=mol,
+            charge=charge,
+            spin_multiplicity=spin,
+            solvent=solvent,
+            max_atom_budget=max_atom_budget,
+            architector_params=architector_params
+        )
+        this_complexes.append(solvent_complex)
 
-    # Combine all of the templates
-    templates = templates_solvent_additive
-    templates.update(templates_ions)
-    templates.update(templates_redox_flow)
-    templates.update(templates_ilesw_cation)
-    templates.update(templates_ilesw_anion)
+        # Step 3 - random solvation shell
+        random_complex = generate_random_solvated_mol(
+            mol=mol,
+            charge=charge,
+            spin_multiplicity=spin,
+            solvating_info=solvating_info,
+            max_atom_budget=max_atom_budget,
+            max_trials=10,
+            architector_params=architector_params
+        )
+        this_complexes.append(random_complex)
 
-    print("TOTAL NUMBER OF TEMPLATES:", len(templates))
-
-    # Combine all substituents
-    substituents = list(set(substituents))
-
-    print("TOTAL NUMBER OF SUBSTITUENTS:", len(substituents))
-
-    dump_path = Path("dump")
-    # If the directory doesn't exist, make it
-    dump_path.mkdir(exist_ok=True)
-
-    # Generate library based on functional group substitution
-    library = generate_library(
-        templates=templates,
-        substituents=substituents,
-        attempts_per_template=50,
-        max_atoms=None,
-        max_heavy_atoms=75,
-        dump_to=dump_path / "initial_library_smiles.json",
-    )
-
-    # Filter using InChI to remove duplicates
-    filtered_library = filter_library(
-        library
-    )
-
-    # Dump library as *.xyz files
-    dump_xyzs(
-        library=filtered_library,
-        base_dir=dump_path / "xyzs"
-    )
-
-    # Generate some plots describing library
-    library_stats(
-        xyz_dir=dump_path / "xyzs",
-        fig_dir=dump_path / "figures"
-    )
+        # Dump new complexes as *.xyz files
+        dump_xyzs(
+            complexes=this_complexes,
+            prefix=name,
+            base_dir=this_dir,
+        )

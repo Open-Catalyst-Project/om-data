@@ -666,7 +666,7 @@ def dump_xyzs(
     validate: bool = True
 ):
     """
-    Create XYZs for each molecule in a library of substituted molecules
+    Create *.xyz files for each molecule in a library of substituted molecules
 
     Args:
         library (Dict[str, List[str]]): Collection of substituted molecules organized by template name
@@ -713,7 +713,7 @@ def dump_xyzs(
             charge = pbmol.charge
             spin = pbmol.spin
 
-            scine_molassembler.io.write((path / f"mol{ii}_{charge}_{spin}.xyz").resolve().as_posix(), mol, pos)
+            scine_molassembler.io.write((path / f"{name}_mol{ii}_{charge}_{spin}.xyz").resolve().as_posix(), mol, pos)
 
 
 def library_stats(xyz_dir: Path, fig_dir: Path):
@@ -733,16 +733,19 @@ def library_stats(xyz_dir: Path, fig_dir: Path):
         "element_appearances": defaultdict(int)
     }
 
+    xyz_dir.mkdir(exist_ok=True)
+    fig_dir.mkdir(exist_ok=True)
+
     for subdir in xyz_dir.iterdir():
         if not subdir.is_dir():
             continue
 
-        for file in (xyz_dir / subdir).iterdir():
+        for file in subdir.iterdir():
             if not file.name.endswith(".xyz"):
                 continue
 
-            mol = Molecule.from_file(xyz_dir / subdir / file)
-            charge = int(file.name.split("_")[1])
+            mol = Molecule.from_file(file)
+            charge = int(file.name.split("_")[-2])
             data["charges"].append(charge)
             num_atoms = len(mol)
             data["num_atoms"].append(num_atoms)
