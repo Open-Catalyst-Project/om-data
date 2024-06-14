@@ -1,17 +1,15 @@
+import argparse
 import glob
 import os
 import random
-import re
 import shutil
 import subprocess
 import sys
-import argparse
 import time
+from typing import List, Tuple
 
 import pandas as pd
-from typing import Tuple, List
 from schrodinger.adapter import evaluate_smarts
-from schrodinger.application import prepwizard
 from schrodinger.protein.captermini import CapTermini
 from schrodinger.structure import Structure, StructureReader, StructureWriter
 from schrodinger.structutils import analyze, build
@@ -31,7 +29,7 @@ class MissingResiduesError(Exception):
     pass
 
 
-def get_biolip_db(lig_type: str = "reg", pklpath:str = '.') -> pd.DataFrame:
+def get_biolip_db(lig_type: str = "reg", pklpath: str = ".") -> pd.DataFrame:
     pkl_name = os.path.join(pklpath, "biolip_df.pkl")
     if os.path.exists(pkl_name):
         biolip_df = pd.read_pickle(pkl_name)
@@ -213,7 +211,9 @@ def retreive_ligand_and_env(
                 print(e)
                 continue
             except ConnectionError:
-                print(f"Error on {pdb_id}: Could not reach PDB server, try again later?")
+                print(
+                    f"Error on {pdb_id}: Could not reach PDB server, try again later?"
+                )
             else:
                 prepped_pdb_fnames.add(fname)
 
@@ -223,9 +223,10 @@ def retreive_ligand_and_env(
                 print(f"Error on {pdb_id}, BS{binding_site_counter}: Atoms are missing")
                 continue
             except MissingResiduesError:
-                print(f"Error on {pdb_id}, BS{binding_site_counter}: Ligand residue is missing")
+                print(
+                    f"Error on {pdb_id}, BS{binding_site_counter}: Ligand residue is missing"
+                )
                 continue
-                
 
             # Count heavy atoms of ligand and skip if too large
             heavy_lig_ats = [at for at in lig_ats if st.atom[at].atomic_number > 1]
@@ -355,7 +356,7 @@ def get_prepped_protein(
         if not os.path.exists(fname):
             # PDB could not be downloaded, try the cif
             fname, outname = download_cif(pdb_id, chains)
-            
+
         st = StructureReader.read(fname)
         # Reject structure that are just a bunch of CA
         missing_backbone_check(st)
@@ -418,7 +419,7 @@ def run_prepwizard(fname: str, outname: str) -> None:
             ],
             timeout=3600 * 2,  # Wait not more than 2 hours
         )
-    except subprocess.TimeoutExpired as e:
+    except subprocess.TimeoutExpired:
         # Try again without PROPKA (which seems to be where things get stuck)
         print("PrepWizard is taking too long, try without PROPKA")
         subprocess.run(
@@ -476,8 +477,8 @@ def make_gaps_gly(st: Structure, row: pd.Series, gap_res: List[str]) -> None:
     """
     for res_num in gap_res:
         res = st.findResidue(f'{row["receptor_chain"]}:{res_num}')
-        ## You have to be pretty weird to not be a Standard Residue,
-        ## just keep these as is
+        # You have to be pretty weird to not be a Standard Residue,
+        # just keep these as is
         if not res.isStandardResidue():
             continue
         # If the residue being turned to GLY is not just a simple amino
@@ -602,7 +603,7 @@ def parse_args():
 def main():
     args = parse_args()
     biolip_df = get_biolip_db(pklpath=args.output_path)
-    ligand_env = retreive_ligand_and_env(
+    retreive_ligand_and_env(
         biolip_df,
         start_pdb=args.start_idx,
         end_pdb=args.end_idx,
