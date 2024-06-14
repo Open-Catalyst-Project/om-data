@@ -196,9 +196,9 @@ def retreive_ligand_and_env(
         pdb_id = pdb_list[pdb_count]
         rows = grouped_biolip.get_group(pdb_id)
         print(f"preparing {pdb_id} (entry: {pdb_count})")
-        sys.stdout.flush()
         prepped_pdb_fnames = set()
         for idx, row in rows.iterrows():
+            sys.stdout.flush()
             binding_site_counter = (
                 row["binding_site_number_code"] + row["receptor_chain"]
             )
@@ -365,6 +365,7 @@ def get_prepped_protein(
             os.remove(file_to_del)
     for deldir in glob.glob(f"{basename}-???"):
         shutil.rmtree(deldir)
+    sys.stdout.flush()
     return st, outname
 
 
@@ -397,6 +398,7 @@ def run_prepwizard(fname: str, outname: str) -> None:
         )
     except subprocess.TimeoutExpired as e:
         # Try again without PROPKA (which seems to be where things get stuck)
+        print("PrepWizard is taking too long, try without PROPKA")
         subprocess.run(
             [
                 os.path.join(SCHRO, "utilities", "prepwizard"),
@@ -490,7 +492,7 @@ def get_atom_lists(st: Structure, row: pd.Series) -> Tuple[List[int], List[int]]
         res_name = f'{row["ligand_chain"]}:{res_num}{row["ligand_residue_inscode"]}'
         try:
             res = st.findResidue(res_name)
-        except MissingResiduesError:
+        except ValueError:
             print(f"missing expected residue: {res_name}")
             continue
         lig_ats.extend(res.getAtomIndices())
