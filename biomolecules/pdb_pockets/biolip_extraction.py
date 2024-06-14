@@ -219,6 +219,10 @@ def retreive_ligand_and_env(
             except MissingAtomsError:
                 print(f"Error on {pdb_id}, BS{binding_site_counter}: Atoms are missing")
                 continue
+            except MissingResiduesError:
+                print(f"Error on {pdb_id}, BS{binding_site_counter}: Ligand residue is missing")
+                continue
+                
 
             # Count heavy atoms of ligand and skip if too large
             heavy_lig_ats = [at for at in lig_ats if st.atom[at].atomic_number > 1]
@@ -249,7 +253,7 @@ def retreive_ligand_and_env(
             os.remove(fname)
 
 
-def download_cif(pdb_id: str, chains: List[str]) -> str:
+def download_cif(pdb_id: str, chains: List[str]) -> Tuple[str, str]:
     """
     Download cif (as opposed to pdb) of a given protein and extract
     the needed chains.
@@ -268,9 +272,10 @@ def download_cif(pdb_id: str, chains: List[str]) -> str:
         at_list.extend(st.chain[chain].getAtomList())
     st = st.extract(at_list)
     fname = f"{pdb_id}.maegz"
+    outname = f"{pdb_id}_{'_'.join(sorted(chains))}_prepped.maegz"
     with StructureWriter(fname) as writer:
         writer.append(st)
-    return fname
+    return fname, outname
 
 
 def missing_backbone_check(st: Structure):
@@ -337,7 +342,8 @@ def get_prepped_protein(
         subprocess.run([os.path.join(SCHRO, "utilities", "getpdb"), pdb_name])
         if not os.path.exists(fname):
             # PDB could not be downloaded, try the cif
-            fname = download_cif(pdb_id, chains)
+            fname, outname = download_cif(pdb_id, chains)
+            
         st = StructureReader.read(fname)
         # Reject structure that are just a bunch of CA
         missing_backbone_check(st)
@@ -348,10 +354,14 @@ def get_prepped_protein(
         st.write(fname)
 
         # Run PrepWizard
-        try:
-            run_prepwizard(fname, outname)
-        except subprocess.TimeoutExpired:
-            raise RuntimeError("PrepWizard took longer than 2 hours, skipping")
+        if not os.path.exists(outname):
+            # We have to check for outname existence again because the proper outname
+            # for PDBs that have to be downloaded as CIFs isn't known until after
+            # we download them and can see their chain names.
+            try:
+                run_prepwizard(fname, outname)
+            except subprocess.TimeoutExpired:
+                raise RuntimeError("PrepWizard took longer than 2 hours, skipping")
     if not os.path.exists(outname):
         raise RuntimeError("PrepWizard failed")
 
@@ -494,7 +504,7 @@ def get_atom_lists(st: Structure, row: pd.Series) -> Tuple[List[int], List[int]]
             res = st.findResidue(res_name)
         except ValueError:
             print(f"missing expected residue: {res_name}")
-            continue
+            raise MissingResiduesError
         lig_ats.extend(res.getAtomIndices())
     # Add in coordinating groups for ions
     coord_ats = []
