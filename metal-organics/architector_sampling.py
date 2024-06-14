@@ -2,15 +2,16 @@
 
 import argparse
 from typing import Optional
+from tqdm import tqdm
 
 import architector.io_ptable as io_ptable
 import mendeleev
 import numpy as np
 import pandas as pd
 
-MAX_N_ATOMS = 250
+MAX_N_ATOMS = 120
 # Set seed
-random_seed = 46139
+random_seed = 98745
 np.random.seed(random_seed)
 
 
@@ -205,14 +206,16 @@ def create_sample(
         history_uids = []
     total = 0
     out_rows = []
-    while total < nsamples:
-        sample_row, uid = sample(
-            metal_df=metal_df, ligands_df=ligands_df, test=test, maxCN=maxCN
-        )
-        if uid not in history_uids:
-            total += 1
-            history_uids.append(uid)
-            out_rows.append(sample_row)
+    with tqdm(total=nsamples) as pbar:
+        while total < nsamples:
+            sample_row, uid = sample(
+                metal_df=metal_df, ligands_df=ligands_df, test=test, maxCN=maxCN
+            )
+            if uid not in history_uids:
+                total += 1
+                history_uids.append(uid)
+                out_rows.append(sample_row)
+                pbar.update(1)
     dfout = pd.DataFrame(out_rows)
     return dfout, history_uids
 
