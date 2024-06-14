@@ -29,6 +29,10 @@ class MissingResiduesError(Exception):
     pass
 
 
+class MutateError(Exception):
+    pass
+
+
 def get_biolip_db(lig_type: str = "reg", pklpath: str = ".") -> pd.DataFrame:
     pkl_name = os.path.join(pklpath, "biolip_df.pkl")
     if os.path.exists(pkl_name):
@@ -227,6 +231,12 @@ def retreive_ligand_and_env(
                     f"Error on {pdb_id}, BS{binding_site_counter}: Ligand residue is missing"
                 )
                 continue
+            except MutateError:
+                print(
+                    f"Error on {pdb_id}, BS{binding_site_counter}: Cannot mutate gap residue to GLY"
+                )
+                continue
+
 
             # Count heavy atoms of ligand and skip if too large
             heavy_lig_ats = [at for at in lig_ats if st.atom[at].atomic_number > 1]
@@ -485,8 +495,13 @@ def make_gaps_gly(st: Structure, row: pd.Series, gap_res: List[str]) -> None:
         # acid, e.g. it is bound to a ligand, it can't be mutated properly
         # and it will actually also garble the structure
         if res.getBetaCarbon() is not None:
+            if res.getAlphaCarbon() is None:
+                raise MutateError
             st.deleteBond(res.getBetaCarbon(), res.getAlphaCarbon())
-        build.mutate(st, res.getAlphaCarbon(), "GLY")
+        try:
+            build.mutate(st, res.getAlphaCarbon(), "GLY")
+        except:
+            raise MutateError
 
 
 def get_atom_lists(st: Structure, row: pd.Series) -> Tuple[List[int], List[int]]:
