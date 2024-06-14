@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 import argparse
+import time
 
 import pandas as pd
 from typing import Tuple, List
@@ -211,6 +212,8 @@ def retreive_ligand_and_env(
                 print(f"Error on {pdb_id}: PrepWizard failed")
                 print(e)
                 continue
+            except ConnectionError:
+                print(f"Error on {pdb_id}: Could not reach PDB server, try again later?")
             else:
                 prepped_pdb_fnames.add(fname)
 
@@ -262,10 +265,19 @@ def download_cif(pdb_id: str, chains: List[str]) -> Tuple[str, str]:
     :param chains: list of relevant chain names to extract
     :return: filename where structure has been downloaded
     """
-    subprocess.run(
-        [os.path.join(SCHRO, "utilities", "getpdb"), pdb_id, "-format", "cif"]
-    )
-    st = StructureReader.read(f"{pdb_id}.cif")
+    cif_name = f"{pdb_id}.cif"
+    for i in range(3):
+        subprocess.run(
+            [os.path.join(SCHRO, "utilities", "getpdb"), pdb_id, "-format", "cif"]
+        )
+        if os.path.exists(cif_name):
+            break
+        else:
+            time.sleep(10)
+    else:
+        raise ConnectionError
+
+    st = StructureReader.read(cif_name)
     # only extract the relevant chains because these proteins tend to be very large and PrepWizard takes hours
     at_list = []
     for chain in chains:
