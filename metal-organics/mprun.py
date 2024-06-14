@@ -1,14 +1,15 @@
 """ Adapted from Architector/development/lig_sampling/production_scripts/mpirun.py """
 
 import argparse
+import multiprocessing as mp
 import os
 import pathlib
 import pickle
 import subprocess
 import sys
 import time
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
+from functools import partial
 
 import pandas as pd
 from tqdm import tqdm
@@ -84,7 +85,6 @@ def parse_args():
 
 def main():
     args = parse_args()
-    n_workers = args.n_workers
     batch_idx = args.batch_idx
     if not os.path.exists(args.outpath):
         os.mkdir(args.outpath)
@@ -106,15 +106,12 @@ def main():
         inp_dict["name"] = str(i)
         newindf_rows.append(inp_dict)
 
-    with ProcessPoolExecutor(max_workers=n_workers) as exe:
-        futs = []
-        for d in newindf_rows[batch_idx * args.batch_size : (batch_idx + 1) * args.batch_size]:
-            # print('Submitting: {}'.format(i))
-            fut = exe.submit(calc, d, args.outpath)
-            futs.append(fut)
-        # Track progress of completed jobs.
-        for x in tqdm(as_completed(futs), total=len(futs)):
-            res = x.result()
+    pool = mp.Pool(args.n_workers)
+    fxn = partial(calc, outpath=args.outpath)
+    batch = newindf_rows[
+        batch_idx * args.batch_size : (batch_idx + 1) * args.batch_size
+    ]
+    list(tqdm(pool.imap(fxn, batch), total=len(batch)))
 
 
 if __name__ == "__main__":
