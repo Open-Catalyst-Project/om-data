@@ -457,7 +457,10 @@ def deprotonate_phosphate_esters(st: Structure) -> None:
     :param st: Structure with phosphate groups that can be deprotonated
     """
     phos_smarts = "[*;!#1][*][P](=[O])([O])([O][H])"
-    matched_ats = evaluate_smarts(st, phos_smarts)
+    try:
+        matched_ats = evaluate_smarts(st, phos_smarts)
+    except ValueError:
+        matched_ats = []
     H_ats = {ats[-1] for ats in matched_ats}
     O_ats = {ats[-2] for ats in matched_ats}
     for O_at in O_ats:
