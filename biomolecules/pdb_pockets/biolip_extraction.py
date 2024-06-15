@@ -218,6 +218,10 @@ def retreive_ligand_and_env(
                 print(
                     f"Error on {pdb_id}: Could not reach PDB server, try again later?"
                 )
+                continue
+            except ValueError:
+                print(f"Error on {pdb_id}: BioLiP chain error")
+                continue
             else:
                 prepped_pdb_fnames.add(fname)
 
@@ -367,7 +371,9 @@ def get_prepped_protein(
             # PDB could not be downloaded, try the cif
             fname, outname = download_cif(pdb_id, chains)
 
-        st = StructureReader.read(fname)
+        st = next(StructureReader(fname), None)
+        if st is None:
+            raise ValueError
         # Reject structure that are just a bunch of CA
         missing_backbone_check(st)
 
