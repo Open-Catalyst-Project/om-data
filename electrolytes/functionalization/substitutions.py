@@ -1,4 +1,5 @@
 from collections import defaultdict
+import copy
 from pathlib import Path
 import random
 import re
@@ -55,11 +56,8 @@ templates_solvent_additive = {
     "carboxylate": "C([1*])([2*])([3*])OC(=O)[4*]",
     "thf": "C([1*])([2*])1C([3*])([4*])C([5*])([6*])OC([7*])([8*])1",
     "cyclic_sulfate": "C([1*])([2*])1C([3*])([4*])OS(=O)(=O)O1", 
-    "sulfone": "[1*]S(=O)(=O)[2*]",
     "sultone": "C([1*])([2*])1C([3*])([4*])C([5*])([6*])S(=O)(=O)OC([7*])([8*])1",
-    "sulfite_ester": "[1*]OS(=O)O[2*]",
     "cyclic_sulfite_ester": "C1([1*])([2*])OS(=O)OC([3*])([4*])C([5*])([6*])C1([7*])([8*])",
-    "sulfonyl_fluoride": "[1*]S(F)(=O)=O",
     "sulfamoyl_fluoride": "N([1*])([2*])S(=O)(=O)F",
     "dinitrile": "N#CC([1*])([2*])C([3*])([4*])C#N",
     "carbamate": "[1*]OC(=O)N([2*])([3*])",
@@ -70,11 +68,9 @@ templates_solvent_additive = {
     "silane": "[Si]([1*])([2*])([3*])([4*])",
     "siloxane": "O([Si]([1*])([2*])[3*])[Si]([4*])([5*])[6*]",
     "borane": "B([1*])([2*])[3*]",
-    "boroxine": "O1B([1*])OB([2*])OB([3*])1",
     "maleic_anhydride": "C1([1*])=C([2*])C(=O)OC1=O",
     "lactone": "C1([3*])([4*])C([1*])([2*])C(=O)OC([5*])([6*])1",
     "lactam": "C1([3*])([4*])C([1*])([2*])C(=O)NC([5*])([6*])1",
-
 }
 
 templates_ions = {
@@ -82,7 +78,6 @@ templates_ions = {
     "organosulfate": "O=S(=O)([O-])O[1*]",
     "cyclic_borate": "O1C([3*])([4*])C(O[B-]([1*])([2*])1)([5*])([6*])",
     "cyclic_aluminate": "O1C([3*])([4*])C(O[Al-]([1*])([2*])1)([5*])([6*])",
-    "cyclic_phosphate": "O1C([5*])([6*])C(O[P-]([1*])([2*])([3*])([4*])1)([7*])([8*])",
 }
 
 templates_redox_flow = {
@@ -120,14 +115,12 @@ templates_ilesw_cation = {
     "oxadiazine": "[N+]([1*])([2*])=C1N([3*])C([4*])([5*])OC([6*])([7*])N([8*])1",
     "morpholinium": "C([1*])([2*])1C([3*])([4*])OC([5*])([6*])C([7*])([8*])[N+]([9*])([10*])1",
     "piperazinium": "C([1*])([2*])1C([3*])([4*])N([5*])C([6*])([7*])C([8*])([9*])[N+]([10*])([11*])1",
-    "pyrimidine": "[N+]([1*])([2*])=C1N([3*])C([4*])([5*])C([6*])([7*])C([8*])([9*])N([10*])1",
     "piperidinium": "C([1*])([2*])1C([3*])([4*])C([5*])([6*])C([7*])([8*])[N+]([9*])([10*])C([11*])([12*])1",
     "iosquinolinium": "c([1*])1c([2*])c([3*])c2c(c([4*])1)c([5*])[n+]([6*])c([7*])c([8*])2"
 }
 
 templates_ilesw_anion = {
     "azanide": "[N-]([1*])([2*])",
-    "methanide": "[C-]([1*])([2*])([3*])",
     "methanoate": "[O-]C([1*])=O",
     "tetrahydroborate": "[B-]([1*])([2*])([3*])([4*])",
     "tetrahydroaluminate": "[Al-]([1*])([2*])([3*])([4*])",
@@ -165,7 +158,6 @@ substituents = [
     'C(Cl)=C(Cl)C',
     'C(Cl)C(Cl)C',
     'C(Cl)CC',
-    'C(F)(C(C(C(C(C(C(C(F)(F)F)(F)F)(F)F)(F)F)(F)F)(F)F)(F)F)F',
     'C(F)(C(C(C(F)(F)F)(F)F)(F)F)F',
     'C(F)(C(C(F)(F)F)(F)F)F',
     'C(F)(C(F)(F)F)F',
@@ -219,7 +211,6 @@ substituents = [
     'CCC(C)C',
     'CCC(CCC=C(C)C)C',
     'CCC(F)(F)F',
-    'CCCBr',
     'CCCC',
     'CCCC#C',
     'CCCC(=O)O',
@@ -250,7 +241,6 @@ substituents = [
     'CCCCCCCC[Si](c1ccccc1)(C)C',
     'CCCCCCCOC',
     'CCCCCCCSc1nnco1',
-    'CCCCCCOC',
     'CCCCCCOC(=O)C',
     'CCCCCCOC(=O)C=C',
     'CCCCCN',
@@ -268,7 +258,6 @@ substituents = [
     'CCCCOC=O',
     'CCCCS(=O)(=O)Cl',
     'CCCCS(=O)(=O)O',
-    'CCCCSc1nnco1',
     'CCCCl',
     'CCCCn1cccc1',
     'CCCF',
@@ -286,7 +275,6 @@ substituents = [
     'CCCSC(=S)N(c1ccccc1)c1ccccc1',
     'CCCSC(=S)N1CCOCC1',
     'CCCSC(=S)n1cncc1',
-    'CCCc1ccccc1',
     'CCF',
     'CCN',
     'CCN(C(=O)C)CC',
@@ -296,7 +284,6 @@ substituents = [
     'CCOC=O',
     'CCOCC',
     'CCOCC(C(C(C(F)F)(F)F)(F)F)(F)F',
-    'CCOCC(F)(F)F',
     'CCOCCOc1ccc(cc1)C(CC(C)(C)C)(C)C',
     'CCO[Si](C)(C)C',
     'CCP(=O)(OCC)OCC',
@@ -318,7 +305,6 @@ substituents = [
     'COc1cc(C)ccc1C(C)C',
     'COc1ccccc1',
     'CP(=O)(O)O',
-    'CS(=O)=O',
     'CSCC',
     'Cc1ccc(cc1)C',
     'Cc1cccc(c1)C',
@@ -340,7 +326,6 @@ substituents = [
     'NCCCC',
     'NNN',
     'O',
-    'OB(O)(O)',
     'OC#N',
     'OCC',
     'OCC(C(C)C)C',
@@ -352,7 +337,6 @@ substituents = [
     'OCCOCC',
     'ON=O',
     'ONO',
-    'O[N+](=O)[O-]',
     'P(=O)(O)O',
     'P(C)C',
     'P(C)CC',
@@ -360,7 +344,6 @@ substituents = [
     'P(O)Br',
     'P(O)C',
     'P(O)Cl',
-    'P(O)I',
     'P(O)N',
     'P(O)O',
     'P=N',
@@ -375,12 +358,36 @@ substituents = [
     '[S](=O)(=O)C(C(C(F)(F)F)(F)F)(F)F',
     '[S](=O)(=O)C(F)(F)(F)',
     '[S](F)(=O)=O',
-    '[S]CC(=O)OCC(OC(=O)CS)C',
-    '[Si](C)(C)(C)',
     'c1ccccc1',
     'c1ccccn1',
     'c1cccnc1',
     'c1ccncc1'
+ ]
+
+
+# Roughly 5% (a bit more) of templates
+templates_ood = {
+    "sulfite_ester": "[1*]OS(=O)O[2*]",
+    "boroxine": "O1B([1*])OB([2*])OB([3*])1",
+    "cyclic_phosphate": "O1C([5*])([6*])C(O[P-]([1*])([2*])([3*])([4*])1)([7*])([8*])",
+    "pyrimidine": "[N+]([1*])([2*])=C1N([3*])C([4*])([5*])C([6*])([7*])C([8*])([9*])N([10*])1",
+    "methanide": "[C-]([1*])([2*])([3*])",
+}
+
+# Roughly 5% of substituents
+substituents_ood = [
+    'C(F)(C(C(C(C(C(C(C(F)(F)F)(F)F)(F)F)(F)F)(F)F)(F)F)(F)F)F',
+    'CCCCCCOC',
+    'CCCCSc1nnco1',
+    'CCCBr',
+    'CCCc1ccccc1',
+    'CCOCC(F)(F)F',
+    'CS(=O)=O',
+    'OB(O)(O)',
+    'O[N+](=O)[O-]',
+    'P(O)I',
+    '[S]CC(=O)OCC(OC(=O)CS)C',
+    '[Si](C)(C)(C)'
 ]
 
 
@@ -464,7 +471,8 @@ def generate_new_molecule(
     substituent_info: Dict[str, Any],
     sub_key: str,
     weight_subs: bool = True,
-    max_atoms: Optional[int] = None) -> str:
+    max_atoms: Optional[int] = None,
+    ood_substituent_info: Optional[Dict[str, Any]] = None) -> str:
     
     """
     Construct a new molecule by performing a functional group substitution.
@@ -479,6 +487,10 @@ def generate_new_molecule(
             function is 1/n, where n is the number of atoms or number of heavy atoms
         max_atoms (Optional[int]): Maximum size of substituent to be added, in terms of number of atoms or number of
             heavy atoms. Default is None, meaning that a substituent of any size can be added
+        ood_substituent_info (Optional[Dict[str, Any]]): Key-value pairs of (optional) out-of-distribution 
+            substituents, where the keys are names (or SMILES strings) and the values are molecule representations,
+            numbers of atoms, etc. If this is not None (default), at least one of these substituents will be added
+            to create an out-of-distribution molecule.
 
     Returns:
         SMILES string for the substituted molecule, with possibly multiple substitutions
@@ -506,15 +518,39 @@ def generate_new_molecule(
 
     budget = _calculate_budget(mol, sub_key, max_atoms)
 
+    if ood_substituent_info is not None:
+        all_substituent_info = copy.deepcopy(substituent_info)
+        all_substituent_info.update(ood_substituent_info)
+
     # Perform substitutions iteratively
     # If the molecule gets too large, only H will be chosen
-    for point in points:
-        sub = select_substituent(
-            substituent_info,
-            sub_key,
-            weight=weight_subs,
-            budget=budget
-        )
+    for pp, point in enumerate(points):
+        
+        if ood_substituent_info is not None:
+            # First substitution must be an OOD substituent
+            # By setting budget=None, we ensure that we choose a real substituent and not [H]
+            if pp == 0:
+                sub = select_substituent(
+                    ood_substituent_info,
+                    sub_key,
+                    weight=weight_subs,
+                    budget=None
+                )
+            else:
+                sub = select_substituent(
+                    all_substituent_info,
+                    sub_key,
+                    weight=weight_subs,
+                    budget=budget
+                )
+
+        else:
+            sub = select_substituent(
+                substituent_info,
+                sub_key,
+                weight=weight_subs,
+                budget=budget
+            )
 
         mol = Chem.ReplaceSubstructs(
             mol, 
@@ -542,6 +578,7 @@ def generate_new_molecule(
 def generate_library(
     templates: Dict[str, str],
     substituents: List[str],
+    ood_substituents: Optional[List[str]] = None,
     attempts_per_template: int = 50,
     max_atoms: Optional[int] = None,
     max_heavy_atoms: Optional[int] = 50,
@@ -555,6 +592,8 @@ def generate_library(
         templates (Dict[str, str]): Key-value pairs of templates, where the keys are names and the values are SMILES
             strings
         substituents (List[str]): List of SMILES strings for substituents
+        ood_substituents (Optional[List[str]]): If not None (default), at least one of these substituent SMILES strings
+            will be added to each molecule in the library
         attempts_per_template (int): How many substituted molecules should we try for each template? Default is 50
         max_atoms (Optional[int]): Maximum size of a substituted molecule, in terms of number of atoms. Default is
             None, meaning that there will be no hard upper limit on molecule size in terms of total number of atoms.
@@ -573,6 +612,11 @@ def generate_library(
         raise ValueError("Both max_atoms and max_heavy_atoms were provided! Please provide only up to one criterion.")
 
     sub_info = info_from_smiles(substituents)
+
+    if ood_substituents is None:
+        ood_sub_info = None
+    else:
+        ood_sub_info = info_from_smiles(ood_substituents)
 
     if max_atoms is not None:
         do_weight = True
@@ -597,7 +641,8 @@ def generate_library(
                     sub_info,
                     sub_key,
                     do_weight,
-                    maximum
+                    maximum,
+                    ood_substituent_info=ood_sub_info,
                 )
             )
 
@@ -822,33 +867,87 @@ if __name__ == "__main__":
 
     print("TOTAL NUMBER OF SUBSTITUENTS:", len(substituents))
 
-    dump_path = Path("dump")
-    # If the directory doesn't exist, make it
-    dump_path.mkdir(exist_ok=True)
+    # Sanity check - make sure that no out-of-distribution (OOD) molecules could be in the in-distribution (ID) set
+    assert len(set(substituents) & set(substituents_ood)) == 0
+    assert len(set(templates.keys()) & set(templates_ood.keys())) == 0
 
-    # Generate library based on functional group substitution
-    library = generate_library(
-        templates=templates,
-        substituents=substituents,
-        attempts_per_template=50,
+    # # dump_path = Path("dump")
+    # dump_path = Path("/home/ewcss/data/omol24/20240521_small_mol_dump")
+    # # If the directory doesn't exist, make it
+    # dump_path.mkdir(exist_ok=True)
+
+    # # Generate library based on functional group substitution
+    # library = generate_library(
+    #     templates=templates,
+    #     substituents=substituents,
+    #     attempts_per_template=30,
+    #     max_atoms=None,
+    #     max_heavy_atoms=75,
+    #     dump_to=dump_path / "initial_library_smiles.json",
+    # )
+
+    # # Filter using InChI to remove duplicates
+    # filtered_library = filter_library(
+    #     library
+    # )
+
+    # # Dump library as *.xyz files
+    # dump_xyzs(
+    #     library=filtered_library,
+    #     base_dir=dump_path / "xyzs"
+    # )
+
+    # # Generate some plots describing library
+    # library_stats(
+    #     xyz_dir=dump_path / "xyzs",
+    #     fig_dir=dump_path / "figures"
+    # )
+
+    # Out-of-distribution set
+    # ood_path = Path("dump/ood")
+    ood_path = Path("/home/ewcss/data/omol24/20240521_small_mol_dump/ood")
+    ood_path.mkdir(exist_ok=True)
+
+    all_substituents = copy.deepcopy(substituents)
+    all_substituents += substituents_ood
+
+    print("TOTAL NUMBER OF OOD TEMPLATES:", len(templates_ood))
+    print("NUMBER OF OOD SUBSTITUENTS:", len(substituents_ood))
+    print("TOTAL NUMBER OF SUBSTITUENTS:", len(all_substituents))
+
+    # Part one - OOD templates with whatever substituents (in-distribution and OOD)
+    ood_from_templates = generate_library(
+        templates=templates_ood,
+        substituents=all_substituents,
+        attempts_per_template=30,
         max_atoms=None,
         max_heavy_atoms=75,
-        dump_to=dump_path / "initial_library_smiles.json",
+        dump_to=ood_path / "from_ood_templates.json",
     )
 
-    # Filter using InChI to remove duplicates
-    filtered_library = filter_library(
-        library
+    # Part two - other templates, but with at least one OOD functional group
+    ood_from_functional_groups = generate_library(
+        templates=templates,
+        substituents=substituents,
+        ood_substituents=substituents_ood,
+        attempts_per_template=10,
+        max_atoms=None,
+        max_heavy_atoms=75,
+        dump_to=ood_path / "from_ood_functional_groups.json",
     )
 
-    # Dump library as *.xyz files
+    ood_from_templates.update(ood_from_functional_groups)
+
+    filtered_ood_library = filter_library(
+        ood_from_templates
+    )
+
     dump_xyzs(
-        library=filtered_library,
-        base_dir=dump_path / "xyzs"
+        library=filtered_ood_library,
+        base_dir=ood_path / "xyzs"
     )
 
-    # Generate some plots describing library
     library_stats(
-        xyz_dir=dump_path / "xyzs",
-        fig_dir=dump_path / "figures"
+        xyz_dir=ood_path / "xyzs",
+        fig_dir=ood_path / "figures"
     )
