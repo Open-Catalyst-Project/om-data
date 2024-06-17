@@ -228,16 +228,16 @@ def retreive_ligand_and_env(
             try:
                 lig_ats, res_ats = get_atom_lists(st, row)
             except MissingAtomsError:
-                print(f"Error on {pdb_id}, BS{binding_site_counter}: Atoms are missing")
+                print(f"Error on {pdb_id}, {binding_site_counter}: Atoms are missing")
                 continue
             except MissingResiduesError:
                 print(
-                    f"Error on {pdb_id}, BS{binding_site_counter}: Ligand residue is missing"
+                    f"Error on {pdb_id}, {binding_site_counter}: Ligand residue is missing"
                 )
                 continue
             except MutateError:
                 print(
-                    f"Error on {pdb_id}, BS{binding_site_counter}: Cannot mutate gap residue to GLY"
+                    f"Error on {pdb_id}, {binding_site_counter}: Cannot mutate gap residue to GLY"
                 )
                 continue
 
@@ -255,7 +255,7 @@ def retreive_ligand_and_env(
                 cap_termini(st, ligand_env)
             except Exception as e:
                 print(
-                    f"Error on {pdb_id}, BS{binding_site_counter}: Cannot cap termini"
+                    f"Error on {pdb_id}, {binding_site_counter}: Cannot cap termini"
                 )
                 print(e)
                 continue
