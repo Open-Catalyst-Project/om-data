@@ -871,41 +871,39 @@ if __name__ == "__main__":
     assert len(set(substituents) & set(substituents_ood)) == 0
     assert len(set(templates.keys()) & set(templates_ood.keys())) == 0
 
-    # # dump_path = Path("dump")
-    # dump_path = Path("/home/ewcss/data/omol24/20240521_small_mol_dump")
-    # # If the directory doesn't exist, make it
-    # dump_path.mkdir(exist_ok=True)
+    dump_path = Path("dump")
+    # If the directory doesn't exist, make it
+    dump_path.mkdir(exist_ok=True)
 
-    # # Generate library based on functional group substitution
-    # library = generate_library(
-    #     templates=templates,
-    #     substituents=substituents,
-    #     attempts_per_template=30,
-    #     max_atoms=None,
-    #     max_heavy_atoms=75,
-    #     dump_to=dump_path / "initial_library_smiles.json",
-    # )
+    # Generate library based on functional group substitution
+    library = generate_library(
+        templates=templates,
+        substituents=substituents,
+        attempts_per_template=1500,
+        max_atoms=None,
+        max_heavy_atoms=75,
+        dump_to=dump_path / "initial_library_smiles.json",
+    )
 
-    # # Filter using InChI to remove duplicates
-    # filtered_library = filter_library(
-    #     library
-    # )
+    # Filter using InChI to remove duplicates
+    filtered_library = filter_library(
+        library
+    )
 
-    # # Dump library as *.xyz files
-    # dump_xyzs(
-    #     library=filtered_library,
-    #     base_dir=dump_path / "xyzs"
-    # )
+    # Dump library as *.xyz files
+    dump_xyzs(
+        library=filtered_library,
+        base_dir=dump_path / "xyzs"
+    )
 
-    # # Generate some plots describing library
-    # library_stats(
-    #     xyz_dir=dump_path / "xyzs",
-    #     fig_dir=dump_path / "figures"
-    # )
+    # Generate some plots describing library
+    library_stats(
+        xyz_dir=dump_path / "xyzs",
+        fig_dir=dump_path / "figures"
+    )
 
     # Out-of-distribution set
-    # ood_path = Path("dump/ood")
-    ood_path = Path("/home/ewcss/data/omol24/20240521_small_mol_dump/ood")
+    ood_path = Path("dump/ood")
     ood_path.mkdir(exist_ok=True)
 
     all_substituents = copy.deepcopy(substituents)
@@ -919,28 +917,31 @@ if __name__ == "__main__":
     ood_from_templates = generate_library(
         templates=templates_ood,
         substituents=all_substituents,
-        attempts_per_template=30,
+        attempts_per_template=1500,
         max_atoms=None,
         max_heavy_atoms=75,
         dump_to=ood_path / "from_ood_templates.json",
     )
+    print("FINISHED PART ONE")
 
     # Part two - other templates, but with at least one OOD functional group
     ood_from_functional_groups = generate_library(
         templates=templates,
         substituents=substituents,
         ood_substituents=substituents_ood,
-        attempts_per_template=10,
+        attempts_per_template=100,
         max_atoms=None,
         max_heavy_atoms=75,
         dump_to=ood_path / "from_ood_functional_groups.json",
     )
+    print("FINISHED PART TWO")
 
     ood_from_templates.update(ood_from_functional_groups)
 
     filtered_ood_library = filter_library(
         ood_from_templates
     )
+    print("FINISHED FILTERING")
 
     dump_xyzs(
         library=filtered_ood_library,
