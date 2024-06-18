@@ -9,6 +9,7 @@ from omdata.orca.calc import (
     OPT_PARAMETERS,
     ORCA_BASIS,
     ORCA_BLOCKS,
+    NBO_FLAG,
     ORCA_FUNCTIONAL,
     ORCA_SIMPLE_INPUT,
     Vertical,
