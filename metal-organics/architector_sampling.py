@@ -2,12 +2,12 @@
 
 import argparse
 from typing import Optional
-from tqdm import tqdm
 
 import architector.io_ptable as io_ptable
 import mendeleev
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 MAX_N_ATOMS = 120
 # Set seed
@@ -249,7 +249,7 @@ def main():
     metal_df = pd.read_pickle("metal_sample_dataframe.pkl")
     ligands_df = pd.read_pickle("ligand_sample_dataframe.pkl")
     if args.history is not None:
-        with open(args.history, 'r') as fh:
+        with open(args.history, "r") as fh:
             history = eval(fh.read())
     else:
         history = None
