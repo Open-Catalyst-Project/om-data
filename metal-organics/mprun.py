@@ -37,9 +37,9 @@ def calc(input_dict: dict, outpath: str) -> bool:
     try:
         subprocess.check_output(
             ["python", "generate_structures.py", pickle_input, outpath],
-            universal_newlines=True,
+            universal_newlines=True, timeout=3600*12
         )
-    except subprocess.CalledProcessError as e:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
         end = time.time()
         with open(
             os.path.join(outpath, input_dict["name"] + "_failed.txt"), "w"
