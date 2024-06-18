@@ -20,7 +20,7 @@ import scine_molassembler
 
 from pymatgen.core.structure import Molecule
 
-from omdata.electrolyte_utils import info_from_smiles
+from omdata.electrolyte_utils import info_from_smiles, validate_structure
 
 
 """
@@ -683,26 +683,6 @@ def filter_library(
                 inchis_charges.add((inchi, charge))
 
     return filtered
-
-
-def validate_structure(species: List[str], coords: np.ndarray) -> bool:
-    """
-    Check if any atoms in the molecule are too close together
-
-    Args:
-        species (List[str]): List of atomic elements with length N, where N is the number of atoms
-        Coords (np.ndarray): Atomic positions as an Nx3 matrix, where N is the number of atoms
-
-    Returns:
-        bool. Is this molecule valid?
-    """
-
-    if isinstance(coords, scine_molassembler.dg.Error):
-        return False
-
-    pmg_mol = Molecule(species, coords)
-
-    return pmg_mol.is_valid(tol=0.9)
 
 
 def dump_xyzs(

@@ -1,8 +1,11 @@
 from typing import Any, Dict, List, Set, Tuple
 
+import numpy as np
+
 from rdkit import Chem
 from rdkit.Chem.rdchem import Mol
 
+from pymatgen.core.structure import Molecule
 from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.io.babel import BabelMolAdaptor
 
@@ -51,3 +54,24 @@ def info_from_smiles(
         }
     
     return data
+
+
+def validate_structure(species: List[str], coords: Any, tolerance: float = 0.9) -> bool:
+    """
+    Check if any atoms in the molecule are too close together
+
+    Args:
+        species (List[str]): List of atomic elements with length N, where N is the number of atoms
+        Coords (Any): Atomic positions as an Nx3 matrix, where N is the number of atoms. Should be
+            of type np.ndarray, but might be of an error type
+
+    Returns:
+        bool. Is this molecule valid?
+    """
+
+    if not isinstance(coords, np.ndarray):
+        return False
+
+    pmg_mol = Molecule(species, coords)
+
+    return pmg_mol.is_valid(tol=tolerance)

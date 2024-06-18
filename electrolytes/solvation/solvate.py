@@ -16,7 +16,7 @@ from sella import Sella
 from architector import convert_io_molecule
 import architector.io_arch_dock as io_arch_dock
 
-from omdata.electrolyte_utils import info_from_smiles
+from omdata.electrolyte_utils import info_from_smiles, validate_structure
 
 
 
@@ -56,7 +56,7 @@ neutrals = [
 
 
 metals_ood = ["[Rb+]", "[Co+2]", "[Y+3]",]
-other_cations_ood = ["C6H15NO2+"]
+other_cations_ood = ["COCC[NH2+]CCOC"]
 anions_ood = ["F[As-](F)(F)(F)(F)F", "[CH-]1234[BH]5%12%13[BH]1%10%11[BH]289[BH]367[BH]145[BH]6%14%15[BH]78%16[BH]9%10%17[BH]%11%12%18[BH]1%13%14[BH-]%15%16%17%18",]
 neutrals_ood = ["O=C(N)C", "C(CO)O"]
 
@@ -159,8 +159,10 @@ def generate_random_solvated_mol(
     charge: int,
     spin_multiplicity: int,
     solvating_info: Dict[str, Dict],
+    ood_solvating_info: Optional[Dict[str, Dict]] = None,
     max_atom_budget: int = 200,
     max_trials: int = 25,
+    weight_key: Optional[str] = "num_atoms",
     architector_params: Dict = dict()
 ) -> Tuple[Atoms, int, int]:
     """
@@ -168,17 +170,19 @@ def generate_random_solvated_mol(
 
     Cations, anions, and neutral species (e.g. solvents, additives) are placed around a central molecule.
 
-    TODO: should make weighting optional, and should allow weighting/budgeting by number of heavy atoms OR
-        total number of atoms
-
     Args:
         mol (Molecule | Atoms): molecule to be solvated
         charge (int): charge of the core molecule
         spin_multiplicity (int): spin multiplicity of the core molecule
         solvating_info (Dict[str, int]): Map <SMILES>:info (number of atoms, charge, etc.) for potential solvating
             molecules
+        ood_solvating_info (Optional[Dict[str, int]]): Map <SMILES>:info (number of atoms, charge, etc.) for potential
+            out-of-distribution (OOD) solvating molecules. Default is None, meaning that the complex will be
+            in-distribution and not contain OOD species
         max_atom_budget (int): Maximum number of atoms that can be in a complex
         max_trials (int): Maximum number of attempts adding a solvating molecule
+        weight_key (Optional[str]): If not None (default is "num_atoms"), possible solvating molecules will be weighted
+            using the given key.
         architector_params (Dict): parameters for Architector solvation shell generation
 
     Returns:
@@ -197,18 +201,30 @@ def generate_random_solvated_mol(
     elif this_max_atoms > max_atom_budget:
         this_max_atoms = max_atom_budget
     
+    if ood_solvating_info is not None:
+        all_solvating_info = copy.deepcopy(solvating_info)
+        all_solvating_info.update(ood_solvating_info)
+
     species_smiles = list()
     total_num_atoms = len(mol)
     total_charge = charge
-    for _ in range(max_trials):
+    for i in range(max_trials):
         budget = this_max_atoms - total_num_atoms
         if budget < 1:
             break
 
+        if ood_solvating_info is not None:
+            if i == 0:
+                possible_solvs = ood_solvating_info
+            else:
+                possible_solvs = all_solvating_info
+        else:
+            possible_solvs = solvating_info
+
         # Assign weights based on number of atoms
         choice_smiles = list()
         choice_weights = list()
-        for smiles, data in solvating_info.items():
+        for smiles, data in possible_solvs.items():
             # Check that we don't try to add species of like charge
             if total_charge * data["charge"] > 0:
                 continue
@@ -216,13 +232,18 @@ def generate_random_solvated_mol(
             # Is the potential solvating molecule too large?
             if total_num_atoms + data["num_atoms"] <= this_max_atoms:
                 choice_smiles.append(smiles)
-                choice_weights.append(1 / data["num_atoms"])
+                if weight_key is not None:
+                    choice_weights.append(1 / data[weight_key])
 
         # No valid molecules
         if len(choice_smiles) == 0:
             break
 
-        choice = random.choices(choice_smiles, weights=choice_weights, k=1)[0]
+        if weight_key is not None:
+            choice = random.choices(choice_smiles, weights=choice_weights, k=1)[0]
+        else:
+            choice = random.choices(choice_smiles, k=1)[0]
+
         choice_num_atoms = solvating_info[choice]["num_atoms"]
         choice_charge = solvating_info[choice]["charge"]
         
@@ -356,6 +377,10 @@ if __name__ == "__main__":
     xyz_dir = Path("xyzs")
     # `base_dir` should point to root-level directory where generated complexes will be dumped
     base_dir = Path("dump")
+    ood_dir = Path("ood")
+
+    base_dir.mkdir(exist_ok=True)
+    ood_dir.mkdir(exist_ok=True)
 
     # Set-up: get info from predefined set of SMILES
     solvating_info = info_from_smiles(
@@ -383,7 +408,7 @@ if __name__ == "__main__":
     num_dimers = 3
     num_random_shells = 1
     max_core_molecule_size = 50
-    max_atom_budget = 70
+    max_atom_budget = 65
 
     # TODO: play around with these more
     # In initial testing, random placement seems to help better surround central molecule
@@ -406,6 +431,8 @@ if __name__ == "__main__":
         mol.set_charge_and_spin(charge, spin)
 
         this_dir = base_dir / name
+
+        # In-distribution (ID) data
 
         # Step 1 - dimers
         this_complexes = generate_random_dimers(
@@ -446,9 +473,73 @@ if __name__ == "__main__":
         if random_complex is not None:
             this_complexes.append(random_complex)
 
+        # Make sure that structures are physically sound
+        # Possible that the MD produces some wild structures, e.g. with atoms too close
+        filtered = list()
+        for comp in this_complexes:
+            if validate_structure(comp[0].get_chemical_symbols(), comp[0].get_positions()):
+                filtered.append(comp)
+
         # Dump new complexes as *.xyz files
         dump_xyzs(
-            complexes=this_complexes,
+            complexes=filtered,
             prefix=name,
             base_dir=this_dir,
         )
+
+        # Out-of-distribution (OOD) data
+        # TODO: probably shouldn't have an OOD point for EVERY structure.
+        # Could do a random subsample
+        # Could actually do this procedure on a totally different set of molecules?
+
+        ood_solvating_info = info_from_smiles(
+            metals_ood + other_cations_ood + anions_ood + neutrals_ood
+        )
+
+        ood_just_solvent_info = info_from_smiles(
+            neutrals_ood
+        )
+
+        # For each molecule, only select one of dimer, solvent shell, or random shell
+        # TODO: should we ONLY be doing random shells?
+        choice = random.choice([1, 2, 3])
+
+        if choice == 1:
+            ood_complex = generate_random_dimers(
+                mol=mol,
+                charge=charge,
+                spin_multiplicity=spin,
+                solvating_info=ood_solvating_info,
+                max_atom_budget=max_atom_budget,
+                num_selections=1,
+                architector_params=architector_params
+            )[0]
+        elif choice == 2:
+            ood_solvent = random.choice(list(ood_just_solvent_info.keys()))
+            ood_complex = generate_full_solvation_shell(
+                mol=mol,
+                charge=charge,
+                spin_multiplicity=spin,
+                solvent=ood_solvent,
+                max_atom_budget=max_atom_budget,
+                architector_params=architector_params
+            )
+        else:
+            ood_complex = generate_random_solvated_mol(
+                mol=mol,
+                charge=charge,
+                spin_multiplicity=spin,
+                solvating_info=solvating_info,
+                ood_solvating_info=ood_solvating_info,
+                max_atom_budget=max_atom_budget,
+                max_trials=10,
+                architector_params=architector_params
+            )
+
+        if validate_structure(ood_complex[0].get_chemical_symbols(), ood_complex[0].get_positions()):
+            # Dump new complexes as *.xyz files
+            dump_xyzs(
+                complexes=[ood_complex],
+                prefix=name,
+                base_dir=ood_dir / name,
+            )
