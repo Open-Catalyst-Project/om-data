@@ -7,25 +7,25 @@ of pure solvent later with OpenMM. Such simulation is needed if we want to figur
 what is the average density of the solvent. 
 """
 import sys
-from data2lammps import *
+import data2lammps as d2l
 import os
 import csv
 import numpy as np
 
 # Read which system # to simulate from command line argument
-i = int(sys.argv[1]) + 1
+row_idx = int(sys.argv[1]) + 1
 
 # Load the CSV file containing systems to simulate
-f = open("elytes.csv", "r")
-systems = list(csv.reader(f))
+with open("elytes.csv", "r") as f:
+    systems = list(csv.reader(f))
 comments = systems[0]
 
 # Extract indices of columns specifying the solvent
-index_neut, index_neut_ratio = get_indices(comments, "neutral")
+index_neut, index_neut_ratio = d2l.get_indices(comments, "neutral")
 
 # Extract solvent species name  and their molar ratios
-neut = get_species_and_conc(systems, i, index_neut)
-neut_ratio = get_species_and_conc(systems, i, index_neut_ratio)
+neut = d2l.get_species_and_conc(systems, row_idx, index_neut)
+neut_ratio = d2l.get_species_and_conc(systems, row_idx, index_neut_ratio)
 
 # If solvent exists. We have may have pure molten salt or ionic liquid
 if neut:
@@ -37,12 +37,9 @@ if neut:
     boxsize = 50 
 
     num_solv = 500
-    Nmols = []
-    Ncomp = len(neut)
-    for j in range(Ncomp):
-        Nmols.append(int(num_solv*molfrac[j]))
+    Nmols = [int(num_solv*frac) for frac in molfrac]
 
     #Run Packmol, followed up by moltemplate 
-    run_packmol_moltemplate(species,boxsize,Nmols,'solvent',str(i-1))
+    d2l.run_packmol_moltemplate(species,boxsize,Nmols,'solvent',str(row_idx-1))
 else:
     print("Solvent does not exist. Not an error, but check if system is a pure moltent salt/ionic liquid.")

@@ -16,7 +16,8 @@ simulation = app.Simulation(modeller.topology, system, integrator)
 simulation.context.setPositions(modeller.positions)
 simulation.minimizeEnergy()
 frames = 1000
-runtime = 250000000
+runtime = 50000000
+#250000000
 
 rate = int(runtime/frames)
 simulation.reporters.append(PDBReporter('system_output.pdb', rate, enforcePeriodicBox=True))
