@@ -267,6 +267,7 @@ def retreive_ligand_and_env(
             ligand_env.write(fname)
 
         # Cleanup the remaining prepped files for this pdb_id
+        print('done with', pdb_count, pdb_id)
         for fname in prepped_pdb_fnames:
             os.remove(fname)
 
@@ -540,7 +541,7 @@ def get_atom_lists(st: Structure, row: pd.Series) -> Tuple[List[int], List[int]]
         try:
             res = st.findResidue(res_name)
         except ValueError:
-            print(f"missing expected residue: {res_name}")
+            print(f"missing expected ligand residue: {res_name}")
             raise MissingResiduesError
         lig_ats.extend(res.getAtomIndices())
     # Add in coordinating groups for ions
@@ -583,7 +584,11 @@ def get_single_gaps(st: Structure, rec_chain: str, res_list: List[str]) -> List[
     parent_indices = set()
     parent_list = list(st.chain[rec_chain].residue)
     for res_name in res_list:
-        res = st.findResidue(f"{rec_chain}:{res_name}")
+        try:
+            res = st.findResidue(f"{rec_chain}:{res_name}")
+        except ValueError:
+            print(f"missing expected receptor residue: {rec_chain}:{res_name}")
+            raise MissingResiduesError
         parent_indices.add(parent_list.index(res))
     gaps = [
         val + 1
