@@ -423,7 +423,7 @@ if __name__ == "__main__":
             continue
 
         name = xyz_file.name.split(".")[0]
-        contents = xyz_file.name.split(".")[0].split("_")
+        contents = name.split("_")
         charge = int(contents[-2])
         spin = int(contents[-1])
 
