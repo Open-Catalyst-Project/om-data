@@ -300,7 +300,7 @@ def generate_random_dimers(
         and charge * v["charge"] <= 0
     ]
 
-    if len(real_candidates_names) == 0:
+    if not real_candidates_names:
         return list()
     elif len(real_candidates_names) < num_selections:
         choices = real_candidates_names
@@ -447,7 +447,7 @@ if __name__ == "__main__":
 
         # Step 2 - pure solvent shell
         # Pick random solvent
-        solvent = random.choice(list(just_solvent_info.keys()))
+        solvent = random.choice(list(just_solvent_info))
         solvent_complex = generate_full_solvation_shell(
             mol=mol,
             charge=charge,
