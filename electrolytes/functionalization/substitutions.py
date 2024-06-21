@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import Counter, defaultdict
 import copy
 from pathlib import Path
 import random
@@ -754,8 +754,8 @@ def library_stats(xyz_dir: Path, fig_dir: Path):
         "num_atoms": list(),
         "num_heavy_atoms": list(),
         "charges": list(),
-        "element_counts": defaultdict(int),
-        "element_appearances": defaultdict(int)
+        "element_counts": Counter(),
+        "element_appearances": Counter()
     }
 
     xyz_dir.mkdir(exist_ok=True)
@@ -780,11 +780,10 @@ def library_stats(xyz_dir: Path, fig_dir: Path):
             for s in species:
                 if s != "H":
                     num_heavy_atoms += 1
-                data["element_counts"][s] += 1
+                data["element_counts"](s)
 
             data["num_heavy_atoms"].append(num_heavy_atoms)
-            for unique_s in set(species):
-                data["element_appearances"][unique_s] += 1
+            data["element_appearances"](set(species))
 
     dumpfn(data, fig_dir / "library_stats.json")
 

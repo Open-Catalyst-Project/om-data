@@ -6,7 +6,6 @@ from rdkit import Chem
 from rdkit.Chem.rdchem import Mol
 
 from pymatgen.core.structure import Molecule
-from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.io.babel import BabelMolAdaptor
 
 
@@ -14,14 +13,14 @@ def info_from_smiles(
     smiles: Dict[str, str] | List[str] | Set[str]
     ) -> Dict[str, Any]:
     """
-    Generate Calculate the number of atoms in a molecule from SMILES.
+    Generate information about a molecule from SMILES.
 
     Args:
         smiles (Dict[str, str] | List[str] | Set[str]): Collection of SMILES, either as a dict {key: smiles},
             or as a list/set.
 
     Returns:
-        num_atoms (Dict[str, Any]): Map between SMILES and their size in terms of total number of atoms
+        data (Dict[str, Any]): Map between SMILES and their properties (charge, spin, number of atoms, etc.)
     """
 
     data = dict()
@@ -36,12 +35,6 @@ def info_from_smiles(
         mol.add_hydrogen()
         charge = mol.pybel_mol.charge
         spin = mol.pybel_mol.spin
-        pmg_mol = mol.pymatgen_mol
-        pmg_mol.set_charge_and_spin(charge, spin)
-        
-        ase_atoms = AseAtomsAdaptor.get_atoms(pmg_mol)
-        ase_atoms.charge = charge
-        ase_atoms.uhf = spin - 1
 
         rdkit_mol = Chem.MolFromSmiles(this_smiles)
         
@@ -50,7 +43,7 @@ def info_from_smiles(
 
         data[name] = {
             "smiles": this_smiles, "charge": charge, "spin": spin, "num_atoms": num_atoms,
-            "num_heavy_atoms": num_heavy_atoms, "pmg_mol": pmg_mol, "rdkit_mol": rdkit_mol, "ase_atoms": ase_atoms
+            "num_heavy_atoms": num_heavy_atoms, "rdkit_mol": rdkit_mol,
         }
     
     return data
