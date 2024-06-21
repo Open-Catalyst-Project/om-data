@@ -346,9 +346,12 @@ substituents = [
     'P(O)Cl',
     'P(O)N',
     'P(O)O',
-    'P=N',
-    'P=O',
-    'P=S',
+    'P([H])([H])=N',
+    'P([H])([H])=O',
+    'P([H])([H])=S',
+    'P(O)(O)=N',
+    'P(O)(O)=O',
+    'P(O)(O)=S',
     'PP(=O)(O)O',
     'S',
     '[O]C(=O)c1ccccc1',
@@ -780,10 +783,10 @@ def library_stats(xyz_dir: Path, fig_dir: Path):
             for s in species:
                 if s != "H":
                     num_heavy_atoms += 1
-                data["element_counts"](s)
+            data["element_counts"].update(species)
 
             data["num_heavy_atoms"].append(num_heavy_atoms)
-            data["element_appearances"](set(species))
+            data["element_appearances"].update(set(species))
 
     dumpfn(data, fig_dir / "library_stats.json")
 

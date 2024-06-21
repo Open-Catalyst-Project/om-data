@@ -35,6 +35,8 @@ def info_from_smiles(
         mol.add_hydrogen()
         charge = mol.pybel_mol.charge
         spin = mol.pybel_mol.spin
+        
+        pmg_mol = mol.pymatgen_mol
 
         rdkit_mol = Chem.MolFromSmiles(this_smiles)
         
@@ -62,9 +64,9 @@ def validate_structure(species: List[str], coords: Any, tolerance: float = 0.9) 
         bool. Is this molecule valid?
     """
 
-    if not isinstance(coords, np.ndarray):
+    try:
+        pmg_mol = Molecule(species, coords)
+    except:
         return False
-
-    pmg_mol = Molecule(species, coords)
 
     return pmg_mol.is_valid(tol=tolerance)

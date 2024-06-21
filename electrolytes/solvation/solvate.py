@@ -1,5 +1,6 @@
 import copy
 import glob
+from math import ceil
 import os
 from pathlib import Path
 import random
@@ -243,8 +244,8 @@ def generate_random_solvated_mol(
         else:
             choice = random.choices(choice_smiles, k=1)[0]
 
-        choice_num_atoms = solvating_info[choice]["num_atoms"]
-        choice_charge = solvating_info[choice]["charge"]
+        choice_num_atoms = possible_solvs[choice]["num_atoms"]
+        choice_charge = possible_solvs[choice]["charge"]
         
         species_smiles.append(choice)
         total_num_atoms += choice_num_atoms
@@ -323,7 +324,7 @@ def generate_random_dimers(
 def dump_xyzs(
     complexes: List[Tuple[Atoms, int, int]],
     prefix: str,
-    base_dir: Path
+    path: Path
 ):
     """
     Create *.xyz files for each complex in a set of solvated complexes
@@ -332,16 +333,16 @@ def dump_xyzs(
         complexes (List[Tuple[Atoms, int, int]]): Collection of solvated molecules. Each entry is a molecular
             structure, its charge, and its spin multiplicity
         prefix (str): Prefix for all *.xyz files
-        base_dir (str | Path): Path in which to dump *.xyz files
+        path (Path): Path in which to dump *.xyz files
 
     Returns:
         None
     """
 
-    base_dir.mkdir(exist_ok=True)
+    path.mkdir(exist_ok=True)
 
     for ii, (atoms, charge, spin) in enumerate(complexes):
-        write((base_dir / f"{prefix}_solv{ii}_{charge}_{spin}.xyz"), atoms, format="xyz")
+        write((path / f"{prefix}_solv{ii}_{charge}_{spin}.xyz"), atoms, format="xyz")
 
 
 if __name__ == "__main__":
@@ -354,8 +355,8 @@ if __name__ == "__main__":
     # *.xyz's can be nested multiple levels down - this script will recursively search for them
     xyz_dir = Path("xyzs")
     # `base_dir` should point to root-level directory where generated complexes will be dumped
-    base_dir = Path("dump")
-    ood_dir = Path("ood")
+    base_dir = Path("solv_dir")
+    ood_dir = Path("solv_dir/ood")
 
     base_dir.mkdir(exist_ok=True)
     ood_dir.mkdir(exist_ok=True)
@@ -386,7 +387,7 @@ if __name__ == "__main__":
     num_dimers = 3
     num_random_shells = 1
     max_core_molecule_size = 50
-    max_atom_budget = 65
+    max_atom_budget = 60
 
     # TODO: play around with these more
     # In initial testing, random placement seems to help better surround central molecule
@@ -456,13 +457,13 @@ if __name__ == "__main__":
         filtered = list()
         for comp in complexes:
             if validate_structure(comp[0].get_chemical_symbols(), comp[0].get_positions()):
-                filtered.append(comp)
+                filtered.append(comp)            
 
         # Dump new complexes as *.xyz files
         dump_xyzs(
             complexes=filtered,
             prefix=name,
-            base_dir=this_dir,
+            base_dir=this_dir.resolve(),
         )
 
         # Out-of-distribution (OOD) data
@@ -519,5 +520,5 @@ if __name__ == "__main__":
             dump_xyzs(
                 complexes=[ood_complex],
                 prefix=name,
-                base_dir=ood_dir / name,
+                base_dir=(ood_dir / name).resolve(),
             )
