@@ -1,4 +1,5 @@
 import copy
+import glob
 import os
 from pathlib import Path
 import random
@@ -319,27 +320,6 @@ def generate_random_dimers(
     return complexes
 
 
-def crawl_xyz(base_dir: Path) -> List[Path]:
-    """
-    Recursively search for *.xyz files in a directory and its subdirectories.
-
-    Args:
-        base_dir (Path): Root directoyr to search.
-    
-    Returns:
-       xyz_paths (List[Path]) 
-    """
-
-    xyz_paths = list()
-
-    for item in base_dir.iterdir():
-        if item.is_file() and (item.name.endswith(".xyz") or item.name.endswith(".xyz.gz")):
-            xyz_paths.append(item.resolve())
-        elif item.is_dir():
-            xyz_paths.extend(crawl_xyz(item.resolve()))
-    return xyz_paths
-
-
 def dump_xyzs(
     complexes: List[Tuple[Atoms, int, int]],
     prefix: str,
@@ -392,7 +372,7 @@ if __name__ == "__main__":
     # Identify all molecules for solvation
     # NOTE: it's important the files have the format "<NAME>_<charge>_<spin>.xyz(.gz)"
     # Because otherwise, we can't identify charge/spin information from the *.xyz format
-    xyz_files = crawl_xyz(xyz_dir)
+    xyz_files = [f for f in glob.glob(f'{xyz_dir.resolve().as_posix()}/**/*.xyz*', recursive=True) if f.endswith('.xyz') or f.endswith('.xyz.gz')]
     print("TOTAL NUMBER OF XYZ FILES:", len(xyz_files))
 
     # For now (2024/06/13), the plan is to do the following for each molecule:
@@ -421,7 +401,7 @@ if __name__ == "__main__":
         if len(mol) > max_core_molecule_size:
             continue
 
-        name = xyz_file.name.split(".")[0]
+        name = os.path.splitext(xyz_file)[0]
         contents = name.split("_")
         charge = int(contents[-2])
         spin = int(contents[-1])
