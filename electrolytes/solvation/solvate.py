@@ -39,11 +39,10 @@ other_cations = [
 # NOTE: removed AlH4- and BH4- because hydrogens were flying off in Architector
 anions = [
     "F[Al-](F)(F)F", "[B-]1(OC(=O)C(=O)O1)(F)F", "[B-]12(OC(=O)C(=O)O1)OC(=O)C(=O)O2", "[B-](F)(F)(F)F",
-    "[BH-]1234[BH]5%12%13[BH]1%10%11[BH]289[BH]367[BH]145[BH]6%14%15[BH]78%16[BH]9%10%17[BH]%11%12%18[BH]1%13%14[BH-]%15%16%17%18",
     "C[O-]", "CC[O-]", "CC(C)[O-]", "[O-]CC[O-]", "CCOC([O-])C(F)(F)F", "[Br-]", "C(F)(F)(F)S(=O)(=O)[O-]",
     "C(=O)(O)[O-]", "CC(=O)[O-]", "C(=O)([O-])[O-]", "C(F)(F)(F)S(=O)(=O)[N-]S(=O)(=O)C(F)(F)F",
     "C[Si](C)(C)[N-][Si](C)(C)C", "CC1(CCCC(N1[O-])(C)C)C", "[Cl-]", "[O-]Cl(=O)(=O)=O", "[N-](S(=O)(=O)F)S(=O)(=O)F",
-    "[O-]P(=O)(F)F", "F[P-](F)(F)(F)(F)F", "[OH-]", "[F-]", "[I-]", "[N+](=O)([O-])[O-]",
+    "F[P-](F)(F)(F)(F)F", "[OH-]", "[F-]", "[I-]", "[N+](=O)([O-])[O-]",
     "[O-]P(=O)([O-])[O-]", "C1=C(C(=O)C=C(C1=O)[O-])[O-]", "[O-]S(=O)(=O)[O-]"
 ]
 
@@ -59,7 +58,7 @@ neutrals = [
 
 metals_ood = ["[Rb+]", "[Co+2]", "[Y+3]",]
 other_cations_ood = ["COCC[NH2+]CCOC"]
-anions_ood = ["F[As-](F)(F)(F)(F)F", "[CH-]1234[BH]5%12%13[BH]1%10%11[BH]289[BH]367[BH]145[BH]6%14%15[BH]78%16[BH]9%10%17[BH]%11%12%18[BH]1%13%14[BH-]%15%16%17%18",]
+anions_ood = ["F[As-](F)(F)(F)(F)F", "[O-]P(=O)(F)F"]
 neutrals_ood = ["O=C(N)C", "C(CO)O"]
 
 
@@ -140,8 +139,8 @@ def generate_full_solvation_shell(
                          f"{solvent}: {solvent_info['charge']}.")
 
     this_max_atoms = round(random.gauss(mu=50 + len(mol), sigma=40))
-    this_max_atoms = min(this_max_atoms, max_atom_budget)
     this_max_atoms = max(this_max_atoms, len(mol) + min_added_atoms)
+    this_max_atoms = min(this_max_atoms, max_atom_budget)
     
     budget = this_max_atoms - len(mol)
     num_solvent_mols = ceil(budget / solvent_info["num_atoms"])
@@ -342,7 +341,7 @@ def dump_xyzs(
     path.mkdir(exist_ok=True)
 
     for ii, (atoms, charge, spin) in enumerate(complexes):
-        write((path / f"{prefix}_solv{ii}_{charge}_{spin}.xyz"), atoms, format="xyz")
+        write(f"{path}/{prefix}_solv{ii}_{charge}_{spin}.xyz", atoms, format="xyz")
 
 
 if __name__ == "__main__":
@@ -353,7 +352,8 @@ if __name__ == "__main__":
     # TODO: CHANGE THESE
     # `xyz_dir` should point to a root-level directory with *.xyz files
     # *.xyz's can be nested multiple levels down - this script will recursively search for them
-    xyz_dir = Path("xyzs")
+    # xyz_dir = Path("xyzs")
+    xyz_dir = Path("/home/ewcss/data/omol24/20240607_solvation/test")
     # `base_dir` should point to root-level directory where generated complexes will be dumped
     base_dir = Path("solv_dir")
     ood_dir = Path("solv_dir/ood")
@@ -403,15 +403,18 @@ if __name__ == "__main__":
             continue
 
         name = os.path.splitext(xyz_file)[0]
+        subname = name.split("/")[-1]
         contents = name.split("_")
         charge = int(contents[-2])
         spin = int(contents[-1])
 
         mol.set_charge_and_spin(charge, spin)
 
-        this_dir = base_dir / name
+        this_dir = base_dir / subname
 
         # In-distribution (ID) data
+
+        filtered = list()
 
         # Step 1 - dimers
         complexes = generate_random_dimers(
@@ -459,11 +462,12 @@ if __name__ == "__main__":
             if validate_structure(comp[0].get_chemical_symbols(), comp[0].get_positions()):
                 filtered.append(comp)            
 
+        print(this_dir)
         # Dump new complexes as *.xyz files
         dump_xyzs(
             complexes=filtered,
-            prefix=name,
-            base_dir=this_dir.resolve(),
+            prefix=subname,
+            path=this_dir,
         )
 
         # Out-of-distribution (OOD) data
@@ -519,6 +523,6 @@ if __name__ == "__main__":
             # Dump new complexes as *.xyz files
             dump_xyzs(
                 complexes=[ood_complex],
-                prefix=name,
-                base_dir=(ood_dir / name).resolve(),
+                prefix=subname,
+                path=(ood_dir / subname),
             )
