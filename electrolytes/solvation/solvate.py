@@ -435,7 +435,7 @@ if __name__ == "__main__":
         # In-distribution (ID) data
 
         # Step 1 - dimers
-        this_complexes = generate_random_dimers(
+        complexes = generate_random_dimers(
             mol=mol,
             charge=charge,
             spin_multiplicity=spin,
@@ -456,7 +456,7 @@ if __name__ == "__main__":
             max_atom_budget=max_atom_budget,
             architector_params=architector_params
         )
-        this_complexes.append(solvent_complex)
+        complexes.append(solvent_complex)
 
         # Step 3 - random solvation shell
         random_complex = generate_random_solvated_mol(
@@ -471,12 +471,12 @@ if __name__ == "__main__":
 
         # Possible that you'll end up with no complex
         if random_complex is not None:
-            this_complexes.append(random_complex)
+            complexes.append(random_complex)
 
         # Make sure that structures are physically sound
         # Possible that the MD produces some wild structures, e.g. with atoms too close
         filtered = list()
-        for comp in this_complexes:
+        for comp in complexes:
             if validate_structure(comp[0].get_chemical_symbols(), comp[0].get_positions()):
                 filtered.append(comp)
 
