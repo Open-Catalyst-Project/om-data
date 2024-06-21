@@ -447,7 +447,7 @@ if __name__ == "__main__":
 
         # Step 2 - pure solvent shell
         # Pick random solvent
-        solvent = random.choice(list(just_solvent_info.keys()))
+        solvent = random.choice(list(just_solvent_info))
         solvent_complex = generate_full_solvation_shell(
             mol=mol,
             charge=charge,
