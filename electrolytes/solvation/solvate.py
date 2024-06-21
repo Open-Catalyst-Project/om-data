@@ -135,8 +135,7 @@ def generate_full_solvation_shell(
                          f"{solvent}: {solvent_info['charge']}.")
 
     this_max_atoms = round(random.gauss(mu=50 + len(mol), sigma=40))
-    if this_max_atoms > max_atom_budget:
-        this_max_atoms = max_atom_budget
+    this_max_atoms = min(this_max_atoms, max_atom_budget)
     if this_max_atoms < len(mol) + 20:
         this_max_atoms = len(mol) + 20
     
@@ -424,7 +423,7 @@ if __name__ == "__main__":
             continue
 
         name = xyz_file.name.split(".")[0]
-        contents = xyz_file.name.split(".")[0].split("_")
+        contents = name.split("_")
         charge = int(contents[-2])
         spin = int(contents[-1])
 
