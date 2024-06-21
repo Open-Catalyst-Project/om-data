@@ -861,7 +861,7 @@ if __name__ == "__main__":
     library = generate_library(
         templates=templates,
         substituents=substituents,
-        attempts_per_template=10,
+        attempts_per_template=1500,
         max_atoms=None,
         max_heavy_atoms=75,
         dump_to=dump_path / "initial_library_smiles.json",
@@ -899,7 +899,7 @@ if __name__ == "__main__":
     ood_from_templates = generate_library(
         templates=templates_ood,
         substituents=all_substituents,
-        attempts_per_template=10,
+        attempts_per_template=1500,
         max_atoms=None,
         max_heavy_atoms=75,
         dump_to=ood_path / "from_ood_templates.json",
@@ -911,7 +911,7 @@ if __name__ == "__main__":
         templates=templates,
         substituents=substituents,
         ood_substituents=substituents_ood,
-        attempts_per_template=10,
+        attempts_per_template=100,
         max_atoms=None,
         max_heavy_atoms=75,
         dump_to=ood_path / "from_ood_functional_groups.json",
