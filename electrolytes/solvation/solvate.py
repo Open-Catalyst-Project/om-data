@@ -109,6 +109,7 @@ def generate_full_solvation_shell(
     charge: int,
     spin_multiplicity: int,
     solvent: str,
+    min_added_atoms: int = 20,
     max_atom_budget: int = 200,
     architector_params: Dict = dict()
 ) -> Tuple[Atoms, int, int]:
@@ -120,6 +121,8 @@ def generate_full_solvation_shell(
         charge (int): charge of the core molecule
         spin_multiplicity (int): spin multiplicity of the core molecule
         solvent (str): SMILES for the solvent to surround the central molecule
+        min_added_atoms (int): Minimum number of atoms to be allowed to add to this molecule. Default is 20.
+        max_atom_budget (int): Maximum number of atoms allowed in this solvation shell. Default is 200.
         architector_params (Dict): parameters for Architector solvation shell generation
 
     Returns:
@@ -136,13 +139,10 @@ def generate_full_solvation_shell(
 
     this_max_atoms = round(random.gauss(mu=50 + len(mol), sigma=40))
     this_max_atoms = min(this_max_atoms, max_atom_budget)
-    if this_max_atoms < len(mol) + 20:
-        this_max_atoms = len(mol) + 20
+    this_max_atoms = max(this_max_atoms, len(mol) + min_added_atoms)
     
     budget = this_max_atoms - len(mol)
-    num_solvent_mols = round(budget / solvent_info["num_atoms"])
-    if num_solvent_mols < 1:
-        num_solvent_mols = 1
+    num_solvent_mols = ceil(budget / solvent_info["num_atoms"])
 
     species_smiles = [solvent] * num_solvent_mols
 
@@ -159,6 +159,7 @@ def generate_random_solvated_mol(
     spin_multiplicity: int,
     solvating_info: Dict[str, Dict],
     ood_solvating_info: Optional[Dict[str, Dict]] = None,
+    min_added_atoms: int = 20,
     max_atom_budget: int = 200,
     max_trials: int = 25,
     weight_key: Optional[str] = "num_atoms",
@@ -178,7 +179,8 @@ def generate_random_solvated_mol(
         ood_solvating_info (Optional[Dict[str, int]]): Map <SMILES>:info (number of atoms, charge, etc.) for potential
             out-of-distribution (OOD) solvating molecules. Default is None, meaning that the complex will be
             in-distribution and not contain OOD species
-        max_atom_budget (int): Maximum number of atoms that can be in a complex
+        min_added_atoms (int): Minimum number of atoms to be allowed to add to this molecule. Default is 20.
+        max_atom_budget (int): Maximum number of atoms that can be in a complex. Default is 200.
         max_trials (int): Maximum number of attempts adding a solvating molecule
         weight_key (Optional[str]): If not None (default is "num_atoms"), possible solvating molecules will be weighted
             using the given key.
@@ -194,11 +196,8 @@ def generate_random_solvated_mol(
     # For now, using a normal (Gaussian distribution) with mean at (50 + len(mol)) atoms and stdev of 40
     # We then turn this continuous selection into an integer and make sure that it's within some reasonable bounds
     this_max_atoms = round(random.gauss(mu=50 + len(mol), sigma=40))
-    lower_bound_maxatoms = len(mol) + 15
-    if this_max_atoms < lower_bound_maxatoms:
-        this_max_atoms = lower_bound_maxatoms
-    elif this_max_atoms > max_atom_budget:
-        this_max_atoms = max_atom_budget
+    this_max_atoms = max(this_max_atoms, len(mol) + min_added_atoms)
+    this_max_atoms = min(this_max_atoms, max_atom_budget)
     
     if ood_solvating_info is not None:
         all_solvating_info = copy.deepcopy(solvating_info)
