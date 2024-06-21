@@ -300,7 +300,7 @@ def generate_random_dimers(
         and charge * v["charge"] <= 0
     ]
 
-    if len(real_candidates_names) == 0:
+    if not real_candidates_names:
         return list()
     elif len(real_candidates_names) < num_selections:
         choices = real_candidates_names
