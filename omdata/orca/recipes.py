@@ -74,8 +74,9 @@ def single_point_calculation(
     if vertical == Vertical.MetalOrganics and spin_multiplicity == 1:
         orcasimpleinput.append("UKS")
         orcablocks.append(get_symm_break_block(atoms, charge))
-    if nbo:
-        orcasimpleinput.append("NBO")
+    if not nbo:
+        orcasimpleinput.extend(["NONBO", "NONPA"])
+    else:
         orcablocks.append(NBO_FLAGS)
 
     nprocs = psutil.cpu_count(logical=False) if nprocs == "max" else nprocs
