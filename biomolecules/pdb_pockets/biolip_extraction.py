@@ -175,6 +175,7 @@ def retreive_ligand_and_env(
     start_pdb: int = 0,
     end_pdb: int = 1000,
     output_path: str = ".",
+    fill_sidechain: bool = True,
 ) -> None:
     """
     Extract ligand and its environment from BioLiP examples
@@ -190,6 +191,7 @@ def retreive_ligand_and_env(
     :param start_pdb: index of first pdb to run in the dataframe
     :param end_pdb: index of last pdb to run in dataframe
     :param output_path: where to store results
+    :param fill_sidechain: If True, PrepWizard will try and fill in missing side chains
     """
     # random.seed(12341)
     grouped_biolip = biolip_df.groupby("pdb_id")
@@ -206,7 +208,7 @@ def retreive_ligand_and_env(
                 row["binding_site_number_code"] + row["receptor_chain"]
             )
             try:
-                st, fname = get_prepped_protein(pdb_id, row)
+                st, fname = get_prepped_protein(pdb_id, row, fill_sidechain)
             except OnlyCAError:
                 print(f"Error on {pdb_id}: Structure has only CA")
                 continue
@@ -230,9 +232,9 @@ def retreive_ligand_and_env(
             except MissingAtomsError:
                 print(f"Error on {pdb_id}, {binding_site_counter}: Atoms are missing")
                 continue
-            except MissingResiduesError:
+            except MissingResiduesError as e:
                 print(
-                    f"Error on {pdb_id}, {binding_site_counter}: Ligand residue is missing"
+                    f"Error on {pdb_id}, {binding_site_counter}: {e} residue is missing"
                 )
                 continue
             except MutateError:
@@ -240,7 +242,6 @@ def retreive_ligand_and_env(
                     f"Error on {pdb_id}, {binding_site_counter}: Cannot mutate gap residue to GLY"
                 )
                 continue
-
 
             # Count heavy atoms of ligand and skip if too large
             heavy_lig_ats = [at for at in lig_ats if st.atom[at].atomic_number > 1]
@@ -254,9 +255,7 @@ def retreive_ligand_and_env(
             try:
                 cap_termini(st, ligand_env)
             except Exception as e:
-                print(
-                    f"Error on {pdb_id}, {binding_site_counter}: Cannot cap termini"
-                )
+                print(f"Error on {pdb_id}, {binding_site_counter}: Cannot cap termini")
                 print(e)
                 continue
             ligand_env = build.reorder_protein_atoms_by_sequence(ligand_env)
@@ -267,7 +266,7 @@ def retreive_ligand_and_env(
             ligand_env.write(fname)
 
         # Cleanup the remaining prepped files for this pdb_id
-        print('done with', pdb_count, pdb_id)
+        print("done with", pdb_count, pdb_id)
         for fname in prepped_pdb_fnames:
             os.remove(fname)
 
@@ -329,7 +328,7 @@ def missing_backbone_check(st: Structure):
 
 
 def get_prepped_protein(
-    pdb_id: str, row: pd.Series, prep: bool = True
+    pdb_id: str, row: pd.Series, fill_sidechain: bool = True, prep: bool = True
 ) -> Tuple[Structure, str]:
     """
     Obtain a structure of the protein suitable for atomistic calculations
@@ -340,6 +339,9 @@ def get_prepped_protein(
 
     :param pdb_id: PDB name to be obtained
     :param row: Series containing receptor and ligand information
+    :param fill_sidechain: If True, PrepWizard will try and fill in missing
+                           side chains. Note, this can actually delete covalently
+                           attached ligands.
     :param prep: If False, preparation steps can be skipped and we only
                  download a PDB as is
     :return: Prepared structure and its filename for subsequent clean-up
@@ -376,7 +378,7 @@ def get_prepped_protein(
         if st is None:
             raise ValueError
         # Reject structure that are just a bunch of CA
-        missing_backbone_check(st)
+        # missing_backbone_check(st)
 
         # Remove any dummy atoms, PrepWizard doesn't like them
         dummy_atoms = [at for at in st.atom if at.atomic_number < 1]
@@ -389,13 +391,14 @@ def get_prepped_protein(
             # for PDBs that have to be downloaded as CIFs isn't known until after
             # we download them and can see their chain names.
             try:
-                run_prepwizard(fname, outname)
+                run_prepwizard(fname, outname, fill_sidechain)
             except subprocess.TimeoutExpired:
                 raise RuntimeError("PrepWizard took longer than 2 hours, skipping")
     if not os.path.exists(outname):
         raise RuntimeError("PrepWizard failed")
 
     st = StructureReader.read(outname)
+    remove_alternate_positions(st)
     deprotonate_phosphate_esters(st)
     st = build.reorder_protein_atoms_by_sequence(st)
 
@@ -409,7 +412,7 @@ def get_prepped_protein(
     return st, outname
 
 
-def run_prepwizard(fname: str, outname: str) -> None:
+def run_prepwizard(fname: str, outname: str, fill_sidechain: bool) -> None:
     """
     Run Schrodinger's PrepWizard
 
@@ -421,38 +424,48 @@ def run_prepwizard(fname: str, outname: str) -> None:
 
     :param fname: input file name for PrepWizard
     :param outname: output file name from PrepWizard
+    :param fill_sidechain: If True, try to fill in side chains
     """
+    args = [
+        os.path.join(SCHRO, "utilities", "prepwizard"),
+        fname,
+        outname,
+        "-noepik",
+        "-noimpref",
+        "-disulfides",
+        "-NOJOBID",
+    ]
+    if fill_sidechain:
+        args.append("-fillsidechains")
     try:
         subprocess.run(
-            [
-                os.path.join(SCHRO, "utilities", "prepwizard"),
-                fname,
-                outname,
-                "-noepik",
-                "-noimpref",
-                "-fillsidechains",
-                "-disulfides",
-                "-NOJOBID",
-            ],
+            args,
             timeout=3600 * 2,  # Wait not more than 2 hours
         )
     except subprocess.TimeoutExpired:
         # Try again without PROPKA (which seems to be where things get stuck)
         print("PrepWizard is taking too long, try without PROPKA")
+        args.append("-nopropka")
         subprocess.run(
-            [
-                os.path.join(SCHRO, "utilities", "prepwizard"),
-                fname,
-                outname,
-                "-noepik",
-                "-noimpref",
-                "-fillsidechains",
-                "-disulfides",
-                "-nopropka",
-                "-NOJOBID",
-            ],
+            args,
             timeout=3600 * 2,  # Wait not more than 2 hours
         )
+
+
+def remove_alternate_positions(st):
+    """
+    Some PDBs have alternate positions for some atoms, we only want the main one
+
+    :param st: Structure which may have alternate positions
+    """
+    alt_coord_names = ["_pdb_alt_", "_m_alt_", "s_pdb_altloc_chars"]
+    alt_props = [
+        prop
+        for prop in st.getAtomPropertyNames()
+        if any(alt_prop in prop for alt_prop in alt_coord_names)
+    ]
+    for prop in alt_props:
+        st.deletePropertyFromAllAtoms(prop)
 
 
 def deprotonate_phosphate_esters(st: Structure) -> None:
@@ -542,7 +555,7 @@ def get_atom_lists(st: Structure, row: pd.Series) -> Tuple[List[int], List[int]]
             res = st.findResidue(res_name)
         except ValueError:
             print(f"missing expected ligand residue: {res_name}")
-            raise MissingResiduesError
+            raise MissingResiduesError("Ligand")
         lig_ats.extend(res.getAtomIndices())
     # Add in coordinating groups for ions
     coord_ats = []
@@ -588,7 +601,7 @@ def get_single_gaps(st: Structure, rec_chain: str, res_list: List[str]) -> List[
             res = st.findResidue(f"{rec_chain}:{res_name}")
         except ValueError:
             print(f"missing expected receptor residue: {rec_chain}:{res_name}")
-            raise MissingResiduesError
+            raise MissingResiduesError("Receptor")
         parent_indices.add(parent_list.index(res))
     gaps = [
         val + 1
@@ -626,6 +639,9 @@ def parse_args():
     parser.add_argument("--start_idx", type=int, required=True)
     parser.add_argument("--end_idx", type=int, required=True)
     parser.add_argument("--output_path", default=".")
+    parser.add_argument(
+        "--no_fill_sidechain", dest="fill_sidechain", action="store_false"
+    )
     return parser.parse_args()
 
 
@@ -637,6 +653,7 @@ def main():
         start_pdb=args.start_idx,
         end_pdb=args.end_idx,
         output_path=args.output_path,
+        fill_sidechain=args.fill_sidechain,
     )
 
 
