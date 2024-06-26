@@ -196,6 +196,7 @@ def retreive_ligand_and_env(
     # random.seed(12341)
     grouped_biolip = biolip_df.groupby("pdb_id")
     pdb_list = list(grouped_biolip.groups.keys())
+    pdb_list = ['1a0q']
     for pdb_count in range(start_pdb, end_pdb):
         # pdb_id = random.choice(list(grouped_biolip.groups.keys()))
         pdb_id = pdb_list[pdb_count]
@@ -398,7 +399,7 @@ def get_prepped_protein(
         raise RuntimeError("PrepWizard failed")
 
     st = StructureReader.read(outname)
-    remove_alternate_positions(st)
+    st = build.remove_alternate_positions(st)
     deprotonate_phosphate_esters(st)
     st = build.reorder_protein_atoms_by_sequence(st)
 
@@ -450,22 +451,6 @@ def run_prepwizard(fname: str, outname: str, fill_sidechain: bool) -> None:
             args,
             timeout=3600 * 2,  # Wait not more than 2 hours
         )
-
-
-def remove_alternate_positions(st):
-    """
-    Some PDBs have alternate positions for some atoms, we only want the main one
-
-    :param st: Structure which may have alternate positions
-    """
-    alt_coord_names = ["_pdb_alt_", "_m_alt_", "s_pdb_altloc_chars"]
-    alt_props = [
-        prop
-        for prop in st.getAtomPropertyNames()
-        if any(alt_prop in prop for alt_prop in alt_coord_names)
-    ]
-    for prop in alt_props:
-        st.deletePropertyFromAllAtoms(prop)
 
 
 def deprotonate_phosphate_esters(st: Structure) -> None:
