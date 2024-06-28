@@ -8,6 +8,7 @@ what is the average density of the solvent.
 """
 import sys
 import data2lammps as d2l
+import lammps2omm as lmm
 import os
 import csv
 import numpy as np
@@ -33,13 +34,14 @@ if neut:
     molfrac = np.array(neut_ratio).astype(int)
     molfrac = molfrac/np.sum(molfrac)
 
-    #Initial boxsize is always 5 nm. 
-    boxsize = 50 
+    #Initial boxsize is always 10 nm. 
+    boxsize = 40 
 
-    num_solv = 500
-    Nmols = [int(num_solv*frac) for frac in molfrac]
+    num_solv = 10
+    Nmols = [int(num_solv*frac) if num_solv*frac >= 1 else 1 for frac in molfrac]
 
     #Run Packmol, followed up by moltemplate 
     d2l.run_packmol_moltemplate(species,boxsize,Nmols,'solvent',str(row_idx-1))
+    lmm.prep_openmm_sim("solvent",[],[],neut,str(row_idx-1))
 else:
     print("Solvent does not exist. Not an error, but check if system is a pure moltent salt/ionic liquid.")

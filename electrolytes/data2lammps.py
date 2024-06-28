@@ -19,8 +19,11 @@ import numpy as np
 import sys
 import os
 import csv 
+import string
+import json
 
 PT = GetPeriodicTable()
+
 
 def get_indices(labels, keyword):
     """ Grab indices of labeled columns given a specific keyword. 

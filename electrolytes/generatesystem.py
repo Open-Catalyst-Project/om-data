@@ -11,9 +11,9 @@ the data2lammps.py module. This script assumes that you have done the following 
 These steps generate a solventdata.txt file containing a time series of the density of the solvent, 
 which we can use to calculate the number of salt molecules to put inside the simulation box. 
 """
-
 import sys
 import data2lammps as d2l
+import lammps2omm as lmm
 import os
 import csv 
 import numpy as np
@@ -54,7 +54,7 @@ species = cat+an+neut#$system[2:Ncomp+2]
 molfrac = salt_molfrac.tolist()+solv_molfrac.tolist()
 
 # Initial boxsize is always 5 nm
-boxsize = 50 #In Angstrom
+boxsize = 60 #In Angstrom
 
 # Calculate how many salt species to add in the system. If units of the salt concentration 
 # is in molality (units == 'mass') then, we don't need solvent density. But if the units is
@@ -62,19 +62,19 @@ boxsize = 50 #In Angstrom
 # stoichiometry (units == 'numbers'), then we have a molten salt/ionic liquid system 
 # and compute the mole fractions directly.
 
-units = systems[row_idx][2]
+units = systems[row_idx][3]
 
 Avog = 6.023*10**23
 Nmols = []
-num_solv = 500
+num_solv = 10#500
 numsalt = 0
 
 salt_conc = np.array(cat_conc+an_conc).astype(float)
-solv_mwweight = sum(calculate_mw(solv)*solv_frac for solv, solv_frac in zip(neut, solv_molfrac))
+solv_mwweight = sum(d2l.calculate_mw(solv)*solv_frac for solv, solv_frac in zip(neut, solv_molfrac))
 
 if 'volume' == units:
     # Solvent density in g/ml, obtained from averaging short MD run
-    data = list(csv.reader(open(f'{i-1}/solventdata.txt', 'r')))
+    data = list(csv.reader(open(f'{row_idx-1}/solventdata.txt', 'r')))
     rho = np.array([float(row[3]) for row in data[1:]])
     rho = np.mean(rho[int(len(rho)/2):]) 
     rho *= 1000 #in g/L
@@ -84,16 +84,23 @@ if 'volume' == units:
     numsalt = np.round(salt_conc*volume*Avog).astype(int)
 elif 'mass' == units:
     #No need to look at solvent density
-    mass = num_solv*solv_mwweight/Avog
+    mass = 1e-3*num_solv*solv_mwweight/Avog #mw is in g/mol, convert to kg/mol
     numsalt = np.round(salt_conc*mass*Avog).astype(int)
 elif 'number' == units:
     salt_molfrac = salt_conc/np.sum(salt_conc)
     numsalt = np.round(salt_molfrac*num_solv).astype(int)
-    print(numsalt)
 
+print(numsalt)
 for j in range(len(cat+an)):
-    Nmols.append(int(numsalt[j]))
+    if numsalt[j] < 1:
+        Nmols.append(1)
+    else:
+        Nmols.append(int(numsalt[j]))
 for j in range(len(neut)):
-    Nmols.append(int(num_solv*solv_molfrac[j]))
+    if int(num_solv*solv_molfrac[j]) < 1:
+        Nmols.append(1)
+    else:
+        Nmols.append(int(num_solv*solv_molfrac[j]))
 
 d2l.run_packmol_moltemplate(species,boxsize,Nmols,'system',str(row_idx-1))
+lmm.prep_openmm_sim("system",cat,an,neut,str(row_idx-1))
