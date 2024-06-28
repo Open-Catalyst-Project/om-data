@@ -1,0 +1,10 @@
+HEADER    water
+COMPND
+SOURCE
+HETATM    1  O00 HOH     1       0.000   0.000   0.000
+HETATM    2  H01 HOH     1       0.818   0.593   0.000
+HETATM    3  H02 HOH     1      -0.818   0.593   0.000
+CONECT    1    2
+CONECT    1    3
+CONECT    1    2    3
+END

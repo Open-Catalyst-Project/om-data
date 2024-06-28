@@ -1,0 +1,8 @@
+HEADER    NONAME 27-Feb-24                                              NONE   1
+TITLE                                                                   NONE   2
+AUTHOR    Apache                                                        NONE   3
+REVDAT   1  27-Feb-24     0                                             NONE   4
+ATOM      1  O           0      -0.057   0.000   0.000  0.00  0.00           O-1
+ATOM      2  H           0       0.910   0.000   0.000  0.00  0.00           H+0
+CONECT    1    2    0    0    0                                         NONE   7
+END                                                                     NONE   8

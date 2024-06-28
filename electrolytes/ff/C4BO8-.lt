@@ -1,0 +1,124 @@
+C4BO8- inherits OPLSCM1A {
+    ### LAMMPS commands for initialization
+    ### (These can be overridden later)
+    write_once("In Init") {
+        atom_style full
+    }
+    write("Data Atoms") {
+        #RESP Charges
+        $atom:b1_c4bo8 $mol:c4bo8 @atom:B_c4bo8 0.808 0.361   0.434   0.565
+        $atom:c1_c4bo8 $mol:c4bo8 @atom:C_c4bo8 0.618 -0.554  -0.142   2.623
+        $atom:c2_c4bo8 $mol:c4bo8 @atom:C_c4bo8 0.618 -1.001   1.189   2.292
+        $atom:c3_c4bo8 $mol:c4bo8 @atom:C_c4bo8 0.618 -2.603 0.93421 1.39853
+        $atom:c4_c4bo8 $mol:c4bo8 @atom:C_c4bo8 0.618 0.922   0.068  -1.662
+        $atom:o1_c4bo8 $mol:c4bo8 @atom:Os_c4bo8 -0.511 0.262  -0.635   1.621
+        $atom:o2_c4bo8 $mol:c4bo8 @atom:O_c4bo8 -0.559 -0.853  -0.778   3.667
+        $atom:o3_c4bo8 $mol:c4bo8 @atom:O_c4bo8 -0.559 -1.754   1.908   2.998 
+        $atom:o4_c4bo8 $mol:c4bo8 @atom:Os_c4bo8 -0.511 -0.480   1.577   1.070
+        $atom:o5_c4bo8 $mol:c4bo8 @atom:Os_c4bo8 -0.511 -4.830 0.80117 2.56864
+        $atom:o6_c4bo8 $mol:c4bo8 @atom:O_c4bo8 -0.559 3.188   0.860  -1.530
+        $atom:o7_c4bo8 $mol:c4bo8 @atom:O_c4bo8 -0.559 0.861  -0.256  -2.877
+        $atom:o8_c4bo8 $mol:c4bo8 @atom:Os_c4bo8 -0.551 -0.128  -0.063  -0.770
+    }
+    write_once("Data Masses") {
+        @atom:B_c4bo8 10.811
+        @atom:O_c4bo8 15.999  
+        @atom:Os_c4bo8 15.999  
+        @atom:C_c4bo8 12.01
+    }
+    write("In Settings") {
+        bond_coeff @bond:BOs_c4bo8 211.90249 1.820
+        bond_coeff @bond:CC_c4bo8 224.4 1.5480   
+        bond_coeff @bond:COs_c4bo8 372.9 1.3580   
+        bond_coeff @bond:CO_c4bo8 652.6 1.2180   
+        
+        angle_coeff @angle:BOsC_c4bo8 99.952199 115.5  
+        angle_coeff @angle:OsBOs_c4bo8 99.952199 109.5
+        angle_coeff @angle:CCO_c4bo8 84.3 120.85   
+        angle_coeff @angle:CCOs_c4bo8 85.3 111.41   
+        angle_coeff @angle:OCOs_c4bo8 114.8 123.25   
+        
+        dihedral_coeff @dihedral:CCOsB_c4bo8 opls 0 19.8375 0 0  
+        dihedral_coeff @dihedral:OsBOsC_c4bo8 opls 0 2.15105 0 0  
+        dihedral_coeff @dihedral:OCCOs_c4bo8 fourier 1 30.1147228 2 0.0
+        dihedral_coeff @dihedral:OsCCO_c4bo8 fourier 1 30.1147228 2 0.0
+        dihedral_coeff @dihedral:OCCO_c4bo8 opls 0 15.0573613767 0 0
+        dihedral_coeff @dihedral:OsCCOs_c4bo8 opls 0 19.8375 0 0
+        dihedral_coeff @dihedral:OCOsB_c4bo8 opls 0 7.3565966 0 0
+        
+        pair_coeff @atom:B_c4bo8 @atom:B_c4bo8 0.0949808795 3.5810 
+        pair_coeff @atom:O_c4bo8 @atom:O_c4bo8 0.1463 3.048120874245357
+        pair_coeff @atom:Os_c4bo8 @atom:Os_c4bo8 0.0726 3.156097798883966
+        pair_coeff @atom:C_c4bo8 @atom:C_c4bo8 0.0988 3.3152123099438304
+    }
+    write("Data Dihedrals") {
+        $dihedral:ccob1_c4bo8 @dihedral:CCOsB_c4bo8 $atom:c1_c4bo8 $atom:c2_c4bo8 $atom:o4_c4bo8 $atom:b1_c4bo8
+        $dihedral:ccob2_c4bo8 @dihedral:CCOsB_c4bo8 $atom:c2_c4bo8 $atom:c1_c4bo8 $atom:o1_c4bo8 $atom:b1_c4bo8
+        $dihedral:ccob3_c4bo8 @dihedral:CCOsB_c4bo8 $atom:c3_c4bo8 $atom:c4_c4bo8 $atom:o8_c4bo8 $atom:b1_c4bo8
+        $dihedral:ccob4_c4bo8 @dihedral:CCOsB_c4bo8 $atom:c4_c4bo8 $atom:c3_c4bo8 $atom:o5_c4bo8 $atom:b1_c4bo8
+        $dihedral:oboc1_c4bo8 @dihedral:OsBOsC_c4bo8 $atom:o1_c4bo8 $atom:b1_c4bo8 $atom:o4_c4bo8 $atom:c2_c4bo8
+        $dihedral:oboc2_c4bo8 @dihedral:OsBOsC_c4bo8 $atom:o1_c4bo8 $atom:b1_c4bo8 $atom:o5_c4bo8 $atom:c3_c4bo8
+        $dihedral:oboc3_c4bo8 @dihedral:OsBOsC_c4bo8 $atom:o1_c4bo8 $atom:b1_c4bo8 $atom:o8_c4bo8 $atom:c4_c4bo8
+        $dihedral:occo1_c4bo8 @dihedral:OsCCO_c4bo8 $atom:o1_c4bo8 $atom:c1_c4bo8 $atom:c2_c4bo8 $atom:o3_c4bo8
+        $dihedral:occo2_c4bo8 @dihedral:OCCOs_c4bo8 $atom:o1_c4bo8 $atom:c1_c4bo8 $atom:c2_c4bo8 $atom:o4_c4bo8
+        $dihedral:occo3_c4bo8 @dihedral:OCCO_c4bo8 $atom:o2_c4bo8 $atom:c1_c4bo8 $atom:c2_c4bo8 $atom:o3_c4bo8
+        $dihedral:occo4_c4bo8 @dihedral:OCCOs_c4bo8 $atom:o2_c4bo8 $atom:c1_c4bo8 $atom:c2_c4bo8 $atom:o4_c4bo8
+        $dihedral:ocob1_c4bo8 @dihedral:OCOsB_c4bo8 $atom:o3_c4bo8 $atom:c2_c4bo8 $atom:o4_c4bo8 $atom:b1_c4bo8
+        $dihedral:oboc4_c4bo8 @dihedral:OsBOsC_c4bo8 $atom:o4_c4bo8 $atom:b1_c4bo8 $atom:o1_c4bo8 $atom:c1_c4bo8
+        $dihedral:oboc5_c4bo8 @dihedral:OsBOsC_c4bo8 $atom:o4_c4bo8 $atom:b1_c4bo8 $atom:o5_c4bo8 $atom:c3_c4bo8
+        $dihedral:oboc6_c4bo8 @dihedral:OsBOsC_c4bo8 $atom:o4_c4bo8 $atom:b1_c4bo8 $atom:o8_c4bo8 $atom:c4_c4bo8
+        $dihedral:oboc7_c4bo8 @dihedral:OsBOsC_c4bo8 $atom:o5_c4bo8 $atom:b1_c4bo8 $atom:o1_c4bo8 $atom:c1_c4bo8
+        $dihedral:oboc8_c4bo8 @dihedral:OsBOsC_c4bo8 $atom:o5_c4bo8 $atom:b1_c4bo8 $atom:o8_c4bo8 $atom:c2_c4bo8
+        $dihedral:oboc9_c4bo8 @dihedral:OsBOsC_c4bo8 $atom:o5_c4bo8 $atom:b1_c4bo8 $atom:o8_c4bo8 $atom:c4_c4bo8
+    
+        $dihedral:occo5_c4bo8 @dihedral:OCCOs_c4bo8 $atom:o5_c4bo8 $atom:c3_c4bo8 $atom:c4_c4bo8 $atom:o7_c4bo8
+        $dihedral:occo6_c4bo8 @dihedral:OsCCOs_c4bo8 $atom:o5_c4bo8 $atom:c3_c4bo8 $atom:c4_c4bo8 $atom:o8_c4bo8
+        $dihedral:occo7_c4bo8 @dihedral:OCCO_c4bo8 $atom:o6_c4bo8 $atom:c3_c4bo8 $atom:c4_c4bo8 $atom:o7_c4bo8
+        $dihedral:occo8_c4bo8 @dihedral:OCCOs_c4bo8 $atom:o6_c4bo8 $atom:c3_c4bo8 $atom:c4_c4bo8 $atom:o8_c4bo8
+        $dihedral:ocob2_c4bo8 @dihedral:OCOsB_c4bo8 $atom:o6_c4bo8 $atom:c3_c4bo8 $atom:o5_c4bo8 $atom:b1_c4bo8
+        $dihedral:ocob3_c4bo8 @dihedral:OCOsB_c4bo8 $atom:o7_c4bo8 $atom:c4_c4bo8 $atom:o8_c4bo8 $atom:b1_c4bo8
+        $dihedral:oboc10_c4bo8 @dihedral:OsBOsC_c4bo8 $atom:o8_c4bo8 $atom:b1_c4bo8 $atom:o1_c4bo8 $atom:c1_c4bo8
+        $dihedral:oboc11_c4bo8 @dihedral:OsBOsC_c4bo8 $atom:o8_c4bo8 $atom:b1_c4bo8 $atom:o4_c4bo8 $atom:c2_c4bo8
+        $dihedral:oboc12_c4bo8 @dihedral:OsBOsC_c4bo8 $atom:o8_c4bo8 $atom:b1_c4bo8 $atom:o5_c4bo8 $atom:c3_c4bo8
+    }
+    write("Data Angles") {
+        $angle:boc1_c4bo8 @angle:BOsC_c4bo8 $atom:b1_c4bo8 $atom:o1_c4bo8 $atom:c1_c4bo8 
+        $angle:boc2_c4bo8 @angle:BOsC_c4bo8 $atom:b1_c4bo8 $atom:o4_c4bo8 $atom:c2_c4bo8 
+        $angle:boc3_c4bo8 @angle:BOsC_c4bo8 $atom:b1_c4bo8 $atom:o5_c4bo8 $atom:c3_c4bo8 
+        $angle:boc4_c4bo8 @angle:BOsC_c4bo8 $atom:b1_c4bo8 $atom:o8_c4bo8 $atom:c4_c4bo8 
+        $angle:cco1_c4bo8 @angle:CCO_c4bo8 $atom:c1_c4bo8 $atom:c2_c4bo8 $atom:o3_c4bo8 
+        $angle:cco2_c4bo8 @angle:CCOs_c4bo8 $atom:c1_c4bo8 $atom:c2_c4bo8 $atom:o4_c4bo8 
+        $angle:cco3_c4bo8 @angle:CCOs_c4bo8 $atom:c2_c4bo8 $atom:c1_c4bo8 $atom:o1_c4bo8 
+        $angle:cco4_c4bo8 @angle:CCO_c4bo8 $atom:c2_c4bo8 $atom:c1_c4bo8 $atom:o2_c4bo8 
+        $angle:cco5_c4bo8 @angle:CCO_c4bo8 $atom:c3_c4bo8 $atom:c4_c4bo8 $atom:o7_c4bo8 
+        $angle:cco6_c4bo8 @angle:CCOs_c4bo8 $atom:c3_c4bo8 $atom:c4_c4bo8 $atom:o8_c4bo8 
+        $angle:cco7_c4bo8 @angle:CCOs_c4bo8 $atom:c4_c4bo8 $atom:c3_c4bo8 $atom:o5_c4bo8 
+        $angle:cco8_c4bo8 @angle:CCOs_c4bo8 $atom:c4_c4bo8 $atom:c3_c4bo8 $atom:o6_c4bo8 
+        $angle:obo1_c4bo8 @angle:OsBOs_c4bo8 $atom:o1_c4bo8 $atom:b1_c4bo8 $atom:o4_c4bo8 
+        $angle:obo2_c4bo8 @angle:OsBOs_c4bo8 $atom:o1_c4bo8 $atom:b1_c4bo8 $atom:o5_c4bo8 
+        $angle:obo3_c4bo8 @angle:OsBOs_c4bo8 $atom:o1_c4bo8 $atom:b1_c4bo8 $atom:o8_c4bo8 
+        $angle:oco1_c4bo8 @angle:OCOs_c4bo8 $atom:o1_c4bo8 $atom:c1_c4bo8 $atom:o2_c4bo8 
+        $angle:oco2_c4bo8 @angle:OCOs_c4bo8 $atom:o3_c4bo8 $atom:c2_c4bo8 $atom:o4_c4bo8 
+        $angle:obo4_c4bo8 @angle:OsBOs_c4bo8 $atom:o4_c4bo8 $atom:b1_c4bo8 $atom:o5_c4bo8 
+        $angle:obo5_c4bo8 @angle:OsBOs_c4bo8 $atom:o4_c4bo8 $atom:b1_c4bo8 $atom:o8_c4bo8 
+        $angle:obo6_c4bo8 @angle:OsBOs_c4bo8 $atom:o5_c4bo8 $atom:b1_c4bo8 $atom:o8_c4bo8 
+        $angle:oco4_c4bo8 @angle:OCOs_c4bo8 $atom:o5_c4bo8 $atom:c3_c4bo8 $atom:o6_c4bo8 
+        $angle:oco5_c4bo8 @angle:OCOs_c4bo8 $atom:o7_c4bo8 $atom:c4_c4bo8 $atom:o8_c4bo8 
+    }
+    write("Data Bonds") {
+        $bond:bo1_c4bo8 @bond:BOs_c4bo8 $atom:b1_c4bo8 $atom:o1_c4bo8
+        $bond:bo2_c4bo8 @bond:BOs_c4bo8 $atom:b1_c4bo8 $atom:o4_c4bo8
+        $bond:bo3_c4bo8 @bond:BOs_c4bo8 $atom:b1_c4bo8 $atom:o5_c4bo8
+        $bond:bo4_c4bo8 @bond:BOs_c4bo8 $atom:b1_c4bo8 $atom:o8_c4bo8
+        $bond:cc1_c4bo8 @bond:CC_c4bo8 $atom:c1_c4bo8 $atom:c2_c4bo8
+        $bond:co1_c4bo8 @bond:COs_c4bo8 $atom:c1_c4bo8 $atom:o1_c4bo8
+        $bond:co2_c4bo8 @bond:CO_c4bo8 $atom:c1_c4bo8 $atom:o2_c4bo8
+        $bond:co3_c4bo8 @bond:CO_c4bo8 $atom:c1_c4bo8 $atom:o3_c4bo8
+        $bond:co4_c4bo8 @bond:COs_c4bo8 $atom:c1_c4bo8 $atom:o4_c4bo8
+        $bond:cc2_c4bo8 @bond:CC_c4bo8 $atom:c3_c4bo8 $atom:c4_c4bo8
+        $bond:co5_c4bo8 @bond:COs_c4bo8 $atom:c1_c4bo8 $atom:o5_c4bo8
+        $bond:co6_c4bo8 @bond:CO_c4bo8 $atom:c1_c4bo8 $atom:o6_c4bo8
+        $bond:co7_c4bo8 @bond:CO_c4bo8 $atom:c1_c4bo8 $atom:o7_c4bo8
+        $bond:co8_c4bo8 @bond:COs_c4bo8 $atom:c1_c4bo8 $atom:o8_c4bo8
+    }
+}

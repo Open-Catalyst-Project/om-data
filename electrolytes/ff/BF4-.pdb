@@ -1,0 +1,12 @@
+REMARK SELFMADE PDBFILE
+ATOM      1  B00 UNK     1      -0.000   0.000  -0.000  
+ATOM      2  F01 UNK     1      -0.287  -0.937  -1.074  
+ATOM      3  F02 UNK     1      -0.755   1.224  -0.211  
+ATOM      4  F03 UNK     1       1.422   0.303   0.011  
+ATOM      5  F04 UNK     1      -0.380  -0.590   1.273
+TER
+CONECT 1 2
+CONECT 1 3
+CONECT 1 4
+CONECT 1 5
+END                                                                             

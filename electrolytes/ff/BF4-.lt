@@ -1,0 +1,34 @@
+BF4- inherits OPLSCM1A {
+  ### Inheriting from oplsaa.lt
+  write("Data Atoms") {
+    $atom:b1_bf4 $mol @atom:B_bf4  0.8276 -0.000   0.000  -0.000 # B
+    $atom:f1_bf4 $mol @atom:F_bf4 -0.4569 -0.287  -0.937  -1.074 # F
+    $atom:f2_bf4 $mol @atom:F_bf4 -0.4569 -0.755   1.224  -0.211 # F
+    $atom:f3_bf4 $mol @atom:F_bf4 -0.4569  1.422   0.303   0.011 # F
+    $atom:f4_bf4 $mol @atom:F_bf4 -0.4569 -0.380  -0.590   1.273 # F
+  }
+write_once("Data Masses") {
+    @atom:B_bf4  10.811
+    @atom:F_bf4  18.998
+  }
+  write("Data Bonds") {
+    $bond:bf1 @bond:BF_bf4 $atom:b1_bf4 $atom:f1_bf4
+    $bond:bf2 @bond:BF_bf4 $atom:b1_bf4 $atom:f2_bf4
+    $bond:bf3 @bond:BF_bf4 $atom:b1_bf4 $atom:f3_bf4
+    $bond:bf4 @bond:BF_bf4 $atom:b1_bf4 $atom:f4_bf4
+  }
+  write("Data Angles") {
+    $angle:fbf1_bf4 @angle:FBF_bf4 $atom:f1_bf4 $atom:b1_bf4 $atom:f2_bf4
+    $angle:fbf2_bf4 @angle:FBF_bf4 $atom:f2_bf4 $atom:b1_bf4 $atom:f3_bf4
+    $angle:fbf3_bf4 @angle:FBF_bf4 $atom:f3_bf4 $atom:b1_bf4 $atom:f4_bf4
+    $angle:fbf4_bf4 @angle:FBF_bf4 $atom:f1_bf4 $atom:b1_bf4 $atom:f3_bf4
+    $angle:fbf5_bf4 @angle:FBF_bf4 $atom:f1_bf4 $atom:b1_bf4 $atom:f4_bf4
+    $angle:fbf6_bf4 @angle:FBF_bf4 $atom:f2_bf4 $atom:b1_bf4 $atom:f4_bf4
+  }
+  write_once("In Settings") {
+    bond_coeff   @bond:BF_bf4         386.59 1.394
+    angle_coeff  @angle:FBF_bf4       109.47 80       
+    pair_coeff  @atom:B_bf4  @atom:B_bf4   0.095 3.5814
+    pair_coeff  @atom:F_bf4  @atom:F_bf4   0.06  3.1181
+  }
+} # end of "BF4-" type definition

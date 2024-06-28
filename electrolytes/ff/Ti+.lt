@@ -1,0 +1,13 @@
+Ti+ {
+    # AtomID  MolID  AtomType  charge   X       Y         Z
+    write("Data Atoms") {
+        $atom:Ti $mol @atom:Ti    1    0.00000  0.00000   0.000000
+    }
+    write_once("Data Masses") {
+        @atom:Ti 47.87
+    }
+    # The "In Settings" section stores force-field parameters for this molecule
+    write_once("In Settings") {
+        pair_coeff @atom:Ti @atom:Ti  0.12244452 2.986292503206417
+    }
+}
