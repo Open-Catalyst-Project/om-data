@@ -54,28 +54,36 @@ def extract_solvation_shells(
         )
     }
 
-    solute_resnames = [
-        k for k, v in residue_to_species_and_type_mapping.items() if v[1] == "solute"
-    ]
-    solvent_resnames = [
-        k for k, v in residue_to_species_and_type_mapping.items() if v[1] == "solvent"
-    ]
+    solutes = {
+        v[0]: k
+        for k, v in residue_to_species_and_type_mapping.items()
+        if v[1] == "solute"
+    }
+    solute_resnames = list(solutes.keys())
+
+    solvents = {
+        v[0]: k
+        for k, v in residue_to_species_and_type_mapping.items()
+        if v[1] == "solvent"
+    }
+    solvent_resnames = list(solvents.keys())
 
     # Read a structure
     structures = StructureReader(os.path.join(input_dir, "system_output.pdb"))
 
     # For each solute: extract shells around the solute of some heuristic radii and bin by composition/graph hash
     # Choose the N most diverse in each bin
-    # Repeat this for each solvent
-    logging.info("Extracting solvation shells from MD trajectory")
-    expanded_shells = []
-    for i, st in tqdm(enumerate(structures)):  # loop over timesteps
-        if i > 10:
-            break
 
-        for residue, (species, _type) in residue_to_species_and_type_mapping.items():
-            # TODO: instead loop over all solute residues
-            if _type == "solute" and species == "Li+":
+    for species, residue in solutes.items():
+        logging.info(f"Extracting solvation shells around {species})")
+
+        for radius in radii:
+            logging.info(f"Radius = {radius} A")
+            expanded_shells = []
+            for i, st in tqdm(enumerate(structures)):  # loop over timesteps
+                if i > 10:  # TODO: fix this
+                    break
+
                 # extract all atoms in this solute
                 solute_molecules = [
                     res for res in st.residue if res.pdbres == f"{residue} "
@@ -86,46 +94,48 @@ def extract_solvation_shells(
                 shells = [
                     set(
                         analyze.evaluate_asl(
-                            st, f"fillres within {radii[0]} mol {mol_num}"
+                            st, f"fillres within {radius} mol {mol_num}"
                         )
                     )
                     for mol_num in central_solute_nums
                 ]
 
-                # Now expand the shells
-                for shell, central_solute in zip(shells, central_solute_nums):
-                    expanded_shell = expand_shell(
-                        st,
-                        shell,
-                        central_solute,
-                        radii[0],
-                        solute_resnames,
-                        max_shell_size=200,
-                    )
-                    expanded_shells.append(expanded_shell)
+            # Now expand the shells
+            for shell, central_solute in zip(shells, central_solute_nums):
+                expanded_shell = expand_shell(
+                    st,
+                    shell,
+                    central_solute,
+                    radius,
+                    solute_resnames,
+                    max_shell_size=200,
+                )
+                expanded_shells.append(expanded_shell)
 
-    # Now compare the expanded shells and group them by similarity
-    # we will get lists of lists of shells where each list of structures are conformers of each other
-    logging.info("Grouping solvation shells into conformers")
-    grouped_shells = group_with_comparison(expanded_shells, are_conformers)
+            # Now compare the expanded shells and group them by similarity
+            # we will get lists of lists of shells where each list of structures are conformers of each other
+            logging.info("Grouping solvation shells into conformers")
+            grouped_shells = group_with_comparison(expanded_shells, are_conformers)
 
-    # Now ensure that topologically related atoms are equivalently numbered (up to molecular symmetry)
-    grouped_shells = [renumber_molecules_to_match(items) for items in grouped_shells]
+            # Now ensure that topologically related atoms are equivalently numbered (up to molecular symmetry)
+            grouped_shells = [
+                renumber_molecules_to_match(items) for items in grouped_shells
+            ]
 
-    # Now extract the top N most diverse shells from each group
-    logging.info(f"Extracting top {top_n} most diverse shells from each group")
-    final_shells = []
-    # example grouping - set of structures
-    for shell_group in tqdm(grouped_shells):
-        filtered_shells = filter_by_rmsd(shell_group, n=top_n)
-        final_shells.extend(filtered_shells)
+            # Now extract the top N most diverse shells from each group
+            logging.info(f"Extracting top {top_n} most diverse shells from each group")
+            final_shells = []
+            # example grouping - set of structures
+            for shell_group in tqdm(grouped_shells):
+                filtered_shells = filter_by_rmsd(shell_group, n=top_n)
+                final_shells.extend(filtered_shells)
 
-    # Save the final shells
-    logging.info("Saving final solvation shells")
-    save_path = os.path.join(save_dir, system_name)
-    os.makedirs(save_path, exist_ok=True)
-    for i, st in enumerate(final_shells):
-        st.write(os.path.join(save_path, f"shell_{i}.xyz"))
+            # Save the final shells
+            logging.info(f"Saving final solvation shells")
+            save_path = os.path.join(save_dir, system_name, species, f"radius={radius}")
+            os.makedirs(save_path, exist_ok=True)
+            for i, st in enumerate(final_shells):
+                st.write(os.path.join(save_path, f"shell_{i}.xyz"))
 
 
 if __name__ == "__main__":
