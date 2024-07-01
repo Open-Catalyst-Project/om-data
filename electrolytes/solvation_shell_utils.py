@@ -1,11 +1,84 @@
 import re
 import numpy as np
 import random
-from typing import List
-from rmsd import kabsch_rmsd
+from typing import List, Callable
+
+from schrodinger.structutils import analyze
+from schrodinger.application.matsci import clusterstruct
+from schrodinger.comparison import are_conformers
+from schrodinger.application.jaguar.utils import group_with_comparison
+from schrodinger.comparison.atom_mapper import ConnectivityAtomMapper
+from schrodinger.structutils import rmsd
+from schrodinger.structure import Structure
 
 
-def filter_by_rmsd(coords: List[np.array], n: int = 20) -> List[np.array]:
+def rmsd_wrapper(st1: Structure, st2: Structure) -> float:
+    """
+    Wrapper around Schrodinger's RMSD calculation function.
+    """
+    assert (
+        st1.atom_total == st2.atom_total
+    ), "Structures must have the same number of atoms for RMSD calculation"
+    at_list = list(range(1, st1.atom_total + 1))
+    return rmsd.calculate_in_place_rmsd(st1, at_list, st2, at_list, use_symmetry=True)
+
+
+def expand_shell(
+    st: Structure,
+    shell_ats: List[int],
+    central_solute: int,
+    radius: float,
+    solute_res_names: List[str],
+    max_shell_size: int = 200,
+) -> Structure:
+    """
+    Expands a solvation shell. If there are any (non-central) solutes present in the shell,
+    recursively include shells around those solutes.
+    First, gets the molecule numbers of solute molecules that are within the radius
+    and not already expanded around. Then, continuously expand around them as long as we don't hit an atom limit.
+    Args:
+        st: Entire structure from the PDB file
+        shell_ats: Set of atoms in a shell (1-indexed)
+        central_solute: Index of the central solute atom in the shell
+        radius: Solvation radius (Angstroms) to consider
+        solute_res_names: List of residue names that correspond to solute atoms in the simulation
+        max_shell_size: Maximum size (in atoms) of the expanded shell
+    Returns:
+        Structure object containing the expanded solvation shell
+    """
+    solutes_included = set([central_solute])
+    while len(shell_ats) < max_shell_size:
+        new_solutes = set()
+        for at in shell_ats:
+            # atom is part of a non-central solute molecule - should expand the shell
+            if (
+                st.atom[at].molecule_number not in solutes_included
+                and st.atom[at].getResidue().pdbres in solute_res_names
+            ):
+                new_solutes.add(st.atom[at].molecule_number)
+
+        if new_solutes:
+            # add entire residues within solvation shell radius of any extra solute atoms
+            shell_ats.update(
+                analyze.evaluate_asl(
+                    st,
+                    f'fillres within {radius} mol {",".join([str(i) for i in new_solutes])}',
+                )
+            )
+            solutes_included.update(new_solutes)
+        else:
+            break
+
+    final_structure = st.extract(sorted(shell_ats), copy_props=True)
+    # contract everthing to be centered on our molecule of interest
+    # (this will also handle if a molecule is split across a PBC)
+    # clusterstruct.contract_structure2(
+    #     final_structure, contract_on_atoms=[central_solute]
+    # )
+    return final_structure
+
+
+def filter_by_rmsd(shells: List[Structure], n: int = 20) -> List[Structure]:
     """
     From a set of coordinates, determine the n most diverse, where "most diverse" means "most different, in terms of minimum RMSD.
     We use the Kabsch Algorithm (https://en.wikipedia.org/wiki/Kabsch_algorithm) to align coordinates based on rotation/translation before computing the RMSD.
@@ -13,76 +86,34 @@ def filter_by_rmsd(coords: List[np.array], n: int = 20) -> List[np.array]:
     by assuming that the random seed point is actually in the MMDP set (which there's no reason a priori to assume). As a result, if we ran this function multiple times, we would get different results.
 
     Args:
-        coords: list of np.arrays of atom coordinates. Must all have the same shape ([N_atoms, 3]), and must all reflect the same atom order!
-            Note that this latter requirement shouldn't be a problem, specifically when dealing with IonSolvR data.
-        n: number of most diverse coordinates to return
+        shell: List of Schrodinger structure objects containing solvation shells
+        n: number of most diverse shells to return
     Returns:
-        list of np.arrays of diverse atom coordinates
+        List of n Schrodinger structures that are the most diverse in terms of minimum RMSD
     """
 
-    seed_point = random.randint(0, len(coords) - 1)
+    seed_point = random.randint(0, len(shells) - 1)
     states = {seed_point}
-    min_rmsds = np.array(
-        [kabsch_rmsd(coords[seed_point], coord, translate=True) for coord in coords]
-    )
+    min_rmsds = np.array([rmsd_wrapper(shells[seed_point], shell) for shell in shells])
     for _ in range(n - 1):
         best = np.argmax(min_rmsds)
         min_rmsds = np.minimum(
             min_rmsds,
-            np.array(
-                [kabsch_rmsd(coords[best], coord, translate=True) for coord in coords]
-            ),
+            np.array([rmsd_wrapper(shells[best], shell) for shell in shells]),
         )
         states.add(best)
 
-    return [coords[i] for i in states]
+    return [shells[i] for i in states]
 
 
-def wrap_positions(positions: np.array, lattices: np.array) -> np.array:
+def renumber_molecules_to_match(mol_list):
     """
-    Wraps input positions based on periodic boundary conditions.
-    Args:
-        positions: numpy array of positions, shape [N_atoms, 3]
-        lattices: numpy array representing dimensions of simulation box, shape [1, 1, 3]
-    Returns:
-        numpy array of wrapped_positions, shape [N_atoms, 3]
+    Ensure that topologically equivalent sites are equivalently numbered
     """
-    displacements = positions[:, np.newaxis, :] - positions[np.newaxis, :, :]
-    idx = np.where(displacements > lattices / 2)[0]
-    dim = np.where(displacements > lattices / 2)[2]
-    if idx.shape[0] > 0:
-        positions[idx, dim] -= lattices[0, 0, dim]
-    return positions
-
-
-def extract_charges_from_lammps_file(file_path: str) -> List[float]:
-    """
-    Extracts partial charges of each atom from a LAMMPS file.
-    Args:
-        file_path (str): path to the LAMMPS file
-    Returns:
-        charges: list of partial charges of length N_atoms
-    """
-    with open(file_path, "r") as file:
-        lines = file.readlines()
-
-    atoms_section = False
-    charges = []
-    first = False
-    for line in lines:
-        if "Atoms" in line:
-            atoms_section = True
-            first = True
-            continue
-        if atoms_section:
-            if line.strip() == "":
-                if not first:
-                    atoms_section = False
-                continue
-            first = False
-            parts = re.split(r"\s+", line.strip())
-            # Assuming the format is: atom-ID molecule-ID atom-type charge x y z
-            charge = float(parts[3])
-            charges.append(charge)
-
-    return charges
+    mapper = ConnectivityAtomMapper(use_chirality=False)
+    atlist = range(1, mol_list[0].atom_total + 1)
+    renumbered_mols = [mol_list[0]]
+    for mol in mol_list[1:]:
+        _, r_mol = mapper.reorder_structures(mol_list[0], atlist, mol, atlist)
+        renumbered_mols.append(r_mol)
+    return renumbered_mols

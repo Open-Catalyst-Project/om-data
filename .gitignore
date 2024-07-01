@@ -112,3 +112,17 @@ Local
 
 # VS Code
 .vscode/
+
+# testfiles
+testfiles/
+testfiles_old/
+*mae
+
+# Schrodinger stuff
+maestro_package/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*ipynb
+
+
