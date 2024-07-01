@@ -341,7 +341,7 @@ def dump_xyzs(
     path.mkdir(exist_ok=True)
 
     for ii, (atoms, charge, spin) in enumerate(complexes):
-        write(f"{path}/{prefix}_solv{ii}_{charge}_{spin}.xyz", atoms, format="xyz")
+        write(str(path / f"{prefix}_solv{ii}_{charge}_{spin}.xyz"), atoms, format="xyz")
 
 
 if __name__ == "__main__":
