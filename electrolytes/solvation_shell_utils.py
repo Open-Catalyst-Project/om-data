@@ -12,17 +12,6 @@ from schrodinger.structutils import rmsd
 from schrodinger.structure import Structure
 
 
-def rmsd_wrapper(st1: Structure, st2: Structure) -> float:
-    """
-    Wrapper around Schrodinger's RMSD calculation function.
-    """
-    assert (
-        st1.atom_total == st2.atom_total
-    ), "Structures must have the same number of atoms for RMSD calculation"
-    at_list = list(range(1, st1.atom_total + 1))
-    return rmsd.calculate_in_place_rmsd(st1, at_list, st2, at_list, use_symmetry=True)
-
-
 def expand_shell(
     st: Structure,
     shell_ats: List[int],
@@ -80,10 +69,10 @@ def expand_shell(
 
 def filter_by_rmsd(shells: List[Structure], n: int = 20) -> List[Structure]:
     """
-    From a set of coordinates, determine the n most diverse, where "most diverse" means "most different, in terms of minimum RMSD.
-    We use the Kabsch Algorithm (https://en.wikipedia.org/wiki/Kabsch_algorithm) to align coordinates based on rotation/translation before computing the RMSD.
-    Note: The Max-Min Diversity Problem is in general NP-hard. This algorithm generates a candidate solution to MMDP for these coords
-    by assuming that the random seed point is actually in the MMDP set (which there's no reason a priori to assume). As a result, if we ran this function multiple times, we would get different results.
+    From a set of shell coordinates, determine the n most diverse shells, where "most diverse" means "most different, in terms of minimum RMSD.
+    Note: The Max-Min Diversity Problem (MMDP) is in general NP-hard. This algorithm generates a candidate solution to MMDP for these coords
+    by assuming that the random seed point is actually in the MMDP set (which there's no reason a priori to assume). As a result, if we ran
+    this function multiple times, we would get different results.
 
     Args:
         shell: List of Schrodinger structure objects containing solvation shells
@@ -93,7 +82,7 @@ def filter_by_rmsd(shells: List[Structure], n: int = 20) -> List[Structure]:
     """
 
     seed_point = random.randint(0, len(shells) - 1)
-    states = {seed_point}
+    final_shell_idxs = {seed_point}
     min_rmsds = np.array([rmsd_wrapper(shells[seed_point], shell) for shell in shells])
     for _ in range(n - 1):
         best = np.argmax(min_rmsds)
@@ -101,9 +90,21 @@ def filter_by_rmsd(shells: List[Structure], n: int = 20) -> List[Structure]:
             min_rmsds,
             np.array([rmsd_wrapper(shells[best], shell) for shell in shells]),
         )
-        states.add(best)
+        final_shell_idxs.add(best)
+    return [shells[i] for i in final_shell_idxs]
 
-    return [shells[i] for i in states]
+
+def rmsd_wrapper(st1: Structure, st2: Structure) -> float:
+    """
+    Wrapper around Schrodinger's RMSD calculation function.
+    """
+    assert (
+        st1.atom_total == st2.atom_total
+    ), "Structures must have the same number of atoms for RMSD calculation"
+    if st1 == st2:
+        return 0.0
+    at_list = list(range(1, st1.atom_total + 1))
+    return rmsd.calculate_in_place_rmsd(st1, at_list, st2, at_list, use_symmetry=True)
 
 
 def renumber_molecules_to_match(mol_list):
