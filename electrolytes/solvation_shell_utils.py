@@ -35,6 +35,13 @@ def expand_shell(
     Returns:
         Structure object containing the expanded solvation shell
     """
+    try:
+        assert central_solute in shell_ats, "Central solute not in shell"
+    except AssertionError as e:
+        print(e)
+        print(f"Central solute: {central_solute}")
+        print(f"Shell atoms: {shell_ats}")
+        import pdb; pdb.set_trace()
     solutes_included = set([central_solute])
     while len(shell_ats) < max_shell_size:
         new_solutes = set()
@@ -57,13 +64,18 @@ def expand_shell(
             solutes_included.update(new_solutes)
         else:
             break
+    shell_ats = sorted(shell_ats)
+    final_structure = st.extract(shell_ats, copy_props=True)
 
-    final_structure = st.extract(sorted(shell_ats), copy_props=True)
+    # find index of central solute in the sorted shell_ats (adjust for 1-indexing)
+    central_solute_idx = shell_ats.index(central_solute) + 1
+
     # contract everthing to be centered on our molecule of interest
     # (this will also handle if a molecule is split across a PBC)
-    # clusterstruct.contract_structure2(
-    #     final_structure, contract_on_atoms=[central_solute]
-    # )
+
+    clusterstruct.contract_structure2(
+        final_structure, contract_on_atoms=[central_solute_idx]
+    )
     return final_structure
 
 

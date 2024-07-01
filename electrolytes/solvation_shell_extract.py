@@ -122,6 +122,7 @@ def extract_solvation_shells(
             # Now compare the expanded shells and group them by similarity
             # we will get lists of lists of shells where each list of structures are conformers of each other
             logging.info("Grouping solvation shells into conformers")
+            # TODO: speed this up
             grouped_shells = group_with_comparison(expanded_shells, are_conformers)
 
             # Now ensure that topologically related atoms are equivalently numbered (up to molecular symmetry)
@@ -144,8 +145,9 @@ def extract_solvation_shells(
             for i, st in enumerate(final_shells):
                 st.write(os.path.join(save_path, f"shell_{i}.xyz"))
 
-    # Now repeat for solvents
+    # Now repeat for solvents:
     for species, residue in solvents.items():
+        # TODO: implement
         pass
 
 
@@ -167,7 +169,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--radii",
         type=list,
-        default=[3, 6],
+        default=[3],
         help="List of solvation shell radii to extract",
     )
 
