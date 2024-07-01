@@ -47,26 +47,24 @@ def extract_solvation_shells(
     with open(os.path.join(input_dir, "metadata_system.json")) as f:
         metadata = json.load(f)
 
-    residue_to_species_and_type_mapping = {
-        k: (v1, v2)
-        for k, v1, v2 in zip(
-            metadata["residue"], metadata["species"], metadata["solute_or_solvent"]
-        )
-    }
 
     solutes = {
-        v[0]: k
-        for k, v in residue_to_species_and_type_mapping.items()
-        if v[1] == "solute"
-    }
-    solute_resnames = list(solutes.keys())
+        species: res
+        for res, species, type in zip(
+            metadata["residue"], metadata["species"], metadata["solute_or_solvent"]
+        )
+        if type == "solute"
+    } # {species: residue name} mapping
+    solute_resnames = list(solutes.values())
 
     solvents = {
-        v[0]: k
-        for k, v in residue_to_species_and_type_mapping.items()
-        if v[1] == "solvent"
-    }
-    solvent_resnames = list(solvents.keys())
+        species: res
+        for res, species, type in zip(
+            metadata["residue"], metadata["species"], metadata["solute_or_solvent"]
+        )
+        if type == "solvent"
+    } # {species: residue name} mapping
+    solvent_resnames = list(solvents.values())
 
     # Read a structure
     structures = StructureReader(os.path.join(input_dir, "system_output.pdb"))
@@ -76,7 +74,6 @@ def extract_solvation_shells(
 
     for species, residue in solutes.items():
         logging.info(f"Extracting solvation shells around {species})")
-
         for radius in radii:
             logging.info(f"Radius = {radius} A")
             expanded_shells = []
@@ -100,17 +97,17 @@ def extract_solvation_shells(
                     for mol_num in central_solute_nums
                 ]
 
-            # Now expand the shells
-            for shell, central_solute in zip(shells, central_solute_nums):
-                expanded_shell = expand_shell(
-                    st,
-                    shell,
-                    central_solute,
-                    radius,
-                    solute_resnames,
-                    max_shell_size=200,
-                )
-                expanded_shells.append(expanded_shell)
+                # Now expand the shells
+                for shell, central_solute in zip(shells, central_solute_nums):
+                    expanded_shell = expand_shell(
+                        st,
+                        shell,
+                        central_solute,
+                        radius,
+                        solute_resnames,
+                        max_shell_size=200,
+                    )
+                    expanded_shells.append(expanded_shell)
 
             # Now compare the expanded shells and group them by similarity
             # we will get lists of lists of shells where each list of structures are conformers of each other
