@@ -2,11 +2,13 @@ from typing import List
 import logging
 
 logging.basicConfig(level=logging.INFO)
+
 import random
 import os
 from tqdm import tqdm
 import json
 import argparse
+import numpy as np
 
 from schrodinger.structure import StructureReader
 from schrodinger.structutils import analyze
@@ -15,6 +17,7 @@ from solvation_shell_utils import (
     renumber_molecules_to_match,
     filter_by_rmsd,
 )
+from utils import validate_metadata_file
 from schrodinger.comparison import are_conformers
 from schrodinger.application.jaguar.utils import group_with_comparison
 from schrodinger.structutils import rmsd
@@ -47,6 +50,9 @@ def extract_solvation_shells(
     with open(os.path.join(input_dir, "metadata_system.json")) as f:
         metadata = json.load(f)
 
+    validate_metadata_file(metadata)
+
+    partial_charges = np.array(metadata["partial_charges"])
 
     solutes = {
         species: res
@@ -54,7 +60,7 @@ def extract_solvation_shells(
             metadata["residue"], metadata["species"], metadata["solute_or_solvent"]
         )
         if type == "solute"
-    } # {species: residue name} mapping
+    }  # {species: residue name} mapping
     solute_resnames = list(solutes.values())
 
     solvents = {
@@ -63,7 +69,7 @@ def extract_solvation_shells(
             metadata["residue"], metadata["species"], metadata["solute_or_solvent"]
         )
         if type == "solvent"
-    } # {species: residue name} mapping
+    }  # {species: residue name} mapping
     solvent_resnames = list(solvents.values())
 
     # Read a structure
@@ -78,6 +84,10 @@ def extract_solvation_shells(
             logging.info(f"Radius = {radius} A")
             expanded_shells = []
             for i, st in tqdm(enumerate(structures)):  # loop over timesteps
+                # assign partial charges to atoms
+                for at, charge in zip(st.atom, partial_charges):
+                    at.partial_charge = charge
+
                 if i > 10:  # TODO: fix this
                     break
 
@@ -133,6 +143,10 @@ def extract_solvation_shells(
             os.makedirs(save_path, exist_ok=True)
             for i, st in enumerate(final_shells):
                 st.write(os.path.join(save_path, f"shell_{i}.xyz"))
+
+    # Now repeat for solvents
+    for species, residue in solvents.items():
+        pass
 
 
 if __name__ == "__main__":
