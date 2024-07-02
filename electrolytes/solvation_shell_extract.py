@@ -144,7 +144,7 @@ def extract_solvation_shells(
 
             # Save the final shells
             logging.info(f"Saving final shells")
-            save_path = os.path.join(save_dir, system_name, species, f"radius={radius}")
+            save_path = os.path.join(save_dir, system_name, species, f"radius_{radius}")
             os.makedirs(save_path, exist_ok=True)
             for i, st in enumerate(final_shells):
                 # TODO: seems like this is saving an extra line at the end of the xyz files
@@ -229,7 +229,7 @@ def extract_solvation_shells(
                 # Save the final shells
                 logging.info(f"Saving final shells")
                 save_path = os.path.join(
-                    save_dir, system_name, species, f"radius={radius}"
+                    save_dir, system_name, species, f"radius_{radius}"
                 )
                 os.makedirs(save_path, exist_ok=True)
                 for i, st in enumerate(final_shells):
