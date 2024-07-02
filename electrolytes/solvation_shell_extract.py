@@ -17,6 +17,7 @@ from solvation_shell_utils import (
     renumber_molecules_to_match,
     filter_by_rmsd,
     filter_shells_with_solute_atoms,
+    filter_shells_by_size,
 )
 from utils import validate_metadata_file
 from schrodinger.comparison import are_conformers
@@ -30,6 +31,7 @@ def extract_solvation_shells(
     system_name: str,
     solute_radii: List[float],
     solvent_radii: List[float],
+    max_shell_size: int,
     top_n: int,
 ):
     """
@@ -42,6 +44,7 @@ def extract_solvation_shells(
         system_name: Name of the system - used for naming the save directory.
         solute_radii: List of shell radii to extract around solutes.
         solvent_radii: List of shell radii to extract around solvents.
+        max_shell_size: Maximum size (in atoms) of saved shells.
         top_n: Number of snapshots to extract per topology.
     """
 
@@ -117,8 +120,11 @@ def extract_solvation_shells(
                         central_solute,
                         radius,
                         solute_resnames,
-                        max_shell_size=200,
+                        max_shell_size=max_shell_size,
                     )
+                    assert (
+                        expanded_shell.atom_total <= max_shell_size
+                    ), "Expanded shell too large"
                     expanded_shells.append(expanded_shell)
 
             # Now compare the expanded shells and group them by similarity
@@ -180,13 +186,19 @@ def extract_solvation_shells(
                     for mol_num in central_solvent_nums
                 ]
 
-                # Only keep the shells that have no solute atoms
+                # Only keep the shells that have no solute atoms and below a maximum size
                 filtered_shells.extend(
-                    filter_shells_with_solute_atoms(shells, st, solute_resnames)
+                    filter_shells_by_size(
+                        filter_shells_with_solute_atoms(shells, st, solute_resnames),
+                        max_shell_size,
+                    )
                 )
 
             # Choose a random subset of shells
             assert len(filtered_shells) > 0, "No solute-free shells found for solvent"
+            # check that every shell is below the max size
+            for shell in filtered_shells:
+                assert shell.atom_total <= max_shell_size, "Expanded shell too large"
             random.shuffle(filtered_shells)
             filtered_shells = filtered_shells[:1000]
 
@@ -248,6 +260,13 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--max_shell_size",
+        type=int,
+        default=200,
+        help="Maximum size (in atoms) of the saved shells",
+    )
+
+    parser.add_argument(
         "--top_n",
         type=int,
         default=20,
@@ -262,5 +281,6 @@ if __name__ == "__main__":
         args.system_name,
         args.solute_radii,
         args.solvent_radii,
+        args.max_shell_size,
         args.top_n,
     )
