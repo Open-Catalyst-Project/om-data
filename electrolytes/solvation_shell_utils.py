@@ -64,8 +64,8 @@ def expand_shell(
     and not already expanded around. Then, continuously expand around them as long as we don't hit an atom limit.
     Args:
         st: Entire structure from the PDB file
-        shell_ats: Set of atoms in a shell (1-indexed)
-        central_solute: Index of the central solute atom in the shell
+        shell_ats: Set of atom indices (of `st`) in a shell (1-indexed)
+        central_solute: Molecule index (of 'st') of the central solute in the shell
         radius: Solvation radius (Angstroms) to consider
         solute_res_names: List of residue names that correspond to solute atoms in the simulation
         max_shell_size: Maximum size (in atoms) of the expanded shell
@@ -73,15 +73,14 @@ def expand_shell(
         Structure object containing the expanded solvation shell
     """
     # TODO: I'm not sure why we have to do this, but sometimes the central solute is not in the shell
-    if central_solute not in shell_ats:
-        shell_ats.add(central_solute)
+    shell_ats.add(central_solute)
 
     solutes_included = set([central_solute])
     while len(shell_ats) < max_shell_size:
         old_shell_ats = shell_ats.copy()
         new_solutes = set()
         for at in shell_ats:
-            # atom is part of a non-central solute molecule - should expand the shell
+            # If atom is part of a non-central solute molecule - should expand the shell
             if (
                 st.atom[at].molecule_number not in solutes_included
                 and st.atom[at].getResidue().pdbres.strip() in solute_res_names

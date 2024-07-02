@@ -60,23 +60,17 @@ def extract_solvation_shells(
 
     partial_charges = np.array(metadata["partial_charges"])
 
-    solutes = {
-        species: res
-        for res, species, type in zip(
-            metadata["residue"], metadata["species"], metadata["solute_or_solvent"]
-        )
-        if type == "solute"
-    }  # {species: residue name} mapping
-    solute_resnames = list(solutes.values())
-
-    solvents = {
-        species: res
-        for res, species, type in zip(
-            metadata["residue"], metadata["species"], metadata["solute_or_solvent"]
-        )
-        if type == "solvent"
-    }  # {species: residue name} mapping
-    solvent_resnames = list(solvents.values())
+    solutes = {}
+    solvents = {}
+    for res, species, type in zip(
+        metadata["residue"], metadata["species"], metadata["solute_or_solvent"]
+    ):
+        if type == "solute":
+            solutes[species] = res
+        elif type == "solvent":
+            solvents[species] = res
+    solute_resnames = set(solutes.values())
+    solvent_resnames = set(solvents.values())
 
     # Read a structure
     structures = StructureReader(os.path.join(input_dir, "system_output.pdb"))
@@ -99,7 +93,7 @@ def extract_solvation_shells(
 
                 # extract all solute molecules
                 solute_molecules = [
-                    res for res in st.residue if res.pdbres.strip() == f"{residue}"
+                    res for res in st.residue if res.pdbres.strip() == residue
                 ]
                 central_solute_nums = [mol.molecule_number for mol in solute_molecules]
                 # Extract solvation shells
@@ -170,7 +164,7 @@ def extract_solvation_shells(
 
                 # extract all solvent molecules
                 solvent_molecules = [
-                    res for res in st.residue if res.pdbres.strip() == f"{residue}"
+                    res for res in st.residue if res.pdbres.strip() == residue
                 ]
                 central_solvent_nums = [
                     mol.molecule_number for mol in solvent_molecules
