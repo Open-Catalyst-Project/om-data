@@ -1,3 +1,4 @@
+import argparse
 from collections import Counter, defaultdict
 import copy
 from pathlib import Path
@@ -831,9 +832,41 @@ def library_stats(xyz_dir: Path, fig_dir: Path):
 
 
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(description="Parameters for OMol24 functional group substitution")
+    parser.add_argument('--seed', type=int, default=42, help='Random seed (default: 42)')
+    parser.add_argument('--dump_path', type=str, default="dump", help="Output directory (default: 'dump')")
+    parser.add_argument(
+        '--attempts_per_template',
+        type=int,
+        default=1500,
+        help="Number of substitutions to attempt per template (default: 1500)"
+    )
+    parser.add_argument(
+        '--attempts_per_template_ood',
+        type=int,
+        default=100,
+        help="Number of substitutions with OOD functional groups to allow per template (default: 100)"
+    )
+    parser.add_argument('--max_atoms', type=int, help="Maximum number of atoms")
+    parser.add_argument('--max_heavy_atoms', type=int, help="Maximum number of atoms")
     
+    args = parser.parse_args()
+
+    # Sanity check
+    if args.max_atoms is not None and args.max_heavy_atoms is not None:
+        raise ValueError(
+            "User can either provide maximum number of atoms or maximum number of heavy atoms,"
+            " but not both!")
+    if args.max_atoms is None and args.max_heavy_atoms is None:
+        max_atoms = None
+        max_heavy_atoms = 75
+    else:
+        max_atoms = args.max_atoms
+        max_heavy_atoms = args.max_heavy_atoms
+
     # For reproducibility
-    random.seed(42)
+    random.seed(args.seed)
 
     # Combine all of the templates
     templates = templates_solvent_additive
@@ -853,7 +886,7 @@ if __name__ == "__main__":
     assert len(set(substituents) & set(substituents_ood)) == 0
     assert len(set(templates.keys()) & set(templates_ood.keys())) == 0
 
-    dump_path = Path("dump")
+    dump_path = Path(args.dump_path)
     # If the directory doesn't exist, make it
     dump_path.mkdir(exist_ok=True)
 
@@ -861,9 +894,9 @@ if __name__ == "__main__":
     library = generate_library(
         templates=templates,
         substituents=substituents,
-        attempts_per_template=1500,
-        max_atoms=None,
-        max_heavy_atoms=75,
+        attempts_per_template=args.attempts_per_template,
+        max_atoms=max_atoms,
+        max_heavy_atoms=max_heavy_atoms,
         dump_to=dump_path / "initial_library_smiles.json",
     )
 
@@ -885,7 +918,7 @@ if __name__ == "__main__":
     )
 
     # Out-of-distribution set
-    ood_path = Path("dump/ood")
+    ood_path = dump_path / "ood"
     ood_path.mkdir(exist_ok=True)
 
     all_substituents = copy.deepcopy(substituents)
@@ -899,9 +932,9 @@ if __name__ == "__main__":
     ood_from_templates = generate_library(
         templates=templates_ood,
         substituents=all_substituents,
-        attempts_per_template=1500,
-        max_atoms=None,
-        max_heavy_atoms=75,
+        attempts_per_template=args.attempts_per_template,
+        max_atoms=max_atoms,
+        max_heavy_atoms=max_heavy_atoms,
         dump_to=ood_path / "from_ood_templates.json",
     )
     print("FINISHED PART ONE")
@@ -911,9 +944,9 @@ if __name__ == "__main__":
         templates=templates,
         substituents=substituents,
         ood_substituents=substituents_ood,
-        attempts_per_template=100,
-        max_atoms=None,
-        max_heavy_atoms=75,
+        attempts_per_template=args.attempts_per_template_ood,
+        max_atoms=max_atoms,
+        max_heavy_atoms=max_heavy_atoms,
         dump_to=ood_path / "from_ood_functional_groups.json",
     )
     print("FINISHED PART TWO")
