@@ -60,10 +60,9 @@ def expand_shell(
     """
     # TODO: I'm not sure why we have to do this, but sometimes the central solute is not in the shell
     shell_ats.add(central_solute)
-
     solutes_included = set([central_solute])
-    while len(shell_ats) < max_shell_size:
-        old_shell_ats = shell_ats.copy()
+
+    def get_new_solutes(st, shell_ats, solutes_included, solute_res_names):
         new_solutes = set()
         for at in shell_ats:
             # If atom is part of a non-central solute molecule - should expand the shell
@@ -72,20 +71,26 @@ def expand_shell(
                 and st.atom[at].getResidue().pdbres.strip() in solute_res_names
             ):
                 new_solutes.add(st.atom[at].molecule_number)
+        return new_solutes
 
-        if new_solutes:
-            # add entire residues within solvation shell radius of any extra solute atoms
-            shell_ats.update(
-                analyze.evaluate_asl(
-                    st,
-                    f'fillres within {radius} mol {",".join([str(i) for i in new_solutes])}',
-                )
+    new_solutes = get_new_solutes(st, shell_ats, solutes_included, solute_res_names)
+    while new_solutes:
+        # add entire residues within solvation shell radius of any extra solute atoms
+        new_shell_ats = shell_ats.union(
+            analyze.evaluate_asl(
+                st,
+                f'fillres within {radius} mol {",".join([str(i) for i in new_solutes])}',
             )
+        )
+        if len(new_shell_ats) <= max_shell_size:
+            shell_ats = new_shell_ats
             solutes_included.update(new_solutes)
+            new_solutes = get_new_solutes(
+                st, shell_ats, solutes_included, solute_res_names
+            )
         else:
             break
 
-    shell_ats = old_shell_ats
     shell_ats = sorted(shell_ats)
     final_structure = st.extract(shell_ats, copy_props=True)
 
@@ -94,7 +99,6 @@ def expand_shell(
 
     # contract everthing to be centered on our molecule of interest
     # (this will also handle if a molecule is split across a PBC)
-
     clusterstruct.contract_structure2(
         final_structure, contract_on_atoms=[central_solute_idx]
     )
