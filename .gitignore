@@ -125,4 +125,7 @@ maestro_package/
 .ipynb_checkpoints/
 *ipynb
 
+# Misc
+notes.txt
+
 
