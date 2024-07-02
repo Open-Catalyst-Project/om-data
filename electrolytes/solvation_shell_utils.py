@@ -12,20 +12,6 @@ from schrodinger.structutils import rmsd
 from schrodinger.structure import Structure
 
 
-def filter_shells_by_size(
-    shells: List[Structure], max_shell_size: int = 200
-) -> List[Structure]:
-    """
-    Filter out shells that are larger than a certain size.
-    Args:
-        shells: List of shell structures
-        max_shell_size: Maximum size (in atoms) of the shell
-    Returns:
-        List of structures that correspond to shells that are smaller than max_size
-    """
-    return [shell for shell in shells if shell.atom_total <= max_shell_size]
-
-
 def filter_shells_with_solute_atoms(
     shells: List[Set[int]], st: Structure, solute_res_names: List[str]
 ) -> List[Structure]:

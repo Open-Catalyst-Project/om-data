@@ -17,7 +17,6 @@ from solvation_shell_utils import (
     renumber_molecules_to_match,
     filter_by_rmsd,
     filter_shells_with_solute_atoms,
-    filter_shells_by_size,
 )
 from utils import validate_metadata_file
 from schrodinger.comparison import are_conformers
@@ -186,14 +185,15 @@ def extract_solvation_shells(
                     ]
 
                     # Only keep the shells that have no solute atoms and below a maximum size
-                    filtered_shells.extend(
-                        filter_shells_by_size(
-                            filter_shells_with_solute_atoms(
-                                shells, st, solute_resnames
-                            ),
-                            max_shell_size,
-                        )
+                    solute_free_shells = filter_shells_with_solute_atoms(
+                        shells, st, solute_resnames
                     )
+                    size_filtered_shells = [
+                        shell
+                        for shell in solute_free_shells
+                        if shell.atom_total <= max_shell_size
+                    ]
+                    filtered_shells.extend(size_filtered_shells)
 
                 # Choose a random subset of shells
                 assert (
