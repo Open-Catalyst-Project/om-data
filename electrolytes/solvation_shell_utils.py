@@ -14,21 +14,23 @@ from schrodinger.structure import Structure
 
 def filter_shells_with_solute_atoms(
     shells: List[Set[int]], st: Structure, solute_res_names: List[str]
-) -> List[List[int]]:
+) -> List[Structure]:
     """
     Filter out shells that contain solute atoms.
     Args:
-        shells: List of sets of atom indices (1-indexed) that correspond to shells
+        shells: List of sets of atom indices that correspond to shells
         st: Entire structure from the PDB file
         solute_res_names: List of residue names that correspond to solute atoms in the simulation
     Returns:
-        List of sets of atom indices (1-indexed) that correspond to shells without solute atoms
+        List of Schrodinger structures that do not contain solute atoms
     """
     actual_shells = [st.extract(shell, copy_props=True) for shell in shells]
     filtered_shells = [
         shell
-        for shell, actual_shell in zip(shells, actual_shells)
-        if not any(at.getResidue().pdbres.strip() in solute_res_names for at in actual_shell.atom)
+        for shell in actual_shells
+        if not any(
+            at.getResidue().pdbres.strip() in solute_res_names for at in shell.atom
+        )
     ]
     return filtered_shells
 
@@ -39,8 +41,8 @@ def expand_shell(
     central_solute: int,
     radius: float,
     solute_res_names: List[str],
-    max_shell_size: int = 100,
-) -> List[int]:
+    max_shell_size: int = 200,
+) -> Structure:
     """
     Expands a solvation shell. If there are any (non-central) solutes present in the shell,
     recursively include shells around those solutes.
@@ -54,7 +56,7 @@ def expand_shell(
         solute_res_names: List of residue names that correspond to solute atoms in the simulation
         max_shell_size: Maximum size (in atoms) of the expanded shell
     Returns:
-       Sorted list of atoms containing the expanded solvation shell (1-indexed)
+        Structure object containing the expanded solvation shell
     """
     # TODO: I'm not sure why we have to do this, but sometimes the central solute is not in the shell
     if central_solute not in shell_ats:
@@ -82,9 +84,19 @@ def expand_shell(
             solutes_included.update(new_solutes)
         else:
             break
-    # TODO: should we return a list instead of a set?
     shell_ats = sorted(shell_ats)
-    return shell_ats
+    final_structure = st.extract(shell_ats, copy_props=True)
+
+    # find index of central solute in the sorted shell_ats (adjust for 1-indexing)
+    central_solute_idx = shell_ats.index(central_solute) + 1
+
+    # contract everthing to be centered on our molecule of interest
+    # (this will also handle if a molecule is split across a PBC)
+
+    clusterstruct.contract_structure2(
+        final_structure, contract_on_atoms=[central_solute_idx]
+    )
+    return final_structure
 
 
 def filter_by_rmsd(shells: List[Structure], n: int = 20) -> List[Structure]:
