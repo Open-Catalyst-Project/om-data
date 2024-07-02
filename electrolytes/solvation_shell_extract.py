@@ -148,74 +148,74 @@ def extract_solvation_shells(
                 # TODO: seems like this is saving an extra line at the end of the xyz files
                 st.write(os.path.join(save_path, f"shell_{i}.xyz"))
 
-    # # Now repeat for solvents to capture solvent-solvent interactions
-    # for species, residue in solvents.items():
-    #     logging.info(f"Extracting shells around {species}")
-    #     for radius in solvent_radii:
-    #         logging.info(f"Radius = {radius} A")
-    #         filtered_shells = []
-    #         for i, st in tqdm(enumerate(structures)):  # loop over timesteps
-    #             # assign partial charges to atoms
-    #             for at, charge in zip(st.atom, partial_charges):
-    #                 at.partial_charge = charge
+    # Now repeat for solvents to capture solvent-solvent interactions
+    for species, residue in solvents.items():
+        logging.info(f"Extracting shells around {species}")
+        for radius in solvent_radii:
+            logging.info(f"Radius = {radius} A")
+            filtered_shells = []
+            for i, st in tqdm(enumerate(structures)):  # loop over timesteps
+                # assign partial charges to atoms
+                for at, charge in zip(st.atom, partial_charges):
+                    at.partial_charge = charge
 
-    #             if i > 10:  # TODO: fix this
-    #                 break
+                if i > 10:  # TODO: fix this
+                    break
 
-    #             # extract all solvent molecules
-    #             solvent_molecules = [
-    #                 res for res in st.residue if res.pdbres.strip() == f"{residue}"
-    #             ]
-    #             central_solvent_nums = [
-    #                 mol.molecule_number for mol in solvent_molecules
-    #             ]
+                # extract all solvent molecules
+                solvent_molecules = [
+                    res for res in st.residue if res.pdbres.strip() == f"{residue}"
+                ]
+                central_solvent_nums = [
+                    mol.molecule_number for mol in solvent_molecules
+                ]
 
-    #             # Extract solvation shells
-    #             shells = [
-    #                 set(
-    #                     analyze.evaluate_asl(
-    #                         st, f"fillres within {radius} mol {mol_num}"
-    #                     )
-    #                 )
-    #                 for mol_num in central_solvent_nums
-    #             ]
+                # Extract solvation shells
+                shells = [
+                    set(
+                        analyze.evaluate_asl(
+                            st, f"fillres within {radius} mol {mol_num}"
+                        )
+                    )
+                    for mol_num in central_solvent_nums
+                ]
 
-    #             # Only keep the shells that have no solute atoms
-    #             filtered_shells.extend(
-    #                 filter_shells_with_solute_atoms(shells, st, solute_resnames)
-    #             )
+                # Only keep the shells that have no solute atoms
+                filtered_shells.extend(
+                    filter_shells_with_solute_atoms(shells, st, solute_resnames)
+                )
 
-    #         # Choose a random subset of shells
-    #         assert len(filtered_shells) > 0, "No solute-free shells found for solvent"
-    #         random.shuffle(filtered_shells)
-    #         filtered_shells = filtered_shells[:1000]
+            # Choose a random subset of shells
+            assert len(filtered_shells) > 0, "No solute-free shells found for solvent"
+            random.shuffle(filtered_shells)
+            filtered_shells = filtered_shells[:1000]
 
-    #         # Now compare the expanded shells and group them by similarity
-    #         # we will get lists of lists of shells where each list of structures are conformers of each other
-    #         logging.info("Grouping solvation shells into conformers")
-    #         # TODO: speed this up
-    #         grouped_shells = group_with_comparison(filtered_shells, are_conformers)
+            # Now compare the expanded shells and group them by similarity
+            # we will get lists of lists of shells where each list of structures are conformers of each other
+            logging.info("Grouping solvation shells into conformers")
+            # TODO: speed this up
+            grouped_shells = group_with_comparison(filtered_shells, are_conformers)
 
-    #         # Now ensure that topologically related atoms are equivalently numbered (up to molecular symmetry)
-    #         grouped_shells = [
-    #             renumber_molecules_to_match(items) for items in grouped_shells
-    #         ]
+            # Now ensure that topologically related atoms are equivalently numbered (up to molecular symmetry)
+            grouped_shells = [
+                renumber_molecules_to_match(items) for items in grouped_shells
+            ]
 
-    #         # Now extract the top N most diverse shells from each group
-    #         logging.info(f"Extracting top {top_n} most diverse shells from each group")
-    #         final_shells = []
-    #         # example grouping - set of structures
-    #         for shell_group in tqdm(grouped_shells):
-    #             filtered = filter_by_rmsd(shell_group, n=top_n)
-    #             final_shells.extend(filtered)
+            # Now extract the top N most diverse shells from each group
+            logging.info(f"Extracting top {top_n} most diverse shells from each group")
+            final_shells = []
+            # example grouping - set of structures
+            for shell_group in tqdm(grouped_shells):
+                filtered = filter_by_rmsd(shell_group, n=top_n)
+                final_shells.extend(filtered)
 
-    #         # Save the final shells
-    #         logging.info(f"Saving final shells")
-    #         save_path = os.path.join(save_dir, system_name, species, f"radius={radius}")
-    #         os.makedirs(save_path, exist_ok=True)
-    #         for i, st in enumerate(final_shells):
-    #             # TODO: seems like this is saving an extra line at the end of the xyz files
-    #             st.write(os.path.join(save_path, f"shell_{i}.xyz"))
+            # Save the final shells
+            logging.info(f"Saving final shells")
+            save_path = os.path.join(save_dir, system_name, species, f"radius={radius}")
+            os.makedirs(save_path, exist_ok=True)
+            for i, st in enumerate(final_shells):
+                # TODO: seems like this is saving an extra line at the end of the xyz files
+                st.write(os.path.join(save_path, f"shell_{i}.xyz"))
 
 
 if __name__ == "__main__":
