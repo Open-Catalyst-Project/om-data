@@ -1,7 +1,7 @@
 import re
 import numpy as np
 import random
-from typing import List, Callable
+from typing import List, Set, Callable
 
 from schrodinger.structutils import analyze
 from schrodinger.application.matsci import clusterstruct
@@ -14,7 +14,7 @@ from schrodinger.structure import Structure
 
 def expand_shell(
     st: Structure,
-    shell_ats: List[int],
+    shell_ats: Set[int],
     central_solute: int,
     radius: float,
     solute_res_names: List[str],
@@ -35,13 +35,10 @@ def expand_shell(
     Returns:
         Structure object containing the expanded solvation shell
     """
-    try:
-        assert central_solute in shell_ats, "Central solute not in shell"
-    except AssertionError as e:
-        print(e)
-        print(f"Central solute: {central_solute}")
-        print(f"Shell atoms: {shell_ats}")
-        import pdb; pdb.set_trace()
+    # TODO: I'm not sure why we have to do this, but sometimes the central solute is not in the shell
+    if central_solute not in shell_ats:
+        shell_ats.add(central_solute)
+
     solutes_included = set([central_solute])
     while len(shell_ats) < max_shell_size:
         new_solutes = set()

@@ -35,7 +35,7 @@ def extract_solvation_shells(
     on the specified solute to extract the first solvation shell.
 
     Args:
-        input_dir: Path to 1) the PDB file containing the MD trajectory and 2) the LAMMPS file containing the initial structure (used to extract partial charges).
+        input_dir: Path to 1) the PDB file containing the MD trajectory (system_output.pdb) and 2) a metadata file (system_metadata.json)
         save_dir: Directory in which to save extracted solvation shells.
         system_name: Name of the system - used for naming the save directory.
         radii: List of solvation shell radii to extract.
@@ -143,6 +143,7 @@ def extract_solvation_shells(
             save_path = os.path.join(save_dir, system_name, species, f"radius={radius}")
             os.makedirs(save_path, exist_ok=True)
             for i, st in enumerate(final_shells):
+                # TODO: seems like this is saving an extra line at the end of the xyz files
                 st.write(os.path.join(save_path, f"shell_{i}.xyz"))
 
     # Now repeat for solvents:
