@@ -1,3 +1,4 @@
+import argparse
 import copy
 import glob
 from math import ceil
@@ -12,7 +13,7 @@ from ase.io import write
 from pymatgen.core.structure import Molecule
 from pymatgen.io.ase import AseAtomsAdaptor
 
-from sella import Sella
+# from sella import Sella
 
 # For solvation shell formation
 from architector import convert_io_molecule
@@ -346,17 +347,49 @@ def dump_xyzs(
 
 if __name__ == "__main__":
     
+    parser = argparse.ArgumentParser(description="Parameters for OMol24 (quasi)-random solvation")
+    parser.add_argument('--xyz_dir', type=str, required=True, help="Directory containing input XYZ files")
+    parser.add_argument('--seed', type=int, default=42, help='Random seed (default: 42)')
+    # TODO
+    parser.add_argument('--base_dir', type=str, default="dump", help="Output directory (default: 'dump')")
+    
+    parser.add_argument(
+        '--num_dimers',
+        type=int,
+        default=3,
+        help="Number of dimer structures to generate (default: 3)"
+    )
+    parser.add_argument(
+        '--num_random_shells',
+        type=int,
+        default=1,
+        help="Number of truly random solvation shells to generate (default: 1)"
+    )
+    parser.add_argument(
+        '--max_core_molecule_size',
+        type=int,
+        default=50,
+        help="Maximum size (number of atoms) for a molecule to serve as the core of a solvation shell (default: 50)"
+    )
+    parser.add_argument(
+        '--max_atom_budget',
+        type=int,
+        default=60,
+        help="Maximum size (number of atoms) of a solvation shell (default: 60)"
+    )    
+    
+    args = parser.parse_args()
+
     # For reproducibility
-    random.seed(42)
+    random.seed(args.seed)
 
     # TODO: CHANGE THESE
     # `xyz_dir` should point to a root-level directory with *.xyz files
     # *.xyz's can be nested multiple levels down - this script will recursively search for them
-    # xyz_dir = Path("xyzs")
-    xyz_dir = Path("/home/ewcss/data/omol24/20240607_solvation/test")
+    xyz_dir = Path(args.xyz_dir)
     # `base_dir` should point to root-level directory where generated complexes will be dumped
-    base_dir = Path("solv_dir")
-    ood_dir = Path("solv_dir/ood")
+    base_dir = Path(args.base_dir)
+    ood_dir = base_dir / "ood"
 
     base_dir.mkdir(exist_ok=True)
     ood_dir.mkdir(exist_ok=True)
@@ -373,7 +406,10 @@ if __name__ == "__main__":
     # Identify all molecules for solvation
     # NOTE: it's important the files have the format "<NAME>_<charge>_<spin>.xyz(.gz)"
     # Because otherwise, we can't identify charge/spin information from the *.xyz format
-    xyz_files = [f for f in glob.glob(f'{xyz_dir.resolve().as_posix()}/**/*.xyz*', recursive=True) if f.endswith('.xyz') or f.endswith('.xyz.gz')]
+    xyz_files = [
+        f for f in glob.glob(f'{xyz_dir.resolve().as_posix()}/**/*.xyz*', recursive=True)
+        if f.endswith('.xyz') or f.endswith('.xyz.gz')
+    ]
     print("TOTAL NUMBER OF XYZ FILES:", len(xyz_files))
 
     # For now (2024/06/13), the plan is to do the following for each molecule:
@@ -384,10 +420,10 @@ if __name__ == "__main__":
 
     # TODO: CHANGE THESE
     # These numbers just for testing
-    num_dimers = 3
+    num_dimers = args.num_dimers
     num_random_shells = 1
-    max_core_molecule_size = 50
-    max_atom_budget = 60
+    max_core_molecule_size = args.max_core_molecule_size
+    max_atom_budget = args.max_atom_budget
 
     # TODO: play around with these more
     # In initial testing, random placement seems to help better surround central molecule
