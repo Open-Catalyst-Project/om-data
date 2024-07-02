@@ -78,13 +78,13 @@ def extract_solvation_shells(
     structures = StructureReader(os.path.join(input_dir, "system_output.pdb"))
 
     # assign partial charges to atoms
-    for st in structures:
+    logging.info("Assigning partial charges to atoms")
+    for st in tqdm(structures):
         for at, charge in zip(st.atom, partial_charges):
             at.partial_charge = charge
 
     # For each solute: extract shells around the solute of some heuristic radii and bin by composition/graph hash
     # Choose the N most diverse in each bin
-
     for species, residue in solutes.items():
         logging.info(f"Extracting solvation shells around {species}")
         for radius in solute_radii:
