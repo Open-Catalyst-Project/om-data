@@ -24,15 +24,12 @@ def filter_shells_with_solute_atoms(
     Returns:
         List of Schrodinger structures that do not contain solute atoms
     """
-    actual_shells = [st.extract(shell, copy_props=True) for shell in shells]
+
+    solute_atoms = analyze.evaluate_asl(st, f'res {",".join(solute_res_names)}')
     filtered_shells = [
-        shell
-        for shell in actual_shells
-        if not any(
-            at.getResidue().pdbres.strip() in solute_res_names for at in shell.atom
-        )
+        shell for shell in shells if not shell.intersection(solute_atoms)
     ]
-    return filtered_shells
+    return [st.extract(shell, copy_props=True) for shell in filtered_shells]
 
 
 def expand_shell(
