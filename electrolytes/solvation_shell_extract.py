@@ -77,6 +77,11 @@ def extract_solvation_shells(
     # Read a structure
     structures = StructureReader(os.path.join(input_dir, "system_output.pdb"))
 
+    # assign partial charges to atoms
+    for st in structures:
+        for at, charge in zip(st.atom, partial_charges):
+            at.partial_charge = charge
+
     # For each solute: extract shells around the solute of some heuristic radii and bin by composition/graph hash
     # Choose the N most diverse in each bin
 
@@ -86,9 +91,6 @@ def extract_solvation_shells(
             logging.info(f"Radius = {radius} A")
             expanded_shells = []
             for i, st in tqdm(enumerate(structures)):  # loop over timesteps
-                # assign partial charges to atoms
-                for at, charge in zip(st.atom, partial_charges):
-                    at.partial_charge = charge
 
                 if i > 10:  # TODO: fix this
                     break
