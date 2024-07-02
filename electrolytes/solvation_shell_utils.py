@@ -136,7 +136,7 @@ def rmsd_wrapper(st1: Structure, st2: Structure) -> float:
     if st1 == st2:
         return 0.0
     at_list = list(range(1, st1.atom_total + 1))
-    return rmsd.calculate_in_place_rmsd(st1, at_list, st2, at_list, use_symmetry=True)
+    return rmsd.superimpose(st1, at_list, st2.copy(), at_list, use_symmetry=True)
 
 
 def renumber_molecules_to_match(mol_list):
