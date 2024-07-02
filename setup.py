@@ -17,10 +17,6 @@ setup(
         "quacc[sella]>=0.7.2",
         "numpy",
         "tqdm",
-        "rmsd",
-        "MDAnalysis",
-        "pymatgen",
-        "solvation-analysis",
     ],
     include_package_data=True,
 )
