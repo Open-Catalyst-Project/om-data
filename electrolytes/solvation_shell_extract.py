@@ -30,6 +30,7 @@ def extract_solvation_shells(
     save_dir: str,
     system_name: str,
     solute_radii: List[float],
+    skip_solvent_centered_shells: bool,
     solvent_radii: List[float],
     max_shell_size: int,
     top_n: int,
@@ -43,6 +44,7 @@ def extract_solvation_shells(
         save_dir: Directory in which to save extracted solvation shells.
         system_name: Name of the system - used for naming the save directory.
         solute_radii: List of shell radii to extract around solutes.
+        skip_solvent_centered_shells: Skip extracting solvent-centered shells.
         solvent_radii: List of shell radii to extract around solvents.
         max_shell_size: Maximum size (in atoms) of saved shells.
         top_n: Number of snapshots to extract per topology.
@@ -148,87 +150,103 @@ def extract_solvation_shells(
                 # TODO: seems like this is saving an extra line at the end of the xyz files
                 st.write(os.path.join(save_path, f"shell_{i}.xyz"))
 
-    # Now repeat for solvents to capture solvent-solvent interactions
-    for species, residue in solvents.items():
-        logging.info(f"Extracting shells around {species}")
-        for radius in solvent_radii:
-            logging.info(f"Radius = {radius} A")
-            filtered_shells = []
-            for i, st in tqdm(enumerate(structures)):  # loop over timesteps
-                # assign partial charges to atoms
-                for at, charge in zip(st.atom, partial_charges):
-                    at.partial_charge = charge
+    if not skip_solvent_centered_shells:
+        # Now repeat for solvents to capture solvent-solvent interactions
+        for species, residue in solvents.items():
+            logging.info(f"Extracting shells around {species}")
+            for radius in solvent_radii:
+                logging.info(f"Radius = {radius} A")
+                filtered_shells = []
+                for i, st in tqdm(enumerate(structures)):  # loop over timesteps
+                    # assign partial charges to atoms
+                    for at, charge in zip(st.atom, partial_charges):
+                        at.partial_charge = charge
 
-                if i > 10:  # TODO: fix this
-                    break
+                    if i > 10:  # TODO: fix this
+                        break
 
-                # extract all solvent molecules
-                solvent_molecules = [
-                    res for res in st.residue if res.pdbres.strip() == residue
-                ]
-                central_solvent_nums = [
-                    mol.molecule_number for mol in solvent_molecules
-                ]
+                    # extract all solvent molecules
+                    solvent_molecules = [
+                        res for res in st.residue if res.pdbres.strip() == residue
+                    ]
+                    central_solvent_nums = [
+                        mol.molecule_number for mol in solvent_molecules
+                    ]
 
-                # Extract solvation shells
-                shells = [
-                    set(
-                        analyze.evaluate_asl(
-                            st, f"fillres within {radius} mol {mol_num}"
+                    # Extract solvation shells
+                    shells = [
+                        set(
+                            analyze.evaluate_asl(
+                                st, f"fillres within {radius} mol {mol_num}"
+                            )
+                        )
+                        for mol_num in central_solvent_nums
+                    ]
+
+                    # Only keep the shells that have no solute atoms and below a maximum size
+                    filtered_shells.extend(
+                        filter_shells_by_size(
+                            filter_shells_with_solute_atoms(
+                                shells, st, solute_resnames
+                            ),
+                            max_shell_size,
                         )
                     )
-                    for mol_num in central_solvent_nums
+
+                # Choose a random subset of shells
+                assert (
+                    len(filtered_shells) > 0
+                ), "No solute-free shells found for solvent"
+                # check that every shell is below the max size
+                for shell in filtered_shells:
+                    assert (
+                        shell.atom_total <= max_shell_size
+                    ), "Expanded shell too large"
+                random.shuffle(filtered_shells)
+                filtered_shells = filtered_shells[:1000]
+
+                # Now compare the expanded shells and group them by similarity
+                # we will get lists of lists of shells where each list of structures are conformers of each other
+                logging.info("Grouping solvation shells into conformers")
+                # TODO: speed this up
+                grouped_shells = group_with_comparison(filtered_shells, are_conformers)
+
+                # Now ensure that topologically related atoms are equivalently numbered (up to molecular symmetry)
+                grouped_shells = [
+                    renumber_molecules_to_match(items) for items in grouped_shells
                 ]
 
-                # Only keep the shells that have no solute atoms and below a maximum size
-                filtered_shells.extend(
-                    filter_shells_by_size(
-                        filter_shells_with_solute_atoms(shells, st, solute_resnames),
-                        max_shell_size,
-                    )
+                # Now extract the top N most diverse shells from each group
+                logging.info(
+                    f"Extracting top {top_n} most diverse shells from each group"
                 )
+                final_shells = []
+                # example grouping - set of structures
+                for shell_group in tqdm(grouped_shells):
+                    filtered = filter_by_rmsd(shell_group, n=top_n)
+                    final_shells.extend(filtered)
 
-            # Choose a random subset of shells
-            assert len(filtered_shells) > 0, "No solute-free shells found for solvent"
-            # check that every shell is below the max size
-            for shell in filtered_shells:
-                assert shell.atom_total <= max_shell_size, "Expanded shell too large"
-            random.shuffle(filtered_shells)
-            filtered_shells = filtered_shells[:1000]
-
-            # Now compare the expanded shells and group them by similarity
-            # we will get lists of lists of shells where each list of structures are conformers of each other
-            logging.info("Grouping solvation shells into conformers")
-            # TODO: speed this up
-            grouped_shells = group_with_comparison(filtered_shells, are_conformers)
-
-            # Now ensure that topologically related atoms are equivalently numbered (up to molecular symmetry)
-            grouped_shells = [
-                renumber_molecules_to_match(items) for items in grouped_shells
-            ]
-
-            # Now extract the top N most diverse shells from each group
-            logging.info(f"Extracting top {top_n} most diverse shells from each group")
-            final_shells = []
-            # example grouping - set of structures
-            for shell_group in tqdm(grouped_shells):
-                filtered = filter_by_rmsd(shell_group, n=top_n)
-                final_shells.extend(filtered)
-
-            # Save the final shells
-            logging.info(f"Saving final shells")
-            save_path = os.path.join(save_dir, system_name, species, f"radius={radius}")
-            os.makedirs(save_path, exist_ok=True)
-            for i, st in enumerate(final_shells):
-                # TODO: seems like this is saving an extra line at the end of the xyz files
-                st.write(os.path.join(save_path, f"shell_{i}.xyz"))
+                # Save the final shells
+                logging.info(f"Saving final shells")
+                save_path = os.path.join(
+                    save_dir, system_name, species, f"radius={radius}"
+                )
+                os.makedirs(save_path, exist_ok=True)
+                for i, st in enumerate(final_shells):
+                    # TODO: seems like this is saving an extra line at the end of the xyz files
+                    st.write(os.path.join(save_path, f"shell_{i}.xyz"))
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
-    random.seed(10)
 
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=10,
+        help="Random seed",
+    )
     parser.add_argument(
         "--input_dir",
         type=str,
@@ -244,6 +262,12 @@ if __name__ == "__main__":
         type=list,
         default=[3],
         help="List of shell radii to extract around solutes",
+    )
+
+    parser.add_argument(
+        "--skip_solvent_centered_shells",
+        action="store_true",
+        help="Skip extracting solvent-centered shells",
     )
 
     parser.add_argument(
@@ -269,11 +293,14 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    random.seed(args.seed)
+
     extract_solvation_shells(
         args.input_dir,
         args.save_dir,
         args.system_name,
         args.solute_radii,
+        args.skip_solvent_centered_shells,
         args.solvent_radii,
         args.max_shell_size,
         args.top_n,
