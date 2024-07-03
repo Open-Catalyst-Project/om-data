@@ -66,7 +66,7 @@ units = systems[row_idx][3]
 
 Avog = 6.023*10**23
 Nmols = []
-num_solv = 10#500
+num_solv = 500
 numsalt = 0
 
 salt_conc = np.array(cat_conc+an_conc).astype(float)
@@ -86,11 +86,10 @@ elif 'mass' == units:
     #No need to look at solvent density
     mass = 1e-3*num_solv*solv_mwweight/Avog #mw is in g/mol, convert to kg/mol
     numsalt = np.round(salt_conc*mass*Avog).astype(int)
-elif 'number' == units:
+elif 'number' == units or 'Number' == units:
     salt_molfrac = salt_conc/np.sum(salt_conc)
     numsalt = np.round(salt_molfrac*num_solv).astype(int)
 
-print(numsalt)
 for j in range(len(cat+an)):
     if numsalt[j] < 1:
         Nmols.append(1)

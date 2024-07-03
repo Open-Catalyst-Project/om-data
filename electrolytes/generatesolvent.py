@@ -31,13 +31,13 @@ neut_ratio = d2l.get_species_and_conc(systems, row_idx, index_neut_ratio)
 # If solvent exists. We have may have pure molten salt or ionic liquid
 if neut:
     species = neut
-    molfrac = np.array(neut_ratio).astype(int)
+    molfrac = np.array(neut_ratio).astype(float)#int)
     molfrac = molfrac/np.sum(molfrac)
 
     #Initial boxsize is always 10 nm. 
     boxsize = 40 
 
-    num_solv = 10
+    num_solv = 500
     Nmols = [int(num_solv*frac) if num_solv*frac >= 1 else 1 for frac in molfrac]
 
     #Run Packmol, followed up by moltemplate 
