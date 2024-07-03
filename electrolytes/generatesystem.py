@@ -66,7 +66,7 @@ units = systems[row_idx][3]
 
 Avog = 6.023*10**23
 Nmols = []
-num_solv = 500
+num_solv = 250
 numsalt = 0
 
 salt_conc = np.array(cat_conc+an_conc).astype(float)

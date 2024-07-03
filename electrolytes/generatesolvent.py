@@ -37,7 +37,7 @@ if neut:
     #Initial boxsize is always 10 nm. 
     boxsize = 40 
 
-    num_solv = 500
+    num_solv = 250
     Nmols = [int(num_solv*frac) if num_solv*frac >= 1 else 1 for frac in molfrac]
 
     #Run Packmol, followed up by moltemplate 
