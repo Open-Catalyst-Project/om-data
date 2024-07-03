@@ -196,7 +196,6 @@ def retreive_ligand_and_env(
     # random.seed(12341)
     grouped_biolip = biolip_df.groupby("pdb_id")
     pdb_list = list(grouped_biolip.groups.keys())
-    pdb_list = ['1a0q']
     for pdb_count in range(start_pdb, end_pdb):
         # pdb_id = random.choice(list(grouped_biolip.groups.keys()))
         pdb_id = pdb_list[pdb_count]
@@ -550,12 +549,12 @@ def get_atom_lists(st: Structure, row: pd.Series) -> Tuple[List[int], List[int]]
             at for at in analyze.evaluate_asl(st, asl_str) if at not in res_ats
         ]
 
-    # mark the ligand chain
-    for at in lig_ats:
-        st.atom[at].chain = "l"
     # mark the coord chain
     for at in coord_ats:
         st.atom[at].chain = "c"
+    # mark the ligand chain
+    for at in lig_ats:
+        st.atom[at].chain = "l"
     # mark the receptor chain
     for at in res_ats:
         st.atom[at].chain = "A"
