@@ -100,8 +100,6 @@ def main():
     # Add index as name of job from input dataframe.
     newindf_rows = []
     for i, row in indf.iterrows():
-        if str(i) in done_list:
-            continue
         inp_dict = row["architector_input"]
         inp_dict["name"] = str(i)
         newindf_rows.append(inp_dict)
@@ -111,6 +109,7 @@ def main():
     batch = newindf_rows[
         batch_idx * args.batch_size : (batch_idx + 1) * args.batch_size
     ]
+    batch = [inp for inp in batch if inp['name'] not in done_list]
     list(tqdm(pool.imap(fxn, batch), total=len(batch)))
 
 
