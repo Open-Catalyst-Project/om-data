@@ -20,7 +20,7 @@ if Path(pdb_initfile).is_file() and Path(ff_xml).is_file():
     simulation.context.setPositions(modeller.positions)
     simulation.minimizeEnergy()
     frames = 200
-    runtime = 500000
+    runtime = 50000
     rate = int(runtime/frames)
     if rate == 0:
         rate = 1
