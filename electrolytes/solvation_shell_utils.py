@@ -39,7 +39,7 @@ def expand_shell(
     radius: float,
     solute_res_names: List[str],
     max_shell_size: int = 200,
-) -> Structure:
+) -> Set[int]:
     """
     Expands a solvation shell. If there are any (non-central) solutes present in the shell,
     recursively include shells around those solutes.
@@ -53,10 +53,8 @@ def expand_shell(
         solute_res_names: List of residue names that correspond to solute atoms in the simulation
         max_shell_size: Maximum size (in atoms) of the expanded shell
     Returns:
-        Structure object containing the expanded solvation shell
+        Set of atom indices (of `st`) of the expanded shell (1-indexed)
     """
-    # # TODO: I'm not sure why we have to do this, but sometimes the central solute is not in the shell
-    # shell_ats.add(st.molecule[central_solute].getAtomList())
     solutes_included = set([central_solute])
 
     def get_new_solutes(st, shell_ats, solutes_included, solute_res_names):
@@ -88,20 +86,7 @@ def expand_shell(
         else:
             break
 
-    shell_ats = sorted(shell_ats)
-    final_structure = st.extract(shell_ats, copy_props=True)
-
-    # find index of first atom of the central solute in the sorted shell_ats (adjust for 1-indexing)
-    central_solute_atom_idx = (
-        shell_ats.index(st.molecule[central_solute].getAtomList()[0]) + 1
-    )
-
-    # contract everthing to be centered on our molecule of interest
-    # (this will also handle if a molecule is split across a PBC)
-    clusterstruct.contract_structure2(
-        final_structure, contract_on_atoms=[central_solute_atom_idx]
-    )
-    return final_structure
+    return shell_ats
 
 
 def filter_by_rmsd(shells: List[Structure], n: int = 20) -> List[Structure]:

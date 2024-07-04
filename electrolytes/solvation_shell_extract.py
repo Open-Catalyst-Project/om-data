@@ -21,6 +21,7 @@ from solvation_shell_utils import (
 from utils import validate_metadata_file
 from schrodinger.comparison import are_conformers
 from schrodinger.application.jaguar.utils import group_with_comparison
+from schrodinger.application.matsci import clusterstruct
 from schrodinger.structutils import rmsd
 
 
@@ -77,10 +78,11 @@ def extract_solvation_shells(
     structures = StructureReader(os.path.join(input_dir, "system_output.pdb"))
 
     # assign partial charges to atoms
-    logging.info("Assigning partial charges to atoms")
-    for st in tqdm(structures):
-        for at, charge in zip(st.atom, partial_charges):
-            at.partial_charge = charge
+    # TODO: fix this - the iterator over structures can only be called once
+    # logging.info("Assigning partial charges to atoms")
+    # for st in tqdm(structures):
+    #     for at, charge in zip(st.atom, partial_charges):
+    #         at.partial_charge = charge
 
     # For each solute: extract shells around the solute of some heuristic radii and bin by composition/graph hash
     # Choose the N most diverse in each bin
@@ -91,7 +93,7 @@ def extract_solvation_shells(
             expanded_shells = []
             for i, st in tqdm(enumerate(structures)):  # loop over timesteps
 
-                if i > 10:  # TODO: fix this
+                if i > 100:  # TODO: fix this
                     break
 
                 # extract all solute molecules
@@ -110,14 +112,34 @@ def extract_solvation_shells(
                 ]
 
                 # Now expand the shells
-                for shell, central_solute in zip(shells, central_solute_nums):
-                    expanded_shell = expand_shell(
-                        st,
-                        shell,
-                        central_solute,
-                        radius,
-                        solute_resnames,
-                        max_shell_size=max_shell_size,
+                for shell_ats, central_solute in zip(shells, central_solute_nums):
+                    expanded_shell_ats = shell_ats
+                    # If we have a solvent-free system, don't expand shells around solutes,
+                    # because we'll always have solutes and will never terminate
+                    if solvent_resnames:
+                        expanded_shell_ats = expand_shell(
+                            st,
+                            shell_ats,
+                            central_solute,
+                            radius,
+                            solute_resnames,
+                            max_shell_size=max_shell_size,
+                        )
+                    expanded_shell_ats = sorted(expanded_shell_ats)
+                    expanded_shell = st.extract(expanded_shell_ats, copy_props=True)
+
+                    # find index of first atom of the central solute in the sorted shell_ats (adjust for 1-indexing)
+                    central_solute_atom_idx = (
+                        expanded_shell_ats.index(
+                            st.molecule[central_solute].getAtomList()[0]
+                        )
+                        + 1
+                    )
+
+                    # contract everthing to be centered on our molecule of interest
+                    # (this will also handle if a molecule is split across a PBC)
+                    clusterstruct.contract_structure2(
+                        expanded_shell, contract_on_atoms=[central_solute_atom_idx]
                     )
                     assert (
                         expanded_shell.atom_total <= max_shell_size
@@ -163,7 +185,7 @@ def extract_solvation_shells(
                     for at, charge in zip(st.atom, partial_charges):
                         at.partial_charge = charge
 
-                    if i > 10:  # TODO: fix this
+                    if i > 100:  # TODO: fix this
                         break
 
                     # extract all solvent molecules
