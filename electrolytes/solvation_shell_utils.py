@@ -12,6 +12,22 @@ from schrodinger.structutils import rmsd
 from schrodinger.structure import Structure
 
 
+def generate_lognormal_samples(loc=75, sigma=0.45, size=1):
+    """
+    Generate random samples from a lognormal distribution.
+
+    Parameters:
+    - loc: float, mean of the distribution
+    - sigma: float, standard deviation of the log of the distribution
+    - size: int, number of samples to generate (default is 1000)
+
+    Returns:
+    - samples: numpy array, random samples from the lognormal distribution
+    """
+    samples = np.random.lognormal(mean=np.log(loc), sigma=sigma, size=size)
+    return samples
+
+
 def filter_shells_with_solute_atoms(
     shells: List[Set[int]], st: Structure, solute_res_names: List[str]
 ) -> List[Structure]:

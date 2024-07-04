@@ -17,6 +17,7 @@ from solvation_shell_utils import (
     renumber_molecules_to_match,
     filter_by_rmsd,
     filter_shells_with_solute_atoms,
+    generate_lognormal_samples,
 )
 from utils import validate_metadata_file
 from schrodinger.comparison import are_conformers
@@ -117,13 +118,19 @@ def extract_solvation_shells(
                     # If we have a solvent-free system, don't expand shells around solutes,
                     # because we'll always have solutes and will never terminate
                     if solvent_resnames:
+                        # TODO: how to choose the mean/scale for sampling?
+                        # Should the mean be set to the number of atoms in the non-expanded shell?
+                        upper_bound = max(
+                            len(shell_ats), generate_lognormal_samples()[0]
+                        )
+                        upper_bound = min(upper_bound, max_shell_size)
                         expanded_shell_ats = expand_shell(
                             st,
                             shell_ats,
                             central_solute,
                             radius,
                             solute_resnames,
-                            max_shell_size=max_shell_size,
+                            max_shell_size=upper_bound,
                         )
                     expanded_shell_ats = sorted(expanded_shell_ats)
                     expanded_shell = st.extract(expanded_shell_ats, copy_props=True)
