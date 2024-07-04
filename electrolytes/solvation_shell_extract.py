@@ -33,6 +33,7 @@ def extract_solvation_shells(
     solute_radii: List[float],
     skip_solvent_centered_shells: bool,
     solvent_radii: List[float],
+    shells_per_frame: int,
     max_shell_size: int,
     top_n: int,
 ):
@@ -47,6 +48,7 @@ def extract_solvation_shells(
         solute_radii: List of shell radii to extract around solutes.
         skip_solvent_centered_shells: Skip extracting solvent-centered shells.
         solvent_radii: List of shell radii to extract around solvents.
+        shells_per_frame: Number of solutes or solvents per MD simulation frame from which to extract candidate shells.
         max_shell_size: Maximum size (in atoms) of saved shells.
         top_n: Number of snapshots to extract per topology.
     """
@@ -94,13 +96,15 @@ def extract_solvation_shells(
             expanded_shells = []
             for i, st in tqdm(enumerate(structures)):  # loop over timesteps
 
-                if i > 100:  # TODO: fix this
-                    break
-
                 # extract all solute molecules
                 solute_molecules = [
                     res for res in st.residue if res.pdbres.strip() == residue
                 ]
+
+                # Subsample a random set of k solute molecules
+                if shells_per_frame > 0:
+                    solute_molecules = random.sample(solute_molecules, shells_per_frame)
+
                 central_solute_nums = [mol.molecule_number for mol in solute_molecules]
                 # Extract solvation shells
                 shells = [
@@ -168,17 +172,18 @@ def extract_solvation_shells(
             logging.info(f"Extracting top {top_n} most diverse shells from each group")
             final_shells = []
             # example grouping - set of structures
-            for shell_group in tqdm(grouped_shells):
+            for group_idx, shell_group in tqdm(enumerate(grouped_shells)):
                 filtered = filter_by_rmsd(shell_group, n=top_n)
+                filtered = [(group_idx, st) for st in filtered]
                 final_shells.extend(filtered)
 
             # Save the final shells
             logging.info(f"Saving final shells")
             save_path = os.path.join(save_dir, system_name, species, f"radius_{radius}")
             os.makedirs(save_path, exist_ok=True)
-            for i, st in enumerate(final_shells):
+            for i, (group_idx, st) in enumerate(final_shells):
                 # TODO: seems like this is saving an extra line at the end of the xyz files
-                st.write(os.path.join(save_path, f"shell_{i}.xyz"))
+                st.write(os.path.join(save_path, f"group_{group_idx}" f"shell_{i}.xyz"))
 
     if not skip_solvent_centered_shells:
         # Now repeat for solvents to capture solvent-solvent interactions
@@ -192,13 +197,16 @@ def extract_solvation_shells(
                     for at, charge in zip(st.atom, partial_charges):
                         at.partial_charge = charge
 
-                    if i > 100:  # TODO: fix this
-                        break
-
                     # extract all solvent molecules
                     solvent_molecules = [
                         res for res in st.residue if res.pdbres.strip() == residue
                     ]
+
+                    # Subsample a random set of k solvent molecules
+                    if shells_per_frame > 0:
+                        solvent_molecules = random.sample(
+                            solvent_molecules, shells_per_frame
+                        )
                     central_solvent_nums = [
                         mol.molecule_number for mol in solvent_molecules
                     ]
@@ -309,6 +317,13 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--shells_per_frame",
+        type=int,
+        default=-1,
+        help="Number of solutes or solvents per MD simulation frame from which to extract candidate shells",
+    )
+
+    parser.add_argument(
         "--max_shell_size",
         type=int,
         default=200,
@@ -333,6 +348,7 @@ if __name__ == "__main__":
         args.solute_radii,
         args.skip_solvent_centered_shells,
         args.solvent_radii,
+        args.shells_per_frame,
         args.max_shell_size,
         args.top_n,
     )
