@@ -205,7 +205,7 @@ def retreive_ligand_and_env(
         for idx, row in rows.iterrows():
             sys.stdout.flush()
             binding_site_counter = (
-                row["binding_site_number_code"] + row["receptor_chain"]
+                row["receptor_chain"] + row["binding_site_number_code"]
             )
             try:
                 st, fname = get_prepped_protein(pdb_id, row, fill_sidechain)
@@ -271,7 +271,7 @@ def retreive_ligand_and_env(
             os.remove(fname)
 
 
-def download_cif(pdb_id: str, chains: List[str]) -> Tuple[str, str]:
+def download_cif(pdb_id: str, chains: List[str]) -> str:
     """
     Download cif (as opposed to pdb) of a given protein and extract
     the needed chains.
@@ -292,39 +292,7 @@ def download_cif(pdb_id: str, chains: List[str]) -> Tuple[str, str]:
     else:
         raise ConnectionError
 
-    st = StructureReader.read(cif_name)
-    # only extract the relevant chains because these proteins tend to be very large and PrepWizard takes hours
-    at_list = []
-    for chain in chains:
-        at_list.extend(st.chain[chain].getAtomList())
-    st = st.extract(at_list)
-    fname = f"{pdb_id}.maegz"
-    outname = f"{pdb_id}_{'_'.join(sorted(chains))}_prepped.maegz"
-    with StructureWriter(fname) as writer:
-        writer.append(st)
-    return fname, outname
-
-
-def missing_backbone_check(st: Structure):
-    """
-    Check if the protein backbone is present in the structure
-
-    Rarely, some protein structures are just C alpha positions. We check
-    for this by making sure that the structure doesn't contain lots of
-    isolated carbon atoms.
-
-    :param st: structure to check
-    :raises: OnlyCAError if structure seems like it is only CA
-    """
-    if (
-        sum(
-            1
-            for mol in st.molecule
-            if len(mol.atom) == 1 and mol.atom[1].element == "C"
-        )
-        > 20
-    ):
-        raise OnlyCAError
+    return cif_name
 
 
 def get_prepped_protein(
@@ -346,17 +314,10 @@ def get_prepped_protein(
                  download a PDB as is
     :return: Prepared structure and its filename for subsequent clean-up
     """
-    baseoutname = f"{pdb_id}_prepped.maegz"
-    pdb_name = pdb_id
     chains = {row["receptor_chain"], row["ligand_chain"]}
-    if len(chains) == 1:
-        solo_chain = next(iter(chains))
-        pdb_name += f":{solo_chain}"
-        outname = f"{pdb_id}_{solo_chain}_prepped.maegz"
-    else:
-        outname = baseoutname
-    basename = pdb_name.replace(":", "_")
-    fname = basename + ".pdb"
+    outname = f"{pdb_id}_{'_'.join(sorted(chains))}_prepped.maegz"
+    fname = f"{pdb_id}.pdb"
+    maename = f"{pdb_id}.maegz"
 
     if not prep:
         subprocess.run([os.path.join(SCHRO, "utilities", "getpdb"), pdb_id])
@@ -364,26 +325,26 @@ def get_prepped_protein(
     elif os.path.exists(outname):
         # We've already done this example
         pass
-    elif os.path.exists(baseoutname):
-        # We've not done this chain, but we have done the whole protein
-        outname = baseoutname
     else:
         # We haven't done anything to prepare the protein
-        subprocess.run([os.path.join(SCHRO, "utilities", "getpdb"), pdb_name])
+        subprocess.run([os.path.join(SCHRO, "utilities", "getpdb"), pdb_id])
         if not os.path.exists(fname):
             # PDB could not be downloaded, try the cif
-            fname, outname = download_cif(pdb_id, chains)
+            fname = download_cif(pdb_id, chains)
 
         st = next(StructureReader(fname), None)
         if st is None:
             raise ValueError
-        # Reject structure that are just a bunch of CA
-        # missing_backbone_check(st)
+        # only extract the relevant chains because these proteins tend to be very large and PrepWizard takes hours
+        at_list = []
+        for chain in chains:
+            at_list.extend(st.chain[chain].getAtomList())
+        st = st.extract(at_list)
 
         # Remove any dummy atoms, PrepWizard doesn't like them
         dummy_atoms = [at for at in st.atom if at.atomic_number < 1]
         st.deleteAtoms(dummy_atoms)
-        st.write(fname)
+        st.write(maename)
 
         # Run PrepWizard
         if not os.path.exists(outname):
@@ -391,7 +352,7 @@ def get_prepped_protein(
             # for PDBs that have to be downloaded as CIFs isn't known until after
             # we download them and can see their chain names.
             try:
-                run_prepwizard(fname, outname, fill_sidechain)
+                run_prepwizard(maename, outname, fill_sidechain)
             except subprocess.TimeoutExpired:
                 raise RuntimeError("PrepWizard took longer than 2 hours, skipping")
     if not os.path.exists(outname):
@@ -399,14 +360,17 @@ def get_prepped_protein(
 
     st = StructureReader.read(outname)
     st = build.remove_alternate_positions(st)
-    deprotonate_phosphate_esters(st)
+    if deprotonate_phosphate_esters(st):
+        print(
+            f'{pdb_id}, {row["receptor_chain"]}{row["binding_site_number_code"]} needed phosphate deprotonation'
+        )
     st = build.reorder_protein_atoms_by_sequence(st)
 
     # Cleanup
-    for file_to_del in (fname, f"{pdb_id}.pdb", f"{pdb_id}.cif"):
+    for file_to_del in (maename, fname):
         if os.path.exists(file_to_del):
             os.remove(file_to_del)
-    for deldir in glob.glob(f"{basename}-???"):
+    for deldir in glob.glob(f"{maename.remove('.mae')}-???"):
         shutil.rmtree(deldir)
     sys.stdout.flush()
     return st, outname
@@ -452,15 +416,16 @@ def run_prepwizard(fname: str, outname: str, fill_sidechain: bool) -> None:
         )
 
 
-def deprotonate_phosphate_esters(st: Structure) -> None:
+def deprotonate_phosphate_esters(st: Structure) -> bool:
     """
     At physiological pH, it's a good assumption that any phosphate esters
     will be deprotonated. In the absence pKa's for ligands, we will make
     this assumption.
 
     :param st: Structure with phosphate groups that can be deprotonated
+    :return: True if structure needed to be deprotonated
     """
-    phos_smarts = "[*;!#1][*][P](=[O])([O])([O][H])"
+    phos_smarts = "[*;!#1][*][P](=[O,S])([O])([O][H])"
     try:
         matched_ats = evaluate_smarts(st, phos_smarts)
     except ValueError:
@@ -470,6 +435,7 @@ def deprotonate_phosphate_esters(st: Structure) -> None:
     for O_at in O_ats:
         st.atom[O_at].formal_charge -= 1
     st.deleteAtoms(H_ats)
+    return bool(H_ats)
 
 
 def make_gaps_gly(st: Structure, row: pd.Series, gap_res: List[str]) -> None:
@@ -549,6 +515,9 @@ def get_atom_lists(st: Structure, row: pd.Series) -> Tuple[List[int], List[int]]
             at for at in analyze.evaluate_asl(st, asl_str) if at not in res_ats
         ]
 
+    # mark the protein as unused, we will edit the parts we want
+    for ch in st.chain:
+        ch.name = "X"
     # mark the coord chain
     for at in coord_ats:
         st.atom[at].chain = "c"
@@ -604,7 +573,7 @@ def cap_termini(st: Structure, ligand_env: Structure) -> None:
     :param st: original protein structure from which the pocket was extracted
     :param ligand_env: extracted protein receptor (i.e. ligand environment)
     """
-    capterm = CapTermini(ligand_env, verbose=False, frag_min_atoms=0)
+    capterm = CapTermini(ligand_env, verbose=False, frag_min_atoms=3)
     for res in capterm.cappedResidues():
         orig_res = st.findResidue(res)
         new_res = ligand_env.findResidue(res)
