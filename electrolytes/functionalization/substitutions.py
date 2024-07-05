@@ -394,6 +394,26 @@ substituents_ood = [
     '[Si](C)(C)(C)'
 ]
 
+# For filtering:
+# We currently want to remove everything with a highly energetic bond type
+# We also try to limit the number of unusual bond types in the molecules we generate
+disallowed_energetic = [
+    "O-O",
+    "N-N",
+    "O-N",
+    "O-[F,Cl,Br,I]",
+    "N-[F,Cl,Br,I]"
+]
+
+weird_patterns = [
+    "P~[Cl,Br,I]", # Phosphorus bound to any non-F halogen
+    "[PX2]", # Phosphorus with only two bonds
+    "P~P", # P-P bonds of any kind
+    "B-B", # B-B single bonds (extremely rare)
+
+
+]
+
 
 def select_replacement_points(template: str) -> List[str]:
     """
@@ -656,7 +676,7 @@ def generate_library(
     return library
 
 
-def filter_library(
+def remove_duplicates(
     library: Dict[str, List[str]]
 ) -> Dict[str, List[str]]:
 
@@ -685,6 +705,73 @@ def filter_library(
             if (inchi, charge) not in inchis_charges:
                 filtered[name].append(smi)
                 inchis_charges.add((inchi, charge))
+
+    return filtered
+
+
+def filter_library(
+    library: Dict[str, List[str]],
+    disallowed_patterns: List[str],
+    uncommon_patterns: List[str],
+    uncommon_factor: float = 0.8,
+):
+    """
+    Remove molecules with problematic or (sometimes) uncomomon patterns from the dataset
+
+    Args:
+        library (Dict[str, List[str]]): Collection of substituted molecules organized by template name
+        disallowed_patterns (List[str]): List of SMARTS patterns. Any molecule containing any of these patterns will
+            be removed from the dataset
+        uncommon_patterns (List[str]): List of SMARTS patterns. A molecule containing `n` of these patterns will be
+            removed from the dataset with a probability (1 - f ** n), where f is the `uncommon_factor` described below
+        uncommon_factor (float): Probability of removing a molecule from the library with one uncommon bonding pattern.
+            For a moleucle with `n` uncommon patterns, the probability of removal is (1 - f ** n), where `f` is this
+            factor.
+
+    Returns:
+        filtered (Dict[str, List[str]]): Collection of substituted molecules with problematic and (some) strange
+            molecules removed.
+    """
+
+    # Sanity check
+    if not (0 < uncommon_factor < 1):
+        raise ValueError("uncommon_factor must be between 0 and 1!")
+
+    filtered = dict()
+
+    disallowed_energetic_mols = [Chem.MolFromSmarts(de) for de in disallowed_energetic]
+    weird_pattern_mols = [Chem.MolFromSmarts(wp) for wp in weird_patterns]
+
+    for name, smiles in library.items():
+        if name not in filtered:
+            filtered[name] = list()
+        
+        for smi in smiles:
+            mol = Chem.MolFromSmiles(smi)
+
+            # Filter out energetic molecules
+            is_energetic = False
+            for pattern in disallowed_energetic_mols:
+                if mol.HasSubstructMatch(pattern):
+                    is_energetic = True
+                    break
+
+            if is_energetic:
+                continue
+
+            num_weird = 0
+            for pattern in weird_pattern_mols:
+                num_weird += len(mol.GetSubstructMatches(pattern))
+
+            if num_weird == 0:
+                filtered[name].append(smi)
+            else:
+                probability = uncommon_factor ** num_weird
+
+                random_num = random.random()
+
+                if random_num < probability:
+                    filtered[name].append(smi)
 
     return filtered
 
@@ -901,8 +988,15 @@ if __name__ == "__main__":
     )
 
     # Filter using InChI to remove duplicates
-    filtered_library = filter_library(
+    filtered_library = remove_duplicates(
         library
+    )
+
+    # Filter to remove energetic molecules and "weird" bond types
+    filtered_library = filter_library(
+        filtered_library,
+        disallowed_energetic,
+        weird_patterns
     )
 
     # Dump library as *.xyz files
@@ -953,8 +1047,14 @@ if __name__ == "__main__":
 
     ood_from_templates.update(ood_from_functional_groups)
 
-    filtered_ood_library = filter_library(
+    filtered_ood_library = remove_duplicates(
         ood_from_templates
+    )
+
+    filtered_ood_library = filter_library(
+        filtered_ood_library,
+        disallowed_energetic,
+        weird_patterns
     )
     print("FINISHED FILTERING")
 
