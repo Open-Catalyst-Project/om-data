@@ -370,7 +370,7 @@ def get_prepped_protein(
     for file_to_del in (maename, fname):
         if os.path.exists(file_to_del):
             os.remove(file_to_del)
-    for deldir in glob.glob(f"{maename.remove('.mae')}-???"):
+    for deldir in glob.glob(f"{pdb_id}-???"):
         shutil.rmtree(deldir)
     sys.stdout.flush()
     return st, outname
