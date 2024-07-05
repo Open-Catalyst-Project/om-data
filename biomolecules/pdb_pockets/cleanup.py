@@ -2,7 +2,7 @@ import argparse
 import glob
 import os
 
-from schrodinger.structure import Structure, StructureReader, StructureWriter
+from schrodinger.structure import Structure, StructureReader
 from schrodinger.structutils import analyze, build
 from tqdm import tqdm
 
@@ -92,7 +92,7 @@ def main():
     args = parse_args()
     for fname in tqdm(glob.glob(os.path.join(args.output_path, f"{args.prefix}*.pdb"))):
         st = StructureReader.read(fname)
-        change_made = fix_disrupted_disulfides(st) or change_made
+        change_made = fix_disrupted_disulfides(st)
         try:
             change_made = remove_ligand_ace_cap(st) or change_made
         except:
