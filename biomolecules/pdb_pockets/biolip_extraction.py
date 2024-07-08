@@ -291,6 +291,17 @@ def download_cif(pdb_id: str) -> Structure:
     :param pdb_id: name of PDB to download
     :return: Downloaded structure
     """
+
+    # Try for the PDB
+    fname = f"{pdb_id}.pdb"
+    subprocess.run([os.path.join(SCHRO, "utilities", "getpdb"), pdb_id])
+    if os.path.exists(fname):
+        st = next(StructureReader(fname), None)
+        os.remove(fname)
+        if st is not None:
+            return st
+
+    # Failing that, take the CIF
     fname = f"{pdb_id}.cif"
     for i in range(3):
         subprocess.run(
@@ -303,11 +314,7 @@ def download_cif(pdb_id: str) -> Structure:
     else:
         raise ConnectionError
 
-    try:
-        st = next(StructureReader(fname), None)
-    except IndexError:
-        subprocess.run([os.path.join(SCHRO, "utilities", "getpdb"), pdb_id])
-        st = next(StructureReader(f"{pdb_id}.pdb"), None)
+    st = next(StructureReader(fname), None)
     if st is None:
         raise ConnectionError
     return st
