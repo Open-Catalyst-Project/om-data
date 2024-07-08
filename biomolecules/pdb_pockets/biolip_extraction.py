@@ -17,10 +17,6 @@ from schrodinger.structutils import analyze, build
 SCHRO = "/private/home/levineds/schrodinger2024-2"
 
 
-class OnlyCAError(Exception):
-    pass
-
-
 class MissingAtomsError(Exception):
     pass
 
@@ -169,6 +165,22 @@ def get_minimal_pockets(group: pd.DataFrame) -> List[int]:
     return group.loc[[row.name for row in subset_rows]]
 
 
+def certain_rows(df):
+    rows = [
+        ("6qs4", "D", "BS03"),
+    ]  # ('6qs4', 'D', 'BS02')]
+    rows_df = pd.DataFrame(
+        rows, columns=["pdb_id", "receptor_chain", "binding_site_number_code"]
+    )
+    filtered = pd.merge(
+        df,
+        rows_df,
+        how="inner",
+        on=["pdb_id", "receptor_chain", "binding_site_number_code"],
+    )
+    return filtered
+
+
 def retreive_ligand_and_env(
     biolip_df: pd.DataFrame,
     ligand_size_limit: int = 250,
@@ -194,8 +206,13 @@ def retreive_ligand_and_env(
     :param fill_sidechain: If True, PrepWizard will try and fill in missing side chains
     """
     # random.seed(12341)
+    # biolip_df = certain_rows(biolip_df)
     grouped_biolip = biolip_df.groupby("pdb_id")
     pdb_list = list(grouped_biolip.groups.keys())
+    done_list = {
+        tuple(os.path.basename(f).split("_")[:2])
+        for f in glob.glob(output_path + "*.pdb")
+    }
     for pdb_count in range(start_pdb, end_pdb):
         # pdb_id = random.choice(list(grouped_biolip.groups.keys()))
         pdb_id = pdb_list[pdb_count]
@@ -204,25 +221,22 @@ def retreive_ligand_and_env(
         prepped_pdb_fnames = set()
         for idx, row in rows.iterrows():
             sys.stdout.flush()
-            binding_site_counter = (
-                row["receptor_chain"] + row["binding_site_number_code"]
-            )
+            bs_counter = row["receptor_chain"] + row["binding_site_number_code"]
+            if (pdb_id, bs_counter) in done_list:
+                continue
             try:
                 st, fname = get_prepped_protein(pdb_id, row, fill_sidechain)
-            except OnlyCAError:
-                print(f"Error on {pdb_id}: Structure has only CA")
-                continue
             except RuntimeError as e:
-                print(f"Error on {pdb_id}: PrepWizard failed")
+                print(f"Error on {pdb_id}, {bs_counter}: PrepWizard failed")
                 print(e)
                 continue
             except ConnectionError:
                 print(
-                    f"Error on {pdb_id}: Could not reach PDB server, try again later?"
+                    f"Error on {pdb_id}, {bs_counter}: Could not reach PDB server, try again later?"
                 )
                 continue
             except ValueError:
-                print(f"Error on {pdb_id}: BioLiP chain error")
+                print(f"Error on {pdb_id}, {bs_counter}: BioLiP chain error")
                 continue
             else:
                 prepped_pdb_fnames.add(fname)
@@ -230,16 +244,14 @@ def retreive_ligand_and_env(
             try:
                 lig_ats, res_ats = get_atom_lists(st, row)
             except MissingAtomsError:
-                print(f"Error on {pdb_id}, {binding_site_counter}: Atoms are missing")
+                print(f"Error on {pdb_id}, {bs_counter}: Atoms are missing")
                 continue
             except MissingResiduesError as e:
-                print(
-                    f"Error on {pdb_id}, {binding_site_counter}: {e} residue is missing"
-                )
+                print(f"Error on {pdb_id}, {bs_counter}: {e} residue is missing")
                 continue
             except MutateError:
                 print(
-                    f"Error on {pdb_id}, {binding_site_counter}: Cannot mutate gap residue to GLY"
+                    f"Error on {pdb_id}, {bs_counter}: Cannot mutate gap residue to GLY"
                 )
                 continue
 
@@ -250,18 +262,18 @@ def retreive_ligand_and_env(
                 continue
 
             # Do the extraction
-            print(f"obtaining {pdb_id}, binding site {binding_site_counter}")
+            print(f"obtaining {pdb_id}, binding site {bs_counter}")
             ligand_env = st.extract(lig_ats + res_ats)
             try:
                 cap_termini(st, ligand_env)
             except Exception as e:
-                print(f"Error on {pdb_id}, {binding_site_counter}: Cannot cap termini")
+                print(f"Error on {pdb_id}, {bs_counter}: Cannot cap termini")
                 print(e)
                 continue
             ligand_env = build.reorder_protein_atoms_by_sequence(ligand_env)
             fname = os.path.join(
                 output_path,
-                f"{pdb_id}_{binding_site_counter}_{ligand_env.formal_charge}.pdb",
+                f"{pdb_id}_{bs_counter}_{ligand_env.formal_charge}.pdb",
             )
             ligand_env.write(fname)
 
@@ -271,28 +283,34 @@ def retreive_ligand_and_env(
             os.remove(fname)
 
 
-def download_cif(pdb_id: str, chains: List[str]) -> str:
+def download_cif(pdb_id: str) -> Structure:
     """
     Download cif (as opposed to pdb) of a given protein and extract
     the needed chains.
 
     :param pdb_id: name of PDB to download
-    :param chains: list of relevant chain names to extract
-    :return: filename where structure has been downloaded
+    :return: Downloaded structure
     """
-    cif_name = f"{pdb_id}.cif"
+    fname = f"{pdb_id}.cif"
     for i in range(3):
         subprocess.run(
             [os.path.join(SCHRO, "utilities", "getpdb"), pdb_id, "-format", "cif"]
         )
-        if os.path.exists(cif_name):
+        if os.path.exists(fname):
             break
         else:
             time.sleep(10)
     else:
         raise ConnectionError
 
-    return cif_name
+    try:
+        st = next(StructureReader(fname), None)
+    except IndexError:
+        subprocess.run([os.path.join(SCHRO, "utilities", "getpdb"), pdb_id])
+        st = next(StructureReader(f"{pdb_id}.pdb"), None)
+    if st is None:
+        raise ConnectionError
+    return st
 
 
 def get_prepped_protein(
@@ -316,7 +334,7 @@ def get_prepped_protein(
     """
     chains = {row["receptor_chain"], row["ligand_chain"]}
     outname = f"{pdb_id}_{'_'.join(sorted(chains))}_prepped.maegz"
-    fname = f"{pdb_id}.pdb"
+    fname = f"{pdb_id}.cif"
     maename = f"{pdb_id}.maegz"
 
     if not prep:
@@ -327,18 +345,17 @@ def get_prepped_protein(
         pass
     else:
         # We haven't done anything to prepare the protein
-        subprocess.run([os.path.join(SCHRO, "utilities", "getpdb"), pdb_id])
-        if not os.path.exists(fname):
-            # PDB could not be downloaded, try the cif
-            fname = download_cif(pdb_id, chains)
+        st = download_cif(pdb_id)
 
-        st = next(StructureReader(fname), None)
-        if st is None:
-            raise ValueError
-        # only extract the relevant chains because these proteins tend to be very large and PrepWizard takes hours
+        # only extract the relevant chains because these proteins can be large
+        # and then PrepWizard can take hours
         at_list = []
-        for chain in chains:
-            at_list.extend(st.chain[chain].getAtomList())
+        try:
+            for chain in chains:
+                at_list.extend(st.chain[chain].getAtomList())
+        except KeyError:
+            print(f"Chain is missing from {pdb_id}")
+            raise ValueError
         st = st.extract(at_list)
 
         # Remove any dummy atoms, PrepWizard doesn't like them
@@ -548,7 +565,11 @@ def get_single_gaps(st: Structure, rec_chain: str, res_list: List[str]) -> List[
     :return: list of residues which are single-residue gaps in `res_list`
     """
     parent_indices = set()
-    parent_list = list(st.chain[rec_chain].residue)
+    try:
+        parent_list = list(st.chain[rec_chain].residue)
+    except KeyError:
+        print(f"missing expected receptor chain: {rec_chain}")
+        raise MissingResiduesError("Chain")
     for res_name in res_list:
         try:
             res = st.findResidue(f"{rec_chain}:{res_name}")
