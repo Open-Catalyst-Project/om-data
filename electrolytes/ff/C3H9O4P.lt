@@ -78,24 +78,24 @@ C3H9O4P inherits OPLSCM1A {
   }
 
   write_once("In Settings") {
-    dihedral_coeff @dihedral:type1_unk_70902 0.000 0.000 0.000 0.000
-    dihedral_coeff @dihedral:type2_unk_70902 0.000 0.000 0.000 0.000
-    dihedral_coeff @dihedral:type3_unk_70902 0.000 0.000 0.000 0.000
-    dihedral_coeff @dihedral:type4_unk_70902 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type5_unk_70902 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type6_unk_70902 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type7_unk_70902 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type8_unk_70902 0.000 0.000 0.000 0.000
-    dihedral_coeff @dihedral:type9_unk_70902 0.000 0.000 0.000 0.000
-    dihedral_coeff @dihedral:type10_unk_70902 0.000 0.000 0.000 0.000
-    dihedral_coeff @dihedral:type11_unk_70902 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type12_unk_70902 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type13_unk_70902 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type14_unk_70902 0.000 0.000 0.000 0.000
-    dihedral_coeff @dihedral:type15_unk_70902 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type16_unk_70902 0.000 0.000 0.000 0.000
-    dihedral_coeff @dihedral:type17_unk_70902 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type18_unk_70902 0.000 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type1_unk_70902 opls  0.000 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type2_unk_70902 opls  0.000 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type3_unk_70902 opls  0.000 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type4_unk_70902 opls  0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type5_unk_70902 opls  0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type6_unk_70902 opls  0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type7_unk_70902 opls  0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type8_unk_70902 opls  0.000 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type9_unk_70902 opls  0.000 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type10_unk_70902 opls  0.000 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type11_unk_70902 opls  0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type12_unk_70902 opls  0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type13_unk_70902 opls  0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type14_unk_70902 opls  0.000 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type15_unk_70902 opls  0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type16_unk_70902 opls  0.000 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type17_unk_70902 opls  0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type18_unk_70902 opls  0.000 0.000 0.000 0.000
   }
 
   write_once("In Settings") {

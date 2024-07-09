@@ -58,16 +58,16 @@ C5H4F8O inherits OPLSCM1A {
   }
 
   write_once("In Settings") {
-    dihedral_coeff @dihedral:type1_unk_fe132 0.000 5.124 0.000 0.000
-    dihedral_coeff @dihedral:type2_unk_fe132 4.669 5.124 0.000 0.000
-    dihedral_coeff @dihedral:type3_unk_fe132 0.000 0.000 0.198 0.000
-    dihedral_coeff @dihedral:type4_unk_fe132 0.000 0.000 0.198 0.000
-    dihedral_coeff @dihedral:type5_unk_fe132 0.000 0.000 0.198 0.000
-    dihedral_coeff @dihedral:type6_unk_fe132 0.000 0.000 0.198 0.000
-    dihedral_coeff @dihedral:type7_unk_fe132 4.669 5.124 0.000 0.000
-    dihedral_coeff @dihedral:type8_unk_fe132 0.000 5.124 0.000 0.000
-    dihedral_coeff @dihedral:type9_unk_fe132 0.000 0.000 0.198 0.000
-    dihedral_coeff @dihedral:type10_unk_fe132 0.000 0.000 0.198 0.000
+    dihedral_coeff @dihedral:type1_unk_fe132 opls 0.000 5.124 0.000 0.000
+    dihedral_coeff @dihedral:type2_unk_fe132 opls 4.669 5.124 0.000 0.000
+    dihedral_coeff @dihedral:type3_unk_fe132 opls 0.000 0.000 0.198 0.000
+    dihedral_coeff @dihedral:type4_unk_fe132 opls 0.000 0.000 0.198 0.000
+    dihedral_coeff @dihedral:type5_unk_fe132 opls 0.000 0.000 0.198 0.000
+    dihedral_coeff @dihedral:type6_unk_fe132 opls 0.000 0.000 0.198 0.000
+    dihedral_coeff @dihedral:type7_unk_fe132 opls 4.669 5.124 0.000 0.000
+    dihedral_coeff @dihedral:type8_unk_fe132 opls 0.000 5.124 0.000 0.000
+    dihedral_coeff @dihedral:type9_unk_fe132 opls 0.000 0.000 0.198 0.000
+    dihedral_coeff @dihedral:type10_unk_fe132 opls 0.000 0.000 0.198 0.000
   }
 
   write_once("In Settings") {
