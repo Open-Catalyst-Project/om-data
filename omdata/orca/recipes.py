@@ -9,6 +9,7 @@ from omdata.orca.calc import (
     OPT_PARAMETERS,
     ORCA_BASIS,
     ORCA_BLOCKS,
+    NBO_FLAGS,
     ORCA_FUNCTIONAL,
     ORCA_SIMPLE_INPUT,
     Vertical,
@@ -27,6 +28,7 @@ def single_point_calculation(
     nprocs=12,
     outputdir=os.getcwd(),
     vertical=Vertical.Default,
+    nbo=False,
     copy_files=None,
     **calc_kwargs,
 ):
@@ -54,6 +56,8 @@ def single_point_calculation(
         List of `orcablocks` swaps for the calculator
     nprocs: int
         Number of processes to parallelize across
+    nbo: bool
+        Run NBO as part of the Orca calculation
     outputdir: str
         Directory to move results to upon completion
     calc_kwargs:
@@ -70,6 +74,10 @@ def single_point_calculation(
     if vertical == Vertical.MetalOrganics and spin_multiplicity == 1:
         orcasimpleinput.append("UKS")
         orcablocks.append(get_symm_break_block(atoms, charge))
+    if not nbo:
+        orcasimpleinput.extend(["NONBO", "NONPA"])
+    else:
+        orcablocks.append(NBO_FLAGS)
 
     nprocs = psutil.cpu_count(logical=False) if nprocs == "max" else nprocs
     default_inputs = [xc, basis, "engrad"]
@@ -103,6 +111,7 @@ def ase_relaxation(
     outputdir=os.getcwd(),
     vertical=Vertical.Default,
     copy_files=None,
+    nbo=False,
     **calc_kwargs,
 ):
     """
@@ -131,6 +140,8 @@ def ase_relaxation(
         Number of processes to parallelize across
     opt_params: dict
         Dictionary of optimizer parameters
+    nbo: bool
+        Run NBO as part of the Orca calculation
     outputdir: str
         Directory to move results to upon completion
     calc_kwargs:
@@ -149,6 +160,10 @@ def ase_relaxation(
     if vertical == Vertical.MetalOrganics and spin_multiplicity == 1:
         orcasimpleinput.append("UKS")
         orcablocks.append(get_symm_break_block(atoms, charge))
+    if not nbo:
+        orcasimpleinput.extend(["NONBO", "NONPA"])
+    else:
+        orcablocks.append(NBO_FLAGS)
 
     nprocs = psutil.cpu_count(logical=False) if nprocs == "max" else nprocs
     default_inputs = [xc, basis, "engrad"]

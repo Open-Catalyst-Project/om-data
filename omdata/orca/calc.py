@@ -113,16 +113,15 @@ ORCA_SIMPLE_INPUT = [
     "NormalConv",
     "DEFGRID3",
     "ALLPOP",
-    "NBO",
 ]
 ORCA_BLOCKS = [
     "%scf Convergence Tight maxiter 300 end",
     "%elprop Dipole true Quadrupole true end",
-    '%nbo NBOKEYLIST = "$NBO NPA NBO E2PERT 0.1 $END" end',
     "%output Print[P_ReducedOrbPopMO_L] 1 Print[P_ReducedOrbPopMO_M] 1 Print[P_BondOrder_L] 1 Print[P_BondOrder_M] 1 end",
     '%basis GTOName "def2-tzvpd.bas" end',
     "%scf THRESH 1e-12 TCUT 1e-13 end",
 ]
+NBO_FLAGS = '%nbo NBOKEYLIST = "$NBO NPA NBO E2PERT 0.1 $END" end'
 ORCA_ASE_SIMPLE_INPUT = " ".join([ORCA_FUNCTIONAL] + [ORCA_BASIS] + ORCA_SIMPLE_INPUT)
 OPT_PARAMETERS = {
     "optimizer": Sella,
