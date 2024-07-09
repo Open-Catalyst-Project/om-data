@@ -79,7 +79,7 @@ def extract_solvation_shells(
     solvent_resnames = set(solvents.values())
 
     # Read a structure
-    structures = list(StructureReader(os.path.join(input_dir, "system_output.pdb")))[:10]
+    structures = list(StructureReader(os.path.join(input_dir, "system_output.pdb")))
     # assign partial charges to atoms
     logging.info("Assigning partial charges to atoms")
     for st in tqdm(structures):
@@ -93,7 +93,9 @@ def extract_solvation_shells(
         for radius in solute_radii:
             logging.info(f"Radius = {radius} A")
             expanded_shells = []
-            for i, st in tqdm(enumerate(structures), total=len(structures)):  # loop over timesteps
+            for i, st in tqdm(
+                enumerate(structures), total=len(structures)
+            ):  # loop over timesteps
 
                 # extract all solute molecules
                 solute_molecules = [
@@ -135,13 +137,16 @@ def extract_solvation_shells(
                             solute_resnames,
                             max_shell_size=upper_bound,
                         )
-                    #expanded_shell_ats = sorted(expanded_shell_ats)
                     central_at = st.molecule[central_solute].atom[1]
-                    central_at.property['b_m_central'] = True
+                    central_at.property["b_m_central"] = True
                     expanded_shell = st.extract(expanded_shell_ats, copy_props=True)
 
                     # find index of first atom of the central solute in the sorted shell_ats (adjust for 1-indexing)
-                    central_solute_atom_idx = next(at for at in expanded_shell.atom if at.property.pop('b_m_central', False)).index
+                    central_solute_atom_idx = next(
+                        at
+                        for at in expanded_shell.atom
+                        if at.property.pop("b_m_central", False)
+                    ).index
 
                     # contract everthing to be centered on our molecule of interest
                     # (this will also handle if a molecule is split across a PBC)
@@ -157,7 +162,9 @@ def extract_solvation_shells(
             # we will get lists of lists of shells where each list of structures are conformers of each other
             logging.info("Grouping solvation shells into conformers")
             # TODO: speed this up
-            isomeric_shells = group_with_comparison(expanded_shells, are_isomeric_molecules)
+            isomeric_shells = group_with_comparison(
+                expanded_shells, are_isomeric_molecules
+            )
             grouped_shells = []
             for isomer_group in isomeric_shells:
                 grouped_shells.extend(groupby_molecules_are_conformers(isomer_group))
@@ -171,7 +178,9 @@ def extract_solvation_shells(
             logging.info(f"Extracting top {top_n} most diverse shells from each group")
             final_shells = []
             # example grouping - set of structures
-            for group_idx, shell_group in tqdm(enumerate(grouped_shells), total=len(grouped_shells)):
+            for group_idx, shell_group in tqdm(
+                enumerate(grouped_shells), total=len(grouped_shells)
+            ):
                 filtered = filter_by_rmsd(shell_group, n=top_n)
                 filtered = [(group_idx, st) for st in filtered]
                 final_shells.extend(filtered)
@@ -192,7 +201,9 @@ def extract_solvation_shells(
             for radius in solvent_radii:
                 logging.info(f"Radius = {radius} A")
                 filtered_shells = []
-                for i, st in tqdm(enumerate(structures), total=len(structures)):  # loop over timesteps
+                for i, st in tqdm(
+                    enumerate(structures), total=len(structures)
+                ):  # loop over timesteps
                     # extract all solvent molecules
                     solvent_molecules = [
                         res for res in st.residue if res.pdbres.strip() == residue
@@ -241,7 +252,9 @@ def extract_solvation_shells(
                 # Now compare the expanded shells and group them by similarity
                 # we will get lists of lists of shells where each list of structures are conformers of each other
                 logging.info("Grouping solvation shells into conformers")
-                grouped_shells = group_with_comparison(filtered_shells, are_isomeric_molecules)
+                grouped_shells = group_with_comparison(
+                    filtered_shells, are_isomeric_molecules
+                )
 
                 # Now ensure that topologically related atoms are equivalently numbered (up to molecular symmetry)
                 grouped_shells = [
@@ -268,41 +281,55 @@ def extract_solvation_shells(
                     # TODO: seems like this is saving an extra line at the end of the xyz files
                     st.write(os.path.join(save_path, f"shell_{i}.xyz"))
 
+
 def are_isomeric_molecules(st1, st2):
-    isomers = st1.mol_total == st2.mol_total and st1.atom_total == st2.atom_total
+    isomers = st1.atom_total == st2.atom_total and st1.mol_total == st2.mol_total
     if isomers:
-        cnt1 = {frozenset(Counter(mol.atom).items()) for mol in st1.molecule} 
-        cnt2 = {frozenset(Counter(mol.atom).items()) for mol in st2.molecule} 
+        isomers = Counter(at.atomic_number for at in st1.atom) == Counter(
+            at.atomic_number for at in st2.atom
+        )
+    if isomers:
+        cnt1 = {
+            frozenset(Counter(at.atomic_number for at in mol.atom).items())
+            for mol in st1.molecule
+        }
+        cnt2 = {
+            frozenset(Counter(at.atomic_number for at in mol.atom).items())
+            for mol in st2.molecule
+        }
         isomers = cnt1 == cnt2
     return isomers
 
+
 def groupby_molecules_are_conformers(st_list):
-     def are_same_group_counts(group1, group2):
-         return {count for count, _ in group1} == {count for count, _ in group2}
+    def are_same_group_counts(group1, group2):
+        return {count for count, _ in group1} == {count for count, _ in group2}
 
-     def are_groups_conformers(group1, group2):
-         matched_groups = 0
-         for count1, st1 in group1:
-             for count2, st2 in group2:
-                 if count1 == count2 and are_conformers(st1, st2):
-                     matched_groups += 1
-                     break
-         return matched_groups == len(group1)
+    def are_groups_conformers(group1, group2):
+        matched_groups = 0
+        for count1, st1 in group1:
+            for count2, st2 in group2:
+                if count1 == count2 and are_conformers(st1, st2):
+                    matched_groups += 1
+                    break
+        return matched_groups == len(group1)
 
-     mol_to_st = {}
-     for st in st_list:
-         mol_list = [mol.extractStructure() for mol in st.molecule]
-         mol_list.sort(key=lambda x: x.atom_total)
-         grouped_mol_list = group_with_comparison(mol_list, are_conformers)
-         st_mols = frozenset((len(grp), grp[0]) for grp in grouped_mol_list)
-         mol_to_st[st_mols] = st
+    mol_to_st = {}
+    for st in st_list:
+        mol_list = [mol.extractStructure() for mol in st.molecule]
+        mol_list.sort(key=lambda x: x.atom_total)
+        grouped_mol_list = group_with_comparison(mol_list, are_conformers)
+        st_mols = frozenset((len(grp), grp[0]) for grp in grouped_mol_list)
+        mol_to_st[st_mols] = st
 
-     grouped_by_molecular_counts = group_with_comparison(mol_to_st.keys(), are_same_group_counts)
-     conf_groups = []
-     for groups in grouped_by_molecular_counts:
-         conf_groups.extend(group_with_comparison(groups, are_groups_conformers))
-     conf_groups = [[mol_to_st[grp] for grp in cgroup] for cgroup in conf_groups]
-     return conf_groups
+    grouped_by_molecular_counts = group_with_comparison(
+        mol_to_st.keys(), are_same_group_counts
+    )
+    conf_groups = []
+    for groups in grouped_by_molecular_counts:
+        conf_groups.extend(group_with_comparison(groups, are_groups_conformers))
+    conf_groups = [[mol_to_st[grp] for grp in cgroup] for cgroup in conf_groups]
+    return conf_groups
 
 
 if __name__ == "__main__":
