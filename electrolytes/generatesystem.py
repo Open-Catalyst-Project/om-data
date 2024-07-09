@@ -17,6 +17,7 @@ import lammps2omm as lmm
 import os
 import csv 
 import numpy as np
+from sklearn.cluster import KMeans
 
 # Read which system # to simulate from command line argument
 row_idx  = int(sys.argv[1]) + 1
@@ -54,7 +55,7 @@ species = cat+an+neut#$system[2:Ncomp+2]
 molfrac = salt_molfrac.tolist()+solv_molfrac.tolist()
 
 # Initial boxsize is always 5 nm
-boxsize = 60 #In Angstrom
+boxsize = 90 #In Angstrom
 
 # Calculate how many salt species to add in the system. If units of the salt concentration 
 # is in molality (units == 'mass') then, we don't need solvent density. But if the units is
@@ -66,7 +67,7 @@ units = systems[row_idx][3]
 
 Avog = 6.023*10**23
 Nmols = []
-num_solv = 250
+num_solv = 500
 numsalt = 0
 
 salt_conc = np.array(cat_conc+an_conc).astype(float)
@@ -74,9 +75,26 @@ solv_mwweight = sum(d2l.calculate_mw(solv)*solv_frac for solv, solv_frac in zip(
 
 if 'volume' == units:
     # Solvent density in g/ml, obtained from averaging short MD run
-    data = list(csv.reader(open(f'{row_idx-1}/solventdata.txt', 'r')))
-    rho = np.array([float(row[3]) for row in data[1:]])
-    rho = np.mean(rho[int(len(rho)/2):]) 
+    data = np.loadtxt(f'{row_idx-1}/solventdata.txt', skiprows=1, usecols=3,delimiter=',')
+    # Reshape data for clustering
+    data_reshaped = data.reshape(-1, 1)
+
+    # Use K-means to cluster the data into 3 clusters (assuming plateau is one of the clusters)
+    kmeans = KMeans(n_clusters=10, random_state=0).fit(data_reshaped)
+
+    # Get the cluster labels and cluster centers
+    labels = kmeans.labels_
+    centers = kmeans.cluster_centers_
+
+    # Identify the plateau cluster as the one with the smallest variance
+    plateau_cluster = np.argmin([np.var(data[labels == i]) for i in range(3)])
+
+    # Find the start index of the plateau region
+    plateau_start_index = np.where(labels == plateau_cluster)[0][0]
+
+    # Compute the mean of the plateau region
+    plateau = data[labels == plateau_cluster]
+    rho = np.mean(plateau[len(plateau)//2:])
     rho *= 1000 #in g/L
 
     molrho = rho/solv_mwweight #in mol/L
