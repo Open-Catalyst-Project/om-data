@@ -9,6 +9,7 @@ from tqdm import tqdm
 import json
 import argparse
 import numpy as np
+from collections import Counter
 
 from schrodinger.structure import StructureReader
 from schrodinger.structutils import analyze
@@ -78,14 +79,12 @@ def extract_solvation_shells(
     solvent_resnames = set(solvents.values())
 
     # Read a structure
-    structures = StructureReader(os.path.join(input_dir, "system_output.pdb"))
-
+    structures = list(StructureReader(os.path.join(input_dir, "system_output.pdb")))[:10]
     # assign partial charges to atoms
-    # TODO: fix this - the iterator over structures can only be called once
-    # logging.info("Assigning partial charges to atoms")
-    # for st in tqdm(structures):
-    #     for at, charge in zip(st.atom, partial_charges):
-    #         at.partial_charge = charge
+    logging.info("Assigning partial charges to atoms")
+    for st in tqdm(structures):
+        for at, charge in zip(st.atom, partial_charges):
+            at.partial_charge = charge
 
     # For each solute: extract shells around the solute of some heuristic radii and bin by composition/graph hash
     # Choose the N most diverse in each bin
@@ -94,7 +93,7 @@ def extract_solvation_shells(
         for radius in solute_radii:
             logging.info(f"Radius = {radius} A")
             expanded_shells = []
-            for i, st in tqdm(enumerate(structures)):  # loop over timesteps
+            for i, st in tqdm(enumerate(structures), total=len(structures)):  # loop over timesteps
 
                 # extract all solute molecules
                 solute_molecules = [
@@ -136,16 +135,13 @@ def extract_solvation_shells(
                             solute_resnames,
                             max_shell_size=upper_bound,
                         )
-                    expanded_shell_ats = sorted(expanded_shell_ats)
+                    #expanded_shell_ats = sorted(expanded_shell_ats)
+                    central_at = st.molecule[central_solute].atom[1]
+                    central_at.property['b_m_central'] = True
                     expanded_shell = st.extract(expanded_shell_ats, copy_props=True)
 
                     # find index of first atom of the central solute in the sorted shell_ats (adjust for 1-indexing)
-                    central_solute_atom_idx = (
-                        expanded_shell_ats.index(
-                            st.molecule[central_solute].getAtomList()[0]
-                        )
-                        + 1
-                    )
+                    central_solute_atom_idx = next(at for at in expanded_shell.atom if at.property.pop('b_m_central', False)).index
 
                     # contract everthing to be centered on our molecule of interest
                     # (this will also handle if a molecule is split across a PBC)
@@ -161,7 +157,10 @@ def extract_solvation_shells(
             # we will get lists of lists of shells where each list of structures are conformers of each other
             logging.info("Grouping solvation shells into conformers")
             # TODO: speed this up
-            grouped_shells = group_with_comparison(expanded_shells, are_conformers)
+            isomeric_shells = group_with_comparison(expanded_shells, are_isomeric_molecules)
+            grouped_shells = []
+            for isomer_group in isomeric_shells:
+                grouped_shells.extend(groupby_molecules_are_conformers(isomer_group))
 
             # Now ensure that topologically related atoms are equivalently numbered (up to molecular symmetry)
             grouped_shells = [
@@ -172,7 +171,7 @@ def extract_solvation_shells(
             logging.info(f"Extracting top {top_n} most diverse shells from each group")
             final_shells = []
             # example grouping - set of structures
-            for group_idx, shell_group in tqdm(enumerate(grouped_shells)):
+            for group_idx, shell_group in tqdm(enumerate(grouped_shells), total=len(grouped_shells)):
                 filtered = filter_by_rmsd(shell_group, n=top_n)
                 filtered = [(group_idx, st) for st in filtered]
                 final_shells.extend(filtered)
@@ -183,6 +182,7 @@ def extract_solvation_shells(
             os.makedirs(save_path, exist_ok=True)
             for i, (group_idx, st) in enumerate(final_shells):
                 # TODO: seems like this is saving an extra line at the end of the xyz files
+                # DSL: So what?
                 st.write(os.path.join(save_path, f"group_{group_idx}" f"shell_{i}.xyz"))
 
     if not skip_solvent_centered_shells:
@@ -192,11 +192,7 @@ def extract_solvation_shells(
             for radius in solvent_radii:
                 logging.info(f"Radius = {radius} A")
                 filtered_shells = []
-                for i, st in tqdm(enumerate(structures)):  # loop over timesteps
-                    # assign partial charges to atoms
-                    for at, charge in zip(st.atom, partial_charges):
-                        at.partial_charge = charge
-
+                for i, st in tqdm(enumerate(structures), total=len(structures)):  # loop over timesteps
                     # extract all solvent molecules
                     solvent_molecules = [
                         res for res in st.residue if res.pdbres.strip() == residue
@@ -233,9 +229,7 @@ def extract_solvation_shells(
                     filtered_shells.extend(size_filtered_shells)
 
                 # Choose a random subset of shells
-                assert (
-                    len(filtered_shells) > 0
-                ), "No solute-free shells found for solvent"
+                assert filtered_shells, "No solute-free shells found for solvent"
                 # check that every shell is below the max size
                 for shell in filtered_shells:
                     assert (
@@ -247,8 +241,7 @@ def extract_solvation_shells(
                 # Now compare the expanded shells and group them by similarity
                 # we will get lists of lists of shells where each list of structures are conformers of each other
                 logging.info("Grouping solvation shells into conformers")
-                # TODO: speed this up
-                grouped_shells = group_with_comparison(filtered_shells, are_conformers)
+                grouped_shells = group_with_comparison(filtered_shells, are_isomeric_molecules)
 
                 # Now ensure that topologically related atoms are equivalently numbered (up to molecular symmetry)
                 grouped_shells = [
@@ -274,6 +267,42 @@ def extract_solvation_shells(
                 for i, st in enumerate(final_shells):
                     # TODO: seems like this is saving an extra line at the end of the xyz files
                     st.write(os.path.join(save_path, f"shell_{i}.xyz"))
+
+def are_isomeric_molecules(st1, st2):
+    isomers = st1.mol_total == st2.mol_total and st1.atom_total == st2.atom_total
+    if isomers:
+        cnt1 = {frozenset(Counter(mol.atom).items()) for mol in st1.molecule} 
+        cnt2 = {frozenset(Counter(mol.atom).items()) for mol in st2.molecule} 
+        isomers = cnt1 == cnt2
+    return isomers
+
+def groupby_molecules_are_conformers(st_list):
+     def are_same_group_counts(group1, group2):
+         return {count for count, _ in group1} == {count for count, _ in group2}
+
+     def are_groups_conformers(group1, group2):
+         matched_groups = 0
+         for count1, st1 in group1:
+             for count2, st2 in group2:
+                 if count1 == count2 and are_conformers(st1, st2):
+                     matched_groups += 1
+                     break
+         return matched_groups == len(group1)
+
+     mol_to_st = {}
+     for st in st_list:
+         mol_list = [mol.extractStructure() for mol in st.molecule]
+         mol_list.sort(key=lambda x: x.atom_total)
+         grouped_mol_list = group_with_comparison(mol_list, are_conformers)
+         st_mols = frozenset((len(grp), grp[0]) for grp in grouped_mol_list)
+         mol_to_st[st_mols] = st
+
+     grouped_by_molecular_counts = group_with_comparison(mol_to_st.keys(), are_same_group_counts)
+     conf_groups = []
+     for groups in grouped_by_molecular_counts:
+         conf_groups.extend(group_with_comparison(groups, are_groups_conformers))
+     conf_groups = [[mol_to_st[grp] for grp in cgroup] for cgroup in conf_groups]
+     return conf_groups
 
 
 if __name__ == "__main__":
