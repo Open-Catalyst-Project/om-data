@@ -71,7 +71,7 @@ def run_packmol_moltemplate(species,boxsize,Nmols,filename,directory):
                     f"output {filename}.pdb \n"])
     
     # Prepare the LT file for the system we want to simulate 
-    systemlt = f'import "{general_ff}"'
+    systemlt = f'import "{general_ff}"\n'
     
     # Go through every species and copy their PDB and LT files to the target directory
     # And add the species to the Packmol script and the system LT file. 
@@ -90,7 +90,7 @@ def run_packmol_moltemplate(species,boxsize,Nmols,filename,directory):
                         "end structure \n"])
 
         systemlt += '\n'.join([f'import "{species[j]}.lt"',
-                f'mol{j} = new {species[j]}[{Nmol}]'])
+                f'mol{j} = new {species[j]}[{Nmol}]\n'])
     
     
     # Now, work inside the directory 
@@ -183,8 +183,6 @@ def calculate_mw(formula):
     """
     total_weight = 0.0
     elements, counts = extract_elements_and_counts(formula)
-    print("Elements:", elements)
-    print("Counts:", counts)
     for element, count in zip(elements, counts):
         total_weight += PT.GetAtomicWeight(element) * count
     return total_weight

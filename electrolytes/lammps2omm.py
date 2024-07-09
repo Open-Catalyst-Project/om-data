@@ -413,9 +413,7 @@ def write_forcefield(u,filename):
         fourier_dihedrals = list(filter(lambda x: x[1] == 'fourier', dihedrals))
         if fourier_dihedrals:
             for line in fourier_dihedrals:
-                #print(len(fourier_dihedrals),fourier_dihedrals)
                 number = len(re.findall(r'k\d+="', line[2]))
-                print(number)
                 ff.write('<CustomTorsionForce energy=')
                 for i in range(1,number+1):
                     if i < number:
@@ -423,15 +421,11 @@ def write_forcefield(u,filename):
                     else:
                         ff.write(f'"k{i}*(1+cos(n{i}*theta-d{i}))')
                 ff.write('">\n')
-                #'k2*(1-cos(n2*theta-d2))+k3*(1+cos(n3*theta-d3))">\n')
-                #ff.write('<CustomTorsionForce energy="k1*(1+cos(n1*theta-d1))+k2*(1-cos(n2*theta-d2))+k3*(1+cos(n3*theta-d3))">\n')
                 for i in range(1,number+1):
                     ff.write(f"""<PerTorsionParameter name="k{i}"/>
     <PerTorsionParameter name="n{i}"/>
     <PerTorsionParameter name="d{i}"/>
     """)
-                #print(fourier_dihedrals)
-                #for line in fourier_dihedrals:
                 ff.write(line[2]+"\n")
                 ff.write('</CustomTorsionForce>\n') 
 
@@ -495,7 +489,6 @@ def write_restemplate(u):
         #If either no bonds are present, then we have a single atom, i.e., Na+ ion or Cl- ion.
         else:
             idx = pdb_resnames.index(resname)
-            #print(resname,pdb_names[idx],lmp_alltypes[idx])
             text += f'  <Atom name="{pdb_names[idx]}" type="{lmp_alltypes[idx]}"/> \n'
         text += ' </Residue>\n'
     text += "</Residues>\n"
@@ -764,7 +757,7 @@ def _improper(line):
 
     omm_out = ' <Improper type1="{}" type2="{}" type3="{}" type4="{}" periodicity1="{}" phase1="{}" k1="{}"/>'.format(omm_t1, omm_t2, omm_t3, omm_t4, int(omm_n),omm_theta,omm_k)
 
-    #print(omm_out)
+    print(omm_out)
     improper_style = improperstyles[0]
     return ["improper",improper_style,omm_out]
 
