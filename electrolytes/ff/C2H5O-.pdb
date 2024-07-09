@@ -1,0 +1,12 @@
+REMARK   1 PDBFIXER FROM: C2H5O-.openmm.pdb
+REMARK   1 CREATED WITH OPENMM 7.7, 2024-07-09
+HETATM    1  C00 UNK     1      -0.743  -0.031  -0.053  1.00  0.00           C  
+HETATM    2  C01 UNK     1       0.801  -0.027   0.053  1.00  0.00           C  
+HETATM    3  O02 UNK     1      -1.196   1.239  -0.472  1.00  0.00           O  
+HETATM    4  H03 UNK     1       1.159   0.717   0.770  1.00  0.00           H  
+HETATM    5  H04 UNK     1       1.195  -0.994   0.375  1.00  0.00           H  
+HETATM    6  H05 UNK     1       1.275   0.206  -0.905  1.00  0.00           H  
+HETATM    7  H06 UNK     1      -1.220  -0.265   0.903  1.00  0.00           H  
+HETATM    8  H07 UNK     1      -1.104  -0.775  -0.769  1.00  0.00           H  
+TER       9      UNK     1
+END

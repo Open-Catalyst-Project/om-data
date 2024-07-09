@@ -1,0 +1,9 @@
+REMARK   1 PDBFIXER FROM: CH3O-.openmm.pdb
+REMARK   1 CREATED WITH OPENMM 7.7, 2024-07-09
+HETATM    1  C00 UNK     1      -0.056  -0.012   0.016  1.00  0.00           C  
+HETATM    2  O01 UNK     1       1.341  -0.137  -0.128  1.00  0.00           O  
+HETATM    3  H02 UNK     1      -0.344   0.052   1.065  1.00  0.00           H  
+HETATM    4  H03 UNK     1      -0.372   0.915  -0.462  1.00  0.00           H  
+HETATM    5  H04 UNK     1      -0.578  -0.818  -0.500  1.00  0.00           H  
+TER       6      UNK     1
+END
