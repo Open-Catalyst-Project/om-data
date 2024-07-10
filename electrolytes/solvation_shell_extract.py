@@ -32,6 +32,7 @@ def extract_solvation_shells(
     system_name: str,
     radii: List[float],
     skip_solvent_centered_shells: bool,
+    max_frames: int,
     shells_per_frame: int,
     max_shell_size: int,
     top_n: int,
@@ -46,6 +47,7 @@ def extract_solvation_shells(
         system_name: Name of the system - used for naming the save directory.
         radii: List of shell radii to extract around solutes and solvents.
         skip_solvent_centered_shells: Skip extracting solvent-centered shells.
+        max_frames: Maximum number of frames to read from the trajectory.
         shells_per_frame: Number of solutes or solvents per MD simulation frame from which to extract candidate shells.
         max_shell_size: Maximum size (in atoms) of saved shells.
         top_n: Number of snapshots to extract per topology.
@@ -77,6 +79,8 @@ def extract_solvation_shells(
 
     # Read structures
     structures = list(StructureReader(os.path.join(input_dir, "system_output.pdb")))
+    if max_frames > 0:
+        structures = random.sample(structures, max_frames)
     # assign partial charges to atoms
     logging.info("Assigning partial charges to atoms")
     for st in tqdm(structures):
@@ -151,8 +155,6 @@ def extract_solvation_shells(
                     elif spec_type == "solvent":
                         fname = os.path.join(save_path, f"shell_{i}_{charge}.xyz")
 
-                    # TODO: seems like this is saving an extra line at the end of the xyz files
-                    # DSL: So what?
                     st.write(fname)
 
 
@@ -285,7 +287,6 @@ def group_shells(shell_list: list[Structure], spec_type: str) -> list[list[Struc
     # Now compare the expanded shells and group them by similarity
     # we will get lists of lists of shells where each list of structures are conformers of each other
     logging.info("Grouping solvation shells into conformers")
-    # TODO: speed this up
     grouped_shells = group_with_comparison(shell_list, are_isomeric_molecules)
     logging.info("Grouped into isomers")
 
@@ -411,6 +412,13 @@ if __name__ == "__main__":
         "--skip_solvent_centered_shells",
         action="store_true",
         help="Skip extracting solvent-centered shells",
+    )
+
+    parser.add_argument(
+        "--max_frames",
+        type=int,
+        default=-1,
+        help="Number of MD simulation frames from the trajectory to use for extraction",
     )
 
     parser.add_argument(
