@@ -1,7 +1,7 @@
-O2V+ {
+O2V+ inherits OPLSCM1A {
   write("Data Atoms") {
     $atom:o1_o2v $mol @atom:O_o2v   -0.65   -3.281   1.488  -1.117
-    $atom:v1_o2v  $mol @atom:V_o2v   2.3   -2.133   1.242   0.765
+    $atom:v_o2v  $mol @atom:V_o2v   2.3   -2.133   1.242   0.765
     $atom:o2_o2v $mol @atom:O_o2v   -0.65 -2.615  -0.071   1.820
   }
   write_once("Data Masses") {

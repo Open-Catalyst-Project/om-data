@@ -8,6 +8,6 @@ Yb+2 {
     }
     # The "In Settings" section stores force-field parameters for this molecule
     write_once("In Settings") {
-        pair_coeff @atom:Yb @atom:Yb  0,04560206 2.7083321031466316
+        pair_coeff @atom:Yb @atom:Yb  0.04560206 2.7083321031466316
     }
 }
