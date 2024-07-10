@@ -1,15 +1,10 @@
-import re
-import numpy as np
 import random
-from typing import List, Set, Callable
+from typing import List, Set
 
-from schrodinger.structutils import analyze
-from schrodinger.application.matsci import clusterstruct
-from schrodinger.comparison import are_conformers
-from schrodinger.application.jaguar.utils import group_with_comparison
+import numpy as np
 from schrodinger.comparison.atom_mapper import ConnectivityAtomMapper
-from schrodinger.structutils import rmsd
 from schrodinger.structure import Structure
+from schrodinger.structutils import analyze, rmsd
 
 
 def generate_lognormal_samples(loc=75, sigma=0.45, size=1):
@@ -26,26 +21,6 @@ def generate_lognormal_samples(loc=75, sigma=0.45, size=1):
     """
     samples = np.random.lognormal(mean=np.log(loc), sigma=sigma, size=size)
     return samples
-
-
-def filter_shells_with_solute_atoms(
-    shells: List[Set[int]], st: Structure, solute_res_names: List[str]
-) -> List[Structure]:
-    """
-    Filter out shells that contain solute atoms.
-    Args:
-        shells: List of sets of atom indices that correspond to shells
-        st: Entire structure from the PDB file
-        solute_res_names: List of residue names that correspond to solute atoms in the simulation
-    Returns:
-        List of Schrodinger structures that do not contain solute atoms
-    """
-
-    solute_atoms = analyze.evaluate_asl(st, f'res {",".join(solute_res_names)}')
-    filtered_shells = [
-        shell for shell in shells if not shell.intersection(solute_atoms)
-    ]
-    return [st.extract(shell, copy_props=True) for shell in filtered_shells]
 
 
 def expand_shell(
