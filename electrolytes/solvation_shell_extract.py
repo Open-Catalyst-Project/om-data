@@ -30,9 +30,8 @@ def extract_solvation_shells(
     input_dir: str,
     save_dir: str,
     system_name: str,
-    solute_radii: List[float],
+    radii: List[float],
     skip_solvent_centered_shells: bool,
-    solvent_radii: List[float],
     shells_per_frame: int,
     max_shell_size: int,
     top_n: int,
@@ -45,9 +44,8 @@ def extract_solvation_shells(
         input_dir: Path to 1) the PDB file containing the MD trajectory (system_output.pdb) and 2) a metadata file (system_metadata.json)
         save_dir: Directory in which to save extracted solvation shells.
         system_name: Name of the system - used for naming the save directory.
-        solute_radii: List of shell radii to extract around solutes.
+        radii: List of shell radii to extract around solutes and solvents.
         skip_solvent_centered_shells: Skip extracting solvent-centered shells.
-        solvent_radii: List of shell radii to extract around solvents.
         shells_per_frame: Number of solutes or solvents per MD simulation frame from which to extract candidate shells.
         max_shell_size: Maximum size (in atoms) of saved shells.
         top_n: Number of snapshots to extract per topology.
@@ -78,9 +76,7 @@ def extract_solvation_shells(
     solvent_resnames = set(solvents.values())
 
     # Read structures
-    structures = list(StructureReader(os.path.join(input_dir, "system_output.pdb")))[
-        :100
-    ]
+    structures = list(StructureReader(os.path.join(input_dir, "system_output.pdb")))
     # assign partial charges to atoms
     logging.info("Assigning partial charges to atoms")
     for st in tqdm(structures):
@@ -96,7 +92,7 @@ def extract_solvation_shells(
     for spec_type in spec_types:
         for species, residue in spec_dicts[spec_type].items():
             logging.info(f"Extracting solvation shells around {species}")
-            for radius in solute_radii:
+            for radius in radii:
                 logging.info(f"Radius = {radius} A")
                 extracted_shells = []
                 for i, st in tqdm(
@@ -116,12 +112,9 @@ def extract_solvation_shells(
                     )
 
                 if spec_type == "solvent":
-                    assert extracted_shells, "No solute-free shells found for solvent"
-                    # DSL: Is the really an assertion error? Or just sad but we should soldier on (i.e. continue)
-
-                    # Choose a random subset of shells
-                    random.shuffle(extracted_shells)
-                    extracted_shells = extracted_shells[:1000]
+                    # raise a warning and continue to the next radii/species
+                    logging.warning("No solute-free shells found for solvent")
+                    continue
 
                 grouped_shells = group_shells(extracted_shells, spec_type)
 
@@ -207,8 +200,7 @@ def extract_residue_from_structure(
         shells = [
             (shell, central_mol)
             for shell, central_mol in zip(shells, central_mol_nums)
-            if (not shell.intersection(solute_atoms))
-            and len(shell) <= max_shell_size
+            if (not shell.intersection(solute_atoms)) and len(shell) <= max_shell_size
         ]
         extracted_shells = [
             extract_contracted_shell(st, at_list, central_mol)
@@ -409,23 +401,16 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--solute_radii",
+        "--radii",
         type=list,
         default=[3],
-        help="List of shell radii to extract around solutes",
+        help="List of shell radii to extract around solutes and solvents",
     )
 
     parser.add_argument(
         "--skip_solvent_centered_shells",
         action="store_true",
         help="Skip extracting solvent-centered shells",
-    )
-
-    parser.add_argument(
-        "--solvent_radii",
-        type=list,
-        default=[3],
-        help="List of shell radii to extract around solvents",
     )
 
     parser.add_argument(
@@ -457,9 +442,8 @@ if __name__ == "__main__":
         args.input_dir,
         args.save_dir,
         args.system_name,
-        args.solute_radii,
+        args.radii,
         args.skip_solvent_centered_shells,
-        args.solvent_radii,
         args.shells_per_frame,
         args.max_shell_size,
         args.top_n,
