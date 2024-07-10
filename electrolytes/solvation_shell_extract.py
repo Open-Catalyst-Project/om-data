@@ -79,7 +79,7 @@ def extract_solvation_shells(
     solvent_resnames = set(solvents.values())
 
     # Read a structure
-    structures = list(StructureReader(os.path.join(input_dir, "system_output.pdb")))
+    structures = list(StructureReader(os.path.join(input_dir, "system_output.pdb")))[:100]
     # assign partial charges to atoms
     logging.info("Assigning partial charges to atoms")
     for st in tqdm(structures):
@@ -150,7 +150,7 @@ def extract_solvation_shells(
 
                     # contract everthing to be centered on our molecule of interest
                     # (this will also handle if a molecule is split across a PBC)
-                    clusterstruct.contract_structure2(
+                    clusterstruct.contract_structure(
                         expanded_shell, contract_on_atoms=[central_solute_atom_idx]
                     )
                     assert (
@@ -165,8 +165,9 @@ def extract_solvation_shells(
             isomeric_shells = group_with_comparison(
                 expanded_shells, are_isomeric_molecules
             )
+            logging.info("Grouped into isomers")
             grouped_shells = []
-            for isomer_group in isomeric_shells:
+            for isomer_group in tqdm(isomeric_shells):
                 grouped_shells.extend(groupby_molecules_are_conformers(isomer_group))
 
             # Now ensure that topologically related atoms are equivalently numbered (up to molecular symmetry)
