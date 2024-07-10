@@ -153,7 +153,7 @@ def extract_solvation_shells(
                     charge = get_structure_charge(st)
                     if spec_type == "solute":
                         fname = os.path.join(
-                            save_path, f"group_{group_idx}", f"shell_{i}_{charge}.xyz"
+                            save_path, f"group_{group_idx}_shell_{i}_{charge}.xyz"
                         )
                     elif spec_type == "solvent":
                         fname = os.path.join(save_path, f"shell_{i}_{charge}.xyz")
@@ -205,14 +205,14 @@ def extract_residue_from_structure(
         # Only keep the shells that have no solute atoms and below a maximum size
         solute_atoms = analyze.evaluate_asl(st, f'res {",".join(solute_resnames)}')
         shells = [
-            shell
-            for shell in shells
+            (shell, central_mol)
+            for shell, central_mol in zip(shells, central_mol_nums)
             if (not shell.intersection(solute_atoms))
-            and shell.atom_total <= max_shell_size
+            and len(shell) <= max_shell_size
         ]
         extracted_shells = [
             extract_contracted_shell(st, at_list, central_mol)
-            for at_list, central_mol in zip(shells, central_mol_nums)
+            for at_list, central_mol in shells
         ]
 
     elif spec_type == "solute":
