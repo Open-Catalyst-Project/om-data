@@ -284,6 +284,13 @@ def extract_solvation_shells(
 
 
 def are_isomeric_molecules(st1, st2):
+    """
+    Determine if two structures have molecules which are isomers of each other.
+
+    This is stronger than just ensuring that the structures are isomers and should
+    be sufficient for cases of just solvents as there are no expected topological
+    differences.
+    """
     isomers = st1.atom_total == st2.atom_total and st1.mol_total == st2.mol_total
     if isomers:
         isomers = Counter(at.atomic_number for at in st1.atom) == Counter(
@@ -303,6 +310,10 @@ def are_isomeric_molecules(st1, st2):
 
 
 def groupby_molecules_are_conformers(st_list):
+    """
+    Given a list of Structures which are assumed to have isomeric molecules,
+    partition the structures by conformers.
+    """
     def are_same_group_counts(group1, group2):
         return {count for count, _ in group1} == {count for count, _ in group2}
 
