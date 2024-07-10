@@ -452,6 +452,7 @@ if __name__ == "__main__":
         args.system_name,
         args.radii,
         args.skip_solvent_centered_shells,
+        args.max_frames,
         args.shells_per_frame,
         args.max_shell_size,
         args.top_n,
