@@ -36,8 +36,8 @@ if units == 'volume':
     molfrac = molfrac/np.sum(molfrac)
 
     #Initial boxsize is always 10 nm. 
-    boxsize = 50 
-    num_solv = 1000
+    boxsize = 100
+    num_solv = 10000
     Natoms = []
     Nmols = []
     for j in range(len(neut)):
@@ -50,7 +50,7 @@ if units == 'volume':
             Natoms.append(sum(counts)*int(num_solv*molfrac[j]))
 
     #Next we want to cap the total number of atoms
-    NMax = 2500
+    NMax = 3500
     count = 0
     if sum(Natoms) > NMax:
         fracs = np.array(Natoms)/sum(Natoms)

@@ -55,7 +55,7 @@ species = cat+an+neut#$system[2:Ncomp+2]
 molfrac = salt_molfrac.tolist()+solv_molfrac.tolist()
 
 # Initial boxsize is always 5 nm
-boxsize = 50 #In Angstrom
+boxsize = 100 #In Angstrom
 
 # Calculate how many salt species to add in the system. If units of the salt concentration 
 # is in molality (units == 'mass') then, we don't need solvent density. But if the units is
@@ -130,7 +130,7 @@ for j in range(len(neut)):
         Natoms.append(sum(counts)*int(num_solv*solv_molfrac[j]))
 
 #Next we want to cap the total number of atoms
-NMax = 2500
+NMax = 3500
 count = 0
 if sum(Natoms) > NMax:
     fracs = np.array(Natoms)/sum(Natoms)
