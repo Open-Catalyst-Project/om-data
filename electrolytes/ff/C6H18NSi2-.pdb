@@ -1,31 +1,56 @@
-REMARK   1 PDBFIXER FROM: C6H18NSi2-.openmm.pdb
-REMARK   1 CREATED WITH OPENMM 7.7, 2024-07-09
-HETATM    1  N00 UNK     1       0.044   1.218   0.164  1.00  0.00           N  
-HETATM    2 Si1  UNK     1      -1.433   0.413  -0.266  1.00  0.00          Si  
-HETATM    3  C02 UNK     1      -2.271  -0.254   1.258  1.00  0.00           C  
-HETATM    4  C03 UNK     1      -2.533   1.715  -1.013  1.00  0.00           C  
-HETATM    5 Si4  UNK     1       1.551   0.391   0.410  1.00  0.00          Si  
-HETATM    6  C05 UNK     1       2.363  -0.001  -1.221  1.00  0.00           C  
-HETATM    7  C06 UNK     1       2.646   1.588   1.322  1.00  0.00           C  
-HETATM    8  C07 UNK     1       1.368  -1.136   1.463  1.00  0.00           C  
-HETATM    9  C08 UNK     1      -1.181  -0.929  -1.534  1.00  0.00           C  
-HETATM   10  H09 UNK     1      -0.580  -1.753  -1.153  1.00  0.00           H  
-HETATM   11  H0A UNK     1      -0.701  -0.538  -2.432  1.00  0.00           H  
-HETATM   12  H0B UNK     1      -2.141  -1.345  -1.843  1.00  0.00           H  
-HETATM   13  H0C UNK     1      -2.421   0.535   1.996  1.00  0.00           H  
-HETATM   14  H0D UNK     1      -1.693  -1.048   1.728  1.00  0.00           H  
-HETATM   15  H0E UNK     1      -3.253  -0.661   1.014  1.00  0.00           H  
-HETATM   16  H0F UNK     1      -2.082   2.145  -1.907  1.00  0.00           H  
-HETATM   17  H0G UNK     1      -3.502   1.303  -1.295  1.00  0.00           H  
-HETATM   18  H0H UNK     1      -2.710   2.529  -0.310  1.00  0.00           H  
-HETATM   19  H0I UNK     1       1.798  -0.735  -1.794  1.00  0.00           H  
-HETATM   20  H0J UNK     1       3.365  -0.403  -1.069  1.00  0.00           H  
-HETATM   21  H0K UNK     1       2.463   0.897  -1.831  1.00  0.00           H  
-HETATM   22  H0M UNK     1       2.215   1.862   2.285  1.00  0.00           H  
-HETATM   23  H0N UNK     1       3.633   1.164   1.507  1.00  0.00           H  
-HETATM   24  H0O UNK     1       2.782   2.507   0.750  1.00  0.00           H  
-HETATM   25  H0P UNK     1       2.347  -1.566   1.680  1.00  0.00           H  
-HETATM   26  H0Q UNK     1       0.779  -1.909   0.972  1.00  0.00           H  
-HETATM   27  H0R UNK     1       0.904  -0.902   2.421  1.00  0.00           H  
-TER      28      UNK     1
+REMARK LIGPARGEN GENERATED PDB FILE
+ATOM      1  N00 UNK     1       0.044   1.218   0.164  1.00  0.00           N  
+ATOM      2  Si1 UNK     1      -1.433   0.413  -0.266  1.00  0.00          Si  
+ATOM      3  C02 UNK     1      -2.271  -0.254   1.258  1.00  0.00           C  
+ATOM      4  C03 UNK     1      -2.533   1.715  -1.013  1.00  0.00           C  
+ATOM      5  Si4 UNK     1       1.551   0.391   0.410  1.00  0.00          Si  
+ATOM      6  C05 UNK     1       2.363  -0.001  -1.221  1.00  0.00           C  
+ATOM      7  C06 UNK     1       2.646   1.588   1.322  1.00  0.00           C  
+ATOM      8  C07 UNK     1       1.368  -1.136   1.463  1.00  0.00           C  
+ATOM      9  C08 UNK     1      -1.181  -0.929  -1.534  1.00  0.00           C  
+ATOM     10  H09 UNK     1      -0.580  -1.753  -1.153  1.00  0.00           H  
+ATOM     11  H0A UNK     1      -0.701  -0.538  -2.432  1.00  0.00           H  
+ATOM     12  H0B UNK     1      -2.141  -1.345  -1.843  1.00  0.00           H  
+ATOM     13  H0C UNK     1      -2.421   0.535   1.996  1.00  0.00           H  
+ATOM     14  H0D UNK     1      -1.693  -1.048   1.728  1.00  0.00           H  
+ATOM     15  H0E UNK     1      -3.253  -0.661   1.014  1.00  0.00           H  
+ATOM     16  H0F UNK     1      -2.082   2.145  -1.907  1.00  0.00           H  
+ATOM     17  H0G UNK     1      -3.502   1.303  -1.295  1.00  0.00           H  
+ATOM     18  H0H UNK     1      -2.710   2.529  -0.310  1.00  0.00           H  
+ATOM     19  H0I UNK     1       1.798  -0.735  -1.794  1.00  0.00           H  
+ATOM     20  H0J UNK     1       3.365  -0.403  -1.069  1.00  0.00           H  
+ATOM     21  H0K UNK     1       2.463   0.897  -1.831  1.00  0.00           H  
+ATOM     22  H0M UNK     1       2.215   1.862   2.285  1.00  0.00           H  
+ATOM     23  H0N UNK     1       3.633   1.164   1.507  1.00  0.00           H  
+ATOM     24  H0O UNK     1       2.782   2.507   0.750  1.00  0.00           H  
+ATOM     25  H0P UNK     1       2.347  -1.566   1.680  1.00  0.00           H  
+ATOM     26  H0Q UNK     1       0.779  -1.909   0.972  1.00  0.00           H  
+ATOM     27  H0R UNK     1       0.904  -0.902   2.421  1.00  0.00           H  
+TER 
+CONECT    1    2 
+CONECT    2    3 
+CONECT    2    4 
+CONECT    1    5 
+CONECT    5    6 
+CONECT    5    7 
+CONECT    5    8 
+CONECT    2    9 
+CONECT    9   10 
+CONECT    9   11 
+CONECT    9   12 
+CONECT    3   13 
+CONECT    3   14 
+CONECT    3   15 
+CONECT    4   16 
+CONECT    4   17 
+CONECT    4   18 
+CONECT    6   19 
+CONECT    6   20 
+CONECT    6   21 
+CONECT    7   22 
+CONECT    7   23 
+CONECT    7   24 
+CONECT    8   25 
+CONECT    8   26 
+CONECT    8   27 
 END

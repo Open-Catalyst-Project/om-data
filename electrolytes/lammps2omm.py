@@ -25,6 +25,7 @@ import math
 import numpy as np
 import contextlib
 from itertools import combinations
+import subprocess
 
 ## Conversion units
 radian2degree = 57.2957795130  # 1 rad  = 57.2957795130 degree
@@ -53,7 +54,7 @@ atomic_masses_rounded = {
     122: 'Sb', 128: 'Te', 127: 'I', 131: 'Xe', 133: 'Cs',
     137: 'Ba', 139: 'La', 140: 'Ce', 141: 'Pr', 144: 'Nd',
     145: 'Pm', 150: 'Sm', 152: 'Eu', 157: 'Gd', 159: 'Tb',
-    163: 'Dy', 165: 'Ho', 167: 'Er', 169: 'Tm', 173: 'Yb',
+    162: 'Dy', 165: 'Ho', 167: 'Er', 169: 'Tm', 173: 'Yb',
     175: 'Lu', 178: 'Hf', 181: 'Ta', 184: 'W', 186: 'Re', 192: 'Ir', 195: 'Pt', 197: 'Au', 201: 'Hg',
     204: 'Tl', 207: 'Pb', 209: 'Bi', 209: 'Po', 210: 'At', 222: 'Rn',
     223: 'Fr', 226: 'Ra', 227: 'Ac', 232: 'Th', 231: 'Pa', 238: 'U',
@@ -297,6 +298,10 @@ def write_pdbfile(u,filename):
     # Now, append the PDB CONECT information
     with open(fname, 'a') as file:
         file.write(pdbconect)
+    
+    # Next, run PDBFixer, so that we have a clean initial configuration file
+    subprocess.run(f'pdbfixer {fname}',shell=True)
+    subprocess.run(f'mv output.pdb {fname}',shell=True)
 
 def write_forcefield(u,filename):
     """Writes the final XML file used for performing an OpenMM simulation
@@ -523,11 +528,19 @@ def grab_pdbdata_attr(pdb_file):
                 if molID[-1] == lsplit[5]:
                     pdb_ids_mol.append(int(lsplit[1]))
                 pdb_names.append(lsplit[2])
-                pdb_resnames.append(lsplit[4]*3)
-                if np.abs(molid-int(lsplit[5])) > 0:
-                    pdb_resname_mol.append(lsplit[4]*3)
-                    molid = int(lsplit[5])
-
+                if len(lsplit[4]) == 1:
+                    pdb_resnames.append(lsplit[4]*3)
+                else:
+                    pdb_resnames.append(lsplit[4][0]*3)
+                try:
+                    if np.abs(molid-int(lsplit[5])) > 0:
+                        pdb_resname_mol.append(lsplit[4]*3)
+                        molid = int(lsplit[5])
+                except Exception as e:
+                    if np.abs(molid-int(lsplit[4][1:])) > 0:
+                        print(lsplit[4]) 
+                        pdb_resname_mol.append(lsplit[4][0]*3)
+                        molid = int(lsplit[4][1:])
 def grab_lmpdata_attr(dname):
     """Reads the data from LAMMPS data file and store them into lists
 

@@ -55,7 +55,7 @@ species = cat+an+neut#$system[2:Ncomp+2]
 molfrac = salt_molfrac.tolist()+solv_molfrac.tolist()
 
 # Initial boxsize is always 5 nm
-boxsize = 90 #In Angstrom
+boxsize = 50 #In Angstrom
 
 # Calculate how many salt species to add in the system. If units of the salt concentration 
 # is in molality (units == 'mass') then, we don't need solvent density. But if the units is
@@ -67,7 +67,8 @@ units = systems[row_idx][3]
 
 Avog = 6.023*10**23
 Nmols = []
-num_solv = 500
+Natoms = []
+num_solv = 5000
 numsalt = 0
 
 salt_conc = np.array(cat_conc+an_conc).astype(float)
@@ -96,7 +97,7 @@ if 'volume' == units:
     plateau = data[labels == plateau_cluster]
     rho = np.mean(plateau[len(plateau)//2:])
     rho *= 1000 #in g/L
-
+    
     molrho = rho/solv_mwweight #in mol/L
     volume = num_solv/(Avog*molrho) #in L
     numsalt = np.round(salt_conc*volume*Avog).astype(int)
@@ -108,16 +109,38 @@ elif 'number' == units or 'Number' == units:
     salt_molfrac = salt_conc/np.sum(salt_conc)
     numsalt = np.round(salt_molfrac*num_solv).astype(int)
 
-for j in range(len(cat+an)):
+
+salt = cat+an
+for j in range(len(salt)):
+    elements, counts = d2l.extract_elements_and_counts(salt[j])
     if numsalt[j] < 1:
         Nmols.append(1)
+        Natoms.append(sum(counts))
     else:
         Nmols.append(int(numsalt[j]))
+        Natoms.append(sum(counts)*int(numsalt[j]))
+
 for j in range(len(neut)):
+    elements, counts = d2l.extract_elements_and_counts(neut[j])
     if int(num_solv*solv_molfrac[j]) < 1:
         Nmols.append(1)
+        Natoms.append(sum(counts))
     else:
         Nmols.append(int(num_solv*solv_molfrac[j]))
+        Natoms.append(sum(counts)*int(num_solv*solv_molfrac[j]))
+
+#Next we want to cap the total number of atoms
+NMax = 2500
+count = 0
+if sum(Natoms) > NMax:
+    fracs = np.array(Natoms)/sum(Natoms)
+    for j, frac in enumerate(fracs):
+        N = frac*NMax
+        count += N
+        N = int(np.round((N/(Natoms[j]/Nmols[j]))))
+        Nmols[j] = N
+
+#print(NMax,count,Nmols)
 
 d2l.run_packmol_moltemplate(species,boxsize,Nmols,'system',str(row_idx-1))
 lmm.prep_openmm_sim("system",cat,an,neut,str(row_idx-1))
