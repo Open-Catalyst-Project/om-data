@@ -17,8 +17,4 @@ for ((i = 0; i < num_lines; i++)); do
     
     #Generate the system
     python generatesystem.py $i 
-    cd $i
-    cp ../runsystem.py ./
-    python runsystem.py $i
-    cd ..
 done

@@ -6,7 +6,9 @@ This README provides rough guide on how to prepare and run bulk electrolyte simu
 3. Moltemplate: [https://www.moltemplate.org/](https://www.moltemplate.org/)
 4. OpenMM: [https://openmm.org/](https://openmm.org/)
 5. MDAnalysis: [https://www.mdanalysis.org/](https://www.mdanalysis.org/)
-6. (Optional) LAMMPS: [https://www.lammps.org/#gsc.tab=0](https://www.lammps.org/#gsc.tab=0)
+6. RDKit: [https://www.rdkit.org/](https://www.rdkit.org/)
+7. PDBFixer: [https://github.com/openmm/pdbfixer](https://github.com/openmm/pdbfixer)
+8. (Optional) LAMMPS: [https://www.lammps.org/#gsc.tab=0](https://www.lammps.org/#gsc.tab=0)
 
 ## List of files and directories
 Only the important ones
@@ -15,11 +17,13 @@ Only the important ones
 - `runsimulations.sh`: a Bash script that will run the simulations one by one. 
 - ff: a directory of force field files of all electroyte components. 
 - elytes.csv: a CSV file listing all possible electrolyte systems we can simulate.
+- litelytes.csv: a CSV file listing electrolyte systems curated from literature. 
 - `data2lammps.py`: a Python module to generate LAMMPS DATA and run files. 
 - `lammps2omm.py`: a Python module to convert LAMMPS DATA and run files to OpenMM XML and PDB files. 
-- `prepopenmmsim.py`: a Python script to prepare an OpenMM simulation given LAMMPS DATA and run files generated from data2lammps.py module. 
 - `generatesolvent.py`: a Python script to generate solvent configuration and force field files (in LAMMPS format).
 - `generatesystem.py`: a Python script to generate system configuration (salt+solvent) and force field files (in LAMMPS format).
+- `randommixing.py`: a Python script to generate completely random electrolytes and append them to elytes.csv file. 
+- `classmixing.py`: a Python script to generate random electrolytes based on their classifications and append them to elytes.csv file. 
 
 In theory, we only need to run preparesimulations.sh, followed by runsimulations.sh
 
