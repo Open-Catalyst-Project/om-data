@@ -8,7 +8,7 @@ five classes to choose from:
 (3) 10% Salt in ionic liquids
 (4) 5% Molten salt 
 (5) 5% Aqueous electrolytes
-For each class, we create two distinct concentrations (0.05 and 1.0 molal) and temperatures. The salt
+For each class, we create two distinct concentrations (0.05 and 0.5 molal) and temperatures. The salt
 may contain N-many cations and M-many anions, with the number chosen randomly  and stoichiometry
 satisfying charge neutrality. Solvents can be mixtures, with components chosen randomly as well. 
 For each cation, anion, and solvent we can have up to four components. 
@@ -180,7 +180,7 @@ for i in range(Nrandom):
     species = cat+an+neut
 
     #Start preparing random electrolytes
-    concs = [0.05, 1.0]
+    concs = [0.05, 0.5]
     for conc in concs:
         for temperature  in [minT, maxT]:
             salt_conc = conc*np.array(stoich)
@@ -199,18 +199,18 @@ for i in range(Nrandom):
                 if j < len(cat):
                     newspecies[f'cation{j+1}'] = cat[j]
                     if clas == 'MS':
-                        newspecies[f'cation{j+1}_conc'] = salt_conc[j]
-                    else:
                         newspecies[f'cation{j+1}_conc'] = stoich[j]
+                    else:
+                        newspecies[f'cation{j+1}_conc'] = salt_conc[j]
                 else:
                     newspecies[f'cation{j+1}'] = ''
                     newspecies[f'cation{j+1}_conc'] = ''
                 if j < len(an):
                     newspecies[f'anion{j+1}'] = an[j]
                     if clas == 'MS':
-                        newspecies[f'anion{j+1}_conc'] = salt_conc[j]
-                    else:
                         newspecies[f'anion{j+1}_conc'] = stoich[j]
+                    else:
+                        newspecies[f'anion{j+1}_conc'] = salt_conc[j]
                 else:
                     newspecies[f'anion{j+1}'] = ''
                     newspecies[f'anion{j+1}_conc'] = ''

@@ -2,7 +2,7 @@
 Author: Muhammad R. Hasyim
 
 Script to a list of purely random electrolytes based on their classifications. THe only constraint here
-is the number of components and charge neutrality. Here, we create two distinct concentrations (0.05 and 1.0 molal) and temperatures. The salt may contain N-many cations and M-many anions, with the number chosen randomly  and stoichiometry satisfying charge neutrality. Solvents can be mixtures, with components chosen randomly as well. For each cation, anion, and solvent we can have up to four components. 
+is the number of components and charge neutrality. Here, we create two distinct concentrations (0.05 and 0.5 molal) and temperatures. The salt may contain N-many cations and M-many anions, with the number chosen randomly  and stoichiometry satisfying charge neutrality. Solvents can be mixtures, with components chosen randomly as well. For each cation, anion, and solvent we can have up to four components. 
 
 The resulting random electrolytes are appended as new entry to the elytes.csv file, which contain the list of all electrolytes we want to simulate. 
 """
@@ -72,7 +72,7 @@ for i in range(Nrandom):
 
 
     #Start preparing random electrolytes
-    concs = [0.05, 1.0]
+    concs = [0.05, 0.5]
     for conc in concs:
         for temperature  in [minT, maxT]:
             salt_conc = conc*np.array(stoich)
