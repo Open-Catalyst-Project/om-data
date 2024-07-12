@@ -24,8 +24,8 @@ if Path(pdb_initfile).is_file() and Path(ff_xml).is_file():
                                           0.002*picoseconds) # Time step
     simulation = app.Simulation(modeller.topology, system, integrator)
     simulation.context.setPositions(modeller.positions)
-    simulation.minimizeEnergy(maxIterations=1000)
-    frames = 1000
+    simulation.minimizeEnergy()
+    frames = 500
     runtime = 10000
     rate = int(runtime/frames)
     if rate == 0:

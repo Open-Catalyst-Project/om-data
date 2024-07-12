@@ -1,3 +1,20 @@
+"""classmixing.py
+Author: Muhammad R. Hasyim
+
+Script to a list of random electrolytes based on their classifications. In particular, there are
+five classes to choose from:
+(1) 40% Salt in protic solvents
+(2) 45% Salt in polar aprotic solvents
+(3) 10% Salt in ionic liquids
+(4) 5% Molten salt 
+(5) 5% Aqueous electrolytes
+For each class, we create two distinct concentrations (0.05 and 1.0 molal) and temperatures. The salt
+may contain N-many cations and M-many anions, with the number chosen randomly  and stoichiometry
+satisfying charge neutrality. Solvents can be mixtures, with components chosen randomly as well. 
+For each cation, anion, and solvent we can have up to four components. 
+
+The resulting random electrolytes are appended as new entry to the elytes.csv file, which contain the list of all electrolytes we want to simulate. 
+"""
 import pandas as pd
 import sys
 import data2lammps as d2l
@@ -5,10 +22,9 @@ import lammps2omm as lmm
 import os
 import csv 
 import numpy as np
-
 from pulp import LpProblem, LpVariable, lpSum, LpMinimize
 
-# Read which system # to simulate from command line argument
+# Solver that can give us stoichiometry that satisfies charge neutrality
 def solve_single_equation(coefficients):
     prob = LpProblem("Integer_Solution_Problem", LpMinimize)
     x = [LpVariable(f"x{i}", 1, 4, cat='Integer') for i in range(len(coefficients))]
@@ -16,31 +32,34 @@ def solve_single_equation(coefficients):
     prob.solve()
     return [int(v.varValue) for v in prob.variables()[1:]]
 
-#Function to Randomly choose cations, anions, and solvents
+#Function to randomly choose cations, anions, and solvents
 def choose_species(species,solvent=False):
     indices = np.random.choice(len(species), size=np.random.randint(1,5), replace=False)
     if solvent:
         return np.array(species["formula"])[indices].tolist(), np.array(species["charge"])[indices].tolist(), np.array(species["min_temperature"])[indices].tolist(), np.array(species["max_temperature"])[indices].tolist()
     else:
         return np.array(species["formula"])[indices].tolist(), np.array(species["charge"])[indices].tolist()
-
 def load_csv(filename):
     return pd.read_csv(filename)
 
+#Load the CSV file
 cations_file = 'cations.csv'
 anions_file = 'anions.csv'
 solvents_file = 'solvent.csv'
 
 elytes= load_csv('elytes.csv')
-Nrandom = 100#00
+
+Nrandom = 700
 for i in range(Nrandom):
     cations = load_csv(cations_file)
     anions = load_csv(anions_file)
     solvents = load_csv(solvents_file)
 
-    #Let's write the completely random electrolyte script
+    #Randomly select which class we want to create
     classes = ['protic','aprotic','IL','MS','aq']
     clas = np.random.choice(classes,p=[0.4,0.4,0.1,0.05,0.05])
+    
+    #(1) Aqueous electrolytes
     if clas == 'aq':
         aq_idx = list(cations['in_aq'])
         cations = cations.iloc[aq_idx]
@@ -60,6 +79,7 @@ for i in range(Nrandom):
         minT = 273
         maxT = 373
         soltorsolv = len(cat+an)*['A']+len(neut)*['B']
+    #(2) Protic solvents
     if clas == 'protic':
         protic_idx = list(cations['in_protic'])
         cations = cations.iloc[protic_idx]
@@ -83,6 +103,7 @@ for i in range(Nrandom):
         maxT = np.sum(np.array(maxT)*solv_molfrac)
 
         soltorsolv = len(cat+an)*['A']+len(neut)*['B']
+    #(3) Polar aprotic solvents
     elif clas == 'aprotic':
         aprotic_idx = list(cations['in_aprotic'])
         cations = cations.iloc[aprotic_idx]
@@ -106,6 +127,7 @@ for i in range(Nrandom):
         maxT = np.sum(np.array(maxT)*solv_molfrac)
         
         soltorsolv = len(cat+an)*['A']+len(neut)*['B']
+    #(3) Ionic liquids
     elif clas == 'IL': 
         IL_idx = list(cations['in_IL'])
         cations_il = cations.iloc[IL_idx]
@@ -135,6 +157,7 @@ for i in range(Nrandom):
         salt_molfrac = np.array(stoich)/sum(stoich)
         solv_molfrac = np.array(stoich_solv)/sum(stoich_solv)
         soltorsolv = len(cat+an)*['A']+len(neut)*['A']
+    #(4) Molten salt
     elif clas == 'MS':
         MS_idx = list(cations['MS_comp'])
         cations_il = cations.iloc[MS_idx]
@@ -152,13 +175,11 @@ for i in range(Nrandom):
         stoich_solv = []
         neut = []
         salt_molfrac = np.array(stoich)/sum(stoich)
-        solv_molfrac = []#np.array(stoich_solv)/sum(stoich_solv)
+        solv_molfrac = []
 
     species = cat+an+neut
 
-    # Calculate how much 
-    boxsize = 50 #In Angstrom
-    Avog = 6.023*10**23
+    #Start preparing random electrolytes
     concs = [0.05, 1.0]
     for conc in concs:
         for temperature  in [minT, maxT]:
@@ -199,11 +220,8 @@ for i in range(Nrandom):
                 else:
                     newspecies[f'neutral{j+1}'] = ''
                     newspecies[f'neutral{j+1}_ratio'] = ''
-            newspecies[f'neutral5'] = ''#neut[j]
-            newspecies[f'neutral5'] = ''#stoich_solv[j]
+            newspecies[f'neutral5'] = ''
+            newspecies[f'neutral5'] = ''
 
-            # Step 3: Append the new row to the DataFrame
             elytes = pd.concat([elytes,pd.DataFrame([newspecies])],ignore_index=True)
-#elytes.append(newspecies, ignore_index=True)
-# Step 4: Save the updated DataFrame back to the CSV file
-elytes.to_csv('finalelytes.csv', index=False)
+elytes.to_csv('elytes.csv', index=False)

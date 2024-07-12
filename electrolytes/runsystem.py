@@ -21,8 +21,8 @@ integrator = LangevinMiddleIntegrator(Temp*kelvin,   # Temperate of head bath
 simulation = app.Simulation(modeller.topology, system, integrator)
 simulation.context.setPositions(modeller.positions)
 simulation.minimizeEnergy()#maxIterations=1000)
-frames = 500
-runtime = 500000
+frames = 10
+runtime = 500#000
 
 rate = int(runtime/frames)
 if rate < 1:
