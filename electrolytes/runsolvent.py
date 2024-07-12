@@ -35,4 +35,4 @@ if Path(pdb_initfile).is_file() and Path(ff_xml).is_file():
     simulation.reporters.append(PDBReporter('solvent_output.pdb', rate, enforcePeriodicBox=True))
     simulation.step(runtime)
 else:
-    print(f'Either {pdb_initfile} or {ff_xml} are missing. Not an error but check if the system is molten salt/ionic liquid')
+    print(f'Either {pdb_initfile} or {ff_xml} are missing. Not an error but check if the system is molten salt/ionic liquid or if concentrations are specified by molalities')
