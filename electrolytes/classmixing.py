@@ -15,6 +15,7 @@ For each cation, anion, and solvent we can have up to four components.
 
 The resulting random electrolytes are appended as new entry to the elytes.csv file, which contain the list of all electrolytes we want to simulate. 
 """
+import re
 import pandas as pd
 import sys
 import data2lammps as d2l
@@ -24,17 +25,38 @@ import csv
 import numpy as np
 from pulp import LpProblem, LpVariable, lpSum, LpMinimize
 
+# Remove species that are duplicate, regardless of charge
+def remove_dup_species(formulas, ids):
+    # Use a dictionary to keep track of unique formulas and corresponding ids
+    unique_formulas_with_ids = {}
+    
+    for formula, id in zip(formulas, ids):
+        cleaned_formula = re.split(r'[+-]', formula)[0]
+        if cleaned_formula not in unique_formulas_with_ids:
+            unique_formulas_with_ids[cleaned_formula] = id
+
+    # Extract the cleaned formulas and corresponding ids
+    cleaned_formulas = list(unique_formulas_with_ids.keys())
+    corresponding_ids = list(unique_formulas_with_ids.values())
+
+    return cleaned_formulas, corresponding_ids
+
 # Solver that can give us stoichiometry that satisfies charge neutrality
 def solve_single_equation(coefficients):
     prob = LpProblem("Integer_Solution_Problem", LpMinimize)
     x = [LpVariable(f"x{i}", 1, 4, cat='Integer') for i in range(len(coefficients))]
     prob += lpSum(coeff * var for coeff, var in zip(coefficients, x)) == 0
     prob.solve()
-    return [int(v.varValue) for v in prob.variables()[1:]]
+    solutions = [int(v.varValue) for v in prob.variables()[1:]]
+    return solutions
 
 #Function to randomly choose cations, anions, and solvents
-def choose_species(species,solvent=False):
+def choose_species(species,solvent=False,cations=False):
     indices = np.random.choice(len(species), size=np.random.randint(1,5), replace=False)
+    
+    #We want to make sure that we have no "identical" species, disregarding their charges
+    formulas = np.array(species["formula"])[indices].tolist() 
+    formulas, indices = remove_dup_species(formulas,indices)
     if solvent:
         return np.array(species["formula"])[indices].tolist(), np.array(species["charge"])[indices].tolist(), np.array(species["min_temperature"])[indices].tolist(), np.array(species["max_temperature"])[indices].tolist()
     else:
@@ -63,7 +85,7 @@ for i in range(Nrandom):
     if clas == 'aq':
         aq_idx = list(cations['in_aq'])
         cations = cations.iloc[aq_idx]
-        cat, catcharges = choose_species(cations)
+        cat, catcharges = choose_species(cations)#,cations=True)
          
         aq_idx = list(anions['in_aq'])
         anions = anions.iloc[aq_idx]
@@ -83,7 +105,7 @@ for i in range(Nrandom):
     if clas == 'protic':
         protic_idx = list(cations['in_protic'])
         cations = cations.iloc[protic_idx]
-        cat, catcharges = choose_species(cations)
+        cat, catcharges = choose_species(cations)#,cations=True)
         
         protic_idx = list(anions['in_protic'])
         anions = anions.iloc[protic_idx]
@@ -107,7 +129,7 @@ for i in range(Nrandom):
     elif clas == 'aprotic':
         aprotic_idx = list(cations['in_aprotic'])
         cations = cations.iloc[aprotic_idx]
-        cat, catcharges = choose_species(cations)
+        cat, catcharges = choose_species(cations)#,cations=True)
         
         aprotic_idx = list(anions['in_aprotic'])
         anions = anions.iloc[aprotic_idx]
@@ -131,7 +153,7 @@ for i in range(Nrandom):
     elif clas == 'IL': 
         IL_idx = list(cations['in_IL'])
         cations_il = cations.iloc[IL_idx]
-        cat, catcharges = choose_species(cations_il)
+        cat, catcharges = choose_species(cations_il)#,cations=True)
         
         IL_idx = list(anions['in_IL'])
         anions_il = anions.iloc[IL_idx]
@@ -142,7 +164,7 @@ for i in range(Nrandom):
 
         IL_idx = list(cations['IL_comp'])
         cations = cations.iloc[IL_idx]
-        neut, solvcharges = choose_species(cations) 
+        neut, solvcharges = choose_species(cations)#,cations=True) 
         
         IL_idx = list(anions['IL_comp'])
         anions = anions.iloc[IL_idx]
@@ -161,7 +183,7 @@ for i in range(Nrandom):
     elif clas == 'MS':
         MS_idx = list(cations['MS_comp'])
         cations_il = cations.iloc[MS_idx]
-        cat, catcharges = choose_species(cations_il)
+        cat, catcharges = choose_species(cations_il)#,cations=True)
         
         MS_idx = list(anions['MS_comp'])
         anions_il = anions.iloc[MS_idx]
@@ -178,13 +200,11 @@ for i in range(Nrandom):
         solv_molfrac = []
 
     species = cat+an+neut
-
     #Start preparing random electrolytes
     concs = [0.05, 0.5]
     for conc in concs:
         for temperature  in [minT, maxT]:
             salt_conc = conc*np.array(stoich)
-            
             #Add this to the new array
             newspecies = dict()
             newspecies['category'] = f'random-{clas}'
@@ -208,9 +228,9 @@ for i in range(Nrandom):
                 if j < len(an):
                     newspecies[f'anion{j+1}'] = an[j]
                     if clas == 'MS':
-                        newspecies[f'anion{j+1}_conc'] = stoich[j]
+                        newspecies[f'anion{j+1}_conc'] = stoich[j+len(cat)]
                     else:
-                        newspecies[f'anion{j+1}_conc'] = salt_conc[j]
+                        newspecies[f'anion{j+1}_conc'] = salt_conc[j+len(cat)]
                 else:
                     newspecies[f'anion{j+1}'] = ''
                     newspecies[f'anion{j+1}_conc'] = ''
@@ -222,6 +242,5 @@ for i in range(Nrandom):
                     newspecies[f'neutral{j+1}_ratio'] = ''
             newspecies[f'neutral5'] = ''
             newspecies[f'neutral5'] = ''
-
             elytes = pd.concat([elytes,pd.DataFrame([newspecies])],ignore_index=True)
 elytes.to_csv('elytes.csv', index=False)

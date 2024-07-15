@@ -18,6 +18,8 @@ The script is heavily modified from:
 
 import re
 import json
+from json import encoder
+encoder.FLOAT_REPR = lambda o: format(o, '.15f')
 import string
 import MDAnalysis as mda
 from pathlib import Path
@@ -26,6 +28,36 @@ import numpy as np
 import contextlib
 from itertools import combinations
 import subprocess
+from rdkit.Chem import GetPeriodicTable
+
+
+def remove_duplicate_lines(long_string):
+    # Split the long string into individual lines
+    lines = long_string.splitlines()
+
+    # Use a set to store unique lines
+    unique_lines = set(lines)
+
+    # Join the unique lines back into a single string
+    unique_string = "\n".join(unique_lines)
+
+    return unique_string
+
+def find_elem_by_mass(target, tol=0.1):
+    pt = GetPeriodicTable()
+    closest_elem = None
+    closest_diff = float('inf')
+    
+    for num in range(1, 119):  # Iterating over known atomic numbers (1 to 118)
+        symbol = pt.GetElementSymbol(num)
+        
+        mass = pt.GetAtomicWeight(num)
+        diff = abs(mass - target)
+        if diff <= closest_diff and diff <= tol:
+            closest_diff = diff
+            closest_elem = symbol
+    print(closest_elem)    
+    return closest_elem
 
 ## Conversion units
 radian2degree = 57.2957795130  # 1 rad  = 57.2957795130 degree
@@ -46,7 +78,7 @@ atomic_masses_rounded = {
     23: 'Na', 24: 'Mg', 27: 'Al', 28: 'Si', 31: 'P',
     32: 'S', 35: 'Cl', 40: 'Ar', 39: 'K', 40: 'Ca',
     45: 'Sc', 48: 'Ti', 51: 'V', 52: 'Cr', 55: 'Mn',
-    56: 'Fe', 59: 'Co', 59: 'Ni', 64: 'Cu', 65: 'Zn',
+    56: 'Fe', 58.93: 'Co', 58.69: 'Ni', 64: 'Cu', 65: 'Zn',
     70: 'Ga', 73: 'Ge', 75: 'As', 79: 'Se', 80: 'Br',
     84: 'Kr', 85: 'Rb', 88: 'Sr', 89: 'Y', 91: 'Zr',
     93: 'Nb', 96: 'Mo', 98: 'Tc', 101: 'Ru', 103: 'Rh',
@@ -366,7 +398,9 @@ def write_forcefield(u,filename):
         # Write the Atom Types
         ff.write("<AtomTypes>\n")
         for i, atomtype in enumerate(lmp_type):
-            elname = atomic_masses_rounded.get(int(np.round(lmp_mass[i])),'UNK')
+            elname = find_elem_by_mass(lmp_mass[i],tol=0.1)
+            #atomic_masses_rounded.get(int(np.round(lmp_mass[i])),'UNK')
+            #elname = atomic_masses_rounded.get(int(np.round(lmp_mass[i])),'UNK')
             ff.write(f' <Type name="{atomtype}" class="{elname}" element="{elname}" mass="{lmp_mass[i]}"/> \n')
         ff.write("</AtomTypes>\n")
         
@@ -483,7 +517,7 @@ def write_restemplate(u):
                 types.append(lmp_alltypes[bond[0]-1])
                 types.append(lmp_alltypes[bond[1]-1])
                 bond_text += f'  <Bond atomName1="{pdb_names[bond[0]-1]}" atomName2="{pdb_names[bond[1]-1]}" /> \n'
-        
+        bond_text = remove_duplicate_lines(bond_text)  
         #Write the atom names and types associated with the bond information
         if types and names:
             r, d = zip(*((r, types[i]) for i, r in enumerate(names) if r not in names[:i]))
