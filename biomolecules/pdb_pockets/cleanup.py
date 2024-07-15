@@ -96,16 +96,20 @@ def main():
         try:
             change_made = remove_ligand_ace_cap(st) or change_made
         except:
-            print(fname)
-            raise
+            print("Error:", fname)
+            continue
         try:
             change_made = remove_ligand_nma_cap(st) or change_made
         except:
-            print(fname)
-            raise
+            print("Error:", fname)
+            continue
         if change_made:
+            new_fname = os.path.join(os.path.dirname(fname), '_'.join(os.path.basename(fname).split('_')[:-1]))
+            new_fname += f'_{st.formal_charge}.pdb'
+            print(f"{fname} -> {new_fname}")
             st = build.reorder_protein_atoms_by_sequence(st)
-            st.write(fname)
+            os.remove(fname)
+            st.write(new_fname)
 
 
 if __name__ == "__main__":
