@@ -93,7 +93,7 @@ C3H7NO inherits OPLSCM1A {
     @atom:type12_h_unk_4f576 1.008
   }
   write("Data Atoms") {
-    $atom:id1 $mol:m1 @atom:type1_c_unk_4f576 -0.28650000 1.000 1.00000 0.00000
+    $atom:id1 $mol:m1 @atom:type1_c_unk_4f576 -0.28640000 1.000 1.00000 0.00000
     $atom:id2 $mol:m1 @atom:type2_c_unk_4f576 0.62040000 -0.504 1.00000 0.00000
     $atom:id3 $mol:m1 @atom:type3_o_unk_4f576 -0.44160000 -1.161 1.00000 1.03423
     $atom:id4 $mol:m1 @atom:type4_n_unk_4f576 -1.14720000 -1.044 0.99840 -1.26584

@@ -1,13 +1,9 @@
 C4H6F3O2- inherits OPLSCM1A {
-
   ### LAMMPS commands for initialization
   ### (These can be overridden later.)
-
-
   write_once("In Init") {
     atom_style full
   }
-
   write_once("In Settings") {
     pair_coeff @atom:type1_c_c4h6f3o2- @atom:type1_c_c4h6f3o2- 0.066 3.5000000
     pair_coeff @atom:type2_o_c4h6f3o2- @atom:type2_o_c4h6f3o2- 0.140 2.9000000
@@ -25,7 +21,6 @@ C4H6F3O2- inherits OPLSCM1A {
     pair_coeff @atom:type14_h_c4h6f3o2- @atom:type14_h_c4h6f3o2- 0.030 2.5000000
     pair_coeff @atom:type15_h_c4h6f3o2- @atom:type15_h_c4h6f3o2- 0.030 2.5000000
   }
-
   write_once("In Settings") {
     bond_coeff @bond:type1_c4h6f3o2 320.0000 1.3800
     bond_coeff @bond:type2_c4h6f3o2 320.0000 1.3800
@@ -42,7 +37,6 @@ C4H6F3O2- inherits OPLSCM1A {
     bond_coeff @bond:type13_c4h6f3o2 340.0000 1.0900
     bond_coeff @bond:type14_c4h6f3o2 340.0000 1.0900
   }
-
   write_once("In Settings") {
     angle_coeff @angle:type1_c4h6f3o2 92.600 111.550
     angle_coeff @angle:type2_c4h6f3o2 50.000 109.500
@@ -70,38 +64,33 @@ C4H6F3O2- inherits OPLSCM1A {
     angle_coeff @angle:type24_c4h6f3o2 33.000 107.800
     angle_coeff @angle:type25_c4h6f3o2 33.000 107.800
   }
-
   write_once("In Settings") {
-    dihedral_coeff @dihedral:type1_c4h6f3o2 0.000 0.000 0.468 0.000
-    dihedral_coeff @dihedral:type2_c4h6f3o2 0.000 0.000 0.468 0.000
-    dihedral_coeff @dihedral:type3_c4h6f3o2 0.000 0.000 0.468 0.000
-    dihedral_coeff @dihedral:type4_c4h6f3o2 -0.375 -1.358 0.004 0.000
-    dihedral_coeff @dihedral:type5_c4h6f3o2 0.650 -0.250 0.670 0.000
-    dihedral_coeff @dihedral:type6_c4h6f3o2 0.000 0.000 0.468 0.000
-    dihedral_coeff @dihedral:type7_c4h6f3o2 0.000 0.000 0.468 0.000
-    dihedral_coeff @dihedral:type8_c4h6f3o2 0.000 0.000 0.468 0.000
-    dihedral_coeff @dihedral:type9_c4h6f3o2 0.000 0.000 0.760 0.000
-    dihedral_coeff @dihedral:type10_c4h6f3o2 0.000 0.000 0.760 0.000
-    dihedral_coeff @dihedral:type11_c4h6f3o2 0.000 0.000 0.760 0.000
-    dihedral_coeff @dihedral:type12_c4h6f3o2 0.000 0.000 0.540 0.000
-    dihedral_coeff @dihedral:type13_c4h6f3o2 0.000 0.000 0.540 0.000
-    dihedral_coeff @dihedral:type14_c4h6f3o2 0.000 0.000 0.540 0.000
-    dihedral_coeff @dihedral:type15_c4h6f3o2 0.650 -0.250 0.670 0.000
-    dihedral_coeff @dihedral:type16_c4h6f3o2 0.000 0.000 0.360 0.000
-    dihedral_coeff @dihedral:type17_c4h6f3o2 0.000 0.000 0.360 0.000
-    dihedral_coeff @dihedral:type18_c4h6f3o2 0.000 0.000 0.360 0.000
-    dihedral_coeff @dihedral:type19_c4h6f3o2 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type20_c4h6f3o2 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type21_c4h6f3o2 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type22_c4h6f3o2 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type23_c4h6f3o2 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type24_c4h6f3o2 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type1_c4h6f3o2 opls 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type2_c4h6f3o2 opls 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type3_c4h6f3o2 opls 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type4_c4h6f3o2 opls -0.375 -1.358 0.004 0.000
+    dihedral_coeff @dihedral:type5_c4h6f3o2 opls 0.650 -0.250 0.670 0.000
+    dihedral_coeff @dihedral:type6_c4h6f3o2 opls 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type7_c4h6f3o2 opls 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type8_c4h6f3o2 opls 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type9_c4h6f3o2 opls 0.000 0.000 0.760 0.000
+    dihedral_coeff @dihedral:type10_c4h6f3o2 opls 0.000 0.000 0.760 0.000
+    dihedral_coeff @dihedral:type11_c4h6f3o2 opls 0.000 0.000 0.760 0.000
+    dihedral_coeff @dihedral:type12_c4h6f3o2 opls 0.000 0.000 0.540 0.000
+    dihedral_coeff @dihedral:type13_c4h6f3o2 opls 0.000 0.000 0.540 0.000
+    dihedral_coeff @dihedral:type14_c4h6f3o2 opls 0.000 0.000 0.540 0.000
+    dihedral_coeff @dihedral:type15_c4h6f3o2 opls 0.650 -0.250 0.670 0.000
+    dihedral_coeff @dihedral:type16_c4h6f3o2 opls 0.000 0.000 0.360 0.000
+    dihedral_coeff @dihedral:type17_c4h6f3o2 opls 0.000 0.000 0.360 0.000
+    dihedral_coeff @dihedral:type18_c4h6f3o2 opls 0.000 0.000 0.360 0.000
+    dihedral_coeff @dihedral:type19_c4h6f3o2 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type20_c4h6f3o2 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type21_c4h6f3o2 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type22_c4h6f3o2 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type23_c4h6f3o2 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type24_c4h6f3o2 opls 0.000 0.000 0.300 0.000
   }
-
-
   ### DATA sections
-
-
   write_once("Data Masses") {
     @atom:type1_c_c4h6f3o2- 12.011
     @atom:type2_o_c4h6f3o2- 15.999
@@ -119,7 +108,6 @@ C4H6F3O2- inherits OPLSCM1A {
     @atom:type14_h_c4h6f3o2- 1.008
     @atom:type15_h_c4h6f3o2- 1.008
   }
-
   write("Data Atoms") {
     $atom:id1 $mol:m1 @atom:type1_c_c4h6f3o2- 0.027520 -0.99800 0.42100 0.26600
     $atom:id2 $mol:m1 @atom:type2_o_c4h6f3o2- -0.220810 -0.07800 0.85800 -0.69300
@@ -137,7 +125,6 @@ C4H6F3O2- inherits OPLSCM1A {
     $atom:id14 $mol:m1 @atom:type14_h_c4h6f3o2- 0.154361 1.41300 2.16300 -1.16400
     $atom:id15 $mol:m1 @atom:type15_h_c4h6f3o2- 0.318284 -0.49800 0.02700 1.15100
   }
-
   write("Data Bonds") {
     $bond:id1 @bond:type1_c4h6f3o2 $atom:id2 $atom:id1
     $bond:id2 @bond:type2_c4h6f3o2 $atom:id3 $atom:id1
@@ -154,7 +141,6 @@ C4H6F3O2- inherits OPLSCM1A {
     $bond:id13 @bond:type13_c4h6f3o2 $atom:id14 $atom:id8
     $bond:id14 @bond:type14_c4h6f3o2 $atom:id15 $atom:id1
   }
-
   write("Data Angles") {
     $angle:id1 @angle:type1_c4h6f3o2 $atom:id3 $atom:id1 $atom:id2
     $angle:id2 @angle:type2_c4h6f3o2 $atom:id4 $atom:id1 $atom:id2
@@ -182,7 +168,6 @@ C4H6F3O2- inherits OPLSCM1A {
     $angle:id24 @angle:type24_c4h6f3o2 $atom:id12 $atom:id9 $atom:id11
     $angle:id25 @angle:type25_c4h6f3o2 $atom:id14 $atom:id8 $atom:id13
   }
-
   write("Data Dihedrals") {
     $dihedral:id1 @dihedral:type1_c4h6f3o2 $atom:id5 $atom:id4 $atom:id1 $atom:id2
     $dihedral:id2 @dihedral:type2_c4h6f3o2 $atom:id6 $atom:id4 $atom:id1 $atom:id2
@@ -209,5 +194,4 @@ C4H6F3O2- inherits OPLSCM1A {
     $dihedral:id23 @dihedral:type23_c4h6f3o2 $atom:id13 $atom:id8 $atom:id9 $atom:id12
     $dihedral:id24 @dihedral:type24_c4h6f3o2 $atom:id14 $atom:id8 $atom:id9 $atom:id12
   }
-
 } # end of "C4H6F3O2- inherits OPLSCM1A" type definition

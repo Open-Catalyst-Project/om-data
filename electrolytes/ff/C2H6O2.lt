@@ -1,13 +1,9 @@
 C2H6O2 inherits OPLSCM1A {
-
   ### LAMMPS commands for initialization
   ### (These can be overridden later.)
-
-
   write_once("In Init") {
     atom_style full
   }
-
   write_once("In Settings") {
     pair_coeff @atom:type1_c_unk_6d4cc @atom:type1_c_unk_6d4cc 0.066 3.5000000
     pair_coeff @atom:type2_c_unk_6d4cc @atom:type2_c_unk_6d4cc 0.066 3.5000000
@@ -20,7 +16,6 @@ C2H6O2 inherits OPLSCM1A {
     pair_coeff @atom:type9_h_unk_6d4cc @atom:type9_h_unk_6d4cc 0.000 0.0000000
     pair_coeff @atom:type10_h_unk_6d4cc @atom:type10_h_unk_6d4cc 0.000 0.0000000
   }
-
   write_once("In Settings") {
     bond_coeff @bond:type1_unk_6d4cc 268.0000 1.5290
     bond_coeff @bond:type2_unk_6d4cc 320.0000 1.4100
@@ -32,7 +27,6 @@ C2H6O2 inherits OPLSCM1A {
     bond_coeff @bond:type8_unk_6d4cc 553.0000 0.9450
     bond_coeff @bond:type9_unk_6d4cc 553.0000 0.9450
   }
-
   write_once("In Settings") {
     angle_coeff @angle:type1_unk_6d4cc 50.000 109.500
     angle_coeff @angle:type2_unk_6d4cc 50.000 109.500
@@ -49,36 +43,30 @@ C2H6O2 inherits OPLSCM1A {
     angle_coeff @angle:type13_unk_6d4cc 35.000 109.500
     angle_coeff @angle:type14_unk_6d4cc 33.000 107.800
   }
-
   write_once("In Settings") {
-    dihedral_coeff @dihedral:type1_unk_6d4cc 9.508 0.000 0.000 0.000
-    dihedral_coeff @dihedral:type2_unk_6d4cc -0.356 -0.174 0.492 0.000
-    dihedral_coeff @dihedral:type3_unk_6d4cc -0.356 -0.174 0.492 0.000
-    dihedral_coeff @dihedral:type4_unk_6d4cc 0.000 0.000 0.468 0.000
-    dihedral_coeff @dihedral:type5_unk_6d4cc 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type6_unk_6d4cc 0.000 0.000 0.352 0.000
-    dihedral_coeff @dihedral:type7_unk_6d4cc 0.000 0.000 0.352 0.000
-    dihedral_coeff @dihedral:type8_unk_6d4cc 0.000 0.000 0.352 0.000
-    dihedral_coeff @dihedral:type9_unk_6d4cc 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type10_unk_6d4cc 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type11_unk_6d4cc 0.000 0.000 0.468 0.000
-    dihedral_coeff @dihedral:type12_unk_6d4cc 0.000 0.000 0.352 0.000
-    dihedral_coeff @dihedral:type13_unk_6d4cc 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type14_unk_6d4cc 0.000 0.000 0.468 0.000
-    dihedral_coeff @dihedral:type15_unk_6d4cc 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type1_unk_6d4cc opls 9.508 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type2_unk_6d4cc opls -0.356 -0.174 0.492 0.000
+    dihedral_coeff @dihedral:type3_unk_6d4cc opls -0.356 -0.174 0.492 0.000
+    dihedral_coeff @dihedral:type4_unk_6d4cc opls 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type5_unk_6d4cc opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type6_unk_6d4cc opls 0.000 0.000 0.352 0.000
+    dihedral_coeff @dihedral:type7_unk_6d4cc opls 0.000 0.000 0.352 0.000
+    dihedral_coeff @dihedral:type8_unk_6d4cc opls 0.000 0.000 0.352 0.000
+    dihedral_coeff @dihedral:type9_unk_6d4cc opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type10_unk_6d4cc opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type11_unk_6d4cc opls 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type12_unk_6d4cc opls 0.000 0.000 0.352 0.000
+    dihedral_coeff @dihedral:type13_unk_6d4cc opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type14_unk_6d4cc opls 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type15_unk_6d4cc opls 0.000 0.000 0.468 0.000
   }
-
   write_once("In Settings") {
     improper_coeff @improper:type1_unk_6d4cc 0.000 -1 2
     improper_coeff @improper:type2_unk_6d4cc 0.000 -1 2
     improper_coeff @improper:type3_unk_6d4cc 0.000 -1 2
     improper_coeff @improper:type4_unk_6d4cc 0.000 -1 2
   }
-
-
   ### DATA sections
-
-
   write_once("Data Masses") {
     @atom:type1_c_unk_6d4cc 12.011
     @atom:type2_c_unk_6d4cc 12.011
@@ -91,7 +79,6 @@ C2H6O2 inherits OPLSCM1A {
     @atom:type9_h_unk_6d4cc 1.008
     @atom:type10_h_unk_6d4cc 1.008
   }
-
   write("Data Atoms") {
     $atom:id1 $mol:m1 @atom:type1_c_unk_6d4cc -0.03310000 1.000 1.00000 0.00000
     $atom:id2 $mol:m1 @atom:type2_c_unk_6d4cc -0.03300000 -0.523 1.00000 0.00000
@@ -104,7 +91,6 @@ C2H6O2 inherits OPLSCM1A {
     $atom:id9 $mol:m1 @atom:type9_h_unk_6d4cc 0.40990000 -0.903 0.08535 1.66319
     $atom:id10 $mol:m1 @atom:type10_h_unk_6d4cc 0.40990000 1.386 0.07134 1.65436
   }
-
   write("Data Bonds") {
     $bond:id1 @bond:type1_unk_6d4cc $atom:id2 $atom:id1
     $bond:id2 @bond:type2_unk_6d4cc $atom:id3 $atom:id2
@@ -116,7 +102,6 @@ C2H6O2 inherits OPLSCM1A {
     $bond:id8 @bond:type8_unk_6d4cc $atom:id9 $atom:id3
     $bond:id9 @bond:type9_unk_6d4cc $atom:id10 $atom:id4
   }
-
   write("Data Angles") {
     $angle:id1 @angle:type1_unk_6d4cc $atom:id1 $atom:id2 $atom:id3
     $angle:id2 @angle:type2_unk_6d4cc $atom:id2 $atom:id1 $atom:id4
@@ -133,7 +118,6 @@ C2H6O2 inherits OPLSCM1A {
     $angle:id13 @angle:type13_unk_6d4cc $atom:id4 $atom:id1 $atom:id6
     $angle:id14 @angle:type14_unk_6d4cc $atom:id7 $atom:id2 $atom:id8
   }
-
   write("Data Dihedrals") {
     $dihedral:id1 @dihedral:type1_unk_6d4cc $atom:id4 $atom:id1 $atom:id2 $atom:id3
     $dihedral:id2 @dihedral:type2_unk_6d4cc $atom:id9 $atom:id3 $atom:id2 $atom:id1
@@ -151,12 +135,10 @@ C2H6O2 inherits OPLSCM1A {
     $dihedral:id14 @dihedral:type14_unk_6d4cc $atom:id6 $atom:id1 $atom:id2 $atom:id3
     $dihedral:id15 @dihedral:type15_unk_6d4cc $atom:id7 $atom:id2 $atom:id1 $atom:id4
   }
-
   write("Data Impropers") {
     $improper:id1 @improper:type1_unk_6d4cc $atom:id1 $atom:id2 $atom:id4 $atom:id5
     $improper:id2 @improper:type2_unk_6d4cc $atom:id1 $atom:id2 $atom:id4 $atom:id6
     $improper:id3 @improper:type3_unk_6d4cc $atom:id2 $atom:id1 $atom:id3 $atom:id7
     $improper:id4 @improper:type4_unk_6d4cc $atom:id2 $atom:id1 $atom:id3 $atom:id8
   }
-
 } # end of "C2H6O2 inherits OPLSCM1A" type definition

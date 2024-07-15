@@ -23,11 +23,9 @@ H3O+ {
     bond_coeff   @bond:OH1_h3o         542.97825  0.9820
     bond_coeff   @bond:OH2_h3o         542.97825  0.9820 
     bond_coeff   @bond:OH3_h3o         542.97825  0.9820
-    
     angle_coeff  @angle:HOH1_h3o       39.51315 113.4000 
     angle_coeff  @angle:HOH2_h3o       39.51315 113.4000 
     angle_coeff  @angle:HOH3_h3o       39.51315 113.4000 
-    
     pair_coeff  @atom:O_h3o  @atom:O_h3o   0.1848  3.1655413253
     pair_coeff  @atom:H_h3o  @atom:H_h3o   0.0100  0.80180884632
   }

@@ -33,14 +33,12 @@ write_once("Data Masses") {
     bond_coeff   @bond:BF2_bf4         386.59 1.394
     bond_coeff   @bond:BF3_bf4         386.59 1.394
     bond_coeff   @bond:BF4_bf4         386.59 1.394
-    
     angle_coeff  @angle:FBF1_bf4       80 109.47       
     angle_coeff  @angle:FBF2_bf4       80 109.47       
     angle_coeff  @angle:FBF3_bf4       80 109.47       
     angle_coeff  @angle:FBF4_bf4       80 109.47       
     angle_coeff  @angle:FBF5_bf4       80 109.47       
     angle_coeff  @angle:FBF6_bf4       80 109.47       
-    
     pair_coeff  @atom:B1_bf4  @atom:B1_bf4   0.095 3.5814
     pair_coeff  @atom:F1_bf4  @atom:F1_bf4   0.06  3.1181
     pair_coeff  @atom:F2_bf4  @atom:F2_bf4   0.06  3.1181

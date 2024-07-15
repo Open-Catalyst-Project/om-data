@@ -330,42 +330,42 @@ C11H24N+ inherits OPLSCM1A {
     @atom:type36_h_unk_f4f2e 1.008
   }
   write("Data Atoms") {
-    $atom:id1 $mol:m1 @atom:type1_c_unk_f4f2e -0.21290000 1.000 1.00000 0.00000
-    $atom:id2 $mol:m1 @atom:type2_c_unk_f4f2e -0.15520000 -0.518 1.00000 0.00000
-    $atom:id3 $mol:m1 @atom:type3_c_unk_f4f2e -0.18040000 -1.078 1.00000 1.42739
-    $atom:id4 $mol:m1 @atom:type4_c_unk_f4f2e -0.08190000 -2.603 0.93421 1.39853
-    $atom:id5 $mol:m1 @atom:type5_n_unk_f4f2e -0.07120000 -3.289 0.80126 2.78038
-    $atom:id6 $mol:m1 @atom:type6_c_unk_f4f2e -0.08660000 -2.948 1.98580 3.70701
-    $atom:id7 $mol:m1 @atom:type7_c_unk_f4f2e -0.18180000 -1.749 1.53860 4.51219
-    $atom:id8 $mol:m1 @atom:type8_c_unk_f4f2e -0.18270000 -1.919 0.04469 4.67478
-    $atom:id9 $mol:m1 @atom:type9_c_unk_f4f2e -0.08710000 -2.830 -0.43991 3.55846
-    $atom:id10 $mol:m1 @atom:type10_c_unk_f4f2e -0.08300000 -4.830 0.80117 2.56864
-    $atom:id11 $mol:m1 @atom:type11_c_unk_f4f2e -0.18130000 -5.335 -0.37167 1.72288
-    $atom:id12 $mol:m1 @atom:type12_c_unk_f4f2e -0.21420000 -6.848 -0.30473 1.55713
-    $atom:id13 $mol:m1 @atom:type13_h_unk_f4f2e 0.08790000 1.379 1.00130 -1.02613
-    $atom:id14 $mol:m1 @atom:type14_h_unk_f4f2e 0.08790000 1.392 0.10982 0.50330
-    $atom:id15 $mol:m1 @atom:type15_h_unk_f4f2e 0.08790000 1.395 1.88622 0.50807
-    $atom:id16 $mol:m1 @atom:type16_h_unk_f4f2e 0.09080000 -0.875 0.11735 -0.54485
-    $atom:id17 $mol:m1 @atom:type17_h_unk_f4f2e 0.09080000 -0.879 1.88381 -0.53843
-    $atom:id18 $mol:m1 @atom:type18_h_unk_f4f2e 0.10110000 -0.743 1.91687 1.91724
-    $atom:id19 $mol:m1 @atom:type19_h_unk_f4f2e 0.10110000 -0.661 0.14503 1.96913
-    $atom:id20 $mol:m1 @atom:type20_h_unk_f4f2e 0.12990000 -2.898 0.05951 0.81442
-    $atom:id21 $mol:m1 @atom:type21_h_unk_f4f2e 0.12990000 -3.017 1.83413 0.92861
-    $atom:id22 $mol:m1 @atom:type22_h_unk_f4f2e 0.13650000 -3.802 2.14365 4.37670
-    $atom:id23 $mol:m1 @atom:type23_h_unk_f4f2e 0.13650000 -2.783 2.88516 3.10688
-    $atom:id24 $mol:m1 @atom:type24_h_unk_f4f2e 0.12890000 -1.701 2.05085 5.47886
-    $atom:id25 $mol:m1 @atom:type25_h_unk_f4f2e 0.12890000 -0.810 1.76438 4.00096
-    $atom:id26 $mol:m1 @atom:type26_h_unk_f4f2e 0.12670000 -2.373 -0.17992 5.64706
-    $atom:id27 $mol:m1 @atom:type27_h_unk_f4f2e 0.12670000 -0.952 -0.46869 4.64885
-    $atom:id28 $mol:m1 @atom:type28_h_unk_f4f2e 0.13620000 -3.712 -0.92366 3.99254
-    $atom:id29 $mol:m1 @atom:type29_h_unk_f4f2e 0.13620000 -2.345 -1.13541 2.86857
-    $atom:id30 $mol:m1 @atom:type30_h_unk_f4f2e 0.13090000 -5.080 1.76026 2.09954
-    $atom:id31 $mol:m1 @atom:type31_h_unk_f4f2e 0.13090000 -5.288 0.76753 3.56493
-    $atom:id32 $mol:m1 @atom:type32_h_unk_f4f2e 0.10070000 -5.071 -1.32804 2.18606
-    $atom:id33 $mol:m1 @atom:type33_h_unk_f4f2e 0.10070000 -4.900 -0.36086 0.72021
-    $atom:id34 $mol:m1 @atom:type34_h_unk_f4f2e 0.09700000 -7.353 -0.34025 2.52690
-    $atom:id35 $mol:m1 @atom:type35_h_unk_f4f2e 0.09700000 -7.198 -1.15105 0.95762
-    $atom:id36 $mol:m1 @atom:type36_h_unk_f4f2e 0.09700000 -7.141 0.61884 1.04692
+$atom:id1 $mol:m1 @atom:type1_c_unk_f4f2e -0.212894444444444 1.000 1.00000 0.00000
+$atom:id2 $mol:m1 @atom:type2_c_unk_f4f2e -0.155194444444444 -0.518 1.00000 0.00000
+$atom:id3 $mol:m1 @atom:type3_c_unk_f4f2e -0.180394444444444 -1.078 1.00000 1.42739
+$atom:id4 $mol:m1 @atom:type4_c_unk_f4f2e -0.081894444444444 -2.603 0.93421 1.39853
+$atom:id5 $mol:m1 @atom:type5_n_unk_f4f2e -0.071194444444444 -3.289 0.80126 2.78038
+$atom:id6 $mol:m1 @atom:type6_c_unk_f4f2e -0.086594444444444 -2.948 1.98580 3.70701
+$atom:id7 $mol:m1 @atom:type7_c_unk_f4f2e -0.181794444444444 -1.749 1.53860 4.51219
+$atom:id8 $mol:m1 @atom:type8_c_unk_f4f2e -0.182694444444444 -1.919 0.04469 4.67478
+$atom:id9 $mol:m1 @atom:type9_c_unk_f4f2e -0.087094444444444 -2.830 -0.43991 3.55846
+$atom:id10 $mol:m1 @atom:type10_c_unk_f4f2e -0.082994444444444 -4.830 0.80117 2.56864
+$atom:id11 $mol:m1 @atom:type11_c_unk_f4f2e -0.181294444444444 -5.335 -0.37167 1.72288
+$atom:id12 $mol:m1 @atom:type12_c_unk_f4f2e -0.214194444444444 -6.848 -0.30473 1.55713
+$atom:id13 $mol:m1 @atom:type13_h_unk_f4f2e 0.087905555555556 1.379 1.00130 -1.02613
+$atom:id14 $mol:m1 @atom:type14_h_unk_f4f2e 0.087905555555556 1.392 0.10982 0.50330
+$atom:id15 $mol:m1 @atom:type15_h_unk_f4f2e 0.087905555555556 1.395 1.88622 0.50807
+$atom:id16 $mol:m1 @atom:type16_h_unk_f4f2e 0.090805555555556 -0.875 0.11735 -0.54485
+$atom:id17 $mol:m1 @atom:type17_h_unk_f4f2e 0.090805555555556 -0.879 1.88381 -0.53843
+$atom:id18 $mol:m1 @atom:type18_h_unk_f4f2e 0.101105555555556 -0.743 1.91687 1.91724
+$atom:id19 $mol:m1 @atom:type19_h_unk_f4f2e 0.101105555555556 -0.661 0.14503 1.96913
+$atom:id20 $mol:m1 @atom:type20_h_unk_f4f2e 0.129905555555556 -2.898 0.05951 0.81442
+$atom:id21 $mol:m1 @atom:type21_h_unk_f4f2e 0.129905555555556 -3.017 1.83413 0.92861
+$atom:id22 $mol:m1 @atom:type22_h_unk_f4f2e 0.136505555555556 -3.802 2.14365 4.37670
+$atom:id23 $mol:m1 @atom:type23_h_unk_f4f2e 0.136505555555556 -2.783 2.88516 3.10688
+$atom:id24 $mol:m1 @atom:type24_h_unk_f4f2e 0.128905555555556 -1.701 2.05085 5.47886
+$atom:id25 $mol:m1 @atom:type25_h_unk_f4f2e 0.128905555555556 -0.810 1.76438 4.00096
+$atom:id26 $mol:m1 @atom:type26_h_unk_f4f2e 0.126705555555556 -2.373 -0.17992 5.64706
+$atom:id27 $mol:m1 @atom:type27_h_unk_f4f2e 0.126705555555556 -0.952 -0.46869 4.64885
+$atom:id28 $mol:m1 @atom:type28_h_unk_f4f2e 0.136205555555556 -3.712 -0.92366 3.99254
+$atom:id29 $mol:m1 @atom:type29_h_unk_f4f2e 0.136205555555556 -2.345 -1.13541 2.86857
+$atom:id30 $mol:m1 @atom:type30_h_unk_f4f2e 0.130905555555556 -5.080 1.76026 2.09954
+$atom:id31 $mol:m1 @atom:type31_h_unk_f4f2e 0.130905555555556 -5.288 0.76753 3.56493
+$atom:id32 $mol:m1 @atom:type32_h_unk_f4f2e 0.100705555555556 -5.071 -1.32804 2.18606
+$atom:id33 $mol:m1 @atom:type33_h_unk_f4f2e 0.100705555555556 -4.900 -0.36086 0.72021
+$atom:id34 $mol:m1 @atom:type34_h_unk_f4f2e 0.097005555555556 -7.353 -0.34025 2.52690
+$atom:id35 $mol:m1 @atom:type35_h_unk_f4f2e 0.097005555555556 -7.198 -1.15105 0.95762
+$atom:id36 $mol:m1 @atom:type36_h_unk_f4f2e 0.097005555555556 -7.141 0.61884 1.04692
   }
   write("Data Bonds") {
     $bond:id1 @bond:type1_unk_f4f2e $atom:id2 $atom:id1

@@ -31,15 +31,12 @@ write("Data Impropers") {
     bond_coeff   @bond:NO1_no3         634.2 1.256
     bond_coeff   @bond:NO2_no3         634.2 1.256
     bond_coeff   @bond:NO3_no3         634.2 1.256
-    
     angle_coeff  @angle:ONO1_no3       120 120.82
     angle_coeff  @angle:ONO2_no3       120 120.82
     angle_coeff  @angle:ONO3_no3       120 120.82
-    
     improper_coeff @improper:ONOO1_no3 4.0 1 2
     improper_coeff @improper:ONOO2_no3 4.0 1 2
     improper_coeff @improper:ONOO3_no3 4.0 1 2
-    
     pair_coeff  @atom:O1_no3  @atom:O1_no3   0.17 3.15
     pair_coeff  @atom:O2_no3  @atom:O2_no3   0.17 3.15
     pair_coeff  @atom:O3_no3  @atom:O3_no3   0.17 3.15

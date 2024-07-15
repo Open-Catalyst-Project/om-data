@@ -47,7 +47,6 @@ write_once("Data Masses") {
     bond_coeff   @bond:PF4         360.46 1.606
     bond_coeff   @bond:PF5         360.46 1.606
     bond_coeff   @bond:PF6         360.46 1.606
-    
     angle_coeff  @angle:FPF1      139.22 90       
     angle_coeff  @angle:FPF2      139.22 90       
     angle_coeff  @angle:FPF4      139.22 90       
@@ -60,7 +59,6 @@ write_once("Data Masses") {
     angle_coeff  @angle:FPF13     139.22 90       
     angle_coeff  @angle:FPF14     139.22 90       
     angle_coeff  @angle:FPF15     139.22 90       
-    
     pair_coeff  @atom:P  @atom:P   0.20 3.74
     pair_coeff  @atom:F1  @atom:F1  0.061  3.1181
     pair_coeff  @atom:F2  @atom:F2  0.061  3.1181

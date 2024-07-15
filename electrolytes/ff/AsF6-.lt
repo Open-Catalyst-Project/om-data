@@ -47,7 +47,6 @@ write_once("Data Masses") {
     bond_coeff   @bond:AsF4         292.9039197 1.799
     bond_coeff   @bond:AsF5         292.9039197 1.799
     bond_coeff   @bond:AsF6         292.9039197 1.799
-    
     angle_coeff  @angle:FAsF1      127.51912 90       
     angle_coeff  @angle:FAsF2      127.51912 90       
     angle_coeff  @angle:FAsF4      127.51912 90       
@@ -60,7 +59,6 @@ write_once("Data Masses") {
     angle_coeff  @angle:FAsF13     127.51912 90       
     angle_coeff  @angle:FAsF14     127.51912 90       
     angle_coeff  @angle:FAsF15     127.51912 90       
-    
     pair_coeff  @atom:As  @atom:As   0.20 3.74
     pair_coeff  @atom:F1  @atom:F1  0.061  3.1181
     pair_coeff  @atom:F2  @atom:F2  0.061  3.1181

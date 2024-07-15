@@ -14,7 +14,6 @@ C4BO8- inherits OPLSCM1A {
     $atom:o2_c4bo8  $mol @atom:O2_c4bo8  -0.511   -0.893  -0.863  -0.796  
     $atom:o6_c4bo8  $mol @atom:O6_c4bo8  -0.559   -3.139  -1.083  -1.018  
   }
-
   write_once("Data Masses") {
     @atom:O8_c4bo8  15.9994
     @atom:C4_c4bo8  12.011
@@ -30,7 +29,6 @@ C4BO8- inherits OPLSCM1A {
     @atom:O2_c4bo8  15.9994
     @atom:O6_c4bo8  15.9994
   }
-
   write("Data Bonds") {
     $bond:o8c4  @bond:O8C4 $atom:o8_c4bo8  $atom:c4_c4bo8
     $bond:c4o4  @bond:C4O4 $atom:c4_c4bo8  $atom:o4_c4bo8
@@ -47,7 +45,6 @@ C4BO8- inherits OPLSCM1A {
     $bond:c2o2  @bond:C2O2 $atom:c2_c4bo8  $atom:o2_c4bo8
     $bond:c2o6  @bond:C2O6 $atom:c2_c4bo8  $atom:o6_c4bo8
   }
-
   write("Data Angles") {
     $angle:o8c4o4  @angle:O8C4O4 $atom:o8_c4bo8  $atom:c4_c4bo8  $atom:o4_c4bo8
     $angle:o8c4c3  @angle:O8C4C3 $atom:o8_c4bo8  $atom:c4_c4bo8  $atom:c3_c4bo8
@@ -72,7 +69,6 @@ C4BO8- inherits OPLSCM1A {
     $angle:o2c2o6  @angle:O2C2O6 $atom:o2_c4bo8  $atom:c2_c4bo8  $atom:o6_c4bo8
     $angle:b1o2c2  @angle:B1O2C2 $atom:b1_c4bo8  $atom:o2_c4bo8  $atom:c2_c4bo8
   }
-
   write("Data Dihedrals") {
     $dihedral:c4o4b1o3  @dihedral:C4O4B1O3 $atom:c4_c4bo8  $atom:o4_c4bo8  $atom:b1_c4bo8  $atom:o3_c4bo8
     $dihedral:o4c4c3o3  @dihedral:O4C4C3O3 $atom:o4_c4bo8  $atom:c4_c4bo8  $atom:c3_c4bo8  $atom:o3_c4bo8
@@ -85,7 +81,6 @@ C4BO8- inherits OPLSCM1A {
     $dihedral:c1c2o2b1  @dihedral:C1C2O2B1 $atom:c1_c4bo8  $atom:c2_c4bo8  $atom:o2_c4bo8  $atom:b1_c4bo8
     $dihedral:o2b1o1c1  @dihedral:O2B1O1C1 $atom:o2_c4bo8  $atom:b1_c4bo8  $atom:o1_c4bo8  $atom:c1_c4bo8
   }
-
   write_once("In Settings") {
     bond_coeff @bond:O8C4 570.41109 1.219
     bond_coeff @bond:C4O4 656.477055 1.250
@@ -101,7 +96,6 @@ C4BO8- inherits OPLSCM1A {
     bond_coeff @bond:C1C2 468.785851 1.409
     bond_coeff @bond:C2O2 656.477055 1.250
     bond_coeff @bond:C2O6 570.41109 1.219
-    
     angle_coeff @angle:O8C4O4 80.0669 126.6
     angle_coeff @angle:O8C4C3 84.966539 126.2
     angle_coeff @angle:O4C4C3 69.837476 126.0
@@ -124,7 +118,6 @@ C4BO8- inherits OPLSCM1A {
     angle_coeff @angle:C1C2O6 84.966539 126.2
     angle_coeff @angle:O2C2O6 80.0669 126.6
     angle_coeff @angle:B1O2C2 99.952199 115.5
-    
     dihedral_coeff @dihedral:C4O4B1O3 opls 0.0 2.15105 0.0 0.0
     dihedral_coeff @dihedral:O4C4C3O3 opls 0.0 19.8375 0.0 0.0
     dihedral_coeff @dihedral:O4B1O3C3 opls 0.0 2.15105 0.0 0.0
@@ -135,7 +128,6 @@ C4BO8- inherits OPLSCM1A {
     dihedral_coeff @dihedral:O1C1C2O2 opls 0.0 19.8375 0.0 0.0
     dihedral_coeff @dihedral:C1C2O2B1 opls 0.0 19.8375 0.0 0.0
     dihedral_coeff @dihedral:O2B1O1C1 opls 0.0 2.15105 0.0 0.0
-    
     pair_coeff @atom:O8_c4bo8 @atom:O8_c4bo8  0.210157744 2.9603
     pair_coeff @atom:C4_c4bo8 @atom:C4_c4bo8  0.0860659656 3.4001
     pair_coeff @atom:O4_c4bo8 @atom:O4_c4bo8  0.210157744 2.9603 
@@ -150,5 +142,4 @@ C4BO8- inherits OPLSCM1A {
     pair_coeff @atom:O2_c4bo8 @atom:O2_c4bo8  0.210157744 2.9603 
     pair_coeff @atom:O6_c4bo8 @atom:O6_c4bo8  0.210157744 2.9603 
   }
-
 }

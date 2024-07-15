@@ -127,23 +127,23 @@ C4H11NO inherits OPLSCM1A {
     @atom:type17_h_c4h11no 1.008
   }
   write("Data Atoms") {
-    $atom:id1 $mol:m1 @atom:type1_c_c4h11no 0.014805 0.51700 -0.25100 0.12700
-    $atom:id2 $mol:m1 @atom:type2_c_c4h11no 0.087804 -0.92400 -0.19000 -0.40500
-    $atom:id3 $mol:m1 @atom:type3_o_c4h11no -0.353969 1.33200 0.57900 -0.68200
-    $atom:id4 $mol:m1 @atom:type4_c_c4h11no -0.058212 2.68000 0.62600 -0.24900
-    $atom:id5 $mol:m1 @atom:type5_n_c4h11no -0.972363 -1.51000 1.08800 -0.04200
-    $atom:id6 $mol:m1 @atom:type6_c_c4h11no -0.282727 -1.80600 -1.29800 0.18100
-    $atom:id7 $mol:m1 @atom:type7_h_c4h11no 0.091590 -1.41200 -2.28100 -0.08300
-    $atom:id8 $mol:m1 @atom:type8_h_c4h11no 0.091590 -1.85300 -1.25300 1.27000
-    $atom:id9 $mol:m1 @atom:type9_h_c4h11no 0.091590 -2.82500 -1.25300 -0.20600
-    $atom:id10 $mol:m1 @atom:type10_h_c4h11no 0.140197 -0.90000 -0.28400 -1.49500
-    $atom:id11 $mol:m1 @atom:type11_h_c4h11no 0.071516 0.56600 0.04400 1.17700
-    $atom:id12 $mol:m1 @atom:type12_h_c4h11no 0.071516 0.89100 -1.27500 0.06600
-    $atom:id13 $mol:m1 @atom:type13_h_c4h11no 0.079550 3.25300 1.27600 -0.91100
-    $atom:id14 $mol:m1 @atom:type14_h_c4h11no 0.079550 2.75600 1.03000 0.76200
-    $atom:id15 $mol:m1 @atom:type15_h_c4h11no 0.079550 3.14100 -0.36200 -0.26900
-    $atom:id16 $mol:m1 @atom:type16_h_c4h11no 0.384007 -1.54100 1.22100 0.95800
-    $atom:id17 $mol:m1 @atom:type17_h_c4h11no 0.384006 -2.45100 1.18900 -0.39600
+$atom:id1 $mol:m1 @atom:type1_c_c4h11no 0.014805000000000 0.51700 -0.25100 0.12700
+$atom:id2 $mol:m1 @atom:type2_c_c4h11no 0.087804000000000 -0.92400 -0.19000 -0.40500
+$atom:id3 $mol:m1 @atom:type3_o_c4h11no -0.353969000000000 1.33200 0.57900 -0.68200
+$atom:id4 $mol:m1 @atom:type4_c_c4h11no -0.058212000000000 2.68000 0.62600 -0.24900
+$atom:id5 $mol:m1 @atom:type5_n_c4h11no -0.972363000000000 -1.51000 1.08800 -0.04200
+$atom:id6 $mol:m1 @atom:type6_c_c4h11no -0.282727000000000 -1.80600 -1.29800 0.18100
+$atom:id7 $mol:m1 @atom:type7_h_c4h11no 0.091590000000000 -1.41200 -2.28100 -0.08300
+$atom:id8 $mol:m1 @atom:type8_h_c4h11no 0.091590000000000 -1.85300 -1.25300 1.27000
+$atom:id9 $mol:m1 @atom:type9_h_c4h11no 0.091590000000000 -2.82500 -1.25300 -0.20600
+$atom:id10 $mol:m1 @atom:type10_h_c4h11no 0.140197000000000 -0.90000 -0.28400 -1.49500
+$atom:id11 $mol:m1 @atom:type11_h_c4h11no 0.071516000000000 0.56600 0.04400 1.17700
+$atom:id12 $mol:m1 @atom:type12_h_c4h11no 0.071516000000000 0.89100 -1.27500 0.06600
+$atom:id13 $mol:m1 @atom:type13_h_c4h11no 0.079550000000000 3.25300 1.27600 -0.91100
+$atom:id14 $mol:m1 @atom:type14_h_c4h11no 0.079550000000000 2.75600 1.03000 0.76200
+$atom:id15 $mol:m1 @atom:type15_h_c4h11no 0.079550000000000 3.14100 -0.36200 -0.26900
+$atom:id16 $mol:m1 @atom:type16_h_c4h11no 0.384007000000000 -1.54100 1.22100 0.95800
+$atom:id17 $mol:m1 @atom:type17_h_c4h11no 0.384006000000000 -2.45100 1.18900 -0.39600
   }
   write("Data Bonds") {
     $bond:id1 @bond:type1_c4h11no $atom:id2 $atom:id1

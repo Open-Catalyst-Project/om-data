@@ -56,15 +56,12 @@ write_once("Data Masses") {
   }
   write_once("In Settings") {
     bond_coeff   @bond:CS1_cf3o3s         233.03 1.818
-    
     bond_coeff   @bond:CF1_cf3o3s         441.92 1.323
     bond_coeff   @bond:CF2_cf3o3s         441.92 1.323
     bond_coeff   @bond:CF3_cf3o3s         441.92 1.323
-    
     bond_coeff   @bond:SO1_cf3o3s         637.07 1.437
     bond_coeff   @bond:SO2_cf3o3s         637.07 1.437
     bond_coeff   @bond:SO3_cf3o3s         637.07 1.437
-    
     angle_coeff  @angle:FCF1_cf3o3s       93.33 107.1       
     angle_coeff  @angle:FCF2_cf3o3s       93.33 107.1       
     angle_coeff  @angle:FCF3_cf3o3s       93.33 107.1       
@@ -77,7 +74,6 @@ write_once("Data Masses") {
     angle_coeff  @angle:CSO1_cf3o3s       103.97 102.6       
     angle_coeff  @angle:CSO2_cf3o3s       103.97 102.6       
     angle_coeff  @angle:CSO3_cf3o3s       103.97 102.6       
-    
     improper_coeff  @improper:OSCF1_cf3o3s  0.694 1 3       
     improper_coeff  @improper:OSCF2_cf3o3s  0.694 1 3       
     improper_coeff  @improper:OSCF3_cf3o3s  0.694 1 3       
@@ -87,7 +83,6 @@ write_once("Data Masses") {
     improper_coeff  @improper:OSCF7_cf3o3s  0.694 1 3       
     improper_coeff  @improper:OSCF8_cf3o3s  0.694 1 3       
     improper_coeff  @improper:OSCF9_cf3o3s  0.694 1 3       
-    
     pair_coeff  @atom:C1_cf3o3s  @atom:C1_cf3o3s   0.066 3.5
     pair_coeff  @atom:S1_cf3o3s  @atom:S1_cf3o3s   0.25 2.55
     pair_coeff  @atom:O1_cf3o3s  @atom:O1_cf3o3s   0.21 2.96

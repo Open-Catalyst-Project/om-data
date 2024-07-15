@@ -26,11 +26,9 @@ CO3-2 inherits OPLSCM1A {
     bond_coeff @bond:COs1_co3 284.8 1.4320   
     bond_coeff @bond:CO2_co3 438.1 1.3170 
     bond_coeff @bond:CO3_co3 438.1 1.3170 
-    
     angle_coeff @angle:OCOs1_co3 114.8 123.25   
     angle_coeff @angle:OCO2_co3 118.8 130.25   
     angle_coeff @angle:OCOs3_co3 114.8 123.25   
-    
     pair_coeff @atom:Os1_co3 @atom:Os1_co3 0.0726 3.156097798883966
     pair_coeff @atom:O2_co3 @atom:O2_co3 0.1463 3.048120874245357
     pair_coeff @atom:O3_co3 @atom:O3_co3 0.1463 3.048120874245357
