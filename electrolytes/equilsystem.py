@@ -15,18 +15,14 @@ modeller = app.Modeller(pdb.topology, pdb.positions)
 forcefield = app.ForceField('system.xml')
 system = forcefield.createSystem(modeller.topology, nonbondedMethod=PME, nonbondedCutoff=0.5, constraints=None)
 system.addForce(MonteCarloBarostat(1.0*bar, Temp*kelvin, 1))
-integrator = LangevinMiddleIntegrator(Temp*kelvin,   # Temperate of head bath
+integrator = VariableLangevinIntegrator(Temp*kelvin,   # Temperate of head bath
                                       1/picosecond, # Friction coefficient
-                                      0.002*picosecond) # Time step
+                                      1e-6) # Time step
 simulation = app.Simulation(modeller.topology, system, integrator)
-simulation.loadState('equilsystem.state')
-simulation.loadCheckpoint('equilsystem.checkpoint')
-frames = 500
-runtime = 500000
-
-rate = int(runtime/frames)
-if rate < 1:
-    rate = 1
-simulation.reporters.append(PDBReporter('system_output.pdb', rate, enforcePeriodicBox=True))
-simulation.reporters.append(StateDataReporter('data.txt', rate, progress=True, temperature=True, potentialEnergy=True, density=True,totalSteps=runtime,speed=True))
-simulation.step(runtime)
+simulation.context.setPositions(modeller.positions)
+simulation.minimizeEnergy()
+steps = 1000
+simulation.reporters.append(StateDataReporter('equildata.txt', 1, progress=True, density=True,totalSteps=steps,speed=True))
+simulation.step(steps)
+simulation.saveState('equilsystem.state')
+simulation.saveCheckpoint('equilsystem.checkpoint')
