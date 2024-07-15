@@ -62,8 +62,8 @@ def combine_pockets(biolip_df: pd.DataFrame, path: str):
             out_name += f"_{bs_name}"
         if combined_st is not None:
             out_name += f"_{combined_st.formal_charge}"
-            # for fname in old_names:
-            #    os.remove(fname)
+            for fname in old_names:
+                os.remove(fname)
             combined_st.write(os.path.join(path, out_name + ".pdb"))
 
 
