@@ -83,28 +83,28 @@ def meld_ace_nma(st):
 
 def reconnect_open_chains(st: Structure):
     broken_C = evaluate_asl(
-        st, "atom.pt C and atom.att 2 and within 1.5 (atom.pt N and atom.att 2)"
+        st, "atom.pt C and atom.att 2 and within 1.5 (atom.pt N and atom.att 2 and not chain l) and not chain l"
     )
     broken_N = evaluate_asl(
-        st, "atom.pt N and atom.att 2 and within 1.5 (atom.pt C and atom.att 2)"
+        st, "atom.pt N and atom.att 2 and within 1.5 (atom.pt C and atom.att 2 and not chain l) and not chain l"
     )
     change_made = False
     while broken_C:
         change_made = True
-        b_C = broken_C[0]
+        b_C = broken_C.pop()
         for b_N in broken_N:
-            if st.measure(b_C, b_N) < 1.5:
+            if st.measure(b_C, b_N) < 1.5 and not st.areBound(b_C, b_N):
                 st.addBond(b_C, b_N, 1)
                 st.atom[b_C].formal_charge = 0
                 st.atom[b_N].formal_charge = 0
                 merge_chain_names(st, st.atom[b_C], st.atom[b_N])
                 broken_C = evaluate_asl(
                     st,
-                    "atom.pt C and atom.att 2 and within 1.5 (atom.pt N and atom.att 2)",
+                    "atom.pt C and atom.att 2 and within 1.5 (atom.pt N and atom.att 2 and not chain l) and not chain l",
                 )
                 broken_N = evaluate_asl(
                     st,
-                    "atom.pt N and atom.att 2 and within 1.5 (atom.pt C and atom.att 2)",
+                    "atom.pt N and atom.att 2 and within 1.5 (atom.pt C and atom.att 2 and not chain l) and not chain l",
                 )
                 break
     return change_made
@@ -188,12 +188,14 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_path", default=".")
     parser.add_argument("--prefix", default="")
+    parser.add_argument("--batch", type=int) 
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
     file_list = glob.glob(os.path.join(args.output_path, f"{args.prefix}*.pdb"))
+    file_list = file_list[10000*args.batch:10000*(args.batch+1)]
     for fname in tqdm(file_list):
         if not os.path.exists(fname):
             continue
