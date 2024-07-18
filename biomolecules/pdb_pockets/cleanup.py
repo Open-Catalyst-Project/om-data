@@ -40,6 +40,12 @@ def merge_chain_names(st, at1, at2):
                 if at.chain == old_chain:
                     at.chain = main_chain
 
+def remove_total_overlaps(st):
+    ats_to_delete = [max(at1, at2) for at1, at2 in measure.get_close_atoms(st, dist=0.05)]
+    if ats_to_delete:
+        st.deleteAtoms(ats_to_delete)
+        return True
+    return False
 
 def meld_ace_nma(st):
     change_made = False
@@ -188,14 +194,15 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_path", default=".")
     parser.add_argument("--prefix", default="")
-    parser.add_argument("--batch", type=int) 
+    parser.add_argument("--batch", type=int, default=0) 
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
-    file_list = glob.glob(os.path.join(args.output_path, f"{args.prefix}*.pdb"))
-    file_list = file_list[10000*args.batch:10000*(args.batch+1)]
+    #file_list = glob.glob(os.path.join(args.output_path, f"{args.prefix}*.pdb"))
+    #file_list = file_list[10000*args.batch:10000*(args.batch+1)]
+    file_list = 
     for fname in tqdm(file_list):
         if not os.path.exists(fname):
             continue
@@ -218,6 +225,7 @@ def main():
             print("Error:", fname)
             continue
         change_made = reconnect_open_chains(st) or change_made
+        change_made = remove_total_overlaps(st) or change_made
         if change_made:
             new_fname = os.path.join(
                 os.path.dirname(fname),
