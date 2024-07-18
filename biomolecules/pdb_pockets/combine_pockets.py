@@ -142,7 +142,7 @@ def merge_structures(
             combined_st.addBond(lig_at, chain_at.index + offset, order)
 
     # Resolve any coordinating atoms in favor of a receptor atom
-    close_atoms = measure.get_close_atoms(combined_st, dist=0.01)
+    close_atoms = measure.get_close_atoms(combined_st, dist=0.05)
     ats_to_delete = []
     for at1, at2 in close_atoms:
         if combined_st.atom[at2].chain == "c":
