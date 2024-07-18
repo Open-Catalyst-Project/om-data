@@ -200,9 +200,8 @@ def parse_args():
 
 def main():
     args = parse_args()
-    #file_list = glob.glob(os.path.join(args.output_path, f"{args.prefix}*.pdb"))
-    #file_list = file_list[10000*args.batch:10000*(args.batch+1)]
-    file_list = 
+    file_list = glob.glob(os.path.join(args.output_path, f"{args.prefix}*.pdb"))
+    file_list = file_list[10000*args.batch:10000*(args.batch+1)]
     for fname in tqdm(file_list):
         if not os.path.exists(fname):
             continue
