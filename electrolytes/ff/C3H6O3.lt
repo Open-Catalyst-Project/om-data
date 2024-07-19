@@ -1,13 +1,9 @@
 C3H6O3 inherits OPLSCM1A {
-
   ### LAMMPS commands for initialization
   ### (These can be overridden later.)
-
-
   write_once("In Init") {
     atom_style full
   }
-
   write_once("In Settings") {
     pair_coeff @atom:type1_c_unk_fe132 @atom:type1_c_unk_fe132 0.066 3.5000000
     pair_coeff @atom:type2_o_unk_fe132 @atom:type2_o_unk_fe132 0.140 2.9000000
@@ -22,7 +18,6 @@ C3H6O3 inherits OPLSCM1A {
     pair_coeff @atom:type11_h_unk_fe132 @atom:type11_h_unk_fe132 0.030 2.5000000
     pair_coeff @atom:type12_h_unk_fe132 @atom:type12_h_unk_fe132 0.030 2.5000000
   }
-
   write_once("In Settings") {
     bond_coeff @bond:type1_unk_fe132 320.0000 1.4100
     bond_coeff @bond:type2_unk_fe132 214.0000 1.3270
@@ -36,7 +31,6 @@ C3H6O3 inherits OPLSCM1A {
     bond_coeff @bond:type10_unk_fe132 340.0000 1.0900
     bond_coeff @bond:type11_unk_fe132 340.0000 1.0900
   }
-
   write_once("In Settings") {
     angle_coeff @angle:type1_unk_fe132 83.000 116.900
     angle_coeff @angle:type2_unk_fe132 83.000 123.400
@@ -56,7 +50,6 @@ C3H6O3 inherits OPLSCM1A {
     angle_coeff @angle:type16_unk_fe132 83.000 123.400
     angle_coeff @angle:type17_unk_fe132 33.000 107.800
   }
-
   write_once("In Settings") {
     dihedral_coeff @dihedral:type1_unk_fe132 opls 0.000 5.124 0.000 0.000
     dihedral_coeff @dihedral:type2_unk_fe132 opls 4.669 5.124 0.000 0.000
@@ -69,7 +62,6 @@ C3H6O3 inherits OPLSCM1A {
     dihedral_coeff @dihedral:type9_unk_fe132 opls 0.000 0.000 0.198 0.000
     dihedral_coeff @dihedral:type10_unk_fe132 opls 0.000 0.000 0.198 0.000
   }
-
   write_once("In Settings") {
     improper_coeff @improper:type1_unk_fe132 10.500 -1 2
     improper_coeff @improper:type2_unk_fe132 0.000 -1 2
@@ -77,11 +69,7 @@ C3H6O3 inherits OPLSCM1A {
     improper_coeff @improper:type4_unk_fe132 0.000 -1 2
     improper_coeff @improper:type5_unk_fe132 0.000 -1 2
   }
-
-
   ### DATA sections
-
-
   write_once("Data Masses") {
     @atom:type1_c_unk_fe132 12.011
     @atom:type2_o_unk_fe132 15.999
@@ -96,7 +84,6 @@ C3H6O3 inherits OPLSCM1A {
     @atom:type11_h_unk_fe132 1.008
     @atom:type12_h_unk_fe132 1.008
   }
-
   write("Data Atoms") {
     $atom:id1 $mol:m1 @atom:type1_c_unk_fe132 -0.04380000 1.000 1.00000 0.00000
     $atom:id2 $mol:m1 @atom:type2_o_unk_fe132 -0.31610000 -0.426 1.00000 0.00000
@@ -111,7 +98,6 @@ C3H6O3 inherits OPLSCM1A {
     $atom:id11 $mol:m1 @atom:type11_h_unk_fe132 0.10780000 -2.786 1.90111 2.92454
     $atom:id12 $mol:m1 @atom:type12_h_unk_fe132 0.10780000 -2.787 0.09840 2.92325
   }
-
   write("Data Bonds") {
     $bond:id1 @bond:type1_unk_fe132 $atom:id2 $atom:id1
     $bond:id2 @bond:type2_unk_fe132 $atom:id3 $atom:id2
@@ -125,7 +111,6 @@ C3H6O3 inherits OPLSCM1A {
     $bond:id10 @bond:type10_unk_fe132 $atom:id11 $atom:id6
     $bond:id11 @bond:type11_unk_fe132 $atom:id12 $atom:id6
   }
-
   write("Data Angles") {
     $angle:id1 @angle:type1_unk_fe132 $atom:id1 $atom:id2 $atom:id3
     $angle:id2 @angle:type2_unk_fe132 $atom:id2 $atom:id3 $atom:id4
@@ -145,7 +130,6 @@ C3H6O3 inherits OPLSCM1A {
     $angle:id16 @angle:type16_unk_fe132 $atom:id4 $atom:id3 $atom:id5
     $angle:id17 @angle:type17_unk_fe132 $atom:id10 $atom:id6 $atom:id11
   }
-
   write("Data Dihedrals") {
     $dihedral:id1 @dihedral:type1_unk_fe132 $atom:id4 $atom:id3 $atom:id2 $atom:id1
     $dihedral:id2 @dihedral:type2_unk_fe132 $atom:id6 $atom:id5 $atom:id3 $atom:id2
@@ -158,7 +142,6 @@ C3H6O3 inherits OPLSCM1A {
     $dihedral:id9 @dihedral:type9_unk_fe132 $atom:id9 $atom:id1 $atom:id2 $atom:id3
     $dihedral:id10 @dihedral:type10_unk_fe132 $atom:id8 $atom:id1 $atom:id2 $atom:id3
   }
-
   write("Data Impropers") {
     $improper:id1 @improper:type1_unk_fe132 $atom:id3 $atom:id2 $atom:id4 $atom:id5
     $improper:id2 @improper:type2_unk_fe132 $atom:id1 $atom:id2 $atom:id7 $atom:id8
@@ -166,5 +149,4 @@ C3H6O3 inherits OPLSCM1A {
     $improper:id4 @improper:type4_unk_fe132 $atom:id6 $atom:id10 $atom:id11 $atom:id5
     $improper:id5 @improper:type5_unk_fe132 $atom:id6 $atom:id10 $atom:id12 $atom:id5
   }
-
 } # end of "C3H6O3 inherits OPLSCM1A" type definition

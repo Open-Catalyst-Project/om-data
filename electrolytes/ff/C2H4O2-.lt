@@ -1,13 +1,9 @@
 C2H4O2- inherits OPLSCM1A {
-
   ### LAMMPS commands for initialization
   ### (These can be overridden later.)
-
-
   write_once("In Init") {
     atom_style full
   }
-
   write_once("In Settings") {
     pair_coeff @atom:type1_c_c2h4o2- @atom:type1_c_c2h4o2- 0.066 3.5000000
     pair_coeff @atom:type2_c_c2h4o2- @atom:type2_c_c2h4o2- 0.066 3.5000000
@@ -18,7 +14,6 @@ C2H4O2- inherits OPLSCM1A {
     pair_coeff @atom:type7_h_c2h4o2- @atom:type7_h_c2h4o2- 0.030 2.5000000
     pair_coeff @atom:type8_h_c2h4o2- @atom:type8_h_c2h4o2- 0.030 2.5000000
   }
-
   write_once("In Settings") {
     bond_coeff @bond:type1_c2h4o2 268.0000 1.5290
     bond_coeff @bond:type2_c2h4o2 320.0000 1.4100
@@ -28,7 +23,6 @@ C2H4O2- inherits OPLSCM1A {
     bond_coeff @bond:type6_c2h4o2 340.0000 1.0900
     bond_coeff @bond:type7_c2h4o2 340.0000 1.0900
   }
-
   write_once("In Settings") {
     angle_coeff @angle:type1_c2h4o2 50.000 109.500
     angle_coeff @angle:type2_c2h4o2 50.000 109.500
@@ -43,23 +37,18 @@ C2H4O2- inherits OPLSCM1A {
     angle_coeff @angle:type11_c2h4o2 33.000 107.800
     angle_coeff @angle:type12_c2h4o2 33.000 107.800
   }
-
   write_once("In Settings") {
-    dihedral_coeff @dihedral:type1_c2h4o2 9.508 0.000 0.000 0.000
-    dihedral_coeff @dihedral:type2_c2h4o2 0.000 0.000 0.468 0.000
-    dihedral_coeff @dihedral:type3_c2h4o2 0.000 0.000 0.468 0.000
-    dihedral_coeff @dihedral:type4_c2h4o2 0.000 0.000 0.468 0.000
-    dihedral_coeff @dihedral:type5_c2h4o2 0.000 0.000 0.468 0.000
-    dihedral_coeff @dihedral:type6_c2h4o2 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type7_c2h4o2 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type8_c2h4o2 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type9_c2h4o2 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type1_c2h4o2 opls 9.508 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type2_c2h4o2 opls 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type3_c2h4o2 opls 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type4_c2h4o2 opls 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type5_c2h4o2 opls 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type6_c2h4o2 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type7_c2h4o2 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type8_c2h4o2 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type9_c2h4o2 opls 0.000 0.000 0.300 0.000
   }
-
-
   ### DATA sections
-
-
   write_once("Data Masses") {
     @atom:type1_c_c2h4o2- 12.011
     @atom:type2_c_c2h4o2- 12.011
@@ -70,7 +59,6 @@ C2H4O2- inherits OPLSCM1A {
     @atom:type7_h_c2h4o2- 1.008
     @atom:type8_h_c2h4o2- 1.008
   }
-
   write("Data Atoms") {
     $atom:id1 $mol:m1 @atom:type1_c_c2h4o2- 0.019372 0.74100 -0.07100 -0.05500
     $atom:id2 $mol:m1 @atom:type2_c_c2h4o2- 0.024907 -0.79700 0.04100 -0.09400
@@ -81,7 +69,6 @@ C2H4O2- inherits OPLSCM1A {
     $atom:id7 $mol:m1 @atom:type7_h_c2h4o2- 0.133342 1.21000 0.86100 -0.36900
     $atom:id8 $mol:m1 @atom:type8_h_c2h4o2- 0.133340 1.11800 -0.81200 -0.75900
   }
-
   write("Data Bonds") {
     $bond:id1 @bond:type1_c2h4o2 $atom:id2 $atom:id1
     $bond:id2 @bond:type2_c2h4o2 $atom:id3 $atom:id1
@@ -91,7 +78,6 @@ C2H4O2- inherits OPLSCM1A {
     $bond:id6 @bond:type6_c2h4o2 $atom:id7 $atom:id1
     $bond:id7 @bond:type7_c2h4o2 $atom:id8 $atom:id1
   }
-
   write("Data Angles") {
     $angle:id1 @angle:type1_c2h4o2 $atom:id3 $atom:id1 $atom:id2
     $angle:id2 @angle:type2_c2h4o2 $atom:id4 $atom:id2 $atom:id1
@@ -106,7 +92,6 @@ C2H4O2- inherits OPLSCM1A {
     $angle:id11 @angle:type11_c2h4o2 $atom:id6 $atom:id2 $atom:id5
     $angle:id12 @angle:type12_c2h4o2 $atom:id8 $atom:id1 $atom:id7
   }
-
   write("Data Dihedrals") {
     $dihedral:id1 @dihedral:type1_c2h4o2 $atom:id4 $atom:id2 $atom:id1 $atom:id3
     $dihedral:id2 @dihedral:type2_c2h4o2 $atom:id5 $atom:id2 $atom:id1 $atom:id3
@@ -118,5 +103,4 @@ C2H4O2- inherits OPLSCM1A {
     $dihedral:id8 @dihedral:type8_c2h4o2 $atom:id7 $atom:id1 $atom:id2 $atom:id6
     $dihedral:id9 @dihedral:type9_c2h4o2 $atom:id8 $atom:id1 $atom:id2 $atom:id6
   }
-
 } # end of "C2H4O2- inherits OPLSCM1A" type definition

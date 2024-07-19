@@ -25,12 +25,36 @@ Only the important ones
 - `randommixing.py`: a Python script to generate completely random electrolytes and append them to elytes.csv file. 
 - `classmixing.py`: a Python script to generate random electrolytes based on their classifications and append them to elytes.csv file. 
 
-In theory, we only need to run preparesimulations.sh, followed by runsimulations.sh
+
+## How to run
+
+Run your MD simulations in this directory. Systems are already prepped in the tar file. So first, un-tar the files
+```console
+tar -xvf electrolytes.tar.gz
+```
+This should result in 3418 directories labeled in numerical order, each of which containing a set of initial input files to run the MD simulation. The number labeling each directory represents the index in the CSV file `elytes.csv`. To run an MD simulation for one system, we can go to one of the directories (let's say `0`) and do the following: 
 
 ```console
-foo@bar:~$ ./preparesimulations.sh
-foo@bar:~$ ./runsimulations.sh
+cd 0;
+cp ../runsystem.py ./
+python runsystem.py 0
 ```
+
+If one wants to run simulations all simulations one-by-one, we can also write the following bash script
+```bash
+#!/bin/bash 
+
+num_lines=$(wc -l < elytes.csv)
+num_lines=$((num_lines-1))
+
+for ((i = 0; i < num_lines; i++)); do
+    cd $i
+    cp ../runsystem.py ./
+    python runsystem.py $i
+    cd ..
+done
+```
+which is provided in `runsimulations.sh.` Right now, the simulations are configured to perform an NPT run at 1 bar and whichever temperature relevant for the system for 500 ns
 
 ## How it works
 

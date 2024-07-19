@@ -35,21 +35,17 @@ write_once("Data Masses") {
     $angle:fsn1_f2no4s2 @angle:FSN1_f2no4s2 $atom:f1_f2no4s2 $atom:s1_f2no4s2 $atom:n1_f2no4s2
     $angle:fso1_f2no4s2 @angle:FSO1_f2no4s2 $atom:f1_f2no4s2 $atom:s1_f2no4s2 $atom:o1_f2no4s2
     $angle:fso2_f2no4s2 @angle:FSOs2_f2no4s2 $atom:f1_f2no4s2 $atom:s1_f2no4s2 $atom:o2_f2no4s2
-    
     $angle:fsn2_f2no4s2 @angle:FSN2_f2no4s2 $atom:f2_f2no4s2 $atom:s2_f2no4s2 $atom:n1_f2no4s2
     $angle:fso3_f2no4s2 @angle:FSO3_f2no4s2 $atom:f2_f2no4s2 $atom:s2_f2no4s2 $atom:o3_f2no4s2
     $angle:fso4_f2no4s2 @angle:FSOs4_f2no4s2 $atom:f2_f2no4s2 $atom:s2_f2no4s2 $atom:o4_f2no4s2
-    
     $angle:nso1_f2no4s2 @angle:NSO1_f2no4s2 $atom:n1_f2no4s2 $atom:s1_f2no4s2 $atom:o1_f2no4s2
     $angle:nso2_f2no4s2 @angle:NSOs2_f2no4s2 $atom:n1_f2no4s2 $atom:s1_f2no4s2 $atom:o2_f2no4s2
     $angle:nso3_f2no4s2 @angle:NSO3_f2no4s2 $atom:n1_f2no4s2 $atom:s2_f2no4s2 $atom:o3_f2no4s2
     $angle:nso4_f2no4s2 @angle:NSOs4_f2no4s2 $atom:n1_f2no4s2 $atom:s2_f2no4s2 $atom:o4_f2no4s2
-    
     $angle:oso1_f2no4s2 @angle:OSOs1_f2no4s2 $atom:o1_f2no4s2 $atom:s1_f2no4s2 $atom:o2_f2no4s2
     $angle:oso2_f2no4s2 @angle:OSOs2_f2no4s2 $atom:o3_f2no4s2 $atom:s2_f2no4s2 $atom:o4_f2no4s2
     $angle:sns1_f2no4s2 @angle:SNS1_f2no4s2 $atom:s1_f2no4s2 $atom:n1_f2no4s2 $atom:s2_f2no4s2
   }
-
   write("Data Dihedrals") {
     $dihedral:snsf1_f2no4s2 @dihedral:SNSF1_f2no4s2 $atom:s1_f2no4s2 $atom:n1_f2no4s2 $atom:s2_f2no4s2 $atom:f2_f2no4s2
     $dihedral:snso1_f2no4s2 @dihedral:SNSO1_f2no4s2 $atom:s1_f2no4s2 $atom:n1_f2no4s2 $atom:s2_f2no4s2 $atom:o3_f2no4s2
@@ -67,31 +63,25 @@ write_once("Data Masses") {
     bond_coeff @bond:SOs2_f2no4s2 387.8 1.6230 
     bond_coeff @bond:SO3_f2no4s2 683.0 1.4530   
     bond_coeff @bond:SOs4_f2no4s2 387.8 1.6230 
-    
     angle_coeff @angle:FSN1_f2no4s2 122.9 116.90   
     angle_coeff @angle:FSN2_f2no4s2 122.9 116.90   
     angle_coeff @angle:FSO1_f2no4s2 130.2 106.54   
     angle_coeff @angle:FSOs2_f2no4s2 130.2 106.54   
     angle_coeff @angle:FSO3_f2no4s2 130.2 106.54   
     angle_coeff @angle:FSOs4_f2no4s2 130.2 106.54   
-    
     angle_coeff @angle:NSO1_f2no4s2 124.1 119.10   
     angle_coeff @angle:NSOs2_f2no4s2 126.4 103.25   
     angle_coeff @angle:NSO3_f2no4s2 124.1 119.10   
     angle_coeff @angle:NSOs4_f2no4s2 126.4 103.25   
-    
     angle_coeff @angle:OSOs1_f2no4s2 126.6 108.56   
     angle_coeff @angle:OSOs2_f2no4s2 126.6 108.56   
     angle_coeff @angle:SNS1_f2no4s2 70.3 119.18   
-    
-    
     dihedral_coeff @dihedral:SNSF1_f2no4s2 fourier 1 6.666666666666667 2 180.0     
     dihedral_coeff @dihedral:SNSF2_f2no4s2 fourier 1 6.666666666666667 2 180.0     
     dihedral_coeff @dihedral:SNSO1_f2no4s2 fourier 1 6.666666666666667 2 180.0     
     dihedral_coeff @dihedral:SNSOs2_f2no4s2 fourier 1 6.666666666666667 2 180.0     
     dihedral_coeff @dihedral:SNSO3_f2no4s2 fourier 1 6.666666666666667 2 180.0     
     dihedral_coeff @dihedral:SNSOs4_f2no4s2 fourier 1 6.666666666666667 2 180.0     
-    
     pair_coeff  @atom:S1_f2no4s2  @atom:S1_f2no4s2   0.2824 3.532413417426445
     pair_coeff  @atom:S2_f2no4s2  @atom:S2_f2no4s2   0.2824 3.532413417426445
     pair_coeff  @atom:O1_f2no4s2  @atom:O1_f2no4s2   0.1463 3.048120874245357

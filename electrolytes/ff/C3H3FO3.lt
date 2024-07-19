@@ -89,16 +89,16 @@ C3H3FO3 inherits OPLSCM1A {
     @atom:type10_h_unk_c6317 1.008
   }
   write("Data Atoms") {
-    $atom:id1 $mol:m1 @atom:type1_c_unk_c6317 -0.08080000 1.000 1.00000 0.00000
-    $atom:id2 $mol:m1 @atom:type2_c_unk_c6317 0.18870000 -0.493 1.00000 0.00000
-    $atom:id3 $mol:m1 @atom:type3_o_unk_c6317 -0.33130000 -0.832 1.00000 1.36271
-    $atom:id4 $mol:m1 @atom:type4_c_unk_c6317 0.55480000 0.217 0.41236 2.00462
-    $atom:id5 $mol:m1 @atom:type5_o_unk_c6317 -0.35360000 0.197 0.06633 3.17330
-    $atom:id6 $mol:m1 @atom:type6_o_unk_c6317 -0.30830000 1.311 0.30880 1.19764
-    $atom:id7 $mol:m1 @atom:type7_f_unk_c6317 -0.14870000 -0.964 -0.15344 -0.53577
-    $atom:id8 $mol:m1 @atom:type8_h_unk_c6317 0.15240000 1.420 2.00864 0.07049
-    $atom:id9 $mol:m1 @atom:type9_h_unk_c6317 0.15240000 1.423 0.47745 -0.86145
-    $atom:id10 $mol:m1 @atom:type10_h_unk_c6317 0.17460000 -0.930 1.84669 -0.53515
+$atom:id1 $mol:m1 @atom:type1_c_unk_c6317 -0.080820000000000 1.000 1.00000 0.00000
+$atom:id2 $mol:m1 @atom:type2_c_unk_c6317 0.188680000000000 -0.493 1.00000 0.00000
+$atom:id3 $mol:m1 @atom:type3_o_unk_c6317 -0.331320000000000 -0.832 1.00000 1.36271
+$atom:id4 $mol:m1 @atom:type4_c_unk_c6317 0.554780000000000 0.217 0.41236 2.00462
+$atom:id5 $mol:m1 @atom:type5_o_unk_c6317 -0.353620000000000 0.197 0.06633 3.17330
+$atom:id6 $mol:m1 @atom:type6_o_unk_c6317 -0.308320000000000 1.311 0.30880 1.19764
+$atom:id7 $mol:m1 @atom:type7_f_unk_c6317 -0.148720000000000 -0.964 -0.15344 -0.53577
+$atom:id8 $mol:m1 @atom:type8_h_unk_c6317 0.152380000000000 1.420 2.00864 0.07049
+$atom:id9 $mol:m1 @atom:type9_h_unk_c6317 0.152380000000000 1.423 0.47745 -0.86145
+$atom:id10 $mol:m1 @atom:type10_h_unk_c6317 0.174580000000000 -0.930 1.84669 -0.53515
   }
   write("Data Bonds") {
     $bond:id1 @bond:type1_unk_c6317 $atom:id2 $atom:id1

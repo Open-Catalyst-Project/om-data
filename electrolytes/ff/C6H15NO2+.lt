@@ -1,13 +1,9 @@
 C6H15NO2+ inherits OPLSCM1A {
-
   ### LAMMPS commands for initialization
   ### (These can be overridden later.)
-
-
   write_once("In Init") {
     atom_style full
   }
-
   write_once("In Settings") {
     pair_coeff @atom:type1_n_c6h15no2+ @atom:type1_n_c6h15no2+ 0.170 3.2500000
     pair_coeff @atom:type2_c_c6h15no2+ @atom:type2_c_c6h15no2+ 0.066 3.5000000
@@ -35,7 +31,6 @@ C6H15NO2+ inherits OPLSCM1A {
     pair_coeff @atom:type24_h_c6h15no2+ @atom:type24_h_c6h15no2+ 0.030 2.5000000
     pair_coeff @atom:type25_h_c6h15no2+ @atom:type25_h_c6h15no2+ 0.030 2.5000000
   }
-
   write_once("In Settings") {
     bond_coeff @bond:type1_c6h15no2 367.0000 1.4710
     bond_coeff @bond:type2_c6h15no2 367.0000 1.4710
@@ -62,7 +57,6 @@ C6H15NO2+ inherits OPLSCM1A {
     bond_coeff @bond:type23_c6h15no2 340.0000 1.0900
     bond_coeff @bond:type24_c6h15no2 340.0000 1.0900
   }
-
   write_once("In Settings") {
     angle_coeff @angle:type1_c6h15no2 50.000 113.000
     angle_coeff @angle:type2_c6h15no2 80.000 111.200
@@ -109,62 +103,57 @@ C6H15NO2+ inherits OPLSCM1A {
     angle_coeff @angle:type43_c6h15no2 33.000 107.800
     angle_coeff @angle:type44_c6h15no2 33.000 107.800
   }
-
   write_once("In Settings") {
-    dihedral_coeff @dihedral:type1_c6h15no2 1.438 -0.124 0.264 0.000
-    dihedral_coeff @dihedral:type2_c6h15no2 8.000 0.000 0.000 0.000
-    dihedral_coeff @dihedral:type3_c6h15no2 0.650 -0.250 0.670 0.000
-    dihedral_coeff @dihedral:type4_c6h15no2 1.438 -0.124 0.264 0.000
-    dihedral_coeff @dihedral:type5_c6h15no2 8.000 0.000 0.000 0.000
-    dihedral_coeff @dihedral:type6_c6h15no2 0.650 -0.250 0.670 0.000
-    dihedral_coeff @dihedral:type7_c6h15no2 0.000 0.000 0.760 0.000
-    dihedral_coeff @dihedral:type8_c6h15no2 0.000 0.000 0.760 0.000
-    dihedral_coeff @dihedral:type9_c6h15no2 0.000 0.000 0.760 0.000
-    dihedral_coeff @dihedral:type10_c6h15no2 0.000 0.000 0.384 0.000
-    dihedral_coeff @dihedral:type11_c6h15no2 0.000 0.000 0.384 0.000
-    dihedral_coeff @dihedral:type12_c6h15no2 0.000 0.000 0.302 0.000
-    dihedral_coeff @dihedral:type13_c6h15no2 0.000 0.000 0.302 0.000
-    dihedral_coeff @dihedral:type14_c6h15no2 0.000 0.000 0.347 0.000
-    dihedral_coeff @dihedral:type15_c6h15no2 0.000 0.000 0.347 0.000
-    dihedral_coeff @dihedral:type16_c6h15no2 0.000 0.000 0.302 0.000
-    dihedral_coeff @dihedral:type17_c6h15no2 0.000 0.000 0.302 0.000
-    dihedral_coeff @dihedral:type18_c6h15no2 0.000 0.000 0.384 0.000
-    dihedral_coeff @dihedral:type19_c6h15no2 0.000 0.000 0.384 0.000
-    dihedral_coeff @dihedral:type20_c6h15no2 0.000 0.000 0.760 0.000
-    dihedral_coeff @dihedral:type21_c6h15no2 0.000 0.000 0.760 0.000
-    dihedral_coeff @dihedral:type22_c6h15no2 0.000 0.000 0.760 0.000
-    dihedral_coeff @dihedral:type23_c6h15no2 0.000 0.000 0.347 0.000
-    dihedral_coeff @dihedral:type24_c6h15no2 0.000 0.000 0.347 0.000
-    dihedral_coeff @dihedral:type25_c6h15no2 0.000 0.000 0.468 0.000
-    dihedral_coeff @dihedral:type26_c6h15no2 0.000 0.000 0.468 0.000
-    dihedral_coeff @dihedral:type27_c6h15no2 0.000 0.000 0.760 0.000
-    dihedral_coeff @dihedral:type28_c6h15no2 0.000 0.000 0.760 0.000
-    dihedral_coeff @dihedral:type29_c6h15no2 0.000 0.000 0.468 0.000
-    dihedral_coeff @dihedral:type30_c6h15no2 0.000 0.000 0.468 0.000
-    dihedral_coeff @dihedral:type31_c6h15no2 0.000 0.000 0.760 0.000
-    dihedral_coeff @dihedral:type32_c6h15no2 0.000 0.000 0.760 0.000
-    dihedral_coeff @dihedral:type33_c6h15no2 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type34_c6h15no2 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type35_c6h15no2 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type36_c6h15no2 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type37_c6h15no2 0.000 0.000 0.261 0.000
-    dihedral_coeff @dihedral:type38_c6h15no2 0.000 0.000 0.261 0.000
-    dihedral_coeff @dihedral:type39_c6h15no2 0.000 0.000 0.261 0.000
-    dihedral_coeff @dihedral:type40_c6h15no2 0.000 0.000 0.261 0.000
-    dihedral_coeff @dihedral:type41_c6h15no2 0.000 0.000 0.261 0.000
-    dihedral_coeff @dihedral:type42_c6h15no2 0.000 0.000 0.261 0.000
-    dihedral_coeff @dihedral:type43_c6h15no2 0.000 0.000 0.261 0.000
-    dihedral_coeff @dihedral:type44_c6h15no2 0.000 0.000 0.261 0.000
-    dihedral_coeff @dihedral:type45_c6h15no2 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type46_c6h15no2 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type47_c6h15no2 0.000 0.000 0.300 0.000
-    dihedral_coeff @dihedral:type48_c6h15no2 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type1_c6h15no2 opls 1.438 -0.124 0.264 0.000
+    dihedral_coeff @dihedral:type2_c6h15no2 opls 8.000 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type3_c6h15no2 opls 0.650 -0.250 0.670 0.000
+    dihedral_coeff @dihedral:type4_c6h15no2 opls 1.438 -0.124 0.264 0.000
+    dihedral_coeff @dihedral:type5_c6h15no2 opls 8.000 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type6_c6h15no2 opls 0.650 -0.250 0.670 0.000
+    dihedral_coeff @dihedral:type7_c6h15no2 opls 0.000 0.000 0.760 0.000
+    dihedral_coeff @dihedral:type8_c6h15no2 opls 0.000 0.000 0.760 0.000
+    dihedral_coeff @dihedral:type9_c6h15no2 opls 0.000 0.000 0.760 0.000
+    dihedral_coeff @dihedral:type10_c6h15no2 opls 0.000 0.000 0.384 0.000
+    dihedral_coeff @dihedral:type11_c6h15no2 opls 0.000 0.000 0.384 0.000
+    dihedral_coeff @dihedral:type12_c6h15no2 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type13_c6h15no2 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type14_c6h15no2 opls 0.000 0.000 0.347 0.000
+    dihedral_coeff @dihedral:type15_c6h15no2 opls 0.000 0.000 0.347 0.000
+    dihedral_coeff @dihedral:type16_c6h15no2 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type17_c6h15no2 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type18_c6h15no2 opls 0.000 0.000 0.384 0.000
+    dihedral_coeff @dihedral:type19_c6h15no2 opls 0.000 0.000 0.384 0.000
+    dihedral_coeff @dihedral:type20_c6h15no2 opls 0.000 0.000 0.760 0.000
+    dihedral_coeff @dihedral:type21_c6h15no2 opls 0.000 0.000 0.760 0.000
+    dihedral_coeff @dihedral:type22_c6h15no2 opls 0.000 0.000 0.760 0.000
+    dihedral_coeff @dihedral:type23_c6h15no2 opls 0.000 0.000 0.347 0.000
+    dihedral_coeff @dihedral:type24_c6h15no2 opls 0.000 0.000 0.347 0.000
+    dihedral_coeff @dihedral:type25_c6h15no2 opls 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type26_c6h15no2 opls 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type27_c6h15no2 opls 0.000 0.000 0.760 0.000
+    dihedral_coeff @dihedral:type28_c6h15no2 opls 0.000 0.000 0.760 0.000
+    dihedral_coeff @dihedral:type29_c6h15no2 opls 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type30_c6h15no2 opls 0.000 0.000 0.468 0.000
+    dihedral_coeff @dihedral:type31_c6h15no2 opls 0.000 0.000 0.760 0.000
+    dihedral_coeff @dihedral:type32_c6h15no2 opls 0.000 0.000 0.760 0.000
+    dihedral_coeff @dihedral:type33_c6h15no2 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type34_c6h15no2 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type35_c6h15no2 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type36_c6h15no2 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type37_c6h15no2 opls 0.000 0.000 0.261 0.000
+    dihedral_coeff @dihedral:type38_c6h15no2 opls 0.000 0.000 0.261 0.000
+    dihedral_coeff @dihedral:type39_c6h15no2 opls 0.000 0.000 0.261 0.000
+    dihedral_coeff @dihedral:type40_c6h15no2 opls 0.000 0.000 0.261 0.000
+    dihedral_coeff @dihedral:type41_c6h15no2 opls 0.000 0.000 0.261 0.000
+    dihedral_coeff @dihedral:type42_c6h15no2 opls 0.000 0.000 0.261 0.000
+    dihedral_coeff @dihedral:type43_c6h15no2 opls 0.000 0.000 0.261 0.000
+    dihedral_coeff @dihedral:type44_c6h15no2 opls 0.000 0.000 0.261 0.000
+    dihedral_coeff @dihedral:type45_c6h15no2 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type46_c6h15no2 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type47_c6h15no2 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type48_c6h15no2 opls 0.000 0.000 0.300 0.000
   }
-
-
   ### DATA sections
-
-
   write_once("Data Masses") {
     @atom:type1_n_c6h15no2+ 14.007
     @atom:type2_c_c6h15no2+ 12.011
@@ -192,7 +181,6 @@ C6H15NO2+ inherits OPLSCM1A {
     @atom:type24_h_c6h15no2+ 1.008
     @atom:type25_h_c6h15no2+ 1.008
   }
-
   write("Data Atoms") {
     $atom:id1 $mol:m1 @atom:type1_n_c6h15no2+ -0.187154 0.03900 0.10900 0.22600
     $atom:id2 $mol:m1 @atom:type2_c_c6h15no2+ -0.187624 1.40500 -0.19600 -0.26800
@@ -220,7 +208,6 @@ C6H15NO2+ inherits OPLSCM1A {
     $atom:id24 $mol:m1 @atom:type24_h_c6h15no2+ 0.095528 -5.02600 -0.10100 -0.19900
     $atom:id25 $mol:m1 @atom:type25_h_c6h15no2+ 0.095526 -5.32300 -1.82800 -0.35800
   }
-
   write("Data Bonds") {
     $bond:id1 @bond:type1_c6h15no2 $atom:id2 $atom:id1
     $bond:id2 @bond:type2_c6h15no2 $atom:id3 $atom:id1
@@ -247,7 +234,6 @@ C6H15NO2+ inherits OPLSCM1A {
     $bond:id23 @bond:type23_c6h15no2 $atom:id24 $atom:id6
     $bond:id24 @bond:type24_c6h15no2 $atom:id25 $atom:id6
   }
-
   write("Data Angles") {
     $angle:id1 @angle:type1_c6h15no2 $atom:id3 $atom:id1 $atom:id2
     $angle:id2 @angle:type2_c6h15no2 $atom:id4 $atom:id3 $atom:id1
@@ -294,7 +280,6 @@ C6H15NO2+ inherits OPLSCM1A {
     $angle:id43 @angle:type43_c6h15no2 $atom:id25 $atom:id6 $atom:id23
     $angle:id44 @angle:type44_c6h15no2 $atom:id25 $atom:id6 $atom:id24
   }
-
   write("Data Dihedrals") {
     $dihedral:id1 @dihedral:type1_c6h15no2 $atom:id4 $atom:id3 $atom:id1 $atom:id2
     $dihedral:id2 @dihedral:type2_c6h15no2 $atom:id5 $atom:id4 $atom:id3 $atom:id1
@@ -345,5 +330,4 @@ C6H15NO2+ inherits OPLSCM1A {
     $dihedral:id47 @dihedral:type47_c6h15no2 $atom:id21 $atom:id4 $atom:id3 $atom:id20
     $dihedral:id48 @dihedral:type48_c6h15no2 $atom:id22 $atom:id4 $atom:id3 $atom:id20
   }
-
 } # end of "C6H15NO2+ inherits OPLSCM1A" type definition

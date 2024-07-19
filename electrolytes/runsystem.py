@@ -4,11 +4,16 @@ from openmm.unit import *
 from sys import stdout, exit
 import csv
 
+#Read the temperature from the CSV file
 row_idx  = int(sys.argv[1]) + 1
-# Load the CSV file containing systems to simulate
 with open("../elytes.csv", "r") as f:
     systems = list(csv.reader(f))
 Temp = float(systems[row_idx][4])
+
+dt = 0.002 #ps
+t_final = 500000 #ps, which is 500 ns
+frames = 1000
+runtime = int(t_final/dt)
 
 pdb = app.PDBFile('system_init.pdb')
 modeller = app.Modeller(pdb.topology, pdb.positions)
@@ -17,12 +22,10 @@ system = forcefield.createSystem(modeller.topology, nonbondedMethod=PME, nonbond
 system.addForce(MonteCarloBarostat(1.0*bar, Temp*kelvin, 1))
 integrator = LangevinMiddleIntegrator(Temp*kelvin,   # Temperate of head bath
                                       1/picosecond, # Friction coefficient
-                                      0.002*picoseconds) # Time step
+                                      dt*picosecond) # Time step
 simulation = app.Simulation(modeller.topology, system, integrator)
-simulation.context.setPositions(modeller.positions)
-simulation.minimizeEnergy()#maxIterations=1000)
-frames = 10
-runtime = 500#000
+simulation.loadState('equilsystem.state')
+simulation.loadCheckpoint('equilsystem.checkpoint')
 
 rate = int(runtime/frames)
 if rate < 1:

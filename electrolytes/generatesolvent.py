@@ -50,7 +50,7 @@ if units == 'volume':
             Natoms.append(sum(counts)*int(num_solv*molfrac[j]))
 
     #Next we want to cap the total number of atoms
-    NMax = 3500
+    NMax = 5000
     count = 0
     if sum(Natoms) > NMax:
         fracs = np.array(Natoms)/sum(Natoms)

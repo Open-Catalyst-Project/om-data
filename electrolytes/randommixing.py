@@ -7,6 +7,7 @@ is the number of components and charge neutrality. Here, we create two distinct 
 The resulting random electrolytes are appended as new entry to the elytes.csv file, which contain the list of all electrolytes we want to simulate. 
 """
 import pandas as pd
+import re
 import sys
 import data2lammps as d2l
 import lammps2omm as lmm
@@ -15,21 +16,56 @@ import csv
 import numpy as np
 from pulp import LpProblem, LpVariable, lpSum, LpMinimize
 
+# Remove species that are duplicate, regardless of charge
+def remove_dup_species(formulas, ids):
+    # Use a dictionary to keep track of unique formulas and corresponding ids
+    unique_formulas_with_ids = {}
+    
+    for formula, id in zip(formulas, ids):
+        cleaned_formula = re.split(r'[+-]', formula)[0]
+        if cleaned_formula not in unique_formulas_with_ids:
+            unique_formulas_with_ids[cleaned_formula] = id
+
+    # Extract the cleaned formulas and corresponding ids
+    cleaned_formulas = list(unique_formulas_with_ids.keys())
+    corresponding_ids = list(unique_formulas_with_ids.values())
+
+    return cleaned_formulas, corresponding_ids
+
 # Solver that can give us stoichiometry that satisfies charge neutrality
 def solve_single_equation(coefficients):
     prob = LpProblem("Integer_Solution_Problem", LpMinimize)
-    x = [LpVariable(f"x{i}", 1, 4, cat='Integer') for i in range(len(coefficients))]
+    x = [LpVariable(f"x{i}", 1, 5, cat='Integer') for i in range(len(coefficients))]
     prob += lpSum(coeff * var for coeff, var in zip(coefficients, x)) == 0
     prob.solve()
     return [int(v.varValue) for v in prob.variables()[1:]]
 
+lanthanides = [
+    "La", "Ce", "Pr", "Nd", "Pm", "Sm",
+    "Eu", "Gd", "Tb", "Dy", "Ho", "Er",
+    "Tm", "Yb", "Lu"
+]
 #Function to randomly choose cations, anions, and solvents
-def choose_species(species,solvent=False):
-    indices = np.random.choice(len(species), size=np.random.randint(1,5), replace=False)
+def contains_lanthanide(strings):
+    for string in strings:
+        for lanthanide in lanthanides:
+            if lanthanide in string:
+                return True
+    return False
+
+def choose_species(species,solvent=False,cations=False):
+    
+    formulas = lanthanides
+    while contains_lanthanide(formulas):
+        indices = np.random.choice(len(species), size=np.random.randint(1,5), replace=False)
+        #We want to make sure that we have no "identical" species, disregarding their charges
+        formulas = np.array(species["formula"])[indices].tolist() 
+        formulas, indices = remove_dup_species(formulas,indices)
     if solvent:
-        return list(species["formula"][indices]), list(species["charge"][indices]), list(species["min_temperature"][indices]), list(species["max_temperature"][indices])
+        return np.array(species["formula"])[indices].tolist(), np.array(species["charge"])[indices].tolist(), np.array(species["min_temperature"])[indices].tolist(), np.array(species["max_temperature"])[indices].tolist()
     else:
-        return list(species["formula"][indices]), list(species["charge"][indices])
+        return np.array(species["formula"])[indices].tolist(), np.array(species["charge"])[indices].tolist()
+
 def load_csv(filename):
     return pd.read_csv(filename)
 
@@ -43,7 +79,7 @@ anions = load_csv(anions_file)
 solvents = load_csv(solvents_file)
 elytes= load_csv('elytes.csv')
 
-Nrandom = 200
+Nrandom = 100
 for i in range(Nrandom):
     
     #Randomly select cations and cations
@@ -72,7 +108,7 @@ for i in range(Nrandom):
 
 
     #Start preparing random electrolytes
-    concs = [0.05, 0.5]
+    concs = [0.025, 0.25]
     for conc in concs:
         for temperature  in [minT, maxT]:
             salt_conc = conc*np.array(stoich)
@@ -83,16 +119,16 @@ for i in range(Nrandom):
             newelectrolyte['DOI'] = ''
             newelectrolyte['units'] = 'mass'
             newelectrolyte['temperature'] = temperature
-            for j in range(10):
+            for j in range(5):
                 if j < len(cat):
                     newelectrolyte[f'cation{j+1}'] = cat[j]
-                    newelectrolyte[f'cation{j+1}_conc'] = salt_conc[j]
+                    newelectrolyte[f'cation{j+1}_conc'] = salt_conc[j]/len(cat+an)
                 else:
                     newelectrolyte[f'cation{j+1}'] = ''
                     newelectrolyte[f'cation{j+1}_conc'] = ''
                 if j < len(an):
                     newelectrolyte[f'anion{j+1}'] = an[j]
-                    newelectrolyte[f'anion{j+1}_conc'] = salt_conc[j+len(cat)]
+                    newelectrolyte[f'anion{j+1}_conc'] = salt_conc[j+len(cat)]/len(cat+an)
                 else:
                     newelectrolyte[f'anion{j+1}'] = ''
                     newelectrolyte[f'anion{j+1}_conc'] = ''
@@ -102,8 +138,6 @@ for i in range(Nrandom):
                 else:
                     newelectrolyte[f'neutral{j+1}'] = ''
                     newelectrolyte[f'neutral{j+1}_ratio'] = ''
-            newelectrolyte[f'neutral5'] = ''
-            newelectrolyte[f'neutral5'] = ''
             
             elytes = pd.concat([elytes,pd.DataFrame([newelectrolyte])],ignore_index=True)
 elytes.to_csv('elytes.csv', index=False)
