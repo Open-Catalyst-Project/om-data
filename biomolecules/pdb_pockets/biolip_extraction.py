@@ -440,6 +440,28 @@ def run_prepwizard(fname: str, outname: str, fill_sidechain: bool) -> None:
         )
 
 
+def deprotonate_carboxylic_acids(st: Structure) -> bool:
+    """
+    At physiological pH, it's a good assumption that any carboxylic acids
+    will be deprotonated. In the absence pKa's for ligands, we will make
+    this assumption.
+
+    :param st: Structure with carboxylic acid groups that can be deprotonated
+    :return: True if structure needed to be deprotonated
+    """
+    cooh_smarts = "[C](=[O])([O][H])"
+    try:
+        matched_ats = evaluate_smarts(st, cooh_smarts)
+    except ValueError:
+        matched_ats = []
+    H_ats = {ats[-1] for ats in matched_ats}
+    O_ats = {ats[-2] for ats in matched_ats}
+    for O_at in O_ats:
+        st.atom[O_at].formal_charge -= 1
+    st.deleteAtoms(H_ats)
+    return bool(H_ats)
+
+
 def deprotonate_phosphate_esters(st: Structure) -> bool:
     """
     At physiological pH, it's a good assumption that any phosphate esters
