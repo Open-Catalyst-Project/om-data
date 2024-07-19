@@ -1,7 +1,6 @@
 import argparse
 import glob
 import os
-import random
 import shutil
 import subprocess
 import sys
@@ -11,7 +10,7 @@ from typing import List, Tuple
 import pandas as pd
 from schrodinger.adapter import evaluate_smarts
 from schrodinger.protein.captermini import CapTermini
-from schrodinger.structure import Structure, StructureReader, StructureWriter
+from schrodinger.structure import Structure, StructureReader
 from schrodinger.structutils import analyze, build
 
 SCHRO = "/private/home/levineds/schrodinger2024-2"
@@ -279,8 +278,9 @@ def retreive_ligand_and_env(
 
         # Cleanup the remaining prepped files for this pdb_id
         print("done with", pdb_count, pdb_id)
-        for fname in prepped_pdb_fnames:
-            os.remove(fname)
+        for fname in prepped_pdb_fnames + [f'{pdb_id}.pdb', f'{pdb_id}.cif']:
+            if os.path.exists(fname):
+                os.remove(fname)
 
 
 def download_cif(pdb_id: str) -> Structure:
@@ -294,25 +294,26 @@ def download_cif(pdb_id: str) -> Structure:
 
     # Try for the PDB
     fname = f"{pdb_id}.pdb"
-    subprocess.run([os.path.join(SCHRO, "utilities", "getpdb"), pdb_id])
+    if not os.path.exists(fname):
+        subprocess.run([os.path.join(SCHRO, "utilities", "getpdb"), pdb_id])
     if os.path.exists(fname):
         st = next(StructureReader(fname), None)
-        os.remove(fname)
         if st is not None:
             return st
 
     # Failing that, take the CIF
     fname = f"{pdb_id}.cif"
-    for i in range(3):
-        subprocess.run(
-            [os.path.join(SCHRO, "utilities", "getpdb"), pdb_id, "-format", "cif"]
-        )
-        if os.path.exists(fname):
-            break
+    if not os.path.exists(fname):
+        for i in range(3):
+            subprocess.run(
+                [os.path.join(SCHRO, "utilities", "getpdb"), pdb_id, "-format", "cif"]
+            )
+            if os.path.exists(fname):
+                break
+            else:
+                time.sleep(10)
         else:
-            time.sleep(10)
-    else:
-        raise ConnectionError
+            raise ConnectionError
 
     st = next(StructureReader(fname), None)
     if st is None:
@@ -341,7 +342,6 @@ def get_prepped_protein(
     """
     chains = {row["receptor_chain"], row["ligand_chain"]}
     outname = f"{pdb_id}_{'_'.join(sorted(chains))}_prepped.maegz"
-    fname = f"{pdb_id}.cif"
     maename = f"{pdb_id}.maegz"
 
     if not prep:
@@ -388,10 +388,14 @@ def get_prepped_protein(
         print(
             f'{pdb_id}, {row["receptor_chain"]}{row["binding_site_number_code"]} needed phosphate deprotonation'
         )
+    if deprotonate_carboxylic_acids(st):
+        print(
+            f'{pdb_id}, {row["receptor_chain"]}{row["binding_site_number_code"]} needed carboxylic acid deprotonation'
+        )
     st = build.reorder_protein_atoms_by_sequence(st)
 
     # Cleanup
-    for file_to_del in (maename, fname):
+    for file_to_del in (maename,):
         if os.path.exists(file_to_del):
             os.remove(file_to_del)
     for deldir in glob.glob(f"{pdb_id}-???"):
