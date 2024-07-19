@@ -2,10 +2,10 @@ import argparse
 import glob
 import os
 
+from schrodinger.application.jaguar.utils import mmjag_update_lewis
 from schrodinger.structure import Structure, StructureReader
 from schrodinger.structutils import build, measure
 from schrodinger.structutils.analyze import evaluate_asl, evaluate_smarts
-from schrodinger.application.jaguar.utils import mmjag_update_lewis
 from tqdm import tqdm
 
 
@@ -27,34 +27,42 @@ def remove_extra_Hs(st: Structure) -> bool:
 
 
 def deprotonate_metal_bound_n(st):
-    N_to_dep = evaluate_asl(st, "atom.ele N and atom.att 4 and (withinbonds 1 metals) and (withinbonds 1 atom.ele H)")
+    N_to_dep = evaluate_asl(
+        st,
+        "atom.ele N and atom.att 4 and (withinbonds 1 metals) and (withinbonds 1 atom.ele H)",
+    )
     ats_to_del = []
     for at_N in N_to_dep:
-        att_H = next(b_at for b_at in st.atom[at_N].bonded_atoms if b_at.atomic_number == 1)
+        att_H = next(
+            b_at for b_at in st.atom[at_N].bonded_atoms if b_at.atomic_number == 1
+        )
         ats_to_del.append(att_H)
         st.atom[at_N].formal_charge = -1
     st.deleteAtoms(ats_to_del)
     return bool(N_to_dep)
 
+
 def fix_heme_charge(st):
-    change_made=False
-    for res in st.chain['l'].residue:
-        if res.pdbres.strip() in {'HEM', 'HEC'}:
-            coord_n = [res.getAtomByPdbName(f' N{i} ') for i in "ABCD"]
+    change_made = False
+    for res in st.chain["l"].residue:
+        if res.pdbres.strip() in {"HEM", "HEC"}:
+            coord_n = [res.getAtomByPdbName(f" N{i} ") for i in "ABCD"]
             if any(at is None for at in coord_n):
                 continue
             if sum(at.formal_charge for at in coord_n) != -2:
                 for i, at in enumerate(coord_n, 1):
-                    at.formal_charge = -1 * (i%2)
+                    at.formal_charge = -1 * (i % 2)
                 change_made = True
     return change_made
 
+
 def fix_quartenary_N_charge(st):
-    quart_N = evaluate_smarts(st, '[NX4+0]')
+    quart_N = evaluate_smarts(st, "[NX4+0]")
     for at_N in quart_N:
         if all(bond.order == 1 for bond in st.atom[at_N[0]].bond):
             st.atom[at_N[0]].formal_charge = 1
     return bool(quart_N)
+
 
 def non_physical_estate(st):
     change_made = False
@@ -71,6 +79,7 @@ def non_physical_estate(st):
                 change_made = True
     return change_made
 
+
 def merge_chain_names(st, at1, at2):
     chains = [at1.chain, at2.chain]
     if len(set(chains)) != 1:
@@ -86,12 +95,16 @@ def merge_chain_names(st, at1, at2):
                 if at.chain == old_chain:
                     at.chain = main_chain
 
+
 def remove_total_overlaps(st):
-    ats_to_delete = [max(at1, at2) for at1, at2 in measure.get_close_atoms(st, dist=0.05)]
+    ats_to_delete = [
+        max(at1, at2) for at1, at2 in measure.get_close_atoms(st, dist=0.05)
+    ]
     if ats_to_delete:
         st.deleteAtoms(ats_to_delete)
         return True
     return False
+
 
 def meld_ace_nma(st):
     change_made = False
@@ -135,10 +148,12 @@ def meld_ace_nma(st):
 
 def reconnect_open_chains(st: Structure):
     broken_C = evaluate_asl(
-        st, "atom.pt C and atom.att 2 and within 1.5 (atom.pt N and atom.att 2 and not chain l) and not chain l"
+        st,
+        "atom.pt C and atom.att 2 and within 1.5 (atom.pt N and atom.att 2 and not chain l) and not chain l",
     )
     broken_N = evaluate_asl(
-        st, "atom.pt N and atom.att 2 and within 1.5 (atom.pt C and atom.att 2 and not chain l) and not chain l"
+        st,
+        "atom.pt N and atom.att 2 and within 1.5 (atom.pt C and atom.att 2 and not chain l) and not chain l",
     )
     change_made = False
     while broken_C:
@@ -240,14 +255,15 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_path", default=".")
     parser.add_argument("--prefix", default="")
-    parser.add_argument("--batch", type=int, default=0) 
+    parser.add_argument("--batch", type=int, default=0)
+    parser.add_argument("--nuclear_option", action="store_true")
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
     file_list = glob.glob(os.path.join(args.output_path, f"{args.prefix}*.pdb"))
-    file_list = file_list[10000*args.batch:10000*(args.batch+1)]
+    file_list = file_list[10000 * args.batch : 10000 * (args.batch + 1)]
     for fname in tqdm(file_list):
         if not os.path.exists(fname):
             continue
@@ -260,9 +276,10 @@ def main():
         change_made = reconnect_open_chains(st) or change_made
         change_made = remove_total_overlaps(st) or change_made
         change_made = fix_quartenary_N_charge(st) or change_made
-        change_made = deprotonate_metal_bound_n(st) or change_made
-        change_made = fix_heme_charge(st) or change_made
-        change_made = non_physical_estate(st) or change_made
+        if args.nuclear_option:
+            change_made = deprotonate_metal_bound_n(st) or change_made
+            change_made = fix_heme_charge(st) or change_made
+            change_made = non_physical_estate(st) or change_made
         if change_made:
             new_fname = os.path.join(
                 os.path.dirname(fname),
