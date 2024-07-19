@@ -4,7 +4,8 @@ import os
 
 from schrodinger.structure import Structure, StructureReader
 from schrodinger.structutils import build, measure
-from schrodinger.structutils.analyze import evaluate_asl
+from schrodinger.structutils.analyze import evaluate_asl, evaluate_smarts
+from schrodinger.application.jaguar.utils import mmjag_update_lewis
 from tqdm import tqdm
 
 
@@ -24,6 +25,51 @@ def remove_extra_Hs(st: Structure) -> bool:
         return True
     return False
 
+
+def deprotonate_metal_bound_n(st):
+    N_to_dep = evaluate_asl(st, "atom.ele N and atom.att 4 and (withinbonds 1 metals) and (withinbonds 1 atom.ele H)")
+    ats_to_del = []
+    for at_N in N_to_dep:
+        att_H = next(b_at for b_at in st.atom[at_N].bonded_atoms if b_at.atomic_number == 1)
+        ats_to_del.append(att_H)
+        st.atom[at_N].formal_charge = -1
+    st.deleteAtoms(ats_to_del)
+    return bool(N_to_dep)
+
+def fix_heme_charge(st):
+    change_made=False
+    for res in st.chain['l'].residue:
+        if res.pdbres.strip() in {'HEM', 'HEC'}:
+            coord_n = [res.getAtomByPdbName(f' N{i} ') for i in "ABCD"]
+            if any(at is None for at in coord_n):
+                continue
+            if sum(at.formal_charge for at in coord_n) != -2:
+                for i, at in enumerate(coord_n, 1):
+                    at.formal_charge = -1 * (i%2)
+                change_made = True
+    return change_made
+
+def fix_quartenary_N_charge(st):
+    quart_N = evaluate_smarts(st, '[NX4+0]')
+    for at_N in quart_N:
+        if all(bond.order == 1 for bond in st.atom[at_N[0]].bond):
+            st.atom[at_N[0]].formal_charge = 1
+    return bool(quart_N)
+
+def non_physical_estate(st):
+    change_made = False
+    if (sum(at.atomic_number for at in st.atom) - st.formal_charge) % 2 != 0:
+        ats_before = st.atom_total
+        build.add_hydrogens(st)
+        if ats_before != st.atom_total:
+            change_made = True
+        else:
+            mmjag_update_lewis(st)
+            ats_before = st.atom_total
+            build.add_hydrogens(st)
+            if ats_before != st.atom_total:
+                change_made = True
+    return change_made
 
 def merge_chain_names(st, at1, at2):
     chains = [at1.chain, at2.chain]
@@ -207,24 +253,16 @@ def main():
             continue
         st = StructureReader.read(fname)
         change_made = fix_disrupted_disulfides(st)
-        try:
-            change_made = remove_ligand_ace_cap(st) or change_made
-        except:
-            print("Error:", fname)
-            continue
-        try:
-            change_made = remove_ligand_nma_cap(st) or change_made
-        except:
-            print("Error:", fname)
-            continue
+        change_made = remove_ligand_ace_cap(st) or change_made
+        change_made = remove_ligand_nma_cap(st) or change_made
         change_made = remove_extra_Hs(st) or change_made
-        try:
-            change_made = meld_ace_nma(st) or change_made
-        except:
-            print("Error:", fname)
-            continue
+        change_made = meld_ace_nma(st) or change_made
         change_made = reconnect_open_chains(st) or change_made
         change_made = remove_total_overlaps(st) or change_made
+        change_made = fix_quartenary_N_charge(st) or change_made
+        change_made = deprotonate_metal_bound_n(st) or change_made
+        change_made = fix_heme_charge(st) or change_made
+        change_made = non_physical_estate(st) or change_made
         if change_made:
             new_fname = os.path.join(
                 os.path.dirname(fname),
