@@ -278,7 +278,7 @@ def retreive_ligand_and_env(
 
         # Cleanup the remaining prepped files for this pdb_id
         print("done with", pdb_count, pdb_id)
-        for fname in prepped_pdb_fnames + [f'{pdb_id}.pdb', f'{pdb_id}.cif']:
+        for fname in prepped_pdb_fnames.union([f'{pdb_id}.pdb', f'{pdb_id}.cif']):
             if os.path.exists(fname):
                 os.remove(fname)
 
