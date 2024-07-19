@@ -42,6 +42,28 @@ def deprotonate_metal_bound_n(st):
     return bool(N_to_dep)
 
 
+def deprotonate_carboxylic_acids(st: Structure) -> bool:
+    """
+    At physiological pH, it's a good assumption that any carboxylic acids
+    will be deprotonated. In the absence pKa's for ligands, we will make
+    this assumption.
+
+    :param st: Structure with carboxylic acid groups that can be deprotonated
+    :return: True if structure needed to be deprotonated
+    """
+    cooh_smarts = "[C](=[O])([O][H])"
+    try:
+        matched_ats = evaluate_smarts(st, cooh_smarts)
+    except ValueError:
+        matched_ats = []
+    H_ats = {ats[-1] for ats in matched_ats}
+    O_ats = {ats[-2] for ats in matched_ats}
+    for O_at in O_ats:
+        st.atom[O_at].formal_charge -= 1
+    st.deleteAtoms(H_ats)
+    return bool(H_ats)
+
+
 def fix_heme_charge(st):
     change_made = False
     for res in st.chain["l"].residue:
@@ -269,6 +291,7 @@ def main():
             continue
         st = StructureReader.read(fname)
         change_made = fix_disrupted_disulfides(st)
+        change_made = deprotonate_carboxylic_acids(st) or change_made
         change_made = remove_ligand_ace_cap(st) or change_made
         change_made = remove_ligand_nma_cap(st) or change_made
         change_made = remove_extra_Hs(st) or change_made
