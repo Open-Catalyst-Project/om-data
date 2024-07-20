@@ -92,7 +92,7 @@ simulate {
    }
 }
 simulate {
-   cfg_file = "desmond_md_job_10.cfg"
+   cfg_file = "/private/home/levineds/om-data/biomolecules/pdb_pockets/desmond_md.cfg"
    jobname  = "$MAINJOBNAME"
    dir      = "."
    compress = ""
