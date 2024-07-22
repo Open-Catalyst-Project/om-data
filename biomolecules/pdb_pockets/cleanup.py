@@ -26,6 +26,26 @@ def remove_extra_Hs(st: Structure) -> bool:
     return False
 
 
+def rename_coord_chain(st):
+    chain_names = [ch.name for ch in st.chain]
+    if "l" not in chain_names and "c" in chain_names:
+        lig = []
+        if len(st.chain["c"].getAtomList()) == 1:
+            lig = st.chain["c"].getAtomList()
+        if not lig:
+            lig = evaluate_asl(st, "chain c and metals")
+        if not lig:
+            lig = evaluate_asl(st, "chain c and res D8U")
+        if not lig:
+            lig = evaluate_asl(st, "chain c and atom.ato >=18")
+        if not lig:
+            lig = evaluate_asl(st, "chain c and atom.ele F,Cl,Br,I")
+        for at in lig:
+            st.atom[at].chain = "l"
+        if lig:
+            return True
+
+
 def deprotonate_metal_bound_n(st):
     N_to_dep = evaluate_asl(
         st,
@@ -290,7 +310,8 @@ def main():
         if not os.path.exists(fname):
             continue
         st = StructureReader.read(fname)
-        change_made = fix_disrupted_disulfides(st)
+        change_made = rename_coord_chain(st)
+        change_made = fix_disrupted_disulfides(st) or change_made
         change_made = deprotonate_carboxylic_acids(st) or change_made
         change_made = remove_ligand_ace_cap(st) or change_made
         change_made = remove_ligand_nma_cap(st) or change_made
