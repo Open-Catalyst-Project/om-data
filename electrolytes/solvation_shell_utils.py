@@ -28,7 +28,6 @@ def expand_shell(
     shell_ats: Set[int],
     central_solute: int,
     radius: float,
-    solute_res_names: List[str],
     max_shell_size: int = 200,
 ) -> Set[int]:
     """
@@ -41,25 +40,24 @@ def expand_shell(
         shell_ats: Set of atom indices (of `st`) in a shell (1-indexed)
         central_solute: Molecule index (of 'st') of the central solute in the shell
         radius: Solvation radius (Angstroms) to consider
-        solute_res_names: List of residue names that correspond to solute atoms in the simulation
         max_shell_size: Maximum size (in atoms) of the expanded shell
     Returns:
         Set of atom indices (of `st`) of the expanded shell (1-indexed)
     """
     solutes_included = set([central_solute])
 
-    def get_new_solutes(st, shell_ats, solutes_included, solute_res_names):
+    def get_new_solutes(st, shell_ats, solutes_included):
         new_solutes = set()
         for at in shell_ats:
             # If atom is part of a non-central solute molecule - should expand the shell
             if (
                 st.atom[at].molecule_number not in solutes_included
-                and st.atom[at].getResidue().pdbres.strip() in solute_res_names
+                and st.atom[at].chain == "A"
             ):
                 new_solutes.add(st.atom[at].molecule_number)
         return new_solutes
 
-    new_solutes = get_new_solutes(st, shell_ats, solutes_included, solute_res_names)
+    new_solutes = get_new_solutes(st, shell_ats, solutes_included)
     while new_solutes:
         # add entire residues within solvation shell radius of any extra solute atoms
         new_shell_ats = shell_ats.union(
@@ -71,9 +69,7 @@ def expand_shell(
         if len(new_shell_ats) <= max_shell_size:
             shell_ats = new_shell_ats
             solutes_included.update(new_solutes)
-            new_solutes = get_new_solutes(
-                st, shell_ats, solutes_included, solute_res_names
-            )
+            new_solutes = get_new_solutes(st, shell_ats, solutes_included)
         else:
             break
 

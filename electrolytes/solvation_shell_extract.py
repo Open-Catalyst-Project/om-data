@@ -74,8 +74,6 @@ def extract_solvation_shells(
         elif spec_type == "solvent":
             solvents[species] = res
     spec_dicts = {"solute": solutes, "solvent": solvents}
-    solute_resnames = set(solutes.values())
-    solvent_resnames = set(solvents.values())
 
     # Read structures
     structures = list(StructureReader(os.path.join(input_dir, "system_output.pdb")))
@@ -108,8 +106,6 @@ def extract_solvation_shells(
                             radius,
                             residue,
                             spec_type,
-                            solute_resnames,
-                            solvent_resnames,
                             shells_per_frame,
                             max_shell_size,
                         )
@@ -163,8 +159,6 @@ def extract_residue_from_structure(
     radius: float,
     residue: str,
     spec_type: str,
-    solute_resnames: list[str],
-    solvent_resnames: list[str],
     shells_per_frame: int,
     max_shell_size: int,
 ) -> Structure:
@@ -176,8 +170,6 @@ def extract_residue_from_structure(
                    (initially in the case of solutes)
     :param resiude: name of residue to consider
     :param spec_type: type of species being extracted, either 'solute' or 'solvent'
-    :param solute_resnames: list of names of solute residues
-    :param solvent_resnames: list of names of solvent residues
     :param shells_per_frame: number of shells to extract from this structure
     :param max_shell_size: maximum number of atoms in a shell
     :return: extracted shell structure
@@ -198,7 +190,7 @@ def extract_residue_from_structure(
 
     if spec_type == "solvent":
         # Only keep the shells that have no solute atoms and below a maximum size
-        solute_atoms = analyze.evaluate_asl(st, f'res {",".join(solute_resnames)}')
+        solute_atoms = st.chain["A"].getAtomList()
         shells = [
             (shell, central_mol)
             for shell, central_mol in zip(shells, central_mol_nums)
@@ -216,7 +208,7 @@ def extract_residue_from_structure(
             expanded_shell_ats = shell_ats
             # If we have a solvent-free system, don't expand shells around solutes,
             # because we'll always have solutes and will never terminate
-            if solvent_resnames:
+            if "B" in {ch.name for ch in st.chain}:
                 # TODO: how to choose the mean/scale for sampling?
                 # Should the mean be set to the number of atoms in the non-expanded shell?
                 upper_bound = max(len(shell_ats), generate_lognormal_samples()[0])
@@ -226,7 +218,6 @@ def extract_residue_from_structure(
                     shell_ats,
                     central_solute,
                     radius,
-                    solute_resnames,
                     max_shell_size=upper_bound,
                 )
             expanded_shell = extract_contracted_shell(
