@@ -16,6 +16,7 @@ The script is heavily modified from:
 'https://github.com/mrat1618/ff-conversion-openmm/main.lammps.py'
 """
 
+import xml.etree.ElementTree as ET
 import re
 import json
 from json import encoder
@@ -145,7 +146,7 @@ pdb_names = []
 pdb_resname_mol = []
 pdb_resnames = []
 
-def prep_openmm_sim(filename,cat,an,neut,directory):
+def prep_openmm_sim(filename,cat,an,solv,directory):
     # Check filename if it is solvent vs. system.
     with contextlib.chdir(directory):
         lmpdata_file = filename+".data"
@@ -159,10 +160,10 @@ def prep_openmm_sim(filename,cat,an,neut,directory):
             u.add_TopologyAttr('record_types',['HETATM']*Natoms)
 
             # Delete certain topology attributes.
-            u.delete_bonds(u.bonds)
-            u.delete_dihedrals(u.dihedrals)
-            u.delete_impropers(u.impropers)
-            u.delete_angles(u.angles)
+            #u.delete_bonds(u.bonds)
+            #u.delete_dihedrals(u.dihedrals)
+            #u.delete_impropers(u.impropers)
+            #u.delete_angles(u.angles)
 
             # Open the LAMMPS data file manually and read + store topology info. 
             grab_lmpdata_attr(lmpdata_file)
@@ -188,11 +189,10 @@ def prep_openmm_sim(filename,cat,an,neut,directory):
            
             # ChainIDs should distinguish between solvent and solute
             chainIDs = []
-            molres = generate_molres(len(cat+an+neut))#[]
-            
-            #for i, letter in enumerate(string.ascii_uppercase[:len(cat+an+neut)]):
+            molres = generate_molres(len(cat+an+solv))#[]
+            #for i, letter in enumerate(string.ascii_uppercase[:len(cat+an+solv)]):
             #    molres.append(letter*3)
-            soltorsolv = len(cat + an)*['solute']+len(neut)*['solvent']
+            soltorsolv = len(cat + an)*['solute']+len(solv)*['solvent']
             chainIDs = ['A' if soltorsolv[molres.index(resname)] == 'solute' else 'B' for resname in pdb_resnames]
             u.add_TopologyAttr('chainIDs',chainIDs)#['A']*Natoms)
             u.add_TopologyAttr('names',pdb_names)
@@ -204,18 +204,55 @@ def prep_openmm_sim(filename,cat,an,neut,directory):
             # Write the OpenMM PDB file
             write_pdbfile(u,filename)
 
-            write_metadata(cat,an,neut,filename)
+            write_metadata(cat,an,solv,filename)
+        
+            # Next check the settings file and see if LAMMPS hybrid style is even necessary
+            # Begin by reading the entire contents of the *in.settings file
+            with open(f'{filename}.in.settings', 'r') as file:
+                lines = file.readlines()
+            string = ""
+            for i, line in enumerate(lines):
+                if "dihedral_coeff" in line and ('opls' in line or 'fourier' in line):
+                    string += line.split()[2]
+        
+            if 'opls' in string and 'fourier' in string:
+                print("No modification necessary. Hybrid style is present")
+            else:
+                print("Modification necessary. Only either opls/fourier style present")
+            
+                #First we modify the lines containing dihedral_coeff and delete the keyword for opls and fourier
+                for i, line in enumerate(lines):
+                    if "dihedral_coeff" in line and ('opls' in line or 'fourier' in line):
+                        modified_line = line.replace('opls', '')
+                        modified_line = modified_line.replace('fourier', '')
+                        lines[i] = modified_line
+                with open(f'{filename}.in.settings', 'w') as file:
+                    file.writelines(lines)
+            
+                # Next, modify the *in.init file. We need to remove the hybrid keyword from that file.
+                with open(f'{filename}.in.init', 'r') as file:
+                    lines = file.readlines()
+                for i, line in enumerate(lines):
+                    if "dihedral_style" in line and ('opls' in line or 'fourier' in line):
+                        modified_line = line.replace('hybrid', '')
+                        if 'opls' in string:
+                            modified_line = modified_line.replace('fourier', '')
+                        if 'fourier' in string:
+                            modified_line = modified_line.replace('opls', '')
+                        lines[i] = modified_line
+                with open(f'{filename}.in.init', 'w') as file:
+                    file.writelines(lines)
         else:
             print(f"Eiher {lmpdata_file} or {pdb_file} don't exist. Not an error, but check if system is molten salt/ionic liquid")
 
-def write_metadata(cat,an,neut,filename):
+def write_metadata(cat,an,solv,filename):
     metadata = {}
-    metadata["species"] = cat+an+neut
+    metadata["species"] = cat+an+solv
     molres = []
-    for i, letter in enumerate(string.ascii_uppercase[:len(cat+an+neut)]):
+    for i, letter in enumerate(string.ascii_uppercase[:len(cat+an+solv)]):
         molres.append(letter*3)
     metadata["residue"] = molres
-    metadata["solute_or_solvent"] = len(cat + an)*['solute']+len(neut)*['solvent'] 
+    metadata["solute_or_solvent"] = len(cat + an)*['solute']+len(solv)*['solvent'] 
     metadata["partial_charges"] = lmp_allcharges
     with open(f"metadata_{filename}.json","w") as f:
         j = json.dumps(metadata,indent=4)
@@ -402,8 +439,7 @@ def write_forcefield(u,filename):
                 torsion_out.append(_improper(cleaned_line))
             elif len(cleaned_line) >= 1 and cleaned_line.split()[0] == "pair_coeff":
                 nonbond_out.append(_nonbonding(cleaned_line))
-            else:
-                print(CGREY+cleaned_line+CEND)
+            print(CGREY+cleaned_line+CEND)
 
     # Start writing the XML file
     omm_ff = filename+'.xml'
@@ -427,6 +463,7 @@ def write_forcefield(u,filename):
         
         #(1) Bond Interactions, use harmonic style
         # see https://docs.lammps.org/bond_harmonic.html for details
+        bond_out = list(filter(lambda x: x is not None, bond_out))
         harmonic_bonds = list(filter(lambda x: x[0] == 'harmonic', bond_out))
         ff.write('<HarmonicBondForce>\n')
         for line in harmonic_bonds:
@@ -435,6 +472,7 @@ def write_forcefield(u,filename):
         
         #(2) Angle Interactions, use harmonic style
         # see https://docs.lammps.org/angle_harmonic.html
+        angle_out = list(filter(lambda x: x is not None, angle_out))
         harmonic_angles = list(filter(lambda x: x[0] == 'harmonic', angle_out))
         ff.write('<HarmonicAngleForce>\n')
         for line in harmonic_angles:
@@ -443,8 +481,8 @@ def write_forcefield(u,filename):
         
         #(3) Improper Interactions, uses cvff style
         # see https://docs.lammps.org/improper_cvff.html for details
-        #filter out any Nones
-        torsion_out = filter(lambda x: x is not None, torsion_out)
+        # filter out any Nones
+        torsion_out = list(filter(lambda x: x is not None, torsion_out))
         impropers = list(filter(lambda x: x[0] == 'improper', torsion_out))
         cvff_impropers = list(filter(lambda x: x[1] == 'cvff', impropers))
         ff.write('<PeriodicTorsionForce>\n')
@@ -469,11 +507,17 @@ def write_forcefield(u,filename):
             for line in fourier_dihedrals:
                 number = len(re.findall(r'k\d+="', line[2]))
                 ff.write('<CustomTorsionForce energy=')
-                for i in range(1,number+1):
-                    if i < number:
-                        ff.write(f'"k{i}*(1+cos(n{i}*theta-d{i}))+')
-                    else:
-                        ff.write(f'"k{i}*(1+cos(n{i}*theta-d{i}))')
+                if number == 1:
+                            ff.write(f'"k1*(1+cos(n1*theta-d1))')
+                else:
+                    for i in range(1,number+1):
+                        if i < number:
+                            if i == 1:
+                                ff.write(f'"k{i}*(1+cos(n{i}*theta-d{i}))+')
+                            else:
+                                ff.write(f'k{i}*(1+cos(n{i}*theta-d{i}))+')
+                        else:
+                            ff.write(f'k{i}*(1+cos(n{i}*theta-d{i}))')
                 ff.write('">\n')
                 for i in range(1,number+1):
                     ff.write(f"""<PerTorsionParameter name="k{i}"/>
@@ -488,6 +532,7 @@ def write_forcefield(u,filename):
         # Coulombic and Lennard-Jones interactions, respectively. 
         # The choice of 0.5 is derived from OPLS specifications,
         # see https://zarbi.chem.yale.edu/ligpargen/openMM_tutorial.html for details
+        nonbond_out = list(filter(lambda x: x is not None, nonbond_out))
         ff.write('<NonbondedForce coulomb14scale="0.5" lj14scale="0.5">\n')
         for line in nonbond_out: 
             ff.write(line[0]+"\n")
@@ -533,6 +578,27 @@ def write_restemplate(u):
                 types.append(lmp_alltypes[bond[1]-1])
                 bond_text += f'  <Bond atomName1="{pdb_names[bond[0]-1]}" atomName2="{pdb_names[bond[1]-1]}" /> \n'
         bond_text = remove_duplicate_lines(bond_text)  
+        wrapped_bonds_string = f"<root> \n {bond_text} </root>"
+
+        # Parse the wrapped bonds string
+        root = ET.fromstring(wrapped_bonds_string)
+
+        # Find all Bond elements
+        bonds = root.findall('Bond')
+
+        # Sort Bond elements based on atomName2 attribute
+        sorted_bonds = sorted(bonds, key=lambda x: x.get('atomName2'))
+
+        # Create a new root element to hold the sorted bonds
+        new_root = ET.Element('root')
+
+        # Append sorted Bond elements to the new root
+        for bond in sorted_bonds:
+            new_root.append(bond)
+
+        # Convert the new root back to a string and strip the wrapping tags
+        bond_text = ET.tostring(new_root, encoding='unicode').replace('<root>', '').replace('</root>', '')
+        
         #Write the atom names and types associated with the bond information
         if types and names:
             r, d = zip(*((r, types[i]) for i, r in enumerate(names) if r not in names[:i]))
@@ -808,10 +874,10 @@ def _improper(line):
 
     idx = lmp_impropertype.index(improper_type)
     aid, bid, cid, did = improper_atomids_list[idx]
-    omm_t1 = lmp_alltypes[aid-1]
-    omm_t2 = lmp_alltypes[bid-1]
-    omm_t3 = lmp_alltypes[cid-1]
-    omm_t4 = lmp_alltypes[did-1]
+    omm_t4 = lmp_alltypes[aid-1]
+    omm_t3 = lmp_alltypes[bid-1]
+    omm_t2 = lmp_alltypes[cid-1]
+    omm_t1 = lmp_alltypes[did-1]
     
     omm_k  = k * kcal2kj
     omm_n  = n
