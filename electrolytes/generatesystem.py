@@ -38,17 +38,16 @@ def get_nmols(charges, natoms, tol=1):
     return [int(v.varValue) for v in prob.variables()[1:]]
 
 # Read which system # to simulate from command line argument
-row_idx  = int(sys.argv[1]) + 1
+row_idx  = int(sys.argv[1]) 
 
 # Load the CSV file containing systems to simulate
 with open("elytes.csv", "r") as f:
     systems = list(csv.reader(f))
 comments = systems[0]
-
 # Extract indices of columns specifying the cation, anion,and solvent
 index_cat, index_cat_conc = d2l.get_indices(comments, "cation")
 index_an, index_an_conc = d2l.get_indices(comments, "anion")
-index_neut, index_neut_ratio = d2l.get_indices(comments, "neutral")
+index_solv, index_solv_ratio = d2l.get_indices(comments, "solvent")
 
 # Extract salt species and their concentrations
 cat = d2l.get_species_and_conc(systems, row_idx, index_cat)
@@ -56,24 +55,23 @@ cat_conc = d2l.get_species_and_conc(systems, row_idx, index_cat_conc)#.astype(fl
 an = d2l.get_species_and_conc(systems, row_idx, index_an)
 an_conc = d2l.get_species_and_conc(systems, row_idx, index_an_conc)#.astype(float)
 
-
 salt_molfrac = np.array(cat_conc+an_conc).astype(float)
 salt_molfrac /= np.sum(salt_molfrac)
 
 
 # Extract solvent species name and their molar ratios
-neut = d2l.get_species_and_conc(systems, row_idx, index_neut)
-neut_ratio = d2l.get_species_and_conc(systems, row_idx, index_neut_ratio)
-solv_molfrac = np.array(neut_ratio).astype(float)
+solv = d2l.get_species_and_conc(systems, row_idx, index_solv)
+solv_ratio = d2l.get_species_and_conc(systems, row_idx, index_solv_ratio)
+solv_molfrac = np.array(solv_ratio).astype(float)
 solv_molfrac /= np.sum(solv_molfrac)
 
-soltorsolv = len(cat+an)*['A']+len(neut)*['B']
+soltorsolv = len(cat+an)*['A']+len(solv)*['B']
    
-species = cat+an+neut#$system[2:Ncomp+2]
+species = cat+an+solv#$system[2:Ncomp+2]
 molfrac = salt_molfrac.tolist()+solv_molfrac.tolist()
 
-# Initial boxsize is always 5 nm
-boxsize = 60 #In Angstrom
+# Initial boxsize is always 10 nm
+boxsize = 100 #In Angstrom
 
 # Calculate how many salt species to add in the system. If units of the salt concentration 
 # is in molality (units == 'mass') then, we don't need solvent density. But if the units is
@@ -81,7 +79,7 @@ boxsize = 60 #In Angstrom
 # stoichiometry (units == 'numbers'), then we have a molten salt/ionic liquid system 
 # and compute the mole fractions directly. We first assume that we want to add 5000 solvent molecules
 # on average. And then, we rescale things back so that the system size is controlled. 
-# In the process, rounding errors cause the system to not be charge neutral. We then adjust
+# In the process, rounding errors cause the system to not be charge solvent. We then adjust
 # how much cations and anions we want to add slightly (usually allowing subtraction/addition of one ion 
 # is sufficient
 
@@ -94,11 +92,11 @@ num_solv = 5000
 numsalt = 0
 
 salt_conc = 0.1*np.array(cat_conc+an_conc).astype(float)
-solv_mwweight = sum(d2l.calculate_mw(solv)*solv_frac for solv, solv_frac in zip(neut, solv_molfrac))
+solv_mwweight = sum(d2l.calculate_mw(solv)*solv_frac for solv, solv_frac in zip(solv, solv_molfrac))
 
 if 'volume' == units:
     # Solvent density in g/ml, obtained from averaging short MD run
-    data = np.loadtxt(f'{row_idx-1}/solventdata.txt', skiprows=1, usecols=3,delimiter=',')
+    data = np.loadtxt(f'{row_idx}/solventdata.txt', skiprows=1, usecols=3,delimiter=',')
     # Reshape data for clustering
     data_reshaped = data.reshape(-1, 1)
 
@@ -145,8 +143,8 @@ for j in range(len(salt)):
         Natoms.append(sum(counts)*int(numsalt[j]))
         salt_counts.append(sum(counts))
 
-for j in range(len(neut)):
-    elements, counts = d2l.extract_elements_and_counts(neut[j])
+for j in range(len(solv)):
+    elements, counts = d2l.extract_elements_and_counts(solv[j])
     if int(num_solv*solv_molfrac[j]) < 1:
         Nmols.append(1)
         Natoms.append(sum(counts))
@@ -195,5 +193,5 @@ if sum(np.array(charges)*np.array(Nmols_salt)) > 0.0 or any(x == 0 for x in Nmol
     Nmols[:len(cat+an)] = get_nmols(charges, Nmols[:len(cat+an)], tol=1)
     print("New number of cation/anion molecules: ",Nmols[:len(cat+an)])
 
-d2l.run_packmol_moltemplate(species,boxsize,Nmols,'system',str(row_idx-1))
-lmm.prep_openmm_sim("system",cat,an,neut,str(row_idx-1))
+d2l.run_packmol_moltemplate(species,boxsize,Nmols,'system',str(row_idx))
+lmm.prep_openmm_sim("system",cat,an,solv,str(row_idx))#-1))

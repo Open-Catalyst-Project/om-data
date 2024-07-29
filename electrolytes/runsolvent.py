@@ -32,7 +32,11 @@ if Path(pdb_initfile).is_file() and Path(ff_xml).is_file():
         rate = 1
 
     simulation.reporters.append(StateDataReporter('solventdata.txt', rate, progress=True, temperature=True, potentialEnergy=True, density=True,totalSteps=runtime,speed=True))
-    simulation.reporters.append(PDBReporter('solvent_output.pdb', rate, enforcePeriodicBox=True))
     simulation.step(runtime)
+    # Get the final state
+    final_state = simulation.context.getState(getPositions=True)
+    # Save the final frame to a PDB file
+    with open('solvent_output.pdb', 'w') as f:
+        PDBFile.writeFile(pdb.topology, final_state.getPositions(), f, keepIds=True)
 else:
     print(f'Either {pdb_initfile} or {ff_xml} are missing. Not an error but check if the system is molten salt/ionic liquid or if concentrations are specified by molalities')

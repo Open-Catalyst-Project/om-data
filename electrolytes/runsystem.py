@@ -5,17 +5,17 @@ from sys import stdout, exit
 import csv
 
 #Read the temperature from the CSV file
-row_idx  = int(sys.argv[1]) + 1
+row_idx  = int(sys.argv[1]) 
 with open("../elytes.csv", "r") as f:
     systems = list(csv.reader(f))
 Temp = float(systems[row_idx][4])
 
 dt = 0.002 #ps
-t_final = 500000 #ps, which is 500 ns
+t_final = 5000 #ps, which is 500 ns
 frames = 1000
 runtime = int(t_final/dt)
 
-pdb = app.PDBFile('system_init.pdb')
+pdb = app.PDBFile('system_equil.pdb')
 modeller = app.Modeller(pdb.topology, pdb.positions)
 forcefield = app.ForceField('system.xml')
 system = forcefield.createSystem(modeller.topology, nonbondedMethod=PME, nonbondedCutoff=0.5, constraints=None)
@@ -26,6 +26,7 @@ integrator = LangevinMiddleIntegrator(Temp*kelvin,   # Temperate of head bath
 simulation = app.Simulation(modeller.topology, system, integrator)
 simulation.loadState('equilsystem.state')
 simulation.loadCheckpoint('equilsystem.checkpoint')
+simulation.minimizeEnergy()
 
 rate = int(runtime/frames)
 if rate < 1:

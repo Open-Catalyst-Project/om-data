@@ -115,43 +115,6 @@ def run_packmol_moltemplate(species,boxsize,Nmols,filename,directory):
     
         # Cleanup the files generated from moltemplate
         subprocess.run(['cleanup_moltemplate.sh', '-base', f'{filename}'])
-    
-        # Next check the settings file and see if LAMMPS hybrid style is even necessary
-        # Begin by reading the entire contents of the *in.settings file
-        with open(f'{filename}.in.settings', 'r') as file:
-            lines = file.readlines()
-        string = ""
-        for i, line in enumerate(lines):
-            if "dihedral_coeff" in line and ('opls' in line or 'fourier' in line):
-                string += line.split()[2]
-    
-        if 'opls' in string and 'fourier' in string:
-            print("No modification necessary. Hybrid style is present")
-        else:
-            print("Modification necessary. Only either opls/fourier style present")
-        
-            #First we modify the lines containing dihedral_coeff and delete the keyword for opls and fourier
-            for i, line in enumerate(lines):
-                if "dihedral_coeff" in line and ('opls' in line or 'fourier' in line):
-                    modified_line = line.replace('opls', '')
-                    modified_line = modified_line.replace('fourier', '')
-                    lines[i] = modified_line
-            with open(f'{filename}.in.settings', 'w') as file:
-                file.writelines(lines)
-        
-            # Next, modify the *in.init file. We need to remove the hybrid keyword from that file.
-            with open(f'{filename}.in.init', 'r') as file:
-                lines = file.readlines()
-            for i, line in enumerate(lines):
-                if "dihedral_style" in line and ('opls' in line or 'fourier' in line):
-                    modified_line = line.replace('hybrid', '')
-                    if 'opls' in string:
-                        modified_line = modified_line.replace('fourier', '')
-                    if 'fourier' in string:
-                        modified_line = modified_line.replace('opls', '')
-                    lines[i] = modified_line
-            with open(f'{filename}.in.init', 'w') as file:
-                file.writelines(lines)
 
 def extract_elements_and_counts(formula):
     """ Return the elements and stoichiometry of a chemical species, given its formula
