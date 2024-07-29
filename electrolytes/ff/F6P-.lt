@@ -1,70 +1,70 @@
 F6P- inherits OPLSCM1A {
   ### Inheriting from oplsaa.lt
   write("Data Atoms") {
-    $atom:p1 $mol @atom:P  1.34   -0.000   0.000  -0.000 # P
-    $atom:f1 $mol @atom:F1 -0.39   -1.181  -0.000   1.181 # F
-    $atom:f2 $mol @atom:F2 -0.39    1.181   0.000  -1.181 # F
-    $atom:f3 $mol @atom:F3 -0.39    1.181   0.000   1.181 # F
-    $atom:f4 $mol @atom:F4 -0.39   -1.181  -0.000  -1.181 # F
-    $atom:f5 $mol @atom:F5 -0.39    0.000  -1.670  -0.000 # F
-    $atom:f6 $mol @atom:F6 -0.39   -0.000   1.670  -0.000 # F
+    $atom:p1_pf6 $mol @atom:P_pf6   1.34   -0.082  -0.291   0.000 # P
+    $atom:f1_pf6 $mol @atom:F1_pf6 -0.39   -0.082   1.339   0.000 # F
+    $atom:f2_pf6 $mol @atom:F2_pf6 -0.39   -0.082  -0.291  -1.630 # F
+    $atom:f3_pf6 $mol @atom:F3_pf6 -0.39    1.548  -0.291   0.000 # F
+    $atom:f4_pf6 $mol @atom:F4_pf6 -0.39   -0.082  -1.921   0.000 # F
+    $atom:f5_pf6 $mol @atom:F5_pf6 -0.39   -0.082  -0.291   1.630 # F
+    $atom:f6_pf6 $mol @atom:F6_pf6 -0.39   -1.712  -0.291  -0.000 # F
   }
-write_once("Data Masses") {
-    @atom:P  30.974
-    @atom:F1  18.998
-    @atom:F2  18.998
-    @atom:F3  18.998
-    @atom:F4  18.998
-    @atom:F5  18.998
-    @atom:F6  18.998
+  write_once("Data Masses") {
+    @atom:P_pf6  30.974
+    @atom:F1_pf6  18.998
+    @atom:F2_pf6  18.998
+    @atom:F3_pf6  18.998
+    @atom:F4_pf6  18.998
+    @atom:F5_pf6  18.998
+    @atom:F6_pf6  18.998
   }
   write("Data Bonds") {
-    $bond:pf1 @bond:PF1 $atom:p1 $atom:f1
-    $bond:pf2 @bond:PF2 $atom:p1 $atom:f2
-    $bond:pf3 @bond:PF3 $atom:p1 $atom:f3
-    $bond:pf4 @bond:PF4 $atom:p1 $atom:f4
-    $bond:pf5 @bond:PF5 $atom:p1 $atom:f5
-    $bond:pf6 @bond:PF6 $atom:p1 $atom:f6
+    $bond:pf1_pf6 @bond:PF1_pf6 $atom:p1_pf6 $atom:f1_pf6
+    $bond:pf2_pf6 @bond:PF2_pf6 $atom:p1_pf6 $atom:f2_pf6
+    $bond:pf3_pf6 @bond:PF3_pf6 $atom:p1_pf6 $atom:f3_pf6
+    $bond:pf4_pf6 @bond:PF4_pf6 $atom:p1_pf6 $atom:f4_pf6
+    $bond:pf5_pf6 @bond:PF5_pf6 $atom:p1_pf6 $atom:f5_pf6
+    $bond:pf6_pf6 @bond:PF6_pf6 $atom:p1_pf6 $atom:f6_pf6
   }
   write("Data Angles") {
-    $angle:fpf1 @angle:FPF1 $atom:f1 $atom:p1 $atom:f2
-    $angle:fpf2 @angle:FPF2 $atom:f1 $atom:p1 $atom:f3
-    $angle:fpf4 @angle:FPF4 $atom:f1 $atom:p1 $atom:f5
-    $angle:fpf5 @angle:FPF5 $atom:f1 $atom:p1 $atom:f6
-    $angle:fpf6 @angle:FPF6 $atom:f2 $atom:p1 $atom:f3
-    $angle:fpf7 @angle:FPF7 $atom:f2 $atom:p1 $atom:f4
-    $angle:fpf9 @angle:FPF9 $atom:f2 $atom:p1 $atom:f6
-    $angle:fpf10 @angle:FPF10 $atom:f3 $atom:p1 $atom:f4
-    $angle:fpf11 @angle:FPF11 $atom:f3 $atom:p1 $atom:f5
-    $angle:fpf13 @angle:FPF13 $atom:f4 $atom:p1 $atom:f5
-    $angle:fpf14 @angle:FPF14 $atom:f4 $atom:p1 $atom:f6
-    $angle:fpf15 @angle:FPF15  $atom:f5 $atom:p1 $atom:f6
+    $angle:fpf1_pf6 @angle:FPF1_pf6 $atom:f1_pf6 $atom:p1_pf6 $atom:f2_pf6
+    $angle:fpf2_pf6 @angle:FPF2_pf6 $atom:f1_pf6 $atom:p1_pf6 $atom:f3_pf6
+    $angle:fpf4_pf6 @angle:FPF4_pf6 $atom:f1_pf6 $atom:p1_pf6 $atom:f5_pf6
+    $angle:fpf5_pf6 @angle:FPF5_pf6 $atom:f1_pf6 $atom:p1_pf6 $atom:f6_pf6
+    $angle:fpf6_pf6 @angle:FPF6_pf6 $atom:f2_pf6 $atom:p1_pf6 $atom:f3_pf6
+    $angle:fpf7_pf6 @angle:FPF7_pf6 $atom:f2_pf6 $atom:p1_pf6 $atom:f4_pf6
+    $angle:fpf9_pf6 @angle:FPF9_pf6 $atom:f2_pf6 $atom:p1_pf6 $atom:f6_pf6
+    $angle:fpf10_pf6 @angle:FPF10_pf6 $atom:f3_pf6 $atom:p1_pf6 $atom:f4_pf6
+    $angle:fpf11_pf6 @angle:FPF11_pf6 $atom:f3_pf6 $atom:p1_pf6 $atom:f5_pf6
+    $angle:fpf13_pf6 @angle:FPF13_pf6 $atom:f4_pf6 $atom:p1_pf6 $atom:f5_pf6
+    $angle:fpf14_pf6 @angle:FPF14_pf6 $atom:f4_pf6 $atom:p1_pf6 $atom:f6_pf6
+    $angle:fpf15_pf6 @angle:FPF15_pf6 $atom:f5_pf6 $atom:p1_pf6 $atom:f6_pf6
   }
   write_once("In Settings") {
-    bond_coeff   @bond:PF1         360.46 1.606
-    bond_coeff   @bond:PF2         360.46 1.606
-    bond_coeff   @bond:PF3         360.46 1.606
-    bond_coeff   @bond:PF4         360.46 1.606
-    bond_coeff   @bond:PF5         360.46 1.606
-    bond_coeff   @bond:PF6         360.46 1.606
-    angle_coeff  @angle:FPF1      139.22 90       
-    angle_coeff  @angle:FPF2      139.22 90       
-    angle_coeff  @angle:FPF4      139.22 90       
-    angle_coeff  @angle:FPF5      139.22 90       
-    angle_coeff  @angle:FPF6      139.22 90       
-    angle_coeff  @angle:FPF7      139.22 90       
-    angle_coeff  @angle:FPF9      139.22 90       
-    angle_coeff  @angle:FPF10     139.22 90       
-    angle_coeff  @angle:FPF11     139.22 90       
-    angle_coeff  @angle:FPF13     139.22 90       
-    angle_coeff  @angle:FPF14     139.22 90       
-    angle_coeff  @angle:FPF15     139.22 90       
-    pair_coeff  @atom:P  @atom:P   0.20 3.74
-    pair_coeff  @atom:F1  @atom:F1  0.061  3.1181
-    pair_coeff  @atom:F2  @atom:F2  0.061  3.1181
-    pair_coeff  @atom:F3  @atom:F3  0.061  3.1181
-    pair_coeff  @atom:F4  @atom:F4  0.061  3.1181
-    pair_coeff  @atom:F5  @atom:F5  0.061  3.1181
-    pair_coeff  @atom:F6  @atom:F6  0.061  3.1181
+    bond_coeff   @bond:PF1_pf6         360.46 1.606
+    bond_coeff   @bond:PF2_pf6         360.46 1.606
+    bond_coeff   @bond:PF3_pf6         360.46 1.606
+    bond_coeff   @bond:PF4_pf6         360.46 1.606
+    bond_coeff   @bond:PF5_pf6         360.46 1.606
+    bond_coeff   @bond:PF6_pf6         360.46 1.606
+    angle_coeff  @angle:FPF1_pf6      139.22 90       
+    angle_coeff  @angle:FPF2_pf6      139.22 90       
+    angle_coeff  @angle:FPF4_pf6      139.22 90       
+    angle_coeff  @angle:FPF5_pf6      139.22 90       
+    angle_coeff  @angle:FPF6_pf6      139.22 90       
+    angle_coeff  @angle:FPF7_pf6      139.22 90       
+    angle_coeff  @angle:FPF9_pf6      139.22 90       
+    angle_coeff  @angle:FPF10_pf6     139.22 90       
+    angle_coeff  @angle:FPF11_pf6     139.22 90       
+    angle_coeff  @angle:FPF13_pf6     139.22 90       
+    angle_coeff  @angle:FPF14_pf6     139.22 90       
+    angle_coeff  @angle:FPF15_pf6     139.22 90       
+    pair_coeff  @atom:P_pf6  @atom:P_pf6   0.20 3.74
+    pair_coeff  @atom:F1_pf6  @atom:F1_pf6  0.061  3.1181
+    pair_coeff  @atom:F2_pf6  @atom:F2_pf6  0.061  3.1181
+    pair_coeff  @atom:F3_pf6  @atom:F3_pf6  0.061  3.1181
+    pair_coeff  @atom:F4_pf6  @atom:F4_pf6  0.061  3.1181
+    pair_coeff  @atom:F5_pf6  @atom:F5_pf6  0.061  3.1181
+    pair_coeff  @atom:F6_pf6  @atom:F6_pf6  0.061  3.1181
   }
 } # end of "F6P-" type definition
