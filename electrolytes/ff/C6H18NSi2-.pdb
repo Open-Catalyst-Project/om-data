@@ -1,11 +1,11 @@
 REMARK   1 PDBFIXER FROM: output.pdb
 REMARK   1 CREATED WITH OPENMM 8.1.1, 2024-07-16
 HETATM    1  C00 UNK     1       1.000   1.000   0.000  1.00  0.00           C  
-HETATM    2  SI1 UNK     1      -0.890   1.000   0.000  1.00  0.00          Si  
+HETATM    2  Si1 UNK     1      -0.890   1.000   0.000  1.00  0.00          Si  
 HETATM    3  C02 UNK     1      -1.449   1.000   1.789  1.00  0.00           C  
 HETATM    4  C03 UNK     1      -1.451   2.601  -0.798  1.00  0.00           C  
 HETATM    5  N04 UNK     1      -1.414  -0.413  -0.870  1.00  0.00           N  
-HETATM    6  SI5 UNK     1      -3.105  -0.762  -1.087  1.00  0.00          Si  
+HETATM    6  Si5 UNK     1      -3.105  -0.762  -1.087  1.00  0.00          Si  
 HETATM    7  C06 UNK     1      -4.022  -0.973   0.533  1.00  0.00           C  
 HETATM    8  C07 UNK     1      -3.984   0.545  -2.105  1.00  0.00           C  
 HETATM    9  C08 UNK     1      -3.232  -2.396  -2.029  1.00  0.00           C  

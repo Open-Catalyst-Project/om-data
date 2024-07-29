@@ -1,4 +1,4 @@
-C2H4O2- inherits OPLSCM1A {
+C2H4O2-2 inherits OPLSCM1A {
   ### LAMMPS commands for initialization
   ### (These can be overridden later.)
   write_once("In Init") {

@@ -24,7 +24,7 @@ F2O2P- inherits OPLSCM1A {
     $angle:fpf1_f2o2p @angle:FPF_f2o2p $atom:f1_f2o2p $atom:p1_f2o2p $atom:f2_f2o2p
     $angle:fpo1_f2o2p @angle:FPO1_f2o2p $atom:f1_f2o2p $atom:p1_f2o2p $atom:o1_f2o2p
     $angle:fpo2_f2o2p @angle:FPOs2_f2o2p $atom:f1_f2o2p $atom:p1_f2o2p $atom:o2_f2o2p
-    $angle:fpo3_f2o2p @angle:FPOs3_f2o2p $atom:f2_f2o2p $atom:p1_f2o2p $atom:o1_f2o2p
+    $angle:fpo3_f2o2p @angle:FPO3_f2o2p $atom:f2_f2o2p $atom:p1_f2o2p $atom:o1_f2o2p
     $angle:fpo4_f2o2p @angle:FPOs4_f2o2p $atom:f2_f2o2p $atom:p1_f2o2p $atom:o2_f2o2p
     $angle:opo3_f2o2p @angle:OPOs_f2o2p $atom:o1_f2o2p $atom:p1_f2o2p $atom:o2_f2o2p
   }
@@ -36,7 +36,7 @@ F2O2P- inherits OPLSCM1A {
     angle_coeff @angle:FPF_f2o2p 92.4 92.22   
     angle_coeff @angle:FPO1_f2o2p 85.1 112.07   
     angle_coeff @angle:FPOs2_f2o2p 85.7 102.27   
-    angle_coeff @angle:FPOs3_f2o2p 85.7 102.27   
+    angle_coeff @angle:FPO3_f2o2p 85.1 112.27   
     angle_coeff @angle:FPOs4_f2o2p 85.7 102.27   
     angle_coeff @angle:OPOs_f2o2p 81.8 115.46   
     pair_coeff @atom:O1_f2o2p @atom:O1_f2o2p 0.1463 3.048120874245357
