@@ -10,7 +10,7 @@ from openmm.unit import *
 row_idx = int(sys.argv[1])
 with open("elytes.csv", "r") as f:
     systems = list(csv.reader(f))
-Temp = float(systems[row_idx + 1][4])
+Temp = float(systems[row_idx][4])
 
 dt = 0.002  # ps
 t_final = 500000  # ps, which is 500 ns
