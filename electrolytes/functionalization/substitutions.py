@@ -396,8 +396,12 @@ substituents_ood = [
 
 # For filtering:
 # We currently want to remove everything with a highly energetic bond type
-# We also try to limit the number of unusual bond types in the molecules we generate
-disallowed_energetic = [
+disallowed_patterns = [
+    "N-N(=O)O"
+]
+
+# Only one of these bonding patterns will be allowed in a given molecule
+energetic_patterns = [
     "O-O",
     "N-N",
     "O-N",
@@ -405,13 +409,12 @@ disallowed_energetic = [
     "N-[F,Cl,Br,I]"
 ]
 
+# We also try to limit the number of unusual bond types in the molecules we generate
+# Molecules with these patterns present will be discarded stochastically
 weird_patterns = [
-    "P~[Cl,Br,I]", # Phosphorus bound to any non-F halogen
+    "P~[Br,I]", # Phosphorus bound to some halogens
     "[PX2]", # Phosphorus with only two bonds
     "P~P", # P-P bonds of any kind
-    "B-B", # B-B single bonds (extremely rare)
-
-
 ]
 
 
@@ -712,6 +715,7 @@ def remove_duplicates(
 def filter_library(
     library: Dict[str, List[str]],
     disallowed_patterns: List[str],
+    energetic_patterns: List[str],
     uncommon_patterns: List[str],
     uncommon_factor: float = 0.8,
 ):
@@ -722,6 +726,8 @@ def filter_library(
         library (Dict[str, List[str]]): Collection of substituted molecules organized by template name
         disallowed_patterns (List[str]): List of SMARTS patterns. Any molecule containing any of these patterns will
             be removed from the dataset
+        energetic_patterns (List[str]): List of SMARTS patterns. A molecule containing more than one of these patterns
+            will be removed from the dataset
         uncommon_patterns (List[str]): List of SMARTS patterns. A molecule containing `n` of these patterns will be
             removed from the dataset with a probability (1 - f ** n), where f is the `uncommon_factor` described below
         uncommon_factor (float): Probability of removing a molecule from the library with one uncommon bonding pattern.
@@ -739,8 +745,9 @@ def filter_library(
 
     filtered = dict()
 
-    disallowed_energetic_mols = [Chem.MolFromSmarts(de) for de in disallowed_energetic]
-    weird_pattern_mols = [Chem.MolFromSmarts(wp) for wp in weird_patterns]
+    disallowed_mols = [Chem.MolFromSmarts(dp) for dp in disallowed_patterns]
+    energetic_mols = [Chem.MolFromSmarts(ep) for ep in energetic_patterns]
+    uncommon_mols = [Chem.MolFromSmarts(up) for up in uncommon_patterns]
 
     for name, smiles in library.items():
         if name not in filtered:
@@ -750,17 +757,27 @@ def filter_library(
             mol = Chem.MolFromSmiles(smi)
 
             # Filter out energetic molecules
-            is_energetic = False
-            for pattern in disallowed_energetic_mols:
+            is_disallowed = False
+            for pattern in disallowed_mols:
                 if mol.HasSubstructMatch(pattern):
-                    is_energetic = True
+                    is_disallowed = True
                     break
 
-            if is_energetic:
+            # If there are any functional groups that we explicitly disallow, we toss the molecule out
+            if is_disallowed:
+                continue
+
+            num_energetic = 0
+            for pattern in energetic_mols:
+                num_energetic += len(mol.GetSubstructMatches(pattern))
+
+            # Only one energetic functional group allowed
+            # We don't want to simulate explosive-like molecules
+            if num_energetic > 1:
                 continue
 
             num_weird = 0
-            for pattern in weird_pattern_mols:
+            for pattern in uncommon_mols:
                 num_weird += len(mol.GetSubstructMatches(pattern))
 
             if num_weird == 0:
@@ -926,13 +943,13 @@ if __name__ == "__main__":
     parser.add_argument(
         '--attempts_per_template',
         type=int,
-        default=1500,
+        default=3000,
         help="Number of substitutions to attempt per template (default: 1500)"
     )
     parser.add_argument(
         '--attempts_per_template_ood',
         type=int,
-        default=100,
+        default=250,
         help="Number of substitutions with OOD functional groups to allow per template (default: 100)"
     )
     parser.add_argument('--max_atoms', type=int, help="Maximum number of atoms")
@@ -995,9 +1012,10 @@ if __name__ == "__main__":
     # Filter to remove energetic molecules and "weird" bond types
     filtered_library = filter_library(
         filtered_library,
-        disallowed_energetic,
-        weird_patterns
-    )
+        disallowed_patterns,
+        energetic_patterns,
+        weird_patterns,
+        )
 
     # Dump library as *.xyz files
     dump_xyzs(
@@ -1053,8 +1071,9 @@ if __name__ == "__main__":
 
     filtered_ood_library = filter_library(
         filtered_ood_library,
-        disallowed_energetic,
-        weird_patterns
+        disallowed_patterns,
+        energetic_patterns,
+        weird_patterns,
     )
     print("FINISHED FILTERING")
 
