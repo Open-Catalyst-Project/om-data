@@ -117,7 +117,7 @@ ORCA_SIMPLE_INPUT = [
 ORCA_BLOCKS = [
     "%scf Convergence Tight maxiter 300 end",
     "%elprop Dipole true Quadrupole true end",
-    "%output Print[P_ReducedOrbPopMO_L] 1 Print[P_ReducedOrbPopMO_M] 1 Print[P_BondOrder_L] 1 Print[P_BondOrder_M] 1 end",
+    "%output Print[P_ReducedOrbPopMO_L] 1 Print[P_ReducedOrbPopMO_M] 1 Print[P_BondOrder_L] 1 Print[P_BondOrder_M] 1 Print[P_Fockian] 1 Print[P_OrbEn] 2 end",
     '%basis GTOName "def2-tzvpd.bas" end',
     "%scf THRESH 1e-12 TCUT 1e-13 end",
 ]
