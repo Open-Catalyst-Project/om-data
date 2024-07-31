@@ -418,10 +418,8 @@ if __name__ == "__main__":
     # 3. Generate `n` random solvation shells with combinations of random combinations of components (ions,
     #    neutral species, etc.)
 
-    # TODO: CHANGE THESE
-    # These numbers just for testing
     num_dimers = args.num_dimers
-    num_random_shells = 1
+    num_random_shells = args.num_random_shells # Note: this is currently unused
     max_core_molecule_size = args.max_core_molecule_size
     max_atom_budget = args.max_atom_budget
 
@@ -507,9 +505,9 @@ if __name__ == "__main__":
         )
 
         # Out-of-distribution (OOD) data
-        # TODO: probably shouldn't have an OOD point for EVERY structure.
-        # Could do a random subsample
-        # Could actually do this procedure on a totally different set of molecules?
+        # We generate an OOD point for 10% of the input structures
+        if random.random() > 0.1:
+            continue
 
         ood_solvating_info = info_from_smiles(
             metals_ood + other_cations_ood + anions_ood + neutrals_ood
