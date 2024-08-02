@@ -13,7 +13,7 @@ C2H6O inherits OPLSCM1A {
     pair_coeff @atom:type6_h_unk_d3ac2 @atom:type6_h_unk_d3ac2 0.030 2.5000000
     pair_coeff @atom:type7_h_unk_d3ac2 @atom:type7_h_unk_d3ac2 0.030 2.5000000
     pair_coeff @atom:type8_h_unk_d3ac2 @atom:type8_h_unk_d3ac2 0.030 2.5000000
-    pair_coeff @atom:type9_h_unk_d3ac2 @atom:type9_h_unk_d3ac2 0.000 0.0000000
+    pair_coeff @atom:type9_h_unk_d3ac2 @atom:type9_h_unk_d3ac2 0.030 2.5000000
   }
   write_once("In Settings") {
     bond_coeff @bond:type1_unk_d3ac2 268.0000 1.5290

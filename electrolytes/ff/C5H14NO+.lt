@@ -25,7 +25,7 @@ C5H14NO+ inherits OPLSCM1A {
     pair_coeff @atom:type18_h_unk_b3211 @atom:type18_h_unk_b3211 0.030 2.5000000
     pair_coeff @atom:type19_h_unk_b3211 @atom:type19_h_unk_b3211 0.030 2.5000000
     pair_coeff @atom:type20_h_unk_b3211 @atom:type20_h_unk_b3211 0.030 2.5000000
-    pair_coeff @atom:type21_h_unk_b3211 @atom:type21_h_unk_b3211 0.000 0.0000000
+    pair_coeff @atom:type21_h_unk_b3211 @atom:type21_h_unk_b3211 0.030 2.5000000
   }
   write_once("In Settings") {
     bond_coeff @bond:type1_unk_b3211 367.0000 1.4710

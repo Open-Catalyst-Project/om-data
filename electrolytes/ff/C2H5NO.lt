@@ -9,8 +9,8 @@ C2H5NO inherits OPLSCM1A {
     pair_coeff @atom:type2_c_unk_c4579 @atom:type2_c_unk_c4579 0.070 3.5500000
     pair_coeff @atom:type3_n_unk_c4579 @atom:type3_n_unk_c4579 0.170 3.2500000
     pair_coeff @atom:type4_c_unk_c4579 @atom:type4_c_unk_c4579 0.066 3.5000000
-    pair_coeff @atom:type5_h_unk_c4579 @atom:type5_h_unk_c4579 0.000 0.0000000
-    pair_coeff @atom:type6_h_unk_c4579 @atom:type6_h_unk_c4579 0.000 0.0000000
+    pair_coeff @atom:type5_h_unk_c4579 @atom:type5_h_unk_c4579 0.030 2.5000000
+    pair_coeff @atom:type6_h_unk_c4579 @atom:type6_h_unk_c4579 0.030 2.5000000
     pair_coeff @atom:type7_h_unk_c4579 @atom:type7_h_unk_c4579 0.030 2.5000000
     pair_coeff @atom:type8_h_unk_c4579 @atom:type8_h_unk_c4579 0.030 2.5000000
     pair_coeff @atom:type9_h_unk_c4579 @atom:type9_h_unk_c4579 0.030 2.5000000

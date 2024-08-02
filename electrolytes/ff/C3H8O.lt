@@ -16,7 +16,7 @@ C3H8O inherits OPLSCM1A {
     pair_coeff @atom:type9_h_unk_ccb61 @atom:type9_h_unk_ccb61 0.030 2.5000000
     pair_coeff @atom:type10_h_unk_ccb61 @atom:type10_h_unk_ccb61 0.030 2.5000000
     pair_coeff @atom:type11_h_unk_ccb61 @atom:type11_h_unk_ccb61 0.030 2.5000000
-    pair_coeff @atom:type12_h_unk_ccb61 @atom:type12_h_unk_ccb61 0.000 0.0000000
+    pair_coeff @atom:type12_h_unk_ccb61 @atom:type12_h_unk_ccb61 0.030 2.5000000
   }
   write_once("In Settings") {
     bond_coeff @bond:type1_unk_ccb61 268.0000 1.5290

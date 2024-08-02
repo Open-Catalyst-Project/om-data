@@ -9,7 +9,7 @@ CHO3- inherits OPLSCM1A {
     pair_coeff @atom:type2_c_unk_e2b78 @atom:type2_c_unk_e2b78 0.070 3.5500000
     pair_coeff @atom:type3_o_unk_e2b78 @atom:type3_o_unk_e2b78 0.210 2.9600000
     pair_coeff @atom:type4_o_unk_e2b78 @atom:type4_o_unk_e2b78 0.210 2.9600000
-    pair_coeff @atom:type5_h_unk_e2b78 @atom:type5_h_unk_e2b78 0.000 0.0000000
+    pair_coeff @atom:type5_h_unk_e2b78 @atom:type5_h_unk_e2b78 0.030 2.5000000
   }
   write_once("In Settings") {
     bond_coeff @bond:type1_unk_e2b78 450.0000 1.3640

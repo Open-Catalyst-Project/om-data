@@ -13,7 +13,7 @@ C3H7NO inherits OPLSCM1A {
     pair_coeff @atom:type6_h_unk_4f576 @atom:type6_h_unk_4f576 0.030 2.5000000
     pair_coeff @atom:type7_h_unk_4f576 @atom:type7_h_unk_4f576 0.030 2.5000000
     pair_coeff @atom:type8_h_unk_4f576 @atom:type8_h_unk_4f576 0.030 2.5000000
-    pair_coeff @atom:type9_h_unk_4f576 @atom:type9_h_unk_4f576 0.000 0.0000000
+    pair_coeff @atom:type9_h_unk_4f576 @atom:type9_h_unk_4f576 0.030 2.5000000
     pair_coeff @atom:type10_h_unk_4f576 @atom:type10_h_unk_4f576 0.030 2.5000000
     pair_coeff @atom:type11_h_unk_4f576 @atom:type11_h_unk_4f576 0.030 2.5000000
     pair_coeff @atom:type12_h_unk_4f576 @atom:type12_h_unk_4f576 0.030 2.5000000

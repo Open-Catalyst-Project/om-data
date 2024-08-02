@@ -21,7 +21,7 @@ C6H15NO2 inherits OPLSCM1A {
     pair_coeff @atom:type14_h_unk_b585e @atom:type14_h_unk_b585e 0.030 2.5000000
     pair_coeff @atom:type15_h_unk_b585e @atom:type15_h_unk_b585e 0.030 2.5000000
     pair_coeff @atom:type16_h_unk_b585e @atom:type16_h_unk_b585e 0.030 2.5000000
-    pair_coeff @atom:type17_h_unk_b585e @atom:type17_h_unk_b585e 0.000 0.0000000
+    pair_coeff @atom:type17_h_unk_b585e @atom:type17_h_unk_b585e 0.030 2.5000000
     pair_coeff @atom:type18_h_unk_b585e @atom:type18_h_unk_b585e 0.030 2.5000000
     pair_coeff @atom:type19_h_unk_b585e @atom:type19_h_unk_b585e 0.030 2.5000000
     pair_coeff @atom:type20_h_unk_b585e @atom:type20_h_unk_b585e 0.030 2.5000000
