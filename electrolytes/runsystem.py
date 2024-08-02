@@ -11,7 +11,7 @@ with open("../elytes.csv", "r") as f:
 Temp = float(systems[row_idx][4])
 
 dt = 0.002 #ps
-t_final = 5000 #ps, which is 500 ns
+t_final = 250000 #ps, which is 500 ns
 frames = 1000
 runtime = int(t_final/dt)
 
