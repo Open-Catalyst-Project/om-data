@@ -24,15 +24,19 @@ from pulp import LpProblem, LpVariable, lpSum, LpMinimize
 def load_csv(filename):
     return pd.read_csv(filename)
 
-def get_nmols(charges, natoms, tol=1):
+def get_nmols(charges, natoms, tol=1,completereset=False):
     prob = LpProblem("Integer_Solution_Problem", LpMinimize)
+    print(charges,natoms)
     x = []
     for i in range(len(charges)):
         if natoms[i]-tol <= 0:
             lowbound= 1
         else:
             lowbound = natoms[i]-tol
-        x.append(LpVariable(f"x{i}", lowbound, natoms[i]+tol, cat='Integer'))
+        if completereset:
+            x.append(LpVariable(f"x{i}", 1*natoms[i], 5*natoms[i], cat='Integer'))
+        else:
+            x.append(LpVariable(f"x{i}", lowbound, natoms[i]+tol, cat='Integer'))
     prob += lpSum(coeff * var for coeff, var in zip(charges, x)) == 0
     prob.solve()
     return [int(v.varValue) for v in prob.variables()[1:]]
@@ -70,8 +74,25 @@ soltorsolv = len(cat+an)*['A']+len(solv)*['B']
 species = cat+an+solv#$system[2:Ncomp+2]
 molfrac = salt_molfrac.tolist()+solv_molfrac.tolist()
 
+# Collect rows corresponding to the first match for each known entry
+#Load the CSV file
+cations_file = 'cations.csv'
+anions_file = 'anions.csv'
+cations = load_csv(cations_file)
+anions = load_csv(anions_file)
+
+charges = []
+for cat_sp in cat:# in known_entries:
+    # Find the first row where column 'B' has the known entry
+    matching_row = cations[cations['formula'] == cat_sp].iloc[0]
+    charges.append(matching_row['charge'])
+for an_sp in an:# in known_entries:
+    # Find the first row where column 'B' has the known entry
+    matching_row = anions[anions['formula'] == an_sp].iloc[0]
+    charges.append(matching_row['charge'])
+
 # Initial boxsize is always 10 nm
-boxsize = 100 #In Angstrom
+boxsize = 50 #In Angstrom
 
 # Calculate how many salt species to add in the system. If units of the salt concentration 
 # is in molality (units == 'mass') then, we don't need solvent density. But if the units is
@@ -91,7 +112,7 @@ Natoms = []
 num_solv = 5000
 numsalt = 0
 
-salt_conc = 0.1*np.array(cat_conc+an_conc).astype(float)
+salt_conc = np.array(cat_conc+an_conc).astype(float)
 solv_mwweight = sum(d2l.calculate_mw(solv)*solv_frac for solv, solv_frac in zip(solv, solv_molfrac))
 
 if 'volume' == units:
@@ -126,6 +147,7 @@ elif 'mass' == units:
     mass = 1e-3*num_solv*solv_mwweight/Avog #mw is in g/mol, convert to kg/mol
     numsalt = salt_conc*np.round(mass*Avog).astype(int)
 elif 'number' == units or 'Number' == units:
+    salt_conc = get_nmols(charges, salt_conc.astype(int), completereset=True)
     salt_molfrac = salt_conc/np.sum(salt_conc)
     numsalt = salt_molfrac*np.round(num_solv).astype(int)
 
@@ -134,6 +156,7 @@ salt = cat+an
 salt_counts = []
 for j in range(len(salt)):
     elements, counts = d2l.extract_elements_and_counts(salt[j])
+    print(elements,counts)
     if numsalt[j] < 1:
         Nmols.append(1)
         Natoms.append(sum(counts))
@@ -161,37 +184,21 @@ if sum(Natoms) > NMax:
     for j, frac in enumerate(fracs):
         N = frac*NMax
         count += N
-        N = int(np.round((N/(Natoms[j]/Nmols[j]))))
+        N = int(np.round((N // (Natoms[j] // Nmols[j]))))
         Nmols[j] = N
-
 Nmols_salt = Nmols[:len(cat+an)]
-#Load the CSV file
-cations_file = 'cations.csv'
-anions_file = 'anions.csv'
-cations = load_csv(cations_file)
-anions = load_csv(anions_file)
-
-# Collect rows corresponding to the first match for each known entry
-charges = []
-for cat_sp in cat:# in known_entries:
-    # Find the first row where column 'B' has the known entry
-    matching_row = cations[cations['formula'] == cat_sp].iloc[0]
-    charges.append(matching_row['charge'])
-for an_sp in an:# in known_entries:
-    # Find the first row where column 'B' has the known entry
-    matching_row = anions[anions['formula'] == an_sp].iloc[0]
-    charges.append(matching_row['charge'])
 
 #We should ensure that the final number satisfies charge neutrality again!
 print(cat+an)
 print(Nmols_salt)
+print(Nmols)
 if sum(np.array(charges)*np.array(Nmols_salt)) > 0.0 or any(x == 0 for x in Nmols_salt):
     print(f"Charge neutrality is not satisfied for system {row_idx}")
-
     print(cat+an)
     print("Previous number of cation/anion molecules: ",Nmols[:len(cat+an)])
-    Nmols[:len(cat+an)] = get_nmols(charges, Nmols[:len(cat+an)], tol=1)
+    Nmols[:len(cat+an)] = get_nmols(charges, Nmols[:len(cat+an)], tol=1)#completereset=True)
     print("New number of cation/anion molecules: ",Nmols[:len(cat+an)])
 
+#print(Nmols)
 d2l.run_packmol_moltemplate(species,boxsize,Nmols,'system',str(row_idx))
 lmm.prep_openmm_sim("system",cat,an,solv,str(row_idx))#-1))

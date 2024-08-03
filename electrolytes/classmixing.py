@@ -250,12 +250,12 @@ for i in range(Nrandom):
     #(4) Molten salt
     elif clas == 'MS':
         MS_idx = list(cations['MS_comp'])
-        cations_il = cations.iloc[MS_idx]
-        cat, catcharges = choose_species(cations_il,max_comp)#,cations=True)
+        cations_ms = cations.iloc[MS_idx]
+        cat, catcharges = choose_species(cations_ms,max_comp)#,cations=True)
         
         MS_idx = list(anions['MS_comp'])
-        anions_il = anions.iloc[MS_idx]
-        an, ancharges = choose_species(anions_il,max_comp)
+        anions_ms = anions.msoc[MS_idx]
+        an, ancharges = choose_species(anions_ms,max_comp)
 
         charges = list(catcharges)+list(ancharges)
         stoich = solve_single_equation(charges)

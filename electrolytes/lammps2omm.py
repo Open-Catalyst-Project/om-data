@@ -85,31 +85,6 @@ CGREY = '\33[90m'
 CYLW = '\33[33m'
 CEND = '\33[0m'
 
-## Dictionary of (rounded) atomic masses and element names
-
-atomic_masses_rounded = {
-    1: 'H', 4: 'He', 7: 'Li', 9: 'Be', 11: 'B',
-    12: 'C', 14: 'N', 16: 'O', 19: 'F', 20: 'Ne',
-    23: 'Na', 24: 'Mg', 27: 'Al', 28: 'Si', 31: 'P',
-    32: 'S', 35: 'Cl', 40: 'Ar', 39: 'K', 40: 'Ca',
-    45: 'Sc', 48: 'Ti', 51: 'V', 52: 'Cr', 55: 'Mn',
-    56: 'Fe', 58.93: 'Co', 58.69: 'Ni', 64: 'Cu', 65: 'Zn',
-    70: 'Ga', 73: 'Ge', 75: 'As', 79: 'Se', 80: 'Br',
-    84: 'Kr', 85: 'Rb', 88: 'Sr', 89: 'Y', 91: 'Zr',
-    93: 'Nb', 96: 'Mo', 98: 'Tc', 101: 'Ru', 103: 'Rh',
-    106: 'Pd', 108: 'Ag', 112: 'Cd', 115: 'In', 119: 'Sn',
-    122: 'Sb', 128: 'Te', 127: 'I', 131: 'Xe', 133: 'Cs',
-    137: 'Ba', 139: 'La', 140: 'Ce', 141: 'Pr', 144: 'Nd',
-    145: 'Pm', 150: 'Sm', 152: 'Eu', 157: 'Gd', 159: 'Tb',
-    162: 'Dy', 165: 'Ho', 167: 'Er', 169: 'Tm', 173: 'Yb',
-    175: 'Lu', 178: 'Hf', 181: 'Ta', 184: 'W', 186: 'Re', 192: 'Ir', 195: 'Pt', 197: 'Au', 201: 'Hg',
-    204: 'Tl', 207: 'Pb', 209: 'Bi', 209: 'Po', 210: 'At', 222: 'Rn',
-    223: 'Fr', 226: 'Ra', 227: 'Ac', 232: 'Th', 231: 'Pa', 238: 'U',
-    237: 'Np', 244: 'Pu', 243: 'Am', 247: 'Cm', 247: 'Bk', 251: 'Cf',
-    252: 'Es', 257: 'Fm', 258: 'Md', 259: 'No', 262: 'Lr', 267: 'Rf',
-    270: 'Db', 271: 'Sg', 270: 'Bh', 269: 'Hs', 278: 'Mt',
-}
-
 ## Data from LAMMPS DATA file
 
 lmp_id = [] 
@@ -159,12 +134,6 @@ def prep_openmm_sim(filename,cat,an,solv,directory):
             Natoms = len(u.atoms)
             u.add_TopologyAttr('record_types',['HETATM']*Natoms)
 
-            # Delete certain topology attributes.
-            #u.delete_bonds(u.bonds)
-            #u.delete_dihedrals(u.dihedrals)
-            #u.delete_impropers(u.impropers)
-            #u.delete_angles(u.angles)
-
             # Open the LAMMPS data file manually and read + store topology info. 
             grab_lmpdata_attr(lmpdata_file)
 
@@ -190,8 +159,6 @@ def prep_openmm_sim(filename,cat,an,solv,directory):
             # ChainIDs should distinguish between solvent and solute
             chainIDs = []
             molres = generate_molres(len(cat+an+solv))#[]
-            #for i, letter in enumerate(string.ascii_uppercase[:len(cat+an+solv)]):
-            #    molres.append(letter*3)
             soltorsolv = len(cat + an)*['solute']+len(solv)*['solvent']
             chainIDs = ['A' if soltorsolv[molres.index(resname)] == 'solute' else 'B' for resname in pdb_resnames]
             u.add_TopologyAttr('chainIDs',chainIDs)#['A']*Natoms)
@@ -450,8 +417,6 @@ def write_forcefield(u,filename):
         ff.write("<AtomTypes>\n")
         for i, atomtype in enumerate(lmp_type):
             elname = find_elem_by_mass(lmp_mass[i],tol=0.1)
-            #atomic_masses_rounded.get(int(np.round(lmp_mass[i])),'UNK')
-            #elname = atomic_masses_rounded.get(int(np.round(lmp_mass[i])),'UNK')
             ff.write(f' <Type name="{atomtype}" class="{elname}" element="{elname}" mass="{lmp_mass[i]}"/> \n')
         ff.write("</AtomTypes>\n")
         
@@ -549,11 +514,8 @@ def find_combination(numbers_list, target_tuple):
         numbers_list (list): A list of all possbile numbers
         target_typle (tuple): A tuple of numbers to match with the combinations of numbers_list
     """
-    for combo in combinations(numbers_list, 2):
-        if sorted(combo) == sorted(target_tuple):
-            return True
-    return False
-
+    num1, num2 = target_tuple
+    return num1 in numbers_list and num2 in numbers_list
 def write_restemplate(u):
     """Generates a residue template for the XML force field file
     
@@ -656,6 +618,7 @@ def grab_pdbdata_attr(pdb_file):
                         print(lsplit[4]) 
                         pdb_resname_mol.append(str(lsplit[4][0]*3))
                         molid = int(lsplit[4][1:])
+
 def grab_lmpdata_attr(dname):
     """Reads the data from LAMMPS data file and store them into lists
 
