@@ -1,0 +1,14 @@
+REMARK   1 PDBFIXER FROM: O4P-3.pdb
+REMARK   1 CREATED WITH OPENMM 8.1.1, 2024-07-12
+HETATM    1  P01 UNK     1      -1.063   0.152   1.036  1.00  0.00           P  
+HETATM    2  O01 UNK     1      -1.370   0.527  -0.584  1.00  0.00           O  
+HETATM    3  O02 UNK     1      -1.155   1.409   1.870  1.00  0.00           O  
+HETATM    4  O03 UNK     1       0.487  -0.507   1.179  1.00  0.00           O  
+HETATM    5  O04 UNK     1      -2.205  -0.970   1.581  1.00  0.00           O  
+TER       6      UNK     1
+CONECT    1    2    3    4    5
+CONECT    2    1
+CONECT    3    1
+CONECT    4    1
+CONECT    5    1
+END

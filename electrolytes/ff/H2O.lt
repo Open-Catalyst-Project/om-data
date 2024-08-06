@@ -1,0 +1,25 @@
+H2O {
+  write("Data Atoms") {
+    $atom:o_w_h2o  $mol:w @atom:O_h2o  -0.848448690103   0.00000   0.00000   0.00000
+    $atom:h1_w_h2o $mol:w @atom:H_h2o   0.4242243450515   0.81762   0.59295   0.0000
+    $atom:h2_w_h2o $mol:w @atom:H_h2o   0.4242243450515  -0.81762   0.59295   0.00000
+  }
+  write_once("Data Masses") {
+    @atom:O_h2o  15.9994
+    @atom:H_h2o  1.008
+  }
+  write("Data Bonds") {
+    $bond:oh1_w_h2o @bond:OH1_h2o $atom:o_w_h2o $atom:h1_w_h2o
+    $bond:oh2_w_h2o @bond:OH2_h2o $atom:o_w_h2o $atom:h2_w_h2o
+  }
+  write("Data Angles") {
+    $angle:hoh_w_h2o @angle:HOH_h2o $atom:h1_w_h2o $atom:o_w_h2o $atom:h2_w_h2o
+  }
+  write_once("In Settings") {
+    bond_coeff   @bond:OH1_h2o         553 1.01181082494
+    bond_coeff   @bond:OH2_h2o         553 1.01181082494
+    angle_coeff  @angle:HOH_h2o       100 108.1484425203924
+    pair_coeff  @atom:O_h2o  @atom:O_h2o   0.15586604400191204  3.17796456355
+    pair_coeff  @atom:H_h2o  @atom:H_h2o   0.0 1.000
+  }
+} # "H2O"

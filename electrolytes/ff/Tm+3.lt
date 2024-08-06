@@ -1,0 +1,13 @@
+Tm+3 {
+    # AtomID  MolID  AtomType  charge   X       Y         Z
+    write("Data Atoms") {
+        $atom:Tm $mol @atom:Tm    3    0.00000  0.00000   0.000000
+    }
+    write_once("Data Masses") {
+        @atom:Tm 168.93
+    }
+    # The "In Settings" section stores force-field parameters for this molecule
+    write_once("In Settings") {
+        pair_coeff @atom:Tm @atom:Tm  0.01773416 2.515897980028318
+    }
+}

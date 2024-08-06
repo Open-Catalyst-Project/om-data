@@ -1,0 +1,13 @@
+Ni+2 {
+    # AtomID  MolID  AtomType  charge   X       Y         Z
+    write("Data Atoms") {
+        $atom:Ni $mol @atom:Ni    2    0.00000  0.00000   0.000000
+    }
+    write_once("Data Masses") {
+        @atom:Ni 58.69
+    }
+    # The "In Settings" section stores force-field parameters for this molecule
+    write_once("In Settings") {
+        pair_coeff @atom:Ni @atom:Ni  0.00064221 2.082921203012113
+    }
+}

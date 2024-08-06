@@ -1,0 +1,7 @@
+REMARK   1 PDBFIXER FROM: OV+.pdb
+REMARK   1 CREATED WITH OPENMM 7.7, 2024-07-09
+HETATM    1  O1  UNK     1      -0.944   3.164  -0.126  1.00  0.00           O  
+HETATM    2  V1  UNK     1      -2.505   2.219  -1.016  1.00  0.00           V  
+TER       3      UNK     1
+CONECT    1    2
+END

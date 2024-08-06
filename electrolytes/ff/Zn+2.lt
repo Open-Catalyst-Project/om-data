@@ -1,0 +1,13 @@
+Zn+2 {
+    # AtomID  MolID  AtomType  charge   X       Y         Z
+    write("Data Atoms") {
+        $atom:Zn $mol @atom:Zn    2    0.00000  0.00000   0.000000
+    }
+    write_once("Data Masses") {
+        @atom:Zn 65.38
+    }
+    # The "In Settings" section stores force-field parameters for this molecule
+    write_once("In Settings") {
+        pair_coeff @atom:Zn @atom:Zn  0.00076841 2.10073917737492
+    }
+}

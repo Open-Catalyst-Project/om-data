@@ -1,0 +1,70 @@
+AsF6- inherits OPLSCM1A {
+  ### Inheriting from oplsaa.lt
+  write("Data Atoms") {
+    $atom:as1 $mol @atom:As  1.169   -0.000   0.000  -0.000 # P
+    $atom:f1 $mol @atom:F1 -0.3615   -1.181  -0.000   1.181 # F
+    $atom:f2 $mol @atom:F2 -0.3615    1.181   0.000  -1.181 # F
+    $atom:f3 $mol @atom:F3 -0.3615    1.181   0.000   1.181 # F
+    $atom:f4 $mol @atom:F4 -0.3615   -1.181  -0.000  -1.181 # F
+    $atom:f5 $mol @atom:F5 -0.3615    0.000  -1.670  -0.000 # F
+    $atom:f6 $mol @atom:F6 -0.3615   -0.000   1.670  -0.000 # F
+  }
+write_once("Data Masses") {
+    @atom:As  74.9216
+    @atom:F1  18.998
+    @atom:F2  18.998
+    @atom:F3  18.998
+    @atom:F4  18.998
+    @atom:F5  18.998
+    @atom:F6  18.998
+  }
+  write("Data Bonds") {
+    $bond:asf1 @bond:AsF1 $atom:as1 $atom:f1
+    $bond:asf2 @bond:AsF2 $atom:as1 $atom:f2
+    $bond:asf3 @bond:AsF3 $atom:as1 $atom:f3
+    $bond:asf4 @bond:AsF4 $atom:as1 $atom:f4
+    $bond:asf5 @bond:AsF5 $atom:as1 $atom:f5
+    $bond:asf6 @bond:AsF6 $atom:as1 $atom:f6
+  }
+  write("Data Angles") {
+    $angle:fasf1 @angle:FAsF1 $atom:f1 $atom:as1 $atom:f2
+    $angle:fasf2 @angle:FAsF2 $atom:f1 $atom:as1 $atom:f3
+    $angle:fasf4 @angle:FAsF4 $atom:f1 $atom:as1 $atom:f5
+    $angle:fasf5 @angle:FAsF5 $atom:f1 $atom:as1 $atom:f6
+    $angle:fasf6 @angle:FAsF6 $atom:f2 $atom:as1 $atom:f3
+    $angle:fasf7 @angle:FAsF7 $atom:f2 $atom:as1 $atom:f4
+    $angle:fasf9 @angle:FAsF9 $atom:f2 $atom:as1 $atom:f6
+    $angle:fasf10 @angle:FAsF10 $atom:f3 $atom:as1 $atom:f4
+    $angle:fasf11 @angle:FAsF11 $atom:f3 $atom:as1 $atom:f5
+    $angle:fasf13 @angle:FAsF13 $atom:f4 $atom:as1 $atom:f5
+    $angle:fasf14 @angle:FAsF14 $atom:f4 $atom:as1 $atom:f6
+    $angle:fasf15 @angle:FAsF15  $atom:f5 $atom:as1 $atom:f6
+  }
+  write_once("In Settings") {
+    bond_coeff   @bond:AsF1         292.9039197 1.799
+    bond_coeff   @bond:AsF2         292.9039197 1.799
+    bond_coeff   @bond:AsF3         292.9039197 1.799
+    bond_coeff   @bond:AsF4         292.9039197 1.799
+    bond_coeff   @bond:AsF5         292.9039197 1.799
+    bond_coeff   @bond:AsF6         292.9039197 1.799
+    angle_coeff  @angle:FAsF1      127.51912 90       
+    angle_coeff  @angle:FAsF2      127.51912 90       
+    angle_coeff  @angle:FAsF4      127.51912 90       
+    angle_coeff  @angle:FAsF5      127.51912 90       
+    angle_coeff  @angle:FAsF6      127.51912 90       
+    angle_coeff  @angle:FAsF7      127.51912 90       
+    angle_coeff  @angle:FAsF9      127.51912 90       
+    angle_coeff  @angle:FAsF10     127.51912 90       
+    angle_coeff  @angle:FAsF11     127.51912 90       
+    angle_coeff  @angle:FAsF13     127.51912 90       
+    angle_coeff  @angle:FAsF14     127.51912 90       
+    angle_coeff  @angle:FAsF15     127.51912 90       
+    pair_coeff  @atom:As  @atom:As   0.20 3.74
+    pair_coeff  @atom:F1  @atom:F1  0.061  3.1181
+    pair_coeff  @atom:F2  @atom:F2  0.061  3.1181
+    pair_coeff  @atom:F3  @atom:F3  0.061  3.1181
+    pair_coeff  @atom:F4  @atom:F4  0.061  3.1181
+    pair_coeff  @atom:F5  @atom:F5  0.061  3.1181
+    pair_coeff  @atom:F6  @atom:F6  0.061  3.1181
+  }
+} # end of "AsF6-" type definition

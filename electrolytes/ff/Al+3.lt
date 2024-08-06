@@ -1,0 +1,13 @@
+Al+3 {
+    # AtomID  MolID  AtomType  charge   X       Y         Z
+    write("Data Atoms") {
+        $atom:Al $mol @atom:Al    3    0.00000  0.00000   0.000000
+    }
+    write_once("Data Masses") {
+        @atom:Al 26.98
+    }
+    # The "In Settings" section stores force-field parameters for this molecule
+    write_once("In Settings") {
+        pair_coeff @atom:Al @atom:Al  0.00412163  2.29317330049
+    }
+}
