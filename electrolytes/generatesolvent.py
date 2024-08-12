@@ -22,7 +22,7 @@ with open("elytes.csv", "r") as f:
 
 # If solvent exists. We have may have pure molten salt or ionic liquid
 units = systems[row_idx][3]
-if units == 'volume':
+if units == 'mass':
     comments = systems[0]
 
     # Extract indices of columns specifying the solvent
@@ -35,6 +35,7 @@ if units == 'volume':
     molfrac = np.array(solv_ratio).astype(float)#int)
     molfrac = molfrac/np.sum(molfrac)
     print(solv)
+    
     #Initial boxsize is always 10 nm. 
     boxsize = 100
     num_solv = 10000
@@ -59,7 +60,6 @@ if units == 'volume':
             count += N
             N = int(N/(Natoms[j]/Nmols[j]))
             Nmols[j] = N
-    #print(NMax,count,Nmols)
     
     #Run Packmol, followed up by moltemplate 
     d2l.run_packmol_moltemplate(species,boxsize,Nmols,'solvent',str(row_idx))

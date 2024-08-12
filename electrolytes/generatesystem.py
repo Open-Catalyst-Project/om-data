@@ -26,7 +26,9 @@ def load_csv(filename):
 
 def get_nmols(charges, natoms, tol=1,completereset=False):
     prob = LpProblem("Integer_Solution_Problem", LpMinimize)
-    print(charges,natoms)
+    print("Charges:",charges)
+    print("Number of mols", natoms)
+    print("Total charge:",sum(np.array(charges)*np.array(natoms)))
     x = []
     for i in range(len(charges)):
         if natoms[i]-tol <= 0:
@@ -34,12 +36,18 @@ def get_nmols(charges, natoms, tol=1,completereset=False):
         else:
             lowbound = natoms[i]-tol
         if completereset:
-            x.append(LpVariable(f"x{i}", 1*natoms[i], 5*natoms[i], cat='Integer'))
+            x.append(LpVariable(f"x{i}", 1, 4, cat='Integer'))
         else:
+            print(lowbound,natoms[i]+tol)
             x.append(LpVariable(f"x{i}", lowbound, natoms[i]+tol, cat='Integer'))
+    #SOlve problem of charge neutrality
     prob += lpSum(coeff * var for coeff, var in zip(charges, x)) == 0
     prob.solve()
-    return [int(v.varValue) for v in prob.variables()[1:]]
+    sorted_variables = sorted(prob.variables()[1:], key=lambda v: int(v.name[1:]))
+    print(sorted_variables)
+    return [int(v.varValue) for v in sorted_variables]
+    #print(prob.variables())
+    #return [int(v.varValue) for v in prob.variables()[1:]]
 
 # Read which system # to simulate from command line argument
 row_idx  = int(sys.argv[1]) 
@@ -92,7 +100,7 @@ for an_sp in an:# in known_entries:
     charges.append(matching_row['charge'])
 
 # Initial boxsize is always 10 nm
-boxsize = 50 #In Angstrom
+boxsize = 90 #In Angstrom
 
 # Calculate how many salt species to add in the system. If units of the salt concentration 
 # is in molality (units == 'mass') then, we don't need solvent density. But if the units is
@@ -147,11 +155,9 @@ elif 'mass' == units:
     mass = 1e-3*num_solv*solv_mwweight/Avog #mw is in g/mol, convert to kg/mol
     numsalt = salt_conc*np.round(mass*Avog).astype(int)
 elif 'number' == units or 'Number' == units:
-    salt_conc = get_nmols(charges, salt_conc.astype(int), completereset=True)
     salt_molfrac = salt_conc/np.sum(salt_conc)
     numsalt = salt_molfrac*np.round(num_solv).astype(int)
 
-#stoich = solve_single_equation(charges)
 salt = cat+an
 salt_counts = []
 for j in range(len(salt)):
@@ -175,7 +181,6 @@ for j in range(len(solv)):
         Nmols.append(int(num_solv*solv_molfrac[j]))
         Natoms.append(sum(counts)*int(num_solv*solv_molfrac[j]))
 
-
 #Next we want to cap the total number of atoms
 NMax = 5000
 count = 0
@@ -192,13 +197,14 @@ Nmols_salt = Nmols[:len(cat+an)]
 print(cat+an)
 print(Nmols_salt)
 print(Nmols)
-if sum(np.array(charges)*np.array(Nmols_salt)) > 0.0 or any(x == 0 for x in Nmols_salt):
+if np.abs(sum(np.array(charges)*np.array(Nmols_salt))) > 0.0 or any(x == 0 for x in Nmols_salt):
     print(f"Charge neutrality is not satisfied for system {row_idx}")
     print(cat+an)
     print("Previous number of cation/anion molecules: ",Nmols[:len(cat+an)])
-    Nmols[:len(cat+an)] = get_nmols(charges, Nmols[:len(cat+an)], tol=1)#completereset=True)
+    Nmols[:len(cat+an)] = get_nmols(charges, Nmols[:len(cat+an)], tol=1)#,completereset=True)
+    #print(cat+an)
     print("New number of cation/anion molecules: ",Nmols[:len(cat+an)])
 
-#print(Nmols)
+#Run packmol and moltemplate and prepare for OpenMM simulation
 d2l.run_packmol_moltemplate(species,boxsize,Nmols,'system',str(row_idx))
 lmm.prep_openmm_sim("system",cat,an,solv,str(row_idx))#-1))

@@ -499,7 +499,7 @@ def write_forcefield(u,filename):
         # see https://zarbi.chem.yale.edu/ligpargen/openMM_tutorial.html for details
         nonbond_out = list(filter(lambda x: x is not None, nonbond_out))
         ff.write('<NonbondedForce coulomb14scale="0.5" lj14scale="0.5">\n')
-        for line in nonbond_out: 
+        for line in nonbond_out:
             ff.write(line[0]+"\n")
         ff.write('</NonbondedForce>\n')
         
@@ -540,6 +540,7 @@ def write_restemplate(u):
                 types.append(lmp_alltypes[bond[1]-1])
                 bond_text += f'  <Bond atomName1="{pdb_names[bond[0]-1]}" atomName2="{pdb_names[bond[1]-1]}" /> \n'
         bond_text = remove_duplicate_lines(bond_text)  
+        """
         wrapped_bonds_string = f"<root> \n {bond_text} </root>"
 
         # Parse the wrapped bonds string
@@ -560,7 +561,7 @@ def write_restemplate(u):
 
         # Convert the new root back to a string and strip the wrapping tags
         bond_text = ET.tostring(new_root, encoding='unicode').replace('<root>', '').replace('</root>', '')
-        
+        """ 
         #Write the atom names and types associated with the bond information
         if types and names:
             r, d = zip(*((r, types[i]) for i, r in enumerate(names) if r not in names[:i]))
@@ -615,7 +616,6 @@ def grab_pdbdata_attr(pdb_file):
                         molid = int(lsplit[5])
                 except Exception as e:
                     if np.abs(molid-int(lsplit[4][1:])) > 0:
-                        print(lsplit[4]) 
                         pdb_resname_mol.append(str(lsplit[4][0]*3))
                         molid = int(lsplit[4][1:])
 
@@ -879,7 +879,6 @@ def _nonbonding(line):#,fixedtypes):
     
     epsilon    = float(llist[3]) 
     sigma      = float(llist[4]) 
-
     omm_sigma   = ang2nm * sigma
     omm_epsilon = kcal2kj * epsilon
 
