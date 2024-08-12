@@ -66,7 +66,7 @@ def run_packmol_moltemplate(species,boxsize,Nmols,filename,directory):
     shutil.copy(f'{general_ff}', f'{directory}')
 
     # Prepare the Packmol script
-    packmolstring = '\n'.join([f"tolerance 3.0",
+    packmolstring = '\n'.join([f"tolerance 4.0",
                     f"filetype pdb",
                     f"output {filename}.pdb \n"])
     
