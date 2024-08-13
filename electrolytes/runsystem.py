@@ -1,10 +1,11 @@
 import csv
 import glob
 import os
+import sys
 
-from openmm import *
 import openmm.app as app
-from openmm.unit import *
+from openmm import *
+from openmm.unit import bar, kelvin, picosecond
 
 # Read the temperature from the CSV file
 row_idx = int(sys.argv[1])
@@ -25,7 +26,6 @@ system = forcefield.createSystem(
     modeller.topology, nonbondedMethod=app.PME, nonbondedCutoff=0.5, constraints=None
 )
 system.addForce(MonteCarloBarostat(1.0 * bar, Temp * kelvin, 100))
-#integrator = VerletIntegrator(
 integrator = LangevinMiddleIntegrator(
     Temp * kelvin,  # Temperate of head bath
     1 / picosecond,  # Friction coefficient
@@ -33,7 +33,8 @@ integrator = LangevinMiddleIntegrator(
 )  # Time step
 simulation = app.Simulation(modeller.topology, system, integrator)
 rate = max(1, int(runtime / frames))
-rate = 1000
+rate = 1000  # Why are we redefining this?
+
 if os.path.exists("md.chk"):
     simulation.loadCheckpoint("md.chk")
     restart = True
