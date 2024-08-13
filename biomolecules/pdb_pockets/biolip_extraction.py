@@ -210,7 +210,7 @@ def retreive_ligand_and_env(
     pdb_list = list(grouped_biolip.groups.keys())
     done_list = {
         tuple(os.path.basename(f).split("_")[:2])
-        for f in glob.glob(output_path + "*.pdb")
+        for f in glob.glob(os.path.join(output_path, "*.pdb"))
     }
     for pdb_count in range(start_pdb, end_pdb):
         # pdb_id = random.choice(list(grouped_biolip.groups.keys()))
@@ -543,7 +543,7 @@ def get_atom_lists(st: Structure, row: pd.Series) -> Tuple[List[int], List[int]]
     # all the atom indices in a separate loop
     for res_num in gap_res + res_list:
         res = st.findResidue(f'{row["receptor_chain"]}:{res_num}')
-        if res.hasMissingAtoms():
+        if res.hasMissingAtoms() or len([at for at in res.atom if at.atomic_number > 1]) == 1:
             print(f'Missing atoms in rec res {row["receptor_chain"]}:{res_num}')
             raise MissingAtomsError
         res_ats.extend(res.getAtomIndices())

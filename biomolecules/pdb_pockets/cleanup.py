@@ -3,11 +3,29 @@ import glob
 import os
 
 from schrodinger.application.jaguar.utils import mmjag_update_lewis
+from schrodinger.application.jaguar.autots_bonding import copy_bonding
 from schrodinger.structure import Structure, StructureReader
 from schrodinger.structutils import build, measure
 from schrodinger.structutils.analyze import evaluate_asl, evaluate_smarts
 from tqdm import tqdm
 
+
+### analyze also has `hydrogens_present` and `has_valid_lewis_structure`
+
+def correct_hydrogens_with_mmlewis(st):
+    ## Warning has_valid_lewis_structure will actually change the Lewis structure
+    st.retype()
+    change_made = False
+    if not hydrogens_present(st):
+        st_copy = st.copy()
+        lewis_valid = has_valid_lewis_structure(st)
+        if st.formal_charge != st_copy.formal_charge:
+            copy_bonding(st_copy, st)
+        st.retype()
+        if not hydrogens_present(st):
+            build.add_hydrogens(st)
+        change_made = st_copy.atom_total != st.atom_total
+    return change_made
 
 def remove_extra_Hs(st: Structure) -> bool:
     ats_to_delete = []
@@ -25,6 +43,13 @@ def remove_extra_Hs(st: Structure) -> bool:
         return True
     return False
 
+def ion_corrections(st):
+    change_made = False
+    for at in st.atom:
+        if at.element in {'Mg', 'Zn'} and at.formal_charge != 2:
+            change_made = True
+            at.formal_charge = 2
+    return change_made
 
 def rename_coord_chain(st):
     chain_names = [ch.name for ch in st.chain]
@@ -45,6 +70,33 @@ def rename_coord_chain(st):
         if lig:
             return True
 
+def assign_name_to_unknown(st):
+    def res_is_ala(res):
+        ala_names = {'CA', 'N', 'C', 'O', 'HN', 'HA', 'CB', 'HB1','HB2','HB3'}
+        at_names = {at.pdbname.strip() for at in res.atom}
+        if ala_names == at_names and res.getAtomByPdbName(' CA ').chirality == 'S':
+            return True
+        else:
+            return False
+
+    def res_is_gly(res):
+        gly_names = {'CA', 'N', 'C', 'O', 'HN', 'HA1', 'HA2'}
+        at_names = {at.pdbname.strip() for at in res.atom}
+        if gly_names == at_names:
+            return True
+        else:
+            return False
+
+    change_made = False
+    for res in st.residue:
+        if res.pdbres.strip() == 'UNK':
+            if res_is_ala(res):
+                res.pdbres = 'ALA'
+                change_made = True
+            elif res_is_gly(res):
+                res.pdbres = 'GLY'
+                change_made = True
+    return change_made
 
 def deprotonate_metal_bound_n(st):
     N_to_dep = evaluate_asl(
@@ -52,14 +104,22 @@ def deprotonate_metal_bound_n(st):
         "atom.ele N and atom.att 4 and (withinbonds 1 metals) and (withinbonds 1 atom.ele H)",
     )
     ats_to_del = []
+    change_made = False
+    if N_to_dep:
+        metals = evaluate_asl(st, "metals")
     for at_N in N_to_dep:
         att_H = next(
             b_at for b_at in st.atom[at_N].bonded_atoms if b_at.atomic_number == 1
         )
-        ats_to_del.append(att_H)
-        st.atom[at_N].formal_charge = -1
+        att_m = next(
+            b_at for b_at in st.atom[at_N].bonded_atoms if b_at.index in metals
+        )
+        if st.areBound(att_H, att_m) and (st.measure(at_N, att_m) > st.measure(att_H, att_m)):
+            ats_to_del.append(att_H)
+            st.atom[at_N].formal_charge = -1
+            change_made = True
     st.deleteAtoms(ats_to_del)
-    return bool(N_to_dep)
+    return change_made
 
 
 def deprotonate_carboxylic_acids(st: Structure) -> bool:
@@ -100,10 +160,12 @@ def fix_heme_charge(st):
 
 def fix_quartenary_N_charge(st):
     quart_N = evaluate_smarts(st, "[NX4+0]")
+    change_made = False
     for at_N in quart_N:
         if all(bond.order == 1 for bond in st.atom[at_N[0]].bond):
             st.atom[at_N[0]].formal_charge = 1
-    return bool(quart_N)
+            change_made = True
+    return change_made
 
 
 def non_physical_estate(st):
@@ -128,14 +190,23 @@ def merge_chain_names(st, at1, at2):
         main_chains = [chain for chain in chains if chain.isupper()]
         if len(main_chains) == 1:
             main_chain = main_chains.pop()
+            old_chain = next(chain for chain in chains if chain != main_chain)
+            if old_chain == 'c':
+                old_bonds = []
+                for bond in st.bond:
+                    if {bond.atom1.chain, bond.atom2.chain} == {'l', 'c'}:
+                        old_bonds.append([bond.atom1, bond.atom2, bond.order])
+                for at1, at2, _ in old_bonds:
+                    st.deleteBond(at1, at2)
             if at1.chain == main_chain:
                 old_mol = at2.molecule_number
             else:
                 old_mol = at1.molecule_number
-            old_chain = next(chain for chain in chains if chain != main_chain)
             for at in st.molecule[old_mol].atom:
                 if at.chain == old_chain:
                     at.chain = main_chain
+            if old_chain == 'c':
+                st.addBonds(old_bonds)
 
 
 def remove_total_overlaps(st):
@@ -199,10 +270,10 @@ def reconnect_open_chains(st: Structure):
     )
     change_made = False
     while broken_C:
-        change_made = True
         b_C = broken_C.pop()
         for b_N in broken_N:
             if st.measure(b_C, b_N) < 1.5 and not st.areBound(b_C, b_N):
+                change_made = True
                 st.addBond(b_C, b_N, 1)
                 st.atom[b_C].formal_charge = 0
                 st.atom[b_N].formal_charge = 0
@@ -297,7 +368,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_path", default=".")
     parser.add_argument("--prefix", default="")
-    parser.add_argument("--batch", type=int, default=0)
+    parser.add_argument("--batch", type=int)
     parser.add_argument("--nuclear_option", action="store_true")
     return parser.parse_args()
 
@@ -305,25 +376,28 @@ def parse_args():
 def main():
     args = parse_args()
     file_list = glob.glob(os.path.join(args.output_path, f"{args.prefix}*.pdb"))
-    file_list = file_list[10000 * args.batch : 10000 * (args.batch + 1)]
+    if args.batch is not None:
+        file_list = file_list[10000 * args.batch : 10000 * (args.batch + 1)]
     for fname in tqdm(file_list):
         if not os.path.exists(fname):
             continue
         st = StructureReader.read(fname)
         change_made = rename_coord_chain(st)
-        change_made = fix_disrupted_disulfides(st) or change_made
-        change_made = deprotonate_carboxylic_acids(st) or change_made
-        change_made = remove_ligand_ace_cap(st) or change_made
-        change_made = remove_ligand_nma_cap(st) or change_made
-        change_made = remove_extra_Hs(st) or change_made
-        change_made = meld_ace_nma(st) or change_made
-        change_made = reconnect_open_chains(st) or change_made
-        change_made = remove_total_overlaps(st) or change_made
-        change_made = fix_quartenary_N_charge(st) or change_made
+        change_made |= fix_disrupted_disulfides(st)
+        change_made |= deprotonate_carboxylic_acids(st)
+        change_made |= remove_ligand_ace_cap(st)
+        change_made |= remove_ligand_nma_cap(st)
+        change_made |= remove_extra_Hs(st)
+        change_made |= meld_ace_nma(st)
+        change_made |= reconnect_open_chains(st)
+        change_made |= remove_total_overlaps(st)
+        change_made |= fix_quartenary_N_charge(st)
+        change_made |= ion_corrections(st)
+        change_made |= deprotonate_metal_bound_n(st)
+        change_made |= assign_name_to_unknown(st)
         if args.nuclear_option:
-            change_made = deprotonate_metal_bound_n(st) or change_made
-            change_made = fix_heme_charge(st) or change_made
-            change_made = non_physical_estate(st) or change_made
+            change_made |= fix_heme_charge(st)
+            change_made |= non_physical_estate(st)
         if change_made:
             new_fname = os.path.join(
                 os.path.dirname(fname),
