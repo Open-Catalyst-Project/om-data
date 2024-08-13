@@ -7,11 +7,10 @@ import architector.io_ptable as io_ptable
 import mendeleev
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 
-MAX_N_ATOMS = 120
+MAX_N_ATOMS = 250
 # Set seed
-random_seed = 98745
+random_seed = 46139
 np.random.seed(random_seed)
 
 
@@ -206,16 +205,14 @@ def create_sample(
         history_uids = []
     total = 0
     out_rows = []
-    with tqdm(total=nsamples) as pbar:
-        while total < nsamples:
-            sample_row, uid = sample(
-                metal_df=metal_df, ligands_df=ligands_df, test=test, maxCN=maxCN
-            )
-            if uid not in history_uids:
-                total += 1
-                history_uids.append(uid)
-                out_rows.append(sample_row)
-                pbar.update(1)
+    while total < nsamples:
+        sample_row, uid = sample(
+            metal_df=metal_df, ligands_df=ligands_df, test=test, maxCN=maxCN
+        )
+        if uid not in history_uids:
+            total += 1
+            history_uids.append(uid)
+            out_rows.append(sample_row)
     dfout = pd.DataFrame(out_rows)
     return dfout, history_uids
 
@@ -249,7 +246,7 @@ def main():
     metal_df = pd.read_pickle("metal_sample_dataframe.pkl")
     ligands_df = pd.read_pickle("ligand_sample_dataframe.pkl")
     if args.history is not None:
-        with open(args.history, "r") as fh:
+        with open(args.history, 'r') as fh:
             history = eval(fh.read())
     else:
         history = None
