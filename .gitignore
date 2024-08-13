@@ -4,6 +4,7 @@ checkpoints
 results
 logs
 *.traj
+*.pdb
 experimental
 
 # Byte-compiled / optimized / DLL files
@@ -111,3 +112,21 @@ Local
 
 # VS Code
 .vscode/
+
+# testfiles
+testfiles/
+testfiles_old/
+*mae
+
+# Schrodinger stuff
+maestro_package/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*ipynb
+
+# Misc
+notes.txt
+*prof
+
+
