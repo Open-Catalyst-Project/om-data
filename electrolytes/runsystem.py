@@ -5,7 +5,7 @@ import sys
 
 import openmm.app as app
 from openmm import *
-from openmm.unit import bar, kelvin, picosecond
+from openmm.unit import nanometer, bar, kelvin, picosecond
 
 # Read the temperature from the CSV file
 row_idx = int(sys.argv[1])
@@ -22,9 +22,9 @@ os.chdir(str(row_idx))
 pdb = app.PDBFile("system_equil.pdb")
 modeller = app.Modeller(pdb.topology, pdb.positions)
 forcefield = app.ForceField("system.xml")
-system = forcefield.createSystem(
-    modeller.topology, nonbondedMethod=app.PME, nonbondedCutoff=0.5, constraints=None
-)
+rdist = 1.0*nanometer
+system = forcefield.createSystem(modeller.topology, nonbondedMethod=app.PME, nonbondedCutoff=rdist, constraints=None,switchDistance=0.9*rdist)
+
 system.addForce(MonteCarloBarostat(1.0 * bar, Temp * kelvin, 100))
 integrator = LangevinMiddleIntegrator(
     Temp * kelvin,  # Temperate of head bath
@@ -33,8 +33,6 @@ integrator = LangevinMiddleIntegrator(
 )  # Time step
 simulation = app.Simulation(modeller.topology, system, integrator)
 rate = max(1, int(runtime / frames))
-rate = 1000  # Why are we redefining this?
-
 if os.path.exists("md.chk"):
     simulation.loadCheckpoint("md.chk")
     restart = True

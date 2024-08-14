@@ -17,16 +17,20 @@ if Path(pdb_initfile).is_file() and Path(ff_xml).is_file():
     pdb = app.PDBFile(pdb_initfile)
     modeller = app.Modeller(pdb.topology, pdb.positions)
     forcefield = app.ForceField(ff_xml)
-    system = forcefield.createSystem(modeller.topology, nonbondedMethod=PME, nonbondedCutoff=0.5, constraints=None)
-    system.addForce(MonteCarloBarostat(1.0*bar, Temp*kelvin, 1))
+    rdist = 1.0*nanometer
+    system = forcefield.createSystem(modeller.topology, nonbondedMethod=PME, nonbondedCutoff=rdist, constraints=None,switchDistance=0.9*rdist)
+    system.addForce(MonteCarloBarostat(1.0*bar, Temp*kelvin, 20))
+    dt = 2.0 #fs
+    dt = dt/1000.0
     integrator = LangevinMiddleIntegrator(Temp*kelvin,   # Temperate of head bath
                                           1/picosecond, # Friction coefficient
-                                          0.002*picoseconds) # Time step
+                                          dt*picoseconds) # Time step
     simulation = app.Simulation(modeller.topology, system, integrator)
     simulation.context.setPositions(modeller.positions)
     simulation.minimizeEnergy()
     frames = 500
-    runtime = 10000
+    runtime = 1000 #ps
+    runtime /= dt
     rate = int(runtime/frames)
     if rate == 0:
         rate = 1
