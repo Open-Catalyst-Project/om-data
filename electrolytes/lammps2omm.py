@@ -539,29 +539,25 @@ def write_restemplate(u):
                 types.append(lmp_alltypes[bond[0]-1])
                 types.append(lmp_alltypes[bond[1]-1])
                 bond_text += f'  <Bond atomName1="{pdb_names[bond[0]-1]}" atomName2="{pdb_names[bond[1]-1]}" /> \n'
+        #Remove duplicate lines in the bond text we read
         bond_text = remove_duplicate_lines(bond_text)  
-        """
+        
+        #Re-order the bond entries
         wrapped_bonds_string = f"<root> \n {bond_text} </root>"
 
-        # Parse the wrapped bonds string
         root = ET.fromstring(wrapped_bonds_string)
 
-        # Find all Bond elements
         bonds = root.findall('Bond')
 
-        # Sort Bond elements based on atomName2 attribute
         sorted_bonds = sorted(bonds, key=lambda x: x.get('atomName2'))
 
-        # Create a new root element to hold the sorted bonds
         new_root = ET.Element('root')
 
-        # Append sorted Bond elements to the new root
         for bond in sorted_bonds:
             new_root.append(bond)
 
-        # Convert the new root back to a string and strip the wrapping tags
         bond_text = ET.tostring(new_root, encoding='unicode').replace('<root>', '').replace('</root>', '')
-        """ 
+        
         #Write the atom names and types associated with the bond information
         if types and names:
             r, d = zip(*((r, types[i]) for i, r in enumerate(names) if r not in names[:i]))
@@ -694,7 +690,7 @@ def _bond(line):
     omm_out = ' <Bond type1="{}" type2="{}" length="{}" k="{}"/>'.format(aid,bid,omm_r, omm_k)
     
     print(omm_out)
-    return [bond_style,omm_out] #(omm_out)
+    return [bond_style,omm_out] 
 
 
 def _angle(line):

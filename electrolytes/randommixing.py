@@ -73,7 +73,9 @@ def solve_single_equation(coefficients):
     x = [LpVariable(f"x{i}", 1, 5, cat='Integer') for i in range(len(coefficients))]
     prob += lpSum(coeff * var for coeff, var in zip(coefficients, x)) == 0
     prob.solve()
-    return [int(v.varValue) for v in prob.variables()[1:]]
+    sorted_variables = sorted(prob.variables()[1:], key=lambda v: int(v.name[1:]))
+    print(sorted_variables)
+    return [int(v.varValue) for v in sorted_variables]
 
 lanthanides = [
     "La", "Ce", "Pr", "Nd", "Pm", "Sm",
@@ -92,7 +94,8 @@ def choose_species(species,max_comp,solvent=False,cations=False):
     
     formulas = lanthanides
     while contains_lanthanide(formulas):
-        indices = np.random.choice(len(species), size=np.random.randint(1,max_comp), replace=False)
+        indices = np.random.choice(len(species), size=max_comp, replace=False)
+        #indices = np.random.choice(len(species), size=np.random.randint(1,max_comp), replace=False)
         #We want to make sure that we have no "identical" species, disregarding their charges
         formulas = np.array(species["formula"])[indices].tolist() 
         #formulas, indices = remove_dup_species(formulas,indices)
@@ -181,4 +184,4 @@ for i in range(Nrandom):
                     newelectrolyte[f'solvent{j+1}_ratio'] = ''
             
             elytes = pd.concat([elytes,pd.DataFrame([newelectrolyte])],ignore_index=True)
-elytes.to_csv('elytes.csv', index=False)
+elytes.to_csv('testelytes.csv', index=False)

@@ -22,7 +22,7 @@ with open("elytes.csv", "r") as f:
 
 # If solvent exists. We have may have pure molten salt or ionic liquid
 units = systems[row_idx][3]
-if units == 'mass':
+if units == 'volume':
     comments = systems[0]
 
     # Extract indices of columns specifying the solvent
@@ -36,8 +36,9 @@ if units == 'mass':
     molfrac = molfrac/np.sum(molfrac)
     print(solv)
     
-    #Initial boxsize is always 10 nm. 
-    boxsize = 100
+    #Initial boxsize is set to 8 nm. 
+    boxsize = 80
+    #Assume some number of solvents, we'll readjust later. 
     num_solv = 10000
     Natoms = []
     Nmols = []

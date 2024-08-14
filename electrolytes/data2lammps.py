@@ -24,7 +24,6 @@ import json
 
 PT = GetPeriodicTable()
 
-
 def get_indices(labels, keyword):
     """ Grab indices of labeled columns given a specific keyword. 
         Args: 
@@ -66,7 +65,7 @@ def run_packmol_moltemplate(species,boxsize,Nmols,filename,directory):
     shutil.copy(f'{general_ff}', f'{directory}')
 
     # Prepare the Packmol script
-    packmolstring = '\n'.join([f"tolerance 4.0",
+    packmolstring = '\n'.join([f"tolerance 2.0",
                     f"filetype pdb",
                     f"output {filename}.pdb \n"])
     
@@ -78,8 +77,6 @@ def run_packmol_moltemplate(species,boxsize,Nmols,filename,directory):
     for j in range(len(Nmols)):
         Nmol = int(Nmols[j])
         #Copy PDB files from the ff directory
-        #shutil.copy(f"./ff/{species[j]}.pdb", f'./{directory}')
-        #shutil.copy(f"./ff/{species[j]}.lt", f'./{directory}')
         spec_name = f'{species[j]}'
         for suffix in ('.pdb', '.lt'):
             shutil.copy(os.path.join('ff', spec_name + suffix), os.path.join(directory, spec_name + suffix))
