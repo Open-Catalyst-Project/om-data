@@ -1,3 +1,4 @@
+import argparse
 import csv
 import glob
 import os
@@ -88,7 +89,7 @@ def main(row_idx: int, job_dir: str):
     os.chdir(cwd)
 
 
-def argparse():
+def parse_args():
     parser = argparse.ArgumentParser(
         description="Parameters for OMol24 Electrolytes MD"
     )
@@ -101,8 +102,10 @@ def argparse():
     parser.add_argument(
         "--row_idx", type=int, help="Job specified in elytes.csv to be run"
     )
+    args = parser.parse_args()
+    return args
 
 
 if __name__ == "__main__":
-    args = argparse()
+    args = parse_args()
     main(args.row_idx, args.job_dir)
