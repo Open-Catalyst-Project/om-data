@@ -1,13 +1,13 @@
 import csv
 import glob
 import os
-import sys
 
 import openmm.app as app
 from openmm import *
-from openmm.unit import nanometer, bar, kelvin, picosecond
+from openmm.unit import bar, kelvin, nanometer, picosecond
 
-def main(row_idx:int, job_dir:str):
+
+def main(row_idx: int, job_dir: str):
     """
     Main job driver
 
@@ -29,8 +29,14 @@ def main(row_idx:int, job_dir:str):
     pdb = app.PDBFile("system_equil.pdb")
     modeller = app.Modeller(pdb.topology, pdb.positions)
     forcefield = app.ForceField("system.xml")
-    rdist = 1.0*nanometer
-    system = forcefield.createSystem(modeller.topology, nonbondedMethod=app.PME, nonbondedCutoff=rdist, constraints=None,switchDistance=0.9*rdist)
+    rdist = 1.0 * nanometer
+    system = forcefield.createSystem(
+        modeller.topology,
+        nonbondedMethod=app.PME,
+        nonbondedCutoff=rdist,
+        constraints=None,
+        switchDistance=0.9 * rdist,
+    )
 
     system.addForce(MonteCarloBarostat(1.0 * bar, temp * kelvin, 100))
     integrator = LangevinMiddleIntegrator(
@@ -59,7 +65,9 @@ def main(row_idx:int, job_dir:str):
         count = 0
     output_name = f"{output_pdb_basename}_{count}.pdb"
 
-    simulation.reporters.append(app.PDBReporter(output_name, rate, enforcePeriodicBox=True))
+    simulation.reporters.append(
+        app.PDBReporter(output_name, rate, enforcePeriodicBox=True)
+    )
     simulation.reporters.append(
         app.StateDataReporter(
             "data.csv",
@@ -79,10 +87,21 @@ def main(row_idx:int, job_dir:str):
     )  # starts at 10 for some reason, equilibration?
     os.chdir(cwd)
 
+
 def argparse():
-    parser = argparse.ArgumentParser(description="Parameters for OMol24 Electrolytes MD")
-    parser.add_argument('--job_dir', type=str, required=True, help="Directory containing input electrolyte directories/where job files will be stored")
-    parser.add_argument('--row_idx', type=int, help='Job specified in elytes.csv to be run')
+    parser = argparse.ArgumentParser(
+        description="Parameters for OMol24 Electrolytes MD"
+    )
+    parser.add_argument(
+        "--job_dir",
+        type=str,
+        required=True,
+        help="Directory containing input electrolyte directories/where job files will be stored",
+    )
+    parser.add_argument(
+        "--row_idx", type=int, help="Job specified in elytes.csv to be run"
+    )
+
 
 if __name__ == "__main__":
     args = argparse()
