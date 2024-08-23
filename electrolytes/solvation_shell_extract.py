@@ -111,7 +111,7 @@ def extract_solvation_shells(
                         )
                     )
 
-                if spec_type == "solvent":
+                if spec_type == "solvent" and not extracted_shells:
                     # raise a warning and continue to the next radii/species
                     logging.warning("No solute-free shells found for solvent")
                     continue
