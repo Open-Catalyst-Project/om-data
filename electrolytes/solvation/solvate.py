@@ -339,11 +339,23 @@ def dump_xyzs(
         None
     """
 
-    path.mkdir(exist_ok=True)
+    path.mkdir(parents=True, exist_ok=True)
 
     for ii, (atoms, charge, spin) in enumerate(complexes):
         write(str(path / f"{prefix}_solv{ii}_{charge}_{spin}.xyz"), atoms, format="xyz")
 
+def val_and_save(complexes, subname, this_dir):
+    # Make sure that structures are physically sound
+    # Possible that the MD produces some wild structures, e.g. with atoms too close
+    filtered = [comp for comp in complexes if validate_structure(comp[0].get_chemical_symbols(), comp[0].get_positions())]
+
+    print(this_dir)
+    # Dump new complexes as *.xyz files
+    dump_xyzs(
+        complexes=filtered,
+        prefix=subname,
+        path=this_dir,
+    )
 
 if __name__ == "__main__":
     
@@ -377,6 +389,7 @@ if __name__ == "__main__":
         default=60,
         help="Maximum size (number of atoms) of a solvation shell (default: 60)"
     )    
+    parser.add_argument('--structure_idx', type=int, help="To leverage embarassingly parallel")
     
     args = parser.parse_args()
 
@@ -391,8 +404,8 @@ if __name__ == "__main__":
     base_dir = Path(args.base_dir)
     ood_dir = base_dir / "ood"
 
-    base_dir.mkdir(exist_ok=True)
-    ood_dir.mkdir(exist_ok=True)
+    base_dir.mkdir(parents=True, exist_ok=True)
+    ood_dir.mkdir(parents=True, exist_ok=True)
 
     # Set-up: get info from predefined set of SMILES
     solvating_info = info_from_smiles(
@@ -410,6 +423,9 @@ if __name__ == "__main__":
         f for f in glob.glob(f'{xyz_dir.resolve().as_posix()}/**/*.xyz*', recursive=True)
         if f.endswith('.xyz') or f.endswith('.xyz.gz')
     ]
+    if args.structure_idx is not None and xyz_files:
+        xyz_files.sort()
+        xyz_files = [xyz_files[args.structure_idx]]
     print("TOTAL NUMBER OF XYZ FILES:", len(xyz_files))
 
     # For now (2024/06/13), the plan is to do the following for each molecule:
@@ -418,10 +434,8 @@ if __name__ == "__main__":
     # 3. Generate `n` random solvation shells with combinations of random combinations of components (ions,
     #    neutral species, etc.)
 
-    # TODO: CHANGE THESE
-    # These numbers just for testing
     num_dimers = args.num_dimers
-    num_random_shells = 1
+    num_random_shells = args.num_random_shells # Note: this is currently unused
     max_core_molecule_size = args.max_core_molecule_size
     max_atom_budget = args.max_atom_budget
 
@@ -451,7 +465,7 @@ if __name__ == "__main__":
         # In-distribution (ID) data
 
         filtered = list()
-
+        print("begin step 1")
         # Step 1 - dimers
         complexes = generate_random_dimers(
             mol=mol,
@@ -462,7 +476,9 @@ if __name__ == "__main__":
             num_selections=num_dimers,
             architector_params=architector_params
         )
+        val_and_save(complexes, subname, this_dir)
 
+        print("begin step 2")
         # Step 2 - pure solvent shell
         # Pick random solvent
         solvent = random.choice(list(just_solvent_info))
@@ -474,8 +490,9 @@ if __name__ == "__main__":
             max_atom_budget=max_atom_budget,
             architector_params=architector_params
         )
-        complexes.append(solvent_complex)
+        val_and_save([solvent_complex], subname, this_dir)
 
+        print("begin step 3")
         # Step 3 - random solvation shell
         random_complex = generate_random_solvated_mol(
             mol=mol,
@@ -489,27 +506,12 @@ if __name__ == "__main__":
 
         # Possible that you'll end up with no complex
         if random_complex is not None:
-            complexes.append(random_complex)
-
-        # Make sure that structures are physically sound
-        # Possible that the MD produces some wild structures, e.g. with atoms too close
-        filtered = list()
-        for comp in complexes:
-            if validate_structure(comp[0].get_chemical_symbols(), comp[0].get_positions()):
-                filtered.append(comp)            
-
-        print(this_dir)
-        # Dump new complexes as *.xyz files
-        dump_xyzs(
-            complexes=filtered,
-            prefix=subname,
-            path=this_dir,
-        )
+            val_and_save([random_complex], subname, this_dir)
 
         # Out-of-distribution (OOD) data
-        # TODO: probably shouldn't have an OOD point for EVERY structure.
-        # Could do a random subsample
-        # Could actually do this procedure on a totally different set of molecules?
+        # We generate an OOD point for 10% of the input structures
+        if random.random() > 0.1:
+            continue
 
         ood_solvating_info = info_from_smiles(
             metals_ood + other_cations_ood + anions_ood + neutrals_ood
