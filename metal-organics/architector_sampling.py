@@ -1,4 +1,11 @@
-""" Adapted from Architector/development/lig_sampling/Sampling_script_forMeta_step2.ipynb """
+""" Adapted from Architector/development/lig_sampling/Sampling_script_forMeta_step2.ipynb
+
+Settings used were as follows"
+Initial generation of metal-organics: MAX_N_ATOMS = 250, random_seed = 46139, lanthanides were excluded, no ligands were excluded, 1m were generated
+"Small" metal-organics: MAX_N_ATOMS = 120, random_seed = 98745, lanthandies were excluded, no ligands were excluded, 1m were generated
+Lanthanides: MAX_N_ATOMS = 120, random_seed = 46139, non-lanthanides were excluded, ligands with heavy main-group elements were excluded, 255k were generated
+Hydrides: MAX_N_ATOMS = 120, random_seed = 34231, no metals were exluced, no ligands were excluded, hydride was added as a ligand and given additional weight of XX, 91000 were generated
+"""
 
 import argparse
 from typing import Optional
@@ -15,7 +22,7 @@ random_seed = 98745
 np.random.seed(random_seed)
 
 
-def select_metals(metal_df: pd.DataFrame) -> pd.DataFrame:
+def select_metals(metal_df: pd.DataFrame, lanthanides='include') -> pd.DataFrame:
     """
     Make adjustments to metals DataFrame
 
@@ -24,6 +31,8 @@ def select_metals(metal_df: pd.DataFrame) -> pd.DataFrame:
     3) Exclude any metals centers we don't want to consider
 
     :param metal_df: input metal list to correct
+    :param lanthanides: what to do about lanthanide metal entries,
+                        options are "include", "exclude", and "only"
     :return: corrected metal list
     """
     all_fracts = []
@@ -56,13 +65,38 @@ def select_metals(metal_df: pd.DataFrame) -> pd.DataFrame:
         "coreCN_fracts": refrow["coreCN_fracts"],
         "total_count": refrow["total_count"],
     }
-    # Omit the Ln
-    gen_metal_df = subset_cn_metal_df[
-        ~subset_cn_metal_df.metal.isin(io_ptable.lanthanides)
-    ]
+    # Omit the Ln as desired
+    if lanthanides == 'exclude':
+        gen_metal_df = subset_cn_metal_df[
+            ~subset_cn_metal_df.metal.isin(io_ptable.lanthanides)
+        ]
+    elif lanthanides == 'only':
+        gen_metal_df = subset_cn_metal_df[
+            subset_cn_metal_df.metal.isin(io_ptable.lanthanides)
+        ]
+    else:
+        gen_metal_df = subset_cn_metal_df
     gen_metal_df.reset_index(drop=True, inplace=True)
     return gen_metal_df
 
+def select_ligands(ligand_df: pd.DataFrame, heavy_maingroup=True, add_hydride=True) -> pd.DataFrame:
+    """
+    Select ligands to include for sampling.
+
+    Removing the heavy main-group elements are one option to promote more "normal" complexes
+
+    :param ligand_df: DataFrame of ligands to select from
+    :return: selected ligands
+    """
+    def is_heavy_mg(lst):
+        lst = lst.split(',')
+        return any(elt in lst for elt in ('Te', 'Se', 'As', 'Sb', 'Ge'))
+    if not heavy_maingroup:
+        ligand_df = ligand_df[~ligand_df['coord_atom_symols'].apply(is_heavy_mg)]
+    if add_hydride:
+        ligand_df.loc[len(ligand_df)] = {'uid':'[H-]0', 'smiles': '[H-]', 'coordList':[0], 'coord_atom_symols': 'H', 'coord_atom_types': 'H', 'non_coord_atom_symbols': '', 'non_coord_atom_types': '', 'charge': -1, 'denticity': 1, 'metal_ox_bound': 'Cr,2', 'frequency': 10000, 'selected_coord_type': 'H', 'natoms': 1, 'selected_non_coord_type':None}
+    ligand_df.reset_index(drop=True, inplace=True)
+    return ligand_df
 
 def sample(
     metal_df: pd.DataFrame,
@@ -135,7 +169,9 @@ def sample(
         # Check that there's any ligands that match the constraints
         if tdf.shape[0] > 0:
             # Sample from the ligands
-            add_row = tdf.sample(1, weights=tdf.denticity).iloc[0]
+            weights = list(tdf.denticity)
+            weights[-1] = 1000
+            add_row = tdf.sample(1, weights=weights).iloc[0]
             # Weighting by denticity makes this equal likelihood PER coordination site.
             lig_dict = {"smiles": add_row["smiles"], "coordList": add_row["coordList"]}
             architector_input["ligands"] = architector_input["ligands"] + [lig_dict]
@@ -255,6 +291,7 @@ def main():
         history = None
 
     gen_metal_df = select_metals(metal_df)
+    ligands_df = select_ligands(ligands_df)
     sdf, history = create_sample(
         metal_df=gen_metal_df,
         ligands_df=ligands_df,
