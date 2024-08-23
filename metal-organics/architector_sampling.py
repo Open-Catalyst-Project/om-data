@@ -22,7 +22,7 @@ random_seed = 98745
 np.random.seed(random_seed)
 
 
-def select_metals(metal_df: pd.DataFrame, lanthanides='include') -> pd.DataFrame:
+def select_metals(metal_df: pd.DataFrame, lanthanides="include") -> pd.DataFrame:
     """
     Make adjustments to metals DataFrame
 
@@ -66,11 +66,11 @@ def select_metals(metal_df: pd.DataFrame, lanthanides='include') -> pd.DataFrame
         "total_count": refrow["total_count"],
     }
     # Omit the Ln as desired
-    if lanthanides == 'exclude':
+    if lanthanides == "exclude":
         gen_metal_df = subset_cn_metal_df[
             ~subset_cn_metal_df.metal.isin(io_ptable.lanthanides)
         ]
-    elif lanthanides == 'only':
+    elif lanthanides == "only":
         gen_metal_df = subset_cn_metal_df[
             subset_cn_metal_df.metal.isin(io_ptable.lanthanides)
         ]
@@ -79,7 +79,10 @@ def select_metals(metal_df: pd.DataFrame, lanthanides='include') -> pd.DataFrame
     gen_metal_df.reset_index(drop=True, inplace=True)
     return gen_metal_df
 
-def select_ligands(ligand_df: pd.DataFrame, heavy_maingroup=True, add_hydride=True) -> pd.DataFrame:
+
+def select_ligands(
+    ligand_df: pd.DataFrame, heavy_maingroup=True, add_hydride=True
+) -> pd.DataFrame:
     """
     Select ligands to include for sampling.
 
@@ -88,20 +91,39 @@ def select_ligands(ligand_df: pd.DataFrame, heavy_maingroup=True, add_hydride=Tr
     :param ligand_df: DataFrame of ligands to select from
     :return: selected ligands
     """
+
     def is_heavy_mg(lst):
-        lst = lst.split(',')
-        return any(elt in lst for elt in ('Te', 'Se', 'As', 'Sb', 'Ge'))
+        lst = lst.split(",")
+        return any(elt in lst for elt in ("Te", "Se", "As", "Sb", "Ge"))
+
     if not heavy_maingroup:
-        ligand_df = ligand_df[~ligand_df['coord_atom_symols'].apply(is_heavy_mg)]
+        ligand_df = ligand_df[~ligand_df["coord_atom_symols"].apply(is_heavy_mg)]
     if add_hydride:
-        ligand_df.loc[len(ligand_df)] = {'uid':'[H-]0', 'smiles': '[H-]', 'coordList':[0], 'coord_atom_symols': 'H', 'coord_atom_types': 'H', 'non_coord_atom_symbols': '', 'non_coord_atom_types': '', 'charge': -1, 'denticity': 1, 'metal_ox_bound': 'Cr,2', 'frequency': 10000, 'selected_coord_type': 'H', 'natoms': 1, 'selected_non_coord_type':None}
+        ligand_df.loc[len(ligand_df)] = {
+            "uid": "[H-]0",
+            "smiles": "[H-]",
+            "coordList": [0],
+            "coord_atom_symols": "H",
+            "coord_atom_types": "H",
+            "non_coord_atom_symbols": "",
+            "non_coord_atom_types": "",
+            "charge": -1,
+            "denticity": 1,
+            "metal_ox_bound": "Cr,2",
+            "frequency": 10000,
+            "selected_coord_type": "H",
+            "natoms": 1,
+            "selected_non_coord_type": None,
+        }
     ligand_df.reset_index(drop=True, inplace=True)
     return ligand_df
+
 
 def sample(
     metal_df: pd.DataFrame,
     ligands_df: pd.DataFrame,
     test: bool = False,
+    hydride_weighting: bool = False,
     maxCN: int = 12,
 ) -> tuple[dict, str]:
     """
@@ -114,6 +136,7 @@ def sample(
     :param metal_df: Metals dataframe to sample from
     :param ligands_df: Ligands dataframe to sample from
     :param test: Whether to generate test dataframe (faster for Architector)
+    :param hydride_weighting: If True, upweight hydride ligands significantly
     :param maxCN: Maximum coordination number to sample
     :return: A row with as much metadata as needed to backtrace how this chemistry was
              sampled and unique identifier for the chemistry sampled
@@ -170,7 +193,8 @@ def sample(
         if tdf.shape[0] > 0:
             # Sample from the ligands
             weights = list(tdf.denticity)
-            weights[-1] = 1000
+            if hydride_weighting:
+                weights[-1] = 100
             add_row = tdf.sample(1, weights=weights).iloc[0]
             # Weighting by denticity makes this equal likelihood PER coordination site.
             lig_dict = {"smiles": add_row["smiles"], "coordList": add_row["coordList"]}

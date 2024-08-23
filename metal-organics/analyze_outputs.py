@@ -18,7 +18,10 @@ def main():
     path = pathlib.Path(args.output_path)
     xyz_path = path / "xyzs"
     xyz_path.mkdir(exist_ok=True)
-    xyz_names = {os.path.join(name.parent, str(name.name).split('_')[0]) for name in xyz_path.glob("*.xyz")}
+    xyz_names = {
+        os.path.join(name.parent, str(name.name).split("_")[0])
+        for name in xyz_path.glob("*.xyz")
+    }
     for fname in tqdm(path.glob("*.pkl"), total=len(list(path.glob("*.pkl")))):
         name = xyz_path / os.path.splitext(os.path.basename(fname))[0]
         if name in xyz_names:

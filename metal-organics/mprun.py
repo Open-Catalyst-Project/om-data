@@ -37,7 +37,8 @@ def calc(input_dict: dict, outpath: str) -> bool:
     try:
         subprocess.check_output(
             ["python", "generate_structures.py", pickle_input, outpath],
-            universal_newlines=True, timeout=3600*12
+            universal_newlines=True,
+            timeout=3600 * 12,
         )
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
         end = time.time()
@@ -109,7 +110,7 @@ def main():
     batch = newindf_rows[
         batch_idx * args.batch_size : (batch_idx + 1) * args.batch_size
     ]
-    batch = [inp for inp in batch if inp['name'] not in done_list]
+    batch = [inp for inp in batch if inp["name"] not in done_list]
     list(tqdm(pool.imap(fxn, batch), total=len(batch)))
 
 
