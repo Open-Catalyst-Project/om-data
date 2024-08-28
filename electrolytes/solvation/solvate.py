@@ -211,7 +211,7 @@ def generate_random_solvated_mol(
         all_solvating_info = copy.deepcopy(solvating_info)
         all_solvating_info.update(ood_solvating_info)
 
-    species_smiles = list()
+    species_smiles = []
     total_num_atoms = len(mol)
     total_charge = charge
     for i in range(max_trials):
@@ -228,8 +228,8 @@ def generate_random_solvated_mol(
             possible_solvs = solvating_info
 
         # Assign weights based on number of atoms
-        choice_smiles = list()
-        choice_weights = list()
+        choice_smiles = []
+        choice_weights = []
         for smiles, data in possible_solvs.items():
             # Check that we don't try to add species of like charge
             if total_charge * data["charge"] > 0:
@@ -310,13 +310,13 @@ def generate_random_dimers(
     ]
 
     if not real_candidates_names:
-        return list()
+        return []
     elif len(real_candidates_names) < num_selections:
         choices = real_candidates_names
     else:
         choices = random.sample(real_candidates_names, k=num_selections)
 
-    complexes = list()
+    complexes = []
     for candidate in choices:
         this_complex, this_complex_charge, this_complex_spin = generate_solvated_mol(
             mol,
@@ -474,7 +474,7 @@ if __name__ == "__main__":
 
         # In-distribution (ID) data
 
-        filtered = list()
+        filtered = []
         print("begin step 1")
         # Step 1 - dimers
         complexes = generate_random_dimers(
