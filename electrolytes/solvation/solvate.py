@@ -23,22 +23,22 @@ from omdata.electrolyte_utils import info_from_smiles, validate_structure
 
 
 
-metals = [
+METALS = [
     "[Li+]", "[Na+]", "[K+]", "[Cs+]", "[Ti+]", "[Cu+]", "[Ag+]", "O=[V+]=O", "[Ca+2]", "[Mg+2]", "[Zn+2]",
-    "[Cu+2]", "[Ni+2]", "[Pt+2]", "[Co+2]", "[Pd+2]", "[Ag+2]", "[Mn+2]", "[Hg+2]", "[Cd+2]", "[Yb+2]", "[Sn+2]",
+    "[Cu+2]", "[Ni+2]", "[Pt+2]", "[Pd+2]", "[Ag+2]", "[Mn+2]", "[Hg+2]", "[Cd+2]", "[Yb+2]", "[Sn+2]",
     "[Pb+2]", "[Eu+2]", "[Sm+2]", "[Ra+2]", "[Cr+2]", "[Fe+2]", "O=[V+2]", "[V+2]", "[Ba+2]", "[Sr+2]", "[Ti+2]", "[Al+3]",
-    "[Cr+3]", "[V+3]", "[Ce+3]", "[Fe+3]", "[In+3]", "[Tl+3]", "[Y+3]", "[La+3]", "[Pr+3]", "[Nd+3]",
+    "[Cr+3]", "[V+3]", "[Ce+3]", "[Fe+3]", "[In+3]", "[Tl+3]",  "[La+3]", "[Pr+3]", "[Nd+3]",
     "[Sm+3]", "[Eu+3]", "[Gd+3]", "[Tb+3]", "[Dy+3]", "[Er+3]", "[Tm+3]", "[Lu+3]", "[Ti+3]", "[Hf+4]", "[Zr+4]", "[Ce+4]",
 ]
 
-other_cations = [
+OTHER_CATIONS = [
     "[OH3+]", "[NH4+]", "CCCC[N+]1(CCCC1)C", "CCN1C=C[N+](=C1)C", "CCC[N+]1(C)CCCC1", "CCC[N+]1(CCCCC1)C",
-    "CC[N+](C)(CC)CCOC", "CCCC[P+](CCCC)(CCCC)CCCC", "CCCC[N+]1(CCCC1)CCC", "COCC[NH2+]CCOC", "CC(=O)[NH2+]C",
+    "CC[N+](C)(CC)CCOC", "CCCC[P+](CCCC)(CCCC)CCCC", "CCCC[N+]1(CCCC1)CCC", "CC(=O)[NH2+]C",
     "CC(COC)[NH3+]", "C[N+](C)(C)CCO", "CC1(CCCC(N1[O+])(C)C)C", "[Be+2]", "C[N+]1=CC=C(C=C1)C2=CC=[N+](C=C2)C",
 ]
 
 # NOTE: removed AlH4- and BH4- because hydrogens were flying off in Architector
-anions = [
+ANIONS = [
     "F[Al-](F)(F)F", "[B-]1(OC(=O)C(=O)O1)(F)F", "[B-]12(OC(=O)C(=O)O1)OC(=O)C(=O)O2", "[B-](F)(F)(F)F",
     "C[O-]", "CC[O-]", "CC(C)[O-]", "[O-]CC[O-]", "CCOC([O-])C(F)(F)F", "[Br-]", "C(F)(F)(F)S(=O)(=O)[O-]",
     "C(=O)(O)[O-]", "CC(=O)[O-]", "C(=O)([O-])[O-]", "C(F)(F)(F)S(=O)(=O)[N-]S(=O)(=O)C(F)(F)F",
@@ -47,7 +47,7 @@ anions = [
     "[O-]P(=O)([O-])[O-]", "C1=C(C(=O)C=C(C1=O)[O-])[O-]", "[O-]S(=O)(=O)[O-]"
 ]
 
-neutrals = [
+NEUTRALS = [
     "C1=CC=C2C(=C1)C(=O)C3=CC=CC=C3C2=O", "C(=O)(N)N", "CC(=O)C", "CC#N", "CCO", "CS(=O)C",
     "C1C(OC(=O)O1)F", "C1COC(=O)O1", "CC(=O)NC", "CC(C)O", "O=S(=O)(OCC)C", "COCCOC", "CC(COC)N", "CCOC(=O)C(F)(F)F",
     "O=C1OCCC1", "CC1COC(=O)O1", "CCCC#N", "C1CCOC1", "O=C(OCC)C", "C1CCS(=O)(=O)C1", "C1COS(=O)(=O)O1",
@@ -57,10 +57,10 @@ neutrals = [
 ]
 
 
-metals_ood = ["[Rb+]", "[Co+2]", "[Y+3]",]
-other_cations_ood = ["COCC[NH2+]CCOC"]
-anions_ood = ["F[As-](F)(F)(F)(F)F", "[O-]P(=O)(F)F"]
-neutrals_ood = ["O=C(N)C", "C(CO)O"]
+METALS_OOD = ["[Rb+]", "[Co+2]", "[Y+3]",]
+OTHER_CATIONS_OOD = ["COCC[NH2+]CCOC"]
+ANIONS_OOD = ["F[As-](F)(F)(F)(F)F", "[O-]P(=O)(F)F"]
+NEUTRALS_OOD = ["O=C(N)C", "C(CO)O"]
 
 
 def generate_solvated_mol(
@@ -409,11 +409,11 @@ if __name__ == "__main__":
 
     # Set-up: get info from predefined set of SMILES
     solvating_info = info_from_smiles(
-        metals + other_cations + anions + neutrals
+        METALS + OTHER_CATIONS + ANIONS + NEUTRALS
     )
 
     just_solvent_info = info_from_smiles(
-        neutrals
+        NEUTRALS
     )
 
     # Identify all molecules for solvation
@@ -453,7 +453,7 @@ if __name__ == "__main__":
             continue
 
         name = os.path.splitext(xyz_file)[0]
-        subname = name.split("/")[-1]
+        subname = os.path.basename(name)
         contents = name.split("_")
         charge = int(contents[-2])
         spin = int(contents[-1])
@@ -514,11 +514,11 @@ if __name__ == "__main__":
             continue
 
         ood_solvating_info = info_from_smiles(
-            metals_ood + other_cations_ood + anions_ood + neutrals_ood
+            METALS_OOD + OTHER_CATIONS_OOD + ANIONS_OOD + NEUTRALS_OOD
         )
 
         ood_just_solvent_info = info_from_smiles(
-            neutrals_ood
+            NEUTRALS_OOD
         )
 
         # For each molecule, only select one of dimer, solvent shell, or random shell
