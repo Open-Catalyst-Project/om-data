@@ -102,7 +102,13 @@ def generate_solvated_mol(
     shell = binding[0].ase_atoms
     shell_charge = int(binding[0].charge)
     shell_spin = int(binding[0].uhf) + 1
-    
+   
+    if len(mol) == len(shell):
+        # Architector returns the input if it fails
+        shell = None
+        shell_charge = None
+        shell_spin = None
+ 
     return shell, shell_charge, shell_spin
 
 
@@ -251,12 +257,15 @@ def generate_random_solvated_mol(
         total_num_atoms += choice_num_atoms
         total_charge += choice_charge
 
-    if len(species_smiles) == 0:
-        return None
+    if species_smiles:
+        shell, shell_charge, shell_spin = generate_solvated_mol(
+            mol, charge, spin_multiplicity, species_smiles, architector_params=architector_params
+        )
+    else:
+        shell = None
+        shell_charge = None
+        shell_spin = None
 
-    shell, shell_charge, shell_spin = generate_solvated_mol(
-        mol, charge, spin_multiplicity, species_smiles, architector_params=architector_params
-    )
     return shell, shell_charge, shell_spin
 
 
@@ -316,7 +325,8 @@ def generate_random_dimers(
             [solvating_info[candidate]["smiles"]],
             architector_params
         )
-        complexes.append((this_complex, this_complex_charge, this_complex_spin))
+        if this_complex is not None:
+            complexes.append((this_complex, this_complex_charge, this_complex_spin))
 
     return complexes
 
@@ -490,7 +500,8 @@ if __name__ == "__main__":
             max_atom_budget=max_atom_budget,
             architector_params=architector_params
         )
-        val_and_save([solvent_complex], subname, this_dir)
+        if solvent_complex[0] is not None:
+            val_and_save([solvent_complex], subname, this_dir)
 
         print("begin step 3")
         # Step 3 - random solvation shell
@@ -505,7 +516,7 @@ if __name__ == "__main__":
         )
 
         # Possible that you'll end up with no complex
-        if random_complex is not None:
+        if random_complex[0] is not None:
             val_and_save([random_complex], subname, this_dir)
 
         # Out-of-distribution (OOD) data
