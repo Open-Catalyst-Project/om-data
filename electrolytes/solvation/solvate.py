@@ -334,6 +334,7 @@ def generate_random_dimers(
 def dump_xyzs(
     complexes: List[Tuple[Atoms, int, int]],
     prefix: str,
+    solv_type: str,
     path: Path
 ):
     """
@@ -343,6 +344,7 @@ def dump_xyzs(
         complexes (List[Tuple[Atoms, int, int]]): Collection of solvated molecules. Each entry is a molecular
             structure, its charge, and its spin multiplicity
         prefix (str): Prefix for all *.xyz files
+        solv_type: Indicates dimer, solvation shell, or random
         path (Path): Path in which to dump *.xyz files
 
     Returns:
@@ -352,9 +354,9 @@ def dump_xyzs(
     path.mkdir(parents=True, exist_ok=True)
 
     for ii, (atoms, charge, spin) in enumerate(complexes):
-        write(str(path / f"{prefix}_solv{ii}_{charge}_{spin}.xyz"), atoms, format="xyz")
+        write(str(path / f"{prefix}_{solv_type}{ii}_{charge}_{spin}.xyz"), atoms, format="xyz")
 
-def val_and_save(complexes, subname, this_dir):
+def val_and_save(complexes, subname, solv_type, this_dir):
     # Make sure that structures are physically sound
     # Possible that the MD produces some wild structures, e.g. with atoms too close
     filtered = [comp for comp in complexes if validate_structure(comp[0].get_chemical_symbols(), comp[0].get_positions())]
@@ -364,6 +366,7 @@ def val_and_save(complexes, subname, this_dir):
     dump_xyzs(
         complexes=filtered,
         prefix=subname,
+        solv_type=solv_type,
         path=this_dir,
     )
 
@@ -464,9 +467,10 @@ if __name__ == "__main__":
 
         name = os.path.splitext(xyz_file)[0]
         subname = os.path.basename(name)
-        contents = name.split("_")
-        charge = int(contents[-2])
-        spin = int(contents[-1])
+        *basename, charge, spin = subname.split("_")
+        basename = '_'.join(basename)
+        charge = int(charge)
+        spin = int(spin)
 
         mol.set_charge_and_spin(charge, spin)
 
@@ -486,7 +490,7 @@ if __name__ == "__main__":
             num_selections=num_dimers,
             architector_params=architector_params
         )
-        val_and_save(complexes, subname, this_dir)
+        val_and_save(complexes, basename, 'dimer', this_dir)
 
         print("begin step 2")
         # Step 2 - pure solvent shell
@@ -501,7 +505,7 @@ if __name__ == "__main__":
             architector_params=architector_params
         )
         if solvent_complex[0] is not None:
-            val_and_save([solvent_complex], subname, this_dir)
+            val_and_save([solvent_complex], basename, 'solv', this_dir)
 
         print("begin step 3")
         # Step 3 - random solvation shell
@@ -517,7 +521,7 @@ if __name__ == "__main__":
 
         # Possible that you'll end up with no complex
         if random_complex[0] is not None:
-            val_and_save([random_complex], subname, this_dir)
+            val_and_save([random_complex], basename, 'rand', this_dir)
 
         # Out-of-distribution (OOD) data
         # We generate an OOD point for 10% of the input structures
@@ -572,6 +576,7 @@ if __name__ == "__main__":
             # Dump new complexes as *.xyz files
             dump_xyzs(
                 complexes=[ood_complex],
-                prefix=subname,
+                prefix=basename,
+                solv_type='ood',
                 path=(ood_dir / subname),
             )
