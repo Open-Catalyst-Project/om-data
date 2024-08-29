@@ -452,12 +452,12 @@ if __name__ == "__main__":
     # TODO: play around with these more
     # In initial testing, random placement seems to help better surround central molecule
     # Sella might be helpful, but also really slows things down
-    architector_params={"species_location_method": "random"}
+    architector_params={"species_location_method": "default", "species_relax": False, "species_intermediate_relax": False}
 
     for xyz_file in xyz_files:
 
         mol = Molecule.from_file(xyz_file)
-
+        architector_params['fix_indices'] = list(range(len(mol)))
         # If molecule is too large, don't bother trying to make solvation complexes
         if len(mol) > max_core_molecule_size:
             continue
