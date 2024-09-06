@@ -194,7 +194,7 @@ def sample(
             # Sample from the ligands
             weights = list(tdf.denticity)
             if hydride_weighting:
-                weights[-1] = 100
+                weights[-1] = 50
             add_row = tdf.sample(1, weights=weights).iloc[0]
             # Weighting by denticity makes this equal likelihood PER coordination site.
             lig_dict = {"smiles": add_row["smiles"], "coordList": add_row["coordList"]}
