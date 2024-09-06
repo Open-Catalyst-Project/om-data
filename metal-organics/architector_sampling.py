@@ -245,6 +245,7 @@ def create_sample(
     metal_df: pd.DataFrame,
     ligands_df: pd.DataFrame,
     history_uids: Optional[list] = None,
+    do_hydride: bool = False,
     nsamples: int = 100,
     test: bool = False,
     maxCN: int = 12,
@@ -269,7 +270,7 @@ def create_sample(
     with tqdm(total=nsamples) as pbar:
         while total < nsamples:
             sample_row, uid = sample(
-                metal_df=metal_df, ligands_df=ligands_df, test=test, maxCN=maxCN
+                metal_df=metal_df, ligands_df=ligands_df, test=test, maxCN=maxCN, hydride_weighting=do_hydride
             )
             if uid not in history_uids:
                 total += 1
@@ -299,6 +300,11 @@ def parse_args():
         type=str,
         help="Path to file storing previously used samples to avoid duplication",
     )
+    parser.add_argument(
+        "--do_hydride",
+        action='store_true',
+        help="Add hydride ligands and upweight them",
+    )
 
     return parser.parse_args()
 
@@ -315,10 +321,11 @@ def main():
         history = None
 
     gen_metal_df = select_metals(metal_df)
-    ligands_df = select_ligands(ligands_df)
+    ligands_df = select_ligands(ligands_df, add_hydride=args.do_hydride)
     sdf, history = create_sample(
         metal_df=gen_metal_df,
         ligands_df=ligands_df,
+        do_hydride=args.do_hydride,
         test=False,
         history_uids=history,
         nsamples=args.n_samples,
