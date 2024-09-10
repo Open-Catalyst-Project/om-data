@@ -6,6 +6,8 @@ import os
 from pathlib import Path
 import random
 from typing import Dict, List, Optional, Set, Tuple
+from rdkit import Chem
+
 
 # For molecule representations
 from ase import Atoms
@@ -48,19 +50,20 @@ ANIONS = [
 ]
 
 NEUTRALS = [
-    "C1=CC=C2C(=C1)C(=O)C3=CC=CC=C3C2=O", "C(=O)(N)N", "CC(=O)C", "CC#N", "CCO", "CS(=O)C",
+    "C1=CC=C2C(=C1)C(=O)C3=CC=CC=C3C2=O", "C(=O)(N)N", "CC(=O)C", "CC#N", "CCO", "CO", "CS(=O)C",
     "C1C(OC(=O)O1)F", "C1COC(=O)O1", "CC(=O)NC", "CC(C)O", "O=S(=O)(OCC)C", "COCCOC", "CC(COC)N", "CCOC(=O)C(F)(F)F",
     "O=C1OCCC1", "CC1COC(=O)O1", "CCCC#N", "C1CCOC1", "O=C(OCC)C", "C1CCS(=O)(=O)C1", "C1COS(=O)(=O)O1",
     "COCCOCCOC", "COC(=O)OC", "CCOC(=O)OC", "COCCNCCOC", "COP(=O)(OC)OC", "O=P(OCC)(OCC)OCC", "C1=CC(=O)C=CC1=O",
     "C1=C(C(=O)C=C(C1=O)O)O", "C1=CC=CC=C1", "C1=CC=C(C=C1)[N+](=O)[O-]", "C(C(C(F)F)(F)F)OC(C(F)F)(F)F", "CC(COC)N",
-    "O", "CC1(CCCC(N1[O])(C)C)C",
+    "O", "CC1(CCCC(N1[O])(C)C)C","C(Cl)(Cl)Cl", "C(Cl)Cl", "C(Cl)(Cl)(Cl)Cl", "C(Br)(Br)Br", "ClCCCl", "BrCCBr", "FC1=CC=CC=C1", "CCCCCC",
+    "CCOCC", "C(=O)N(C)C", "C[N+](=O)[O-]", "n1ccccc1", "N1C=CC=C1", "CCN(CC)CC", "O=P(N(C)C)(N(C)C)N(C)C"
 ]
 
 
 METALS_OOD = ["[Rb+]", "[Co+2]", "[Y+3]",]
 OTHER_CATIONS_OOD = ["COCC[NH2+]CCOC"]
 ANIONS_OOD = ["F[As-](F)(F)(F)(F)F", "[O-]P(=O)(F)F"]
-NEUTRALS_OOD = ["O=C(N)C", "C(CO)O"]
+NEUTRALS_OOD = ["O=C(N)C", "C(CO)O", "O([Si](C)(C)C)[Si](C)(C)C", "Clc1c(Cl)cccc1"]
 
 
 def generate_solvated_mol(
@@ -144,13 +147,12 @@ def generate_full_solvation_shell(
     if solvent_info["charge"] != 0:
         raise ValueError("generate_full_solvation_shell will only work for neutral solvents! Provided charge for"
                          f"{solvent}: {solvent_info['charge']}.")
-
-    this_max_atoms = round(random.gauss(mu=50 + len(mol), sigma=40))
+    this_max_atoms = round(random.gauss(mu=60 + len(mol), sigma=30))
     this_max_atoms = max(this_max_atoms, len(mol) + min_added_atoms)
     this_max_atoms = min(this_max_atoms, max_atom_budget)
     
     budget = this_max_atoms - len(mol)
-    num_solvent_mols = ceil(budget / solvent_info["num_atoms"])
+    num_solvent_mols = max(budget // solvent_info["num_atoms"], 2)
 
     species_smiles = [solvent] * num_solvent_mols
 
@@ -203,7 +205,7 @@ def generate_random_solvated_mol(
     # Select cap for number of atoms in this solvation shell
     # For now, using a normal (Gaussian distribution) with mean at (50 + len(mol)) atoms and stdev of 40
     # We then turn this continuous selection into an integer and make sure that it's within some reasonable bounds
-    this_max_atoms = round(random.gauss(mu=50 + len(mol), sigma=40))
+    this_max_atoms = round(random.gauss(mu=60 + len(mol), sigma=30))
     this_max_atoms = max(this_max_atoms, len(mol) + min_added_atoms)
     this_max_atoms = min(this_max_atoms, max_atom_budget)
     
@@ -215,6 +217,7 @@ def generate_random_solvated_mol(
     total_num_atoms = len(mol)
     total_charge = charge
     for i in range(max_trials):
+        heavy_atom_used = False
         budget = this_max_atoms - total_num_atoms
         if budget < 1:
             break
@@ -234,6 +237,14 @@ def generate_random_solvated_mol(
             # Check that we don't try to add species of like charge
             if total_charge * data["charge"] > 0:
                 continue
+
+            # If heavy atom already used and don't add another
+            rd_mol = Chem.MolFromSmiles(smiles)
+            if rd_mol.GetNumAtoms() == 1 and rd_mol.GetAtomWithIdx(0).GetAtomicNum() > 21:
+                if heavy_atom_used:
+                    continue
+                else:
+                    heavy_atom_used = True
 
             # Is the potential solvating molecule too large?
             if total_num_atoms + data["num_atoms"] <= this_max_atoms:
@@ -455,7 +466,8 @@ if __name__ == "__main__":
     # TODO: play around with these more
     # In initial testing, random placement seems to help better surround central molecule
     # Sella might be helpful, but also really slows things down
-    architector_params={"species_location_method": "default", "species_relax": False, "species_intermediate_relax": False}
+    architector_params={"species_location_method": "random", "species_relax": False, "species_intermediate_relax": False,
+    'species_skin': 0.6, 'species_grid_rad_scale': 1.2}
 
     for xyz_file in xyz_files:
 
@@ -495,17 +507,20 @@ if __name__ == "__main__":
         print("begin step 2")
         # Step 2 - pure solvent shell
         # Pick random solvent
-        solvent = random.choice(list(just_solvent_info))
-        solvent_complex = generate_full_solvation_shell(
-            mol=mol,
-            charge=charge,
-            spin_multiplicity=spin,
-            solvent=solvent,
-            max_atom_budget=max_atom_budget,
-            architector_params=architector_params
-        )
-        if solvent_complex[0] is not None:
-            val_and_save([solvent_complex], basename, 'solv', this_dir)
+        solvent_list = random.sample(list(just_solvent_info), 10)
+        solvent_complexes = []
+        for solvent in solvent_list:
+            solvent_complex = generate_full_solvation_shell(
+                mol=mol,
+                charge=charge,
+                spin_multiplicity=spin,
+                solvent=solvent,
+                max_atom_budget=max_atom_budget,
+                architector_params=architector_params
+            )
+            if solvent_complex[0] is not None:
+                solvent_complexes.append(solvent_complex)
+        val_and_save(solvent_complexes, basename, 'solv', this_dir)
 
         print("begin step 3")
         # Step 3 - random solvation shell
