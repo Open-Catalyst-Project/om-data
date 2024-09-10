@@ -16,6 +16,7 @@ setup(
         "ase@git+https://gitlab.com/ase/ase.git@dc86a19a280741aa2b42a08d0fa63a8d0348e225",
         "quacc[sella]>=0.7.6",
         "sella==2.3.3",
+        "numpy<2"
     ],
     include_package_data=True,
 )
