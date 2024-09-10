@@ -123,7 +123,7 @@ def sample(
     metal_df: pd.DataFrame,
     ligands_df: pd.DataFrame,
     test: bool = False,
-    hydride_weighting: bool = False,
+    add_hydride: bool = False,
     maxCN: int = 12,
 ) -> tuple[dict, str]:
     """
@@ -136,7 +136,7 @@ def sample(
     :param metal_df: Metals dataframe to sample from
     :param ligands_df: Ligands dataframe to sample from
     :param test: Whether to generate test dataframe (faster for Architector)
-    :param hydride_weighting: If True, upweight hydride ligands significantly
+    :param add_hydride: If True, force the first ligand to be a hydride
     :param maxCN: Maximum coordination number to sample
     :return: A row with as much metadata as needed to backtrace how this chemistry was
              sampled and unique identifier for the chemistry sampled
@@ -181,20 +181,22 @@ def sample(
     lig_natoms = []
     finished = False
     while not finished:
-        tdf = ligands_df[
-            ((ligands_df.charge + complex_charge) > -3)
-            & ((ligands_df.charge + complex_charge) < 5)  # Filter 1 -> Charge > -3
-            & (ligands_df.natoms + natoms_total < MAX_N_ATOMS)  # Filter 2 -> Charge < 5
-            & (  # Filter 3 -> Max number of atoms (set at 250 now.)
-                coordsites_left - ligands_df.denticity >= 0
-            )  # Can fit at the metal surface with remaining coordination sites.
-        ]
+        if add_hydride:
+            tdf = ligands_df.iloc[-1:]
+            add_hydride = False
+        else:
+            tdf = ligands_df[
+                ((ligands_df.charge + complex_charge) > -3)
+                & ((ligands_df.charge + complex_charge) < 5)  # Filter 1 -> Charge > -3
+                & (ligands_df.natoms + natoms_total < MAX_N_ATOMS)  # Filter 2 -> Charge < 5
+                & (  # Filter 3 -> Max number of atoms (set at 250 now.)
+                    coordsites_left - ligands_df.denticity >= 0
+                )  # Can fit at the metal surface with remaining coordination sites.
+            ]
         # Check that there's any ligands that match the constraints
         if tdf.shape[0] > 0:
             # Sample from the ligands
             weights = list(tdf.denticity)
-            if hydride_weighting:
-                weights[-1] = 50
             add_row = tdf.sample(1, weights=weights).iloc[0]
             # Weighting by denticity makes this equal likelihood PER coordination site.
             lig_dict = {"smiles": add_row["smiles"], "coordList": add_row["coordList"]}
@@ -270,7 +272,7 @@ def create_sample(
     with tqdm(total=nsamples) as pbar:
         while total < nsamples:
             sample_row, uid = sample(
-                metal_df=metal_df, ligands_df=ligands_df, test=test, maxCN=maxCN, hydride_weighting=do_hydride
+                metal_df=metal_df, ligands_df=ligands_df, test=test, maxCN=maxCN, add_hydride=do_hydride
             )
             if uid not in history_uids:
                 total += 1
