@@ -37,7 +37,7 @@ def info_from_smiles(
         if rdkit_mol is None:
             print("PROBLEM", name, this_smiles)
 
-        Chem.AddHs(rdkit_mol)
+        rdkit_mol = Chem.AddHs(rdkit_mol)
         
         charge = Chem.GetFormalCharge(rdkit_mol)
         spin = Descriptors.NumRadicalElectrons(rdkit_mol) + 1
