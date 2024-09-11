@@ -178,7 +178,9 @@ def get_n_basis(atoms: Atoms) -> int:
     return nbasis
 
 
-def get_mem_estimate(atoms: Atoms, vertical=Vertical.Default, mult=1) -> int:
+def get_mem_estimate(
+    atoms: Atoms, vertical: Enum = Vertical.Default, mult: int = 1
+) -> int:
     """
     Get an estimate of the memory requirement for given input in MB.
 
@@ -210,7 +212,7 @@ def write_orca_inputs(
     mult: int = 1,
     orcasimpleinput: str = ORCA_ASE_SIMPLE_INPUT,
     orcablocks: str = " ".join(ORCA_BLOCKS),
-    vertical=Vertical.Default,
+    vertical: Enum = Vertical.Default,
 ):
     """
     One-off method to be used if you wanted to write inputs for an arbitrary
@@ -222,7 +224,7 @@ def write_orca_inputs(
     # Include estimate of memory needs
     mem_est = get_mem_estimate(atoms, vertical, mult)
     orcablocks += f" %maxcore {mem_est}"
-    
+
     if vertical == Vertical.MetalOrganics and mult == 1:
         orcasimpleinput += " UKS"
         orcablocks += f" {get_symm_break_block(atoms, charge)}"
