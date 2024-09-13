@@ -24,6 +24,7 @@ import csv
 import numpy as np
 from pulp import LpProblem, LpVariable, lpSum, LpMinimize
 
+Avog = 6.023*10**23
 # Remove species that are duplicate, regardless of charge
 def remove_dup_species(formulas, ids):
     # Use a dictionary to keep track of unique formulas and corresponding ids
@@ -40,6 +41,7 @@ def remove_dup_species(formulas, ids):
 
     return cleaned_formulas, corresponding_ids
 
+# Remove species that are duplicate, regardless of charge
 def remove_duplicates(lists_of_formulas):
     # Initialize lists to collect all formulas and their respective ids
     all_formulas = []
@@ -96,7 +98,6 @@ def contains_lanthanide(strings):
     return False
 
 def choose_species(species,max_comp,solvent=False,cations=False):
-    
     formulas = lanthanides
     while contains_lanthanide(formulas):
         indices = np.random.choice(len(species), size=np.random.randint(1,max_comp), replace=False)
@@ -116,14 +117,13 @@ solvents_file = 'solvent.csv'
 
 elytes= load_csv('elytes.csv')
 
-Nrandom = 800
-
+Nrandom = 10#800
 fac = 0.05
 for i in range(Nrandom):
     cations = load_csv(cations_file)
     anions = load_csv(anions_file)
     solvents = load_csv(solvents_file)
-    max_comp = 8
+    max_comp = 4
     #Randomly select which class we want to create
     classes = ['protic','aprotic','IL','MS','aq']
     clas = np.random.choice(classes,p=[0.4,0.4,0.1,0.05,0.05])
@@ -254,7 +254,7 @@ for i in range(Nrandom):
         cat, catcharges = choose_species(cations_ms,max_comp)#,cations=True)
         
         MS_idx = list(anions['MS_comp'])
-        anions_ms = anions.msoc[MS_idx]
+        anions_ms = anions.iloc[MS_idx]
         an, ancharges = choose_species(anions_ms,max_comp)
 
         charges = list(catcharges)+list(ancharges)
@@ -273,48 +273,50 @@ for i in range(Nrandom):
         solv = formulas[2]
 
     species = cat+an+solv
-    #Start preparing random electrolytes
-    #Start with baseline of 20.0 molality
-    concs = [1.0, 10.0]
-    for conc in concs:
+    
+    distances = [3.0, 1.5] #nm 
+    boxsize = 5 #nm
+    minboxsize = 4 #nm
+    minmol = 2
+    for dis in distances:
         for temperature  in [minT, maxT]:
-            salt_conc = conc*np.array(stoich)
-            #Add this to the new array
-            newspecies = dict()
-            newspecies['category'] = f'random-{clas}'
-            newspecies['comment/name'] = f'{clas}-{i+1}'
-            newspecies['DOI'] = ''
-            if clas == 'MS':
-                newspecies['units'] = 'number'
-            else:
-                newspecies['units'] = 'mass'
-            newspecies['temperature'] = temperature
-            for j in range(4):
+            conc = 0.62035049089/dis**3 # number per nm3, concentration
+            mols = salt_molfrac/min(salt_molfrac)*minmol 
+            salt_conc = salt_molfrac*conc/Avog*1e24 #number per nm3
+            totalmol = np.sum(mols) #total number 
+            boxsize = (totalmol/conc)**(1/3) #nm
+            newminmol = minmol
+            while minboxsize > boxsize:
+                newminmol += 1
+                mols = salt_molfrac/min(salt_molfrac)*newminmol 
+                salt_conc = salt_molfrac*conc/Avog*1e24 #number per nm3
+                totalmol = np.sum(mols) #total number 
+                boxsize = (totalmol/conc)**(1/3) #nm
+            newelectrolyte = dict()
+            newelectrolyte['category'] = 'random'
+            newelectrolyte['comment/name'] = f'Rand-{i+1}'
+            newelectrolyte['DOI'] = ''
+            newelectrolyte['units'] = 'volume'
+            newelectrolyte['temperature'] = temperature
+            for j in range(max_comp):
                 if j < len(cat):
-                    newspecies[f'cation{j+1}'] = cat[j]
-                    if clas == 'MS':
-                        newspecies[f'cation{j+1}_conc'] = stoich[j]
-                    else:
-                        newspecies[f'cation{j+1}_conc'] = salt_conc[j]/len(cat+an)
+                    newelectrolyte[f'cation{j+1}'] = cat[j]
+                    newelectrolyte[f'cation{j+1}_conc'] = salt_conc[j]
                 else:
-                    newspecies[f'cation{j+1}'] = ''
-                    newspecies[f'cation{j+1}_conc'] = ''
+                    newelectrolyte[f'cation{j+1}'] = ''
+                    newelectrolyte[f'cation{j+1}_conc'] = ''
                 if j < len(an):
-                    newspecies[f'anion{j+1}'] = an[j]
-                    if clas == 'MS':
-                        newspecies[f'anion{j+1}_conc'] = stoich[j+len(cat)]
-                    else:
-                        newspecies[f'anion{j+1}_conc'] = salt_conc[j+len(cat)]/len(cat+an)
+                    newelectrolyte[f'anion{j+1}'] = an[j]
+                    newelectrolyte[f'anion{j+1}_conc'] = salt_conc[j+len(cat)]
                 else:
-                    newspecies[f'anion{j+1}'] = ''
-                    newspecies[f'anion{j+1}_conc'] = ''
+                    newelectrolyte[f'anion{j+1}'] = ''
+                    newelectrolyte[f'anion{j+1}_conc'] = ''
                 if j < len(solv):
-                    newspecies[f'solvent{j+1}'] = solv[j]
-                    newspecies[f'solvent{j+1}_ratio'] = stoich_solv[j]
+                    newelectrolyte[f'solvent{j+1}'] = solv[j]
+                    newelectrolyte[f'solvent{j+1}_ratio'] = stoich_solv[j]
                 else:
-                    newspecies[f'solvent{j+1}'] = ''
-                    newspecies[f'solvent{j+1}_ratio'] = ''
-            newspecies[f'solvent5'] = ''
-            newspecies[f'solvent5'] = ''
-            elytes = pd.concat([elytes,pd.DataFrame([newspecies])],ignore_index=True)
+                    newelectrolyte[f'solvent{j+1}'] = ''
+                    newelectrolyte[f'solvent{j+1}_ratio'] = ''
+            
+            elytes = pd.concat([elytes,pd.DataFrame([newelectrolyte])],ignore_index=True)
 elytes.to_csv('elytes.csv', index=False)

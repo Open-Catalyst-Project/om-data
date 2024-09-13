@@ -121,7 +121,7 @@ pdb_names = []
 pdb_resname_mol = []
 pdb_resnames = []
 
-def prep_openmm_sim(filename,cat,an,solv,directory):
+def prep_openmm_sim(filename,cat,an,solv,Nmols,directory):
     # Check filename if it is solvent vs. system.
     with contextlib.chdir(directory):
         lmpdata_file = filename+".data"
@@ -171,7 +171,7 @@ def prep_openmm_sim(filename,cat,an,solv,directory):
             # Write the OpenMM PDB file
             write_pdbfile(u,filename)
 
-            write_metadata(cat,an,solv,filename)
+            write_metadata(cat,an,solv,Nmols,filename)
         
             # Next check the settings file and see if LAMMPS hybrid style is even necessary
             # Begin by reading the entire contents of the *in.settings file
@@ -212,7 +212,7 @@ def prep_openmm_sim(filename,cat,an,solv,directory):
         else:
             print(f"Eiher {lmpdata_file} or {pdb_file} don't exist. Not an error, but check if system is molten salt/ionic liquid")
 
-def write_metadata(cat,an,solv,filename):
+def write_metadata(cat,an,solv,nmols,filename):
     metadata = {}
     metadata["species"] = cat+an+solv
     molres = []
@@ -221,10 +221,10 @@ def write_metadata(cat,an,solv,filename):
     metadata["residue"] = molres
     metadata["solute_or_solvent"] = len(cat + an)*['solute']+len(solv)*['solvent'] 
     metadata["partial_charges"] = lmp_allcharges
+    metadata["composition"] = nmols
     with open(f"metadata_{filename}.json","w") as f:
         j = json.dumps(metadata,indent=4)
         f.write(j)
-    
 def _get_types(line):
     """ Obtain atom ids, mass, and types from LAMMPS DATA file
         

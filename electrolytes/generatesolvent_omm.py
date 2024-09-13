@@ -39,7 +39,7 @@ if units == 'volume':
     #Initial boxsize is set to 8 nm. 
     boxsize = 80
     #Assume some number of solvents, we'll readjust later. 
-    num_solv = 10000
+    num_solv = 5000
     Natoms = []
     Nmols = []
     for j in range(len(solv)):
@@ -50,7 +50,7 @@ if units == 'volume':
         else:
             Nmols.append(int(num_solv*molfrac[j]))
             Natoms.append(sum(counts)*int(num_solv*molfrac[j]))
-
+    
     #Next we want to cap the total number of atoms
     NMax = 5000
     count = 0
@@ -60,10 +60,10 @@ if units == 'volume':
             N = frac*NMax
             count += N
             N = int(N/(Natoms[j]/Nmols[j]))
-            Nmols[j] = N
+            Nmols[j] = N 
     
     #Run Packmol, followed up by moltemplate 
-    d2l.run_packmol_moltemplate(species,boxsize,Nmols,'solvent',str(row_idx))
+    d2l.run_system_builder(species,Nmols,'solvent',str(row_idx),boxsize=boxsize,mdengine='lammps')
     lmm.prep_openmm_sim("solvent",[],[],solv,str(row_idx))
 else:
     print("Solvent does not exist. Not an error, but check if system is a pure moltent salt/ionic liquid.")
