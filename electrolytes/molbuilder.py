@@ -118,7 +118,7 @@ simulate {{
 """
             msj.write(multisim)
 
-need_opls4 = ["V+2","V+3","O2V+","OV+2"]
+#need_opls4 = ["V+2","V+3","O2V+","OV+2"]
 
 def run_system_builder(species,Nmols,filename,directory,boxsize=40,mdengine='openmm'):
     """ Run Packmol and Moltemplate to generate system configuration (in LAMMPS data format) 
@@ -179,11 +179,11 @@ def run_system_builder(species,Nmols,filename,directory,boxsize=40,mdengine='ope
        
 
         #If any component requires S-OPLS, we switch to this force field
-        general_ff = ''
-        if any(sp in need_opls4 for sp in species):
-            general_ff = 'S-OPLS'
-        else:
-            general_ff = 'OPLS_2005'
+        #general_ff = ''
+        #if any(sp in need_opls4 for sp in species):
+        general_ff = 'S-OPLS'
+        #else:
+        #general_ff = 'OPLS_2005'
 
         #Run the disordered system builder
         with contextlib.chdir(directory):
