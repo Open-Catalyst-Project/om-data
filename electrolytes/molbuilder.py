@@ -120,7 +120,7 @@ simulate {{
 
 need_opls4 = ["V+2","V+3","O2V+","OV+2"]
 
-def run_system_builder(species,Nmols,filename,directory,boxsize=40,mdengine='lammps'):
+def run_system_builder(species,Nmols,filename,directory,boxsize=40,mdengine='openmm'):
     """ Run Packmol and Moltemplate to generate system configuration (in LAMMPS data format) 
         as well as files to run a LAMMPS simulation.
 

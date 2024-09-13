@@ -2,7 +2,7 @@
 Author: Muhammad R. Hasyim
 
 Script to generate initial system configuration and LAMMPS files using 
-the data2lammps.py module. This script assumes that you have done the following steps:
+the molbuilder.py module. This script assumes that you have done the following steps:
 
     1. Run generatesolvent.py to generate pure solvent configurations. 
     2. Run prepopenmmsim.py for the pure solvent.
@@ -12,7 +12,7 @@ These steps generate a solventdata.txt file containing a time series of the dens
 which we can use to calculate the number of salt molecules to put inside the simulation box. 
 """
 import sys
-import data2lammps as d2l
+import molbuilder as mb
 import lammps2omm as lmm
 import os
 import csv 
@@ -50,23 +50,23 @@ with open("elytes.csv", "r") as f:
     systems = list(csv.reader(f))
 comments = systems[0]
 # Extract indices of columns specifying the cation, anion,and solvent
-index_cat, index_cat_conc = d2l.get_indices(comments, "cation")
-index_an, index_an_conc = d2l.get_indices(comments, "anion")
-index_solv, index_solv_ratio = d2l.get_indices(comments, "solvent")
+index_cat, index_cat_conc = mb.get_indices(comments, "cation")
+index_an, index_an_conc = mb.get_indices(comments, "anion")
+index_solv, index_solv_ratio = mb.get_indices(comments, "solvent")
 
 # Extract salt species and their concentrations
-cat = d2l.get_species_and_conc(systems, row_idx, index_cat)
-cat_conc = d2l.get_species_and_conc(systems, row_idx, index_cat_conc)#.astype(float)
-an = d2l.get_species_and_conc(systems, row_idx, index_an)
-an_conc = d2l.get_species_and_conc(systems, row_idx, index_an_conc)#.astype(float)
+cat = mb.get_species_and_conc(systems, row_idx, index_cat)
+cat_conc = mb.get_species_and_conc(systems, row_idx, index_cat_conc)#.astype(float)
+an = mb.get_species_and_conc(systems, row_idx, index_an)
+an_conc = mb.get_species_and_conc(systems, row_idx, index_an_conc)#.astype(float)
 
 salt_molfrac = np.array(cat_conc+an_conc).astype(float)
 salt_molfrac /= np.sum(salt_molfrac)
 
 
 # Extract solvent species name and their molar ratios
-solv = d2l.get_species_and_conc(systems, row_idx, index_solv)
-solv_ratio = d2l.get_species_and_conc(systems, row_idx, index_solv_ratio)
+solv = mb.get_species_and_conc(systems, row_idx, index_solv)
+solv_ratio = mb.get_species_and_conc(systems, row_idx, index_solv_ratio)
 solv_molfrac = np.array(solv_ratio).astype(float)
 solv_molfrac /= np.sum(solv_molfrac)
 
@@ -117,7 +117,7 @@ minboxsize = 4 #nm
 numsalt = 0
 
 salt_conc = np.array(cat_conc+an_conc).astype(float)
-solv_mwweight = sum(d2l.calculate_mw(solv)*solv_frac for solv, solv_frac in zip(solv, solv_molfrac))
+solv_mwweight = sum(mb.calculate_mw(solv)*solv_frac for solv, solv_frac in zip(solv, solv_molfrac))
 
 if 'volume' == units:
     # Solvent density in g/ml, obtained from averaging short MD run
@@ -162,5 +162,5 @@ if totalcharge > 0.0 or any(x == 0 for x in Nmols[:len(cat+an)]):
     Nmols[:len(cat+an)] = get_nmols(charges, Nmols[:len(cat+an)], tol=1)
     print("New number of cation/anion molecules: ",Nmols[:len(cat+an)])
 
-d2l.run_packmol_moltemplate(species,boxsize*10,Nmols,'system',str(row_idx))
+mb.run_system_builder(species,Nmols,'system',str(row_idx),boxsize=boxsize*10,mdengine='openmm')
 lmm.prep_openmm_sim("system",cat,an,solv,str(row_idx))#-1))
