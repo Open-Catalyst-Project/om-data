@@ -37,10 +37,16 @@ if units == 'volume':
     print(solv)
     
     #Initial boxsize is set to 8 nm. 
-    boxsize = 80
+    rho = 0.5 #g/mL
+    solv_mwweight = sum(mb.calculate_mw(solv)*solv_frac for solv, solv_frac in zip(solv, molfrac))
+    rho *= 1000 #in g/L
+    num_solv = 250
+    molrho = rho/solv_mwweight #in mol/L
+    Avog = 6.022e23
+    volume = num_solv/molrho*1e27/Avog #A3
+    boxsize = volume**(1/3)
     
     #Assume some number of solvents, we'll readjust later. 
-    num_solv = 500
     Natoms = []
     Nmols = []
     for j in range(len(solv)):
@@ -51,20 +57,9 @@ if units == 'volume':
         else:
             Nmols.append(int(num_solv*molfrac[j]))
             Natoms.append(sum(counts)*int(num_solv*molfrac[j]))
-    
-    #Next we want to cap the total number of atoms
-    NMax = 5000
-    count = 0
-    if sum(Natoms) > NMax:
-        fracs = np.array(Natoms)/sum(Natoms)
-        for j, frac in enumerate(fracs):
-            N = frac*NMax
-            count += N
-            N = int(N/(Natoms[j]/Nmols[j]))
-            Nmols[j] = N 
-    
+    print(boxsize)
     #Run Packmol, followed up by moltemplate 
     mb.run_system_builder(species,Nmols,'solvent',str(row_idx),boxsize=boxsize,mdengine='openmm')
-    lmm.prep_openmm_sim("solvent",[],[],solv,str(row_idx))
+    lmm.prep_openmm_md("solvent",[],[],solv,Nmols,str(row_idx))
 else:
     print("Solvent does not exist. Not an error, but check if system is a pure moltent salt/ionic liquid.")

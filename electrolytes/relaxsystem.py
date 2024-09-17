@@ -21,8 +21,8 @@ pdb = app.PDBFile('system_init.pdb')
 modeller = app.Modeller(pdb.topology, pdb.positions)
 forcefield = app.ForceField('system.xml')
 rdist = 2.0*nanometer
-system = forcefield.createSystem(modeller.topology, nonbondedMethod=PME, nonbondedCutoff=rdist, constraints=None,switchDistance=0.9*rdist)
-system.addForce(MonteCarloBarostat(1.0*bar, Temp*kelvin, 20))
+system = forcefield.createSystem(modeller.topology, nonbondedMethod=NoCutoff)#, nonbondedCutoff=rdist, constraints=None,switchDistance=0.9*rdist)
+#system.addForce(MonteCarloBarostat(1.0*bar, Temp*kelvin, 20))
 integrator = LangevinMiddleIntegrator(Temp*kelvin,   # Temperate of head bath
                                       1/picosecond, # Friction coefficient
                                       dt*picosecond) # Tolerance value
@@ -31,7 +31,7 @@ simulation.context.setPositions(modeller.positions)
 simulation.reporters.append(StateDataReporter('relaxdata.txt', rate, progress=True, density=True,totalSteps=steps,speed=True))
 simulation.minimizeEnergy()
 try:
-    simulation.step(steps)
+    #simulation.step(steps)
 
     simulation.saveState('equilsystem.state')
     simulation.saveCheckpoint('equilsystem.checkpoint')
