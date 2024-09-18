@@ -41,127 +41,127 @@ def get_nmols(charges, natoms, tol=1):
     sorted_variables = sorted(prob.variables()[1:], key=lambda v: int(v.name[1:]))
     return [int(v.varValue) for v in sorted_variables]
 
-# Read which system # to simulate from command line argument
-row_idx  = int(sys.argv[1]) 
+def generate_system(row_idx, rho=None):
 
-# Load the CSV file containing systems to simulate
-with open("elytes.csv", "r") as f:
-    systems = list(csv.reader(f))
-comments = systems[0]
-# Extract indices of columns specifying the cation, anion,and solvent
-index_cat, index_cat_conc = mb.get_indices(comments, "cation")
-index_an, index_an_conc = mb.get_indices(comments, "anion")
-index_solv, index_solv_ratio = mb.get_indices(comments, "solvent")
+    # Load the CSV file containing systems to simulate
+    with open("elytes.csv", "r") as f:
+        systems = list(csv.reader(f))
+    comments = systems[0]
+    # Extract indices of columns specifying the cation, anion,and solvent
+    index_cat, index_cat_conc = mb.get_indices(comments, "cation")
+    index_an, index_an_conc = mb.get_indices(comments, "anion")
+    index_solv, index_solv_ratio = mb.get_indices(comments, "solvent")
 
-# Extract salt species and their concentrations
-cat = mb.get_species_and_conc(systems, row_idx, index_cat)
-cat_conc = mb.get_species_and_conc(systems, row_idx, index_cat_conc)#.astype(float)
-an = mb.get_species_and_conc(systems, row_idx, index_an)
-an_conc = mb.get_species_and_conc(systems, row_idx, index_an_conc)#.astype(float)
+    # Extract salt species and their concentrations
+    cat = mb.get_species_and_conc(systems, row_idx, index_cat)
+    cat_conc = mb.get_species_and_conc(systems, row_idx, index_cat_conc)#.astype(float)
+    an = mb.get_species_and_conc(systems, row_idx, index_an)
+    an_conc = mb.get_species_and_conc(systems, row_idx, index_an_conc)#.astype(float)
 
-salt_molfrac = np.array(cat_conc+an_conc).astype(float)
-salt_molfrac /= np.sum(salt_molfrac)
+    salt_molfrac = np.array(cat_conc+an_conc).astype(float)
+    salt_molfrac /= np.sum(salt_molfrac)
 
 
-# Extract solvent species name and their molar ratios
-solv = mb.get_species_and_conc(systems, row_idx, index_solv)
-solv_ratio = mb.get_species_and_conc(systems, row_idx, index_solv_ratio)
-solv_molfrac = np.array(solv_ratio).astype(float)
-solv_molfrac /= np.sum(solv_molfrac)
+    # Extract solvent species name and their molar ratios
+    solv = mb.get_species_and_conc(systems, row_idx, index_solv)
+    solv_ratio = mb.get_species_and_conc(systems, row_idx, index_solv_ratio)
+    solv_molfrac = np.array(solv_ratio).astype(float)
+    solv_molfrac /= np.sum(solv_molfrac)
 
-soltorsolv = len(cat+an)*['A']+len(solv)*['B']
-   
-species = cat+an+solv#$system[2:Ncomp+2]
-molfrac = salt_molfrac.tolist()+solv_molfrac.tolist()
+    soltorsolv = len(cat+an)*['A']+len(solv)*['B']
+       
+    species = cat+an+solv#$system[2:Ncomp+2]
+    molfrac = salt_molfrac.tolist()+solv_molfrac.tolist()
 
-# Collect rows corresponding to the first match for each known entry
-#Load the CSV file
-cations_file = 'cations.csv'
-anions_file = 'anions.csv'
-cations = load_csv(cations_file)
-anions = load_csv(anions_file)
+    # Collect rows corresponding to the first match for each known entry
+    #Load the CSV file
+    cations_file = 'cations.csv'
+    anions_file = 'anions.csv'
+    cations = load_csv(cations_file)
+    anions = load_csv(anions_file)
 
-charges = []
-for cat_sp in cat:# in known_entries:
-    # Find the first row where column 'B' has the known entry
-    matching_row = cations[cations['formula'] == cat_sp].iloc[0]
-    charges.append(matching_row['charge'])
-for an_sp in an:# in known_entries:
-    # Find the first row where column 'B' has the known entry
-    matching_row = anions[anions['formula'] == an_sp].iloc[0]
-    charges.append(matching_row['charge'])
+    charges = []
+    for cat_sp in cat:# in known_entries:
+        # Find the first row where column 'B' has the known entry
+        matching_row = cations[cations['formula'] == cat_sp].iloc[0]
+        charges.append(matching_row['charge'])
+    for an_sp in an:# in known_entries:
+        # Find the first row where column 'B' has the known entry
+        matching_row = anions[anions['formula'] == an_sp].iloc[0]
+        charges.append(matching_row['charge'])
 
-# Initial boxsize is always 10 nm
-boxsize = 100 #In Angstrom
+    # Initial boxsize is always 10 nm
+    boxsize = 100 #In Angstrom
 
-# Calculate how many salt species to add in the system. If units of the salt concentration 
-# is in molality (units == 'mass') then, we don't need solvent density. But if the units is
-# in molarity (units == 'volume'), then we need the solvent density. If units is in moles/
-# stoichiometry (units == 'numbers'), then we have a molten salt/ionic liquid system 
-# and compute the mole fractions directly. We first assume that we want to add 5000 solvent molecules
-# on average. And then, we rescale things back so that the system size is controlled. 
-# In the process, rounding errors cause the system to not be charge solvent. We then adjust
-# how much cations and anions we want to add slightly (usually allowing subtraction/addition of one ion 
-# is sufficient
+    # Calculate how many salt species to add in the system. If units of the salt concentration 
+    # is in molality (units == 'mass') then, we don't need solvent density. But if the units is
+    # in molarity (units == 'volume'), then we need the solvent density. If units is in moles/
+    # stoichiometry (units == 'numbers'), then we have a molten salt/ionic liquid system 
+    # and compute the mole fractions directly. We first assume that we want to add 5000 solvent molecules
+    # on average. And then, we rescale things back so that the system size is controlled. 
+    # In the process, rounding errors cause the system to not be charge solvent. We then adjust
+    # how much cations and anions we want to add slightly (usually allowing subtraction/addition of one ion 
+    # is sufficient
 
-units = systems[row_idx][3]
-temperature = float(systems[row_idx][4])
+    units = systems[row_idx][3]
+    temperature = float(systems[row_idx][4])
 
-Avog = 6.023*10**23
-Nmols = []
-Natoms = []
+    Avog = 6.023*10**23
+    Nmols = []
+    Natoms = []
 
-minmol = 2 #We want the smallest concentration to be 2 species
-minboxsize = 4 #nm
-#num_solv = 1e6#485#5000
-numsalt = 0
+    minmol = 2 #We want the smallest concentration to be 2 species
+    minboxsize = 4 #nm
+    #num_solv = 1e6#485#5000
+    numsalt = 0
 
-salt_conc = np.array(cat_conc+an_conc).astype(float)
-solv_mwweight = sum(mb.calculate_mw(solv)*solv_frac for solv, solv_frac in zip(solv, solv_molfrac))
+    salt_conc = np.array(cat_conc+an_conc).astype(float)
+    solv_mwweight = sum(mb.calculate_mw(solv)*solv_frac for solv, solv_frac in zip(solv, solv_molfrac))
 
-if 'volume' == units:
-    # Solvent density in g/ml, obtained from averaging short MD run
-    rho = np.loadtxt(f'{row_idx}/solventdata.txt')#, skiprows=1, usecols=3,delimiter=',')
+    if 'volume' == units:
+        # Solvent density in g/ml, obtained from averaging short MD run
+        assert rho is not None
 
-    print(rho,"g/mL")
-    print(solv_mwweight,"g/mol")
-    
-    rho *= 1000 #in g/L
-    molrho = rho/solv_mwweight #in mol/L
+        print(rho,"g/mL")
+        print(solv_mwweight,"g/mol")
+        
+        rho *= 1000 #in g/L
+        molrho = rho/solv_mwweight #in mol/L
 
-    numsalt = salt_conc/min(salt_conc)*minmol
-    totalmol = np.sum(numsalt)
-    volume = totalmol/(sum(salt_conc)*Avog) # L
-    boxsize = volume**(1/3)/10*1e9
-    newminmol = minmol
-    conc = 0.6022*sum(salt_conc) #number per nm3
-    while minboxsize > boxsize:
-        newminmol += 1
-        numsalt = salt_molfrac/min(salt_molfrac)*newminmol
-        salt_conc = salt_molfrac*conc/Avog*1e24 #number per nm3
-        totalmol = np.sum(numsalt) #total number 
-        boxsize = (totalmol/conc)**(1/3) #nm
-    volume  = boxsize**3*1e-24 #nm3
-    num_solv = rho/solv_mwweight*volume*Avog
-elif 'mass' == units:
-    #No need to look at solvent density
-    mass = 1e-3*num_solv*solv_mwweight/Avog #mw is in g/mol, convert to kg/mol
-    numsalt = salt_conc*np.round(mass*Avog).astype(int)
-elif 'number' == units or 'Number' == units:
-    salt_molfrac = salt_conc/np.sum(salt_conc)
-    numsalt = salt_molfrac*np.round(num_solv).astype(int)
+        numsalt = salt_conc/min(salt_conc)*minmol
+        totalmol = np.sum(numsalt)
+        volume = totalmol/(sum(salt_conc)*Avog) # L
+        boxsize = volume**(1/3)/10*1e9
+        newminmol = minmol
+        conc = 0.6022*sum(salt_conc) #number per nm3
+        while minboxsize > boxsize:
+            newminmol += 1
+            numsalt = salt_molfrac/min(salt_molfrac)*newminmol
+            salt_conc = salt_molfrac*conc/Avog*1e24 #number per nm3
+            totalmol = np.sum(numsalt) #total number 
+            boxsize = (totalmol/conc)**(1/3) #nm
+        volume  = boxsize**3*1e-24 #nm3
+        num_solv = rho/solv_mwweight*volume*Avog
+    elif 'mass' == units:
+        #No need to look at solvent density
+        mass = 1e-3*num_solv*solv_mwweight/Avog #mw is in g/mol, convert to kg/mol
+        numsalt = salt_conc*np.round(mass*Avog).astype(int)
+    elif 'number' == units or 'Number' == units:
+        salt_molfrac = salt_conc/np.sum(salt_conc)
+        numsalt = salt_molfrac*np.round(num_solv).astype(int)
 
-numsolv = np.round(num_solv*solv_molfrac).astype(int)
-Nmols = np.concatenate((numsalt,numsolv)).astype(int).tolist()
-print(cat,an,solv)
-print(Nmols)
-totalcharge = np.round(sum(np.array(charges)*np.array(Nmols[:len(cat+an)])))
-if totalcharge > 0.0 or any(x == 0 for x in Nmols[:len(cat+an)]):
-    print(f"Charge neutrality is not satisfied for system {row_idx}")
-    print(cat+an)
-    print("Previous number of cation/anion molecules: ",Nmols[:len(cat+an)])
-    Nmols[:len(cat+an)] = get_nmols(charges, Nmols[:len(cat+an)], tol=1)
-    print("New number of cation/anion molecules: ",Nmols[:len(cat+an)])
+    numsolv = np.round(num_solv*solv_molfrac).astype(int)
+    Nmols = np.concatenate((numsalt,numsolv)).astype(int).tolist()
+    print(cat,an,solv)
+    print(Nmols)
+    totalcharge = np.round(sum(np.array(charges)*np.array(Nmols[:len(cat+an)])))
+    if totalcharge > 0.0 or any(x == 0 for x in Nmols[:len(cat+an)]):
+        print(f"Charge neutrality is not satisfied for system {row_idx}")
+        print(cat+an)
+        print("Previous number of cation/anion molecules: ",Nmols[:len(cat+an)])
+        Nmols[:len(cat+an)] = get_nmols(charges, Nmols[:len(cat+an)], tol=1)
+        print("New number of cation/anion molecules: ",Nmols[:len(cat+an)])
 
-mb.run_system_builder(species,Nmols,'elyte',str(row_idx),mdengine="desmond")
-mb.prep_desmond_md('elyte',str(row_idx),temperature)
+    mb.prep_desmond_md('elyte',str(row_idx),temperature)
+    command, directory = mb.run_system_builder(species,Nmols,'elyte',str(row_idx),mdengine="desmond")
+    return command, directory

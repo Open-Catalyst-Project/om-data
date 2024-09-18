@@ -12,17 +12,16 @@ import os
 import csv
 import numpy as np
 
-# Read which system # to simulate from command line argument
-row_idx = int(sys.argv[1]) 
 
-# Load the CSV file containing systems to simulate
-with open("elytes.csv", "r") as f:
-    systems = list(csv.reader(f))
+def generate_solvent_desmond(row_idx):
+    # Load the CSV file containing systems to simulate
+    with open("elytes.csv", "r") as f:
+        systems = list(csv.reader(f))
 
-# If solvent exists. We have may have pure molten salt or ionic liquid
-units = systems[row_idx][3]
-temperature = float(systems[row_idx][4])
-if units == 'volume':
+    # If solvent exists. We have may have pure molten salt or ionic liquid
+    units = systems[row_idx][3]
+    temperature = float(systems[row_idx][4])
+    assert units == 'volume', ("Solvent does not exist. Not an error, but check if system is a pure moltent salt/ionic liquid.")
     comments = systems[0]
 
     # Extract indices of columns specifying the solvent
@@ -49,7 +48,6 @@ if units == 'volume':
             Natoms.append(sum(counts)*int(num_solv*molfrac[j]))
     
     #Run Desmond system builder
-    mb.run_system_builder(species,Nmols,'solvent',str(row_idx),mdengine="desmond")
     mb.prep_desmond_md('solvent',str(row_idx),temperature)#,mdengine="desmond")
-else:
-    print("Solvent does not exist. Not an error, but check if system is a pure moltent salt/ionic liquid.")
+    command, directory = mb.run_system_builder(species,Nmols,'solvent',str(row_idx),mdengine="desmond")
+    return command, directory

@@ -118,7 +118,6 @@ simulate {{
 """
             msj.write(multisim)
 
-#need_opls4 = ["V+2","V+3","O2V+","OV+2"]
 
 def run_system_builder(species,Nmols,filename,directory,boxsize=40,mdengine='openmm'):
     """ Run Packmol and Moltemplate to generate system configuration (in LAMMPS data format) 
@@ -178,38 +177,30 @@ def run_system_builder(species,Nmols,filename,directory,boxsize=40,mdengine='ope
         subprocess.run(f"$SCHRODINGER/run python3 createmonomers.py {filename} {directory}",shell=True)
        
 
-        #If any component requires S-OPLS, we switch to this force field
-        #general_ff = ''
-        #if any(sp in need_opls4 for sp in species):
         general_ff = 'S-OPLS'
-        #else:
-        #general_ff = 'OPLS_2005'
-
         #Run the disordered system builder
-        with contextlib.chdir(directory):
-            command = [
-                "$SCHRODINGER/run",
-                "disordered_system_builder_gui_dir/disordered_system_builder_driver.py",
-                "-molecules", str(int(sum(Nmols))),
-                "-composition", str(':'.join(map(str, Nmols))),
-                "-pbc", "new_cubic",
-                "-density", "0.500",
-                "-scale_vdw", "0.50",
-                "-obey", "density",
-                "-tries_per_mol", "50",
-                "-tries_per_dc", "20",
-                "-seed", "1234",
-                "-no_recolor",
-                "-water_fftype", "TIP3P",
-                "-split_components",
-                "-forcefield", general_ff,
-                "monomers.maegz", f"{filename}",
-                "-JOBNAME", f"{filename}",
-                "-HOST", "localhost:1"
-            ]
-            command = ' '.join(command)
-            print(command)
-            subprocess.run(command,shell=True)
+        command = [
+            "$SCHRODINGER/run",
+            "disordered_system_builder_gui_dir/disordered_system_builder_driver.py",
+            "-molecules", str(int(sum(Nmols))),
+            "-composition", str(':'.join(map(str, Nmols))),
+            "-pbc", "new_cubic",
+            "-density", "0.500",
+            "-scale_vdw", "0.50",
+            "-obey", "density",
+            "-tries_per_mol", "50",
+            "-tries_per_dc", "20",
+            "-seed", "1234",
+            "-no_recolor",
+            "-water_fftype", "TIP3P",
+            "-split_components",
+            "-forcefield", general_ff,
+            "monomers.maegz", f"{filename}",
+            "-JOBNAME", f"{filename}",
+            "-HOST", "localhost:1"
+        ]
+        print(' '.join(command))
+        return command, directory
 
     elif mdengine == 'openmm':
         # Copy-paste the LT file, which has the OPLS settings
