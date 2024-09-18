@@ -40,7 +40,7 @@ if units == 'volume':
     rho = 0.5 #g/mL
     solv_mwweight = sum(mb.calculate_mw(solv)*solv_frac for solv, solv_frac in zip(solv, molfrac))
     rho *= 1000 #in g/L
-    num_solv = 250
+    num_solv = 500
     molrho = rho/solv_mwweight #in mol/L
     Avog = 6.022e23
     volume = num_solv/molrho*1e27/Avog #A3

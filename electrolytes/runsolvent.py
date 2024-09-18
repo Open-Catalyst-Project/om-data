@@ -9,7 +9,7 @@ import csv
 pdb_initfile = 'solvent_init.pdb'
 ff_xml = 'solvent.xml'
 if Path(pdb_initfile).is_file() and Path(ff_xml).is_file():
-    row_idx  = int(sys.argv[1]) + 1
+    row_idx  = int(sys.argv[1]) 
     # Load the CSV file containing systems to simulate
     with open("../elytes.csv", "r") as f:
         systems = list(csv.reader(f))
@@ -19,7 +19,7 @@ if Path(pdb_initfile).is_file() and Path(ff_xml).is_file():
     forcefield = app.ForceField(ff_xml)
     rdist = 1.0*nanometer
     system = forcefield.createSystem(modeller.topology, nonbondedMethod=PME, nonbondedCutoff=rdist, constraints=None,switchDistance=0.9*rdist)
-    system.addForce(MonteCarloBarostat(1.0*bar, Temp*kelvin, 20))
+    system.addForce(MonteCarloBarostat(1.0*bar, Temp*kelvin, 50))
     dt = 2.0 #fs
     dt = dt/1000.0
     integrator = LangevinMiddleIntegrator(Temp*kelvin,   # Temperate of head bath
