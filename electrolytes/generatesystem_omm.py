@@ -163,5 +163,5 @@ if totalcharge > 0.0 or any(x == 0 for x in Nmols[:len(cat+an)]):
     print("New number of cation/anion molecules: ",Nmols[:len(cat+an)])
 
 print(boxsize)
-mb.run_system_builder(species,Nmols,'system',str(row_idx),boxsize=boxsize*10,mdengine='openmm')
+mb.run_system_builder(species,Nmols,'system',str(row_idx),boxsize=boxsize*10*1.1,mdengine='openmm')
 lmm.prep_openmm_md("system",cat,an,solv,Nmols.tolist(),str(row_idx))#-1))
