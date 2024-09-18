@@ -13,11 +13,7 @@ import csv
 import numpy as np
 
 
-def generate_solvent_desmond(row_idx):
-    # Load the CSV file containing systems to simulate
-    with open("elytes.csv", "r") as f:
-        systems = list(csv.reader(f))
-
+def generate_solvent_desmond(row_idx, systems, job_dir):
     # If solvent exists. We have may have pure molten salt or ionic liquid
     units = systems[row_idx][3]
     temperature = float(systems[row_idx][4])
@@ -48,6 +44,6 @@ def generate_solvent_desmond(row_idx):
             Natoms.append(sum(counts)*int(num_solv*molfrac[j]))
     
     #Run Desmond system builder
-    mb.prep_desmond_md('solvent',str(row_idx),temperature)#,mdengine="desmond")
-    command, directory = mb.run_system_builder(species,Nmols,'solvent',str(row_idx),mdengine="desmond")
+    mb.prep_desmond_md('solvent',job_dir, temperature)#,mdengine="desmond")
+    command, directory = mb.run_system_builder(species,Nmols,'solvent',job_dir,mdengine="desmond")
     return command, directory

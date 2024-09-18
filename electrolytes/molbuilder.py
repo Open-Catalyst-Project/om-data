@@ -15,9 +15,6 @@ utility.
 
 from pathlib import Path
 import contextlib
-import json
-from json import encoder
-encoder.FLOAT_REPR = lambda o: format(o, '.15f')
 import subprocess
 import shutil
 from collections import Counter
@@ -29,6 +26,7 @@ import os
 import csv 
 import string
 import pandas as pd
+from createmonomers import write_monomers
 
 def load_csv(filename):
     return pd.read_csv(filename)
@@ -63,16 +61,15 @@ def compute_density_desmond(directory):
     if my_file.is_file():
         subprocess.run(f"$SCHRODINGER/run python3 computedensity.py {directory}",shell=True)
 
-def prep_desmond_md(filename, directory,temperature):
-    with contextlib.chdir(directory):
-        with open(f"{filename}_multisim.msj","w") as msj:
-            time = 1000 #by default the runtime is 1 ns, unless we're running the elyte sim
-            frames = 100
+def prep_desmond_md(filename, job_dir, temperature):
+    with open(os.path.join(job_dir, f"{filename}_multisim.msj"),"w") as msj:
+        time = 1000 #by default the runtime is 1 ns, unless we're running the elyte sim
+        frames = 100
+        interval = time/frames
+        if filename == 'elyte':
+            time = 250*1000 #we set elyte MD time to 250 ns
             interval = time/frames
-            if filename == 'elyte':
-                time = 250*1000 #we set elyte MD time to 250 ns
-                interval = time/frames
-            multisim = f"""task {{ task = "desmond:auto"  }}
+        multisim = f"""task {{ task = "desmond:auto"  }}
 
 ### Start relaxation protocol: Compressive
 
@@ -116,8 +113,7 @@ simulate {{
    compress = ""
 }}
 """
-            msj.write(multisim)
-
+        msj.write(multisim)
 
 def run_system_builder(species,Nmols,filename,directory,boxsize=40,mdengine='openmm'):
     """ Run Packmol and Moltemplate to generate system configuration (in LAMMPS data format) 
@@ -163,20 +159,8 @@ def run_system_builder(species,Nmols,filename,directory,boxsize=40,mdengine='ope
             charges.append(0)
         metadata["charges"] = list(charges)
         print(metadata)
-        #Copy PDB files to the job directory
-        for j in range(len(Nmols)):
-            Nmol = int(Nmols[j])
-            #Copy PDB files from the ff directory
-            spec_name = f'{species[j]}'
-            suffix = '.pdb'
-            shutil.copy(os.path.join('ff', spec_name + suffix), os.path.join(directory, spec_name + suffix))
+        write_monomers(species, charges, directory)
         
-        with open(f"./{directory}/metadata_{filename}.json","w") as f:
-            j = json.dumps(metadata,indent=4)
-            f.write(j)
-        subprocess.run(f"$SCHRODINGER/run python3 createmonomers.py {filename} {directory}",shell=True)
-       
-
         general_ff = 'S-OPLS'
         #Run the disordered system builder
         command = [
