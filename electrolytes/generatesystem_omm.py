@@ -111,7 +111,7 @@ Avog = 6.023*10**23
 Nmols = []
 Natoms = []
 
-minmol = 2 #We want the smallest concentration to be 2 species
+minmol = 1 #We want the smallest concentration to be 2 species
 minboxsize = 4 #nm
 #num_solv = 1e6#485#5000
 numsalt = 0
@@ -151,7 +151,7 @@ elif 'number' == units or 'Number' == units:
     numsalt = salt_molfrac*np.round(num_solv).astype(int)
 
 numsolv = np.round(num_solv*solv_molfrac).astype(int)
-Nmols = np.concatenate((numsalt,numsolv))
+Nmols = np.concatenate((numsalt,numsolv)).astype(int)
 print(cat,an,solv)
 print(Nmols)
 totalcharge = np.round(sum(np.array(charges)*np.array(Nmols[:len(cat+an)])))
@@ -162,5 +162,6 @@ if totalcharge > 0.0 or any(x == 0 for x in Nmols[:len(cat+an)]):
     Nmols[:len(cat+an)] = get_nmols(charges, Nmols[:len(cat+an)], tol=1)
     print("New number of cation/anion molecules: ",Nmols[:len(cat+an)])
 
-mb.run_system_builder(species,Nmols,'system',str(row_idx),boxsize=boxsize*10,mdengine='openmm')
-lmm.prep_openmm_sim("system",cat,an,solv,str(row_idx))#-1))
+print(boxsize)
+mb.run_system_builder(species,Nmols,'system',str(row_idx),boxsize=boxsize*10*1.1,mdengine='openmm')
+lmm.prep_openmm_md("system",cat,an,solv,Nmols.tolist(),str(row_idx))#-1))

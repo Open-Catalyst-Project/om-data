@@ -17,8 +17,7 @@ The resulting random electrolytes are appended as new entry to the elytes.csv fi
 import re
 import pandas as pd
 import sys
-import data2lammps as d2l
-import lammps2omm as lmm
+import molbuilder as mb
 import os
 import csv 
 import numpy as np
@@ -274,12 +273,12 @@ for i in range(Nrandom):
 
     species = cat+an+solv
     
-    distances = [3.0, 1.5] #nm 
+    distances = [2.25, 1.75] #nm 
     boxsize = 5 #nm
     minboxsize = 4 #nm
-    minmol = 2
-    for dis in distances:
-        for temperature  in [minT, maxT]:
+    minmol = 1
+    for dis in [np.random.choice(distances)]:
+        for temperature  in [np.random.choice([minT, maxT])]:
             conc = 0.62035049089/dis**3 # number per nm3, concentration
             mols = salt_molfrac/min(salt_molfrac)*minmol 
             salt_conc = salt_molfrac*conc/Avog*1e24 #number per nm3
@@ -294,9 +293,22 @@ for i in range(Nrandom):
                 boxsize = (totalmol/conc)**(1/3) #nm
             newelectrolyte = dict()
             newelectrolyte['category'] = 'random'
-            newelectrolyte['comment/name'] = f'Rand-{i+1}'
+            name = f'{clas}-{i+1}'
+            if temperature == minT:
+                name += '-minT'
+            else:
+                name += '-maxT'
+            if dis == 2.25:
+                name += '-lowconc'
+            else:
+                name += '-highconc'
+            newelectrolyte['comment/name'] = name 
+
             newelectrolyte['DOI'] = ''
-            newelectrolyte['units'] = 'volume'
+            if clas == 'MS':
+                newelectrolyte['units'] = 'number'
+            else:
+                newelectrolyte['units'] = 'volume'
             newelectrolyte['temperature'] = temperature
             for j in range(max_comp):
                 if j < len(cat):

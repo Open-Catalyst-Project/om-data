@@ -121,7 +121,7 @@ pdb_names = []
 pdb_resname_mol = []
 pdb_resnames = []
 
-def prep_openmm_sim(filename,cat,an,solv,Nmols,directory):
+def prep_openmm_md(filename,cat,an,solv,Nmols,directory):
     # Check filename if it is solvent vs. system.
     with contextlib.chdir(directory):
         lmpdata_file = filename+".data"

@@ -1,46 +1,110 @@
-from openmm.app import *
-from openmm import *
-from openmm.unit import *
-from sys import stdout, exit
-from pathlib import Path
-import csv 
+import argparse
+import csv
+import glob
+import os
 
-#TO-DO: Read temperature from CSV file
-pdb_initfile = 'solvent_init.pdb'
-ff_xml = 'solvent.xml'
-if Path(pdb_initfile).is_file() and Path(ff_xml).is_file():
-    row_idx  = int(sys.argv[1]) + 1
-    # Load the CSV file containing systems to simulate
-    with open("../elytes.csv", "r") as f:
+import openmm.app as app
+from openmm import *
+from openmm.unit import bar, kelvin, nanometer, picosecond
+
+
+def main(row_idx: int, job_dir: str):
+    """
+    Main job driver
+
+    :param row_idx: Row number in the `elytes.csv` that is to be run
+    :param job_dir: Directory where job files are stored and run
+    """
+    # Read the temperature from the CSV file
+    with open("elytes.csv", "r") as f:
         systems = list(csv.reader(f))
-    Temp = float(systems[row_idx][4])
-    pdb = app.PDBFile(pdb_initfile)
+    temp = float(systems[row_idx][4])
+
+    dt = 0.002  # ps
+    t_final = 1000 # ps, which is 500 ns
+    frames = 1000
+    runtime = int(t_final / dt)
+
+    cwd = os.getcwd()
+    os.chdir(os.path.join(job_dir, str(row_idx)))
+
+    pdb = app.PDBFile("solvent_init.pdb")
     modeller = app.Modeller(pdb.topology, pdb.positions)
-    forcefield = app.ForceField(ff_xml)
-    rdist = 1.0*nanometer
-    system = forcefield.createSystem(modeller.topology, nonbondedMethod=PME, nonbondedCutoff=rdist, constraints=None,switchDistance=0.9*rdist)
-    system.addForce(MonteCarloBarostat(1.0*bar, Temp*kelvin, 20))
-    dt = 2.0 #fs
-    dt = dt/1000.0
-    integrator = LangevinMiddleIntegrator(Temp*kelvin,   # Temperate of head bath
-                                          1/picosecond, # Friction coefficient
-                                          dt*picoseconds) # Time step
+    forcefield = app.ForceField("solvent.xml")
+    rdist = 1.0 * nanometer
+    system = forcefield.createSystem(
+        modeller.topology,
+        nonbondedMethod=app.PME,
+        nonbondedCutoff=rdist,
+        constraints=None,
+        switchDistance=0.9 * rdist,
+    )
+
+    system.addForce(MonteCarloBarostat(1.0 * bar, temp * kelvin, 100))
+    integrator = LangevinMiddleIntegrator(
+        temp * kelvin,  # Temperate of head bath
+        1 / picosecond,  # Friction coefficient
+        dt * picosecond,
+    )  # Time step
     simulation = app.Simulation(modeller.topology, system, integrator)
     simulation.context.setPositions(modeller.positions)
+    rate = max(1, int(runtime / frames))
+    
+    # Assuming you have a Simulation object named `simulation`
+    state = simulation.context.getState()
+    # Get the box vectors (3x3 matrix representing the vectors defining the periodic box)
+    box_vectors = state.getPeriodicBoxVectors()
+    # Extract the box dimensions (lengths of the box vectors)
+    box_lengths = [box_vectors[i][i].value_in_unit(unit.nanometer) for i in range(3)]
+    print("Box dimensions (nm):", box_lengths)
+    
     simulation.minimizeEnergy()
-    frames = 500
-    runtime = 1000 #ps
-    runtime /= dt
-    rate = int(runtime/frames)
-    if rate == 0:
-        rate = 1
+    restart = False
 
-    simulation.reporters.append(StateDataReporter('solventdata.txt', rate, progress=True, temperature=True, potentialEnergy=True, density=True,totalSteps=runtime,speed=True))
-    simulation.step(runtime)
-    # Get the final state
-    final_state = simulation.context.getState(getPositions=True)
-    # Save the final frame to a PDB file
-    with open('solvent_output.pdb', 'w') as f:
-        PDBFile.writeFile(pdb.topology, final_state.getPositions(), f, keepIds=True)
-else:
-    print(f'Either {pdb_initfile} or {ff_xml} are missing. Not an error but check if the system is molten salt/ionic liquid or if concentrations are specified by molalities')
+    # Get name for PDBReporter (OpenMM cannot add to an existing .pdb file for restarts)
+    output_pdb_basename = "solvent_output"
+    other_name = sorted(glob.glob(output_pdb_basename + "*.pdb"))
+    if other_name and other_name[-1] != output_pdb_basename + ".pdb":
+        last_name = other_name[-1].replace(".pdb", "")
+        count = int(last_name.split("_")[-1]) + 1
+    else:
+        count = 0
+    output_name = f"{output_pdb_basename}_{count}.pdb"
+    
+
+    simulation.reporters.append(
+        app.PDBReporter(output_name, rate, enforcePeriodicBox=True)
+    )
+    simulation.reporters.append(app.StateDataReporter('solventdata.txt', rate, progress=True, temperature=True, potentialEnergy=True, density=True,totalSteps=runtime,speed=True))
+    simulation.step(
+        runtime - simulation.currentStep - 10
+    )  # starts at 10 for some reason, equilibration?
+    # Assuming you have a Simulation object named `simulation`
+    state = simulation.context.getState()
+    # Get the box vectors (3x3 matrix representing the vectors defining the periodic box)
+    box_vectors = state.getPeriodicBoxVectors()
+    # Extract the box dimensions (lengths of the box vectors)
+    box_lengths = [box_vectors[i][i].value_in_unit(unit.nanometer) for i in range(3)]
+    print("Final Box dimensions (nm):", box_lengths)
+    os.chdir(cwd)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Parameters for OMol24 Electrolytes MD"
+    )
+    parser.add_argument(
+        "--job_dir",
+        type=str,
+        required=True,
+        help="Directory containing input electrolyte directories/where job files will be stored",
+    )
+    parser.add_argument(
+        "--row_idx", type=int, help="Job specified in elytes.csv to be run"
+    )
+    args = parser.parse_args()
+    return args
+
+if __name__ == "__main__":
+    args = parse_args()
+    main(args.row_idx, args.job_dir)

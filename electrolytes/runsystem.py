@@ -21,7 +21,7 @@ def main(row_idx: int, job_dir: str):
     temp = float(systems[row_idx][4])
 
     dt = 0.002  # ps
-    t_final = 500000  # ps, which is 500 ns
+    t_final = 500*1000 # ps, which is 500 ns
     frames = 1000
     runtime = int(t_final / dt)
 
@@ -53,6 +53,13 @@ def main(row_idx: int, job_dir: str):
     else:
         simulation.loadState("equilsystem.state")
         simulation.loadCheckpoint("equilsystem.checkpoint")
+        # Assuming you have a Simulation object named `simulation`
+        state = simulation.context.getState()
+        # Get the box vectors (3x3 matrix representing the vectors defining the periodic box)
+        box_vectors = state.getPeriodicBoxVectors()
+        # Extract the box dimensions (lengths of the box vectors)
+        box_lengths = [box_vectors[i][i].value_in_unit(unit.nanometer) for i in range(3)]
+        print("Box dimensions (nm):", box_lengths)
         simulation.minimizeEnergy()
         restart = False
 
@@ -86,6 +93,13 @@ def main(row_idx: int, job_dir: str):
     simulation.step(
         runtime - simulation.currentStep - 10
     )  # starts at 10 for some reason, equilibration?
+    # Assuming you have a Simulation object named `simulation`
+    state = simulation.context.getState()
+    # Get the box vectors (3x3 matrix representing the vectors defining the periodic box)
+    box_vectors = state.getPeriodicBoxVectors()
+    # Extract the box dimensions (lengths of the box vectors)
+    box_lengths = [box_vectors[i][i].value_in_unit(unit.nanometer) for i in range(3)]
+    print("Final Box dimensions (nm):", box_lengths)
     os.chdir(cwd)
 
 
