@@ -171,7 +171,7 @@ def generate_system(row_idx, systems, job_dir, rho=None):
         if scale_factor > 1:
             numsolv *= int(scale_factor) 
             numsalt *= int(scale_factor)
-    num_solv = sum(numsolv)
+        num_solv = sum(numsolv)
     numsolv = np.round(num_solv*solv_molfrac).astype(int)
     Nmols = np.concatenate((numsalt,numsolv)).astype(int).tolist()
     print(cat,an,solv)

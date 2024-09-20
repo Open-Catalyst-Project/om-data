@@ -95,6 +95,60 @@ simulate {{
   checkpt = {{
      write_last_step = true
   }}
+  ensemble = NVT
+  jobname = "$MASTERJOBNAME"
+  time = 24.0
+  timestep = [0.001 0.001 0.003 ]
+  title = "Molecular Dynamics 0.0 ns/NVT/300.0 K/1 fs"
+  trajectory = {{
+     interval = 4.8
+  }}
+}}
+
+simulate {{
+  checkpt = {{
+     write_last_step = true
+  }}
+  ensemble = NVT
+  jobname = "$MASTERJOBNAME"
+  temperature = 700.0
+  time = 240.0
+  timestep = [0.001 0.001 0.003 ]
+  title = "Molecular Dynamics 0.2 ns/NVT/700.0 K/1 fs"
+  trajectory = {{
+     interval = 4.8
+  }}
+}}
+
+simulate {{
+  checkpt = {{
+     write_last_step = true
+  }}
+  jobname = "$MASTERJOBNAME"
+  time = 24.0
+  timestep = [0.001 0.001 0.003 ]
+  title = "Molecular Dynamics 0.0 ns/NPT/1.01325 bar/300.0 K/1 fs"
+  trajectory = {{
+     interval = 4.8
+  }}
+}}
+
+simulate {{
+  checkpt = {{
+     write_last_step = true
+  }}
+  jobname = "$MASTERJOBNAME"
+  time = 240.0
+  title = "Molecular Dynamics 0.2 ns/NPT/1.01325 bar/300.0 K/2 fs"
+  trajectory = {{
+     interval = 24.0
+  }}
+}}
+
+simulate {{
+  checkpt = {{
+     write_last_step = true
+  }}
   eneseq = {{
      interval = 100.0
   }}
@@ -106,7 +160,7 @@ simulate {{
   time = {time}
   timestep = [0.002 0.002 0.006 ]
   temperature = {temperature} 
-  title = "Molecular Dynamics 1 ns/NPT/1.01325 bar/{temperature} K"
+  title = "Molecular Dynamics {time/1000:.1f} ns/NPT/1.01325 bar/{temperature:.2f} K"
   trajectory = {{
      interval = {interval}
      write_velocity = true
