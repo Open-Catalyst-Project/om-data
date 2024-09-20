@@ -1,4 +1,8 @@
 category,comment/name,DOI,units,temperature,cation1,cation1_conc,cation2,cation2_conc,cation3,cation3_conc,cation4,cation4_conc,cation5,cation5_conc,cation6,cation6_conc,cation7,cation7_conc,cation8,cation8_conc,anion1,anion1_conc,anion2,anion2_conc,anion3,anion3_conc,anion4,anion4_conc,anion5,anion5_conc,anion6,anion6_conc,anion7,anion7_conc,anion8,anion8_conc,solvent1,solvent1_ratio,solvent2,solvent2_ratio,solvent3,solvent3_ratio,solvent4,solvent4_ratio,solvent5,solvent5_ratio,solvent6,solvent6_ratio,solvent7,solvent7_ratio,solvent8,solvent8_ratio
+random,aq-10-minT-lowconc,,volume,286.65000000000003,Ag+2,0.0180845084318799,Ti+,0.0180845084318799,,,,,,,,,,,,,C2H3O2-,0.0542535252956397,,,,,,,,,,,,,,,H2O,1,,,,,,,,,,,,,,
+,Water-in-salt-5,10.1126/science.aab1595,mass,300.0,Li+,5.0,,,,,,,,,,,,,,,C2F6NO4S2-,5.0,,,,,,,,,,,,,,,H2O,1.0,,,,,,,,,,,,,,
+,Molten salt,10.11890/1006-7191-102-129,number,900.0,Li+,45.0,K+,45.0,,,,,,,,,,,,,Cl-,85.0,F-,5.0,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,LHCE-2-hightemp,10.1016/j.chempr.2018.05.002,number,370.0,Li+,1.0,,,,,,,,,,,,,,,F2NO4S2-,1.0,,,,,,,,,,,,,,,C4H8O2S,3.0,C5H4F8O,3.0,,,,,,,,,,,,
 random,protic-1-maxT-highconc,,volume,371.45,Mg+2,0.0960904274551053,,,,,,,,,,,,,,,O4P-3,0.04804521372755265,NO3-,0.04804521372755265,,,,,,,,,,,,,C4H11NO,1,,,,,,,,,,,,,,
 random,aprotic-2-maxT-highconc,,volume,378.28999999999996,H4N+,0.03843617098204213,Ca+2,0.03843617098204213,,,,,,,,,,,,,C9H18NO-,0.03843617098204213,C2H5O-,0.03843617098204213,I-,0.03843617098204213,,,,,,,,,,,C2H3N,2,C3H8O3S,3,,,,,,,,,,,,
 random,protic-3-maxT-highconc,,volume,381.73375,K+,0.1098176313772632,,,,,,,,,,,,,,,F6P-,0.0274544078443158,C6H2O4-2,0.0274544078443158,CF3O3S-,0.0274544078443158,,,,,,,,,,,H2O,2,C2H6O2,1,C4H11NO,1,,,,,,,,,,
@@ -8,4 +12,3 @@ random,protic-6-minT-lowconc,,volume,426.3,K+,0.05167002409108543,,,,,,,,,,,,,,,
 random,aprotic-7-minT-lowconc,,volume,326.55,Tl+3,0.012917506022771358,Mn+2,0.012917506022771358,,,,,,,,,,,,,C2F6NO4S2-,0.05167002409108543,CHO3-,0.012917506022771358,,,,,,,,,,,,,C3H4O3,3,,,,,,,,,,,,,,
 random,aprotic-8-maxT-highconc,,volume,419.1875,OV+2,0.0640602849700702,,,,,,,,,,,,,,,F2O2P-,0.0640602849700702,I-,0.0640602849700702,,,,,,,,,,,,,C2H6OS,1,C3H6O3,1,C3H9O4P,2,,,,,,,,,,
 random,protic-9-minT-highconc,,volume,426.3,Sr+2,0.024022606863776327,Pd+2,0.024022606863776327,Fe+2,0.024022606863776327,,,,,,,,,,,C2H3O2-,0.0960904274551053,C6H2O4-2,0.024022606863776327,,,,,,,,,,,,,CH4N2O,2,,,,,,,,,,,,,,
-random,aq-10-minT-lowconc,,volume,286.65000000000003,Ag+2,0.0180845084318799,Ti+,0.0180845084318799,,,,,,,,,,,,,C2H3O2-,0.0542535252956397,,,,,,,,,,,,,,,H2O,1,,,,,,,,,,,,,,

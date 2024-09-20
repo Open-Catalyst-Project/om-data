@@ -92,9 +92,6 @@ for an_sp in an:# in known_entries:
     matching_row = anions[anions['formula'] == an_sp].iloc[0]
     charges.append(matching_row['charge'])
 
-# Initial boxsize is always 10 nm
-boxsize = 100 #In Angstrom
-
 # Calculate how many salt species to add in the system. If units of the salt concentration 
 # is in molality (units == 'mass') then, we don't need solvent density. But if the units is
 # in molarity (units == 'volume'), then we need the solvent density. If units is in moles/
@@ -111,8 +108,9 @@ Avog = 6.023*10**23
 Nmols = []
 Natoms = []
 
-minmol = 1 #We want the smallest concentration to be 2 species
-minboxsize = 4 #nm
+minmol = 2 #We want the smallest concentration to be 2 species
+numsalt = 0
+natoms_max = 5000 
 #num_solv = 1e6#485#5000
 numsalt = 0
 
@@ -120,6 +118,7 @@ salt_conc = np.array(cat_conc+an_conc).astype(float)
 solv_mwweight = sum(mb.calculate_mw(solv)*solv_frac for solv, solv_frac in zip(solv, solv_molfrac))
 
 if 'volume' == units:
+    minboxsize = 4 #nm
     # Solvent density in g/ml, obtained from averaging short MD run
     data = np.loadtxt(f'{row_idx}/solventdata.txt', skiprows=1, usecols=3,delimiter=',')
     rho = np.mean(data[-10:])#:w
@@ -144,12 +143,40 @@ if 'volume' == units:
     num_solv = rho/solv_mwweight*volume*Avog
 elif 'mass' == units:
     #No need to look at solvent density
-    mass = 1e-3*num_solv*solv_mwweight/Avog #mw is in g/mol, convert to kg/mol
-    numsalt = salt_conc*np.round(mass*Avog).astype(int)
+    numsalt = salt_conc/min(salt_conc)*minmol
+    mass = numsalt[0]/Avog/salt_conc[0] #kg
+    num_solv = 1000*mass/solv_mwweight*Avog  
+    
+    numsolv = np.round(num_solv*solv_molfrac).astype(int)
+    numspec = np.append(numsalt,numsolv)
+    spec = cat+an+solv
+    natoms = 0
+    for j in range(len(spec)):
+        elements, counts = mb.extract_elements_and_counts(spec[j])
+        natoms += sum(counts)*numspec[j]
+    
+    scale_factor = natoms_max/natoms
+    if scale_factor > 1:
+       numsolv *= int(scale_factor) 
+       numsalt *= int(scale_factor)
+    num_solv = sum(numsolv)
 elif 'number' == units or 'Number' == units:
-    salt_molfrac = salt_conc/np.sum(salt_conc)
-    numsalt = salt_molfrac*np.round(num_solv).astype(int)
-
+    #We cannot use minmol to initiate this. Everything is salt. But we know
+    #We want to limit the number of atoms
+    spec_conc = np.array(cat_conc + an_conc + solv_ratio) 
+    spec = cat+an+solv
+    numsalt = salt_conc/min(salt_conc)*minmol
+    numsolv = solv_molfrac*minmol
+    numspec = np.append(numsalt,numsolv)
+    natoms = 0
+    for j in range(len(spec)):
+        elements, counts = mb.extract_elements_and_counts(spec[j])
+        natoms += sum(counts)*numspec[j]
+    scale_factor = natoms_max/natoms
+    if scale_factor > 1:
+        numsolv *= int(scale_factor) 
+        numsalt *= int(scale_factor)
+    num_solv = sum(numsolv)
 numsolv = np.round(num_solv*solv_molfrac).astype(int)
 Nmols = np.concatenate((numsalt,numsolv)).astype(int)
 print(cat,an,solv)
@@ -162,6 +189,21 @@ if totalcharge > 0.0 or any(x == 0 for x in Nmols[:len(cat+an)]):
     Nmols[:len(cat+an)] = get_nmols(charges, Nmols[:len(cat+an)], tol=1)
     print("New number of cation/anion molecules: ",Nmols[:len(cat+an)])
 
-print(boxsize)
-mb.run_system_builder(species,Nmols,'system',str(row_idx),boxsize=boxsize*10*1.1,mdengine='openmm')
+#Initial boxsize is set so that density is 0.5 g/mL
+rho = 0.5 #g/mL
+if units == 'number' or units == 'Number':
+    salt_mwweight = sum(mb.calculate_mw(salt)*salt_frac for salt, salt_frac in zip(cat+an, salt_conc/min(salt_conc)))
+    rho *= 1000 #in g/L
+    molrho = rho/salt_mwweight #in mol/L
+    Avog = 6.022e23
+    volume = sum(numsalt)/molrho*1e27/Avog #A3
+    boxsize = volume**(1/3)
+else:
+    solv_mwweight = sum(mb.calculate_mw(solv)*solv_frac for solv, solv_frac in zip(solv, solv_molfrac))
+    rho *= 1000 #in g/L
+    molrho = rho/solv_mwweight #in mol/L
+    Avog = 6.022e23
+    volume = num_solv/molrho*1e27/Avog #A3
+    boxsize = volume**(1/3)
+mb.run_system_builder(species,Nmols,'system',str(row_idx),boxsize=boxsize,mdengine='openmm')
 lmm.prep_openmm_md("system",cat,an,solv,Nmols.tolist(),str(row_idx))#-1))

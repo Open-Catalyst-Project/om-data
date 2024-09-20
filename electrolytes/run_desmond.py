@@ -41,28 +41,32 @@ def main():
         job_range = [args.job_idx]
     else:
         job_range = range(1, len(systems))
+    
+    density = None
 
     # Define the numbers as a space-separated list
     # Loop through each number
     for job_idx in job_range:
         units = systems[job_idx][3]
-        if units != 'volume':
-            continue
+        #if units != 'volume':
+            #continue
 
         job_dir = os.path.join(args.output_path, str(job_idx))
         if os.path.exists(job_dir):
             shutil.rmtree(job_dir)
         os.makedirs(job_dir)
-        command, directory = generate_solvent_desmond(job_idx, systems, job_dir)
-        job_dj.addJob(queue.JobControlJob(command, directory))
-        job_dj.run()
         
-        cmd = get_desmond_cmd('solvent_system-out.cms', 'solvent_density.cms', 'solvent_multisim.msj', 'density')
-        job_dj.addJob(queue.JobControlJob(cmd, job_dir))
-        job_dj.run()
+        if units == 'volume':
+            command, directory = generate_solvent_desmond(job_idx, systems, job_dir)
+            job_dj.addJob(queue.JobControlJob(command, directory))
+            job_dj.run()
+            
+            cmd = get_desmond_cmd('solvent_system-out.cms', 'solvent_density.cms', 'solvent_multisim.msj', 'density')
+            job_dj.addJob(queue.JobControlJob(cmd, job_dir))
+            job_dj.run()
 
-        with chdir(job_dir):
-            density = compute_density(job_dir)
+            with chdir(job_dir):
+                density = compute_density(job_dir)
         command, directory = generate_system(job_idx, systems, job_dir, density)
         job_dj.addJob(queue.JobControlJob(command, directory))
         job_dj.run()

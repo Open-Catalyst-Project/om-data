@@ -12,10 +12,7 @@ for ((i = 1; i < num_lines; i++)); do
     
     #Generate and run short simulation of the solvent 
     python generatesolvent_omm.py $i
-    cd $i
-    cp ../runsolvent.py ./
-    python runsolvent.py $i
-    cd ..
+    python runsolvent.py --job_dir=./ --row_idx=$i
     
     #Generate the system and relax
     python generatesystem_omm.py $i 

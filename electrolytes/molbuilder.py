@@ -26,7 +26,10 @@ import os
 import csv 
 import string
 import pandas as pd
-from createmonomers import write_monomers
+try:
+    from createmonomers import write_monomers
+except ImportError:
+    print("Error in importing createmonomers. Possible that Schrodinger module is not available. Make sure Schrodinger virtual environment is activated")
 
 def load_csv(filename):
     return pd.read_csv(filename)

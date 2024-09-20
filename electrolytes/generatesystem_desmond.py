@@ -87,9 +87,6 @@ def generate_system(row_idx, systems, job_dir, rho=None):
         matching_row = anions[anions['formula'] == an_sp].iloc[0]
         charges.append(matching_row['charge'])
 
-    # Initial boxsize is always 10 nm
-    boxsize = 100 #In Angstrom
-
     # Calculate how many salt species to add in the system. If units of the salt concentration 
     # is in molality (units == 'mass') then, we don't need solvent density. But if the units is
     # in molarity (units == 'volume'), then we need the solvent density. If units is in moles/
@@ -108,16 +105,16 @@ def generate_system(row_idx, systems, job_dir, rho=None):
     Natoms = []
 
     minmol = 2 #We want the smallest concentration to be 2 species
-    minboxsize = 4 #nm
-    #num_solv = 1e6#485#5000
     numsalt = 0
-
+    natoms_max = 5000 
     salt_conc = np.array(cat_conc+an_conc).astype(float)
     solv_mwweight = sum(mb.calculate_mw(solv)*solv_frac for solv, solv_frac in zip(solv, solv_molfrac))
 
     if 'volume' == units:
         # Solvent density in g/ml, obtained from averaging short MD run
         assert rho is not None
+        
+        minboxsize = 4 #nm
 
         print(rho,"g/mL")
         print(solv_mwweight,"g/mol")
@@ -141,12 +138,40 @@ def generate_system(row_idx, systems, job_dir, rho=None):
         num_solv = rho/solv_mwweight*volume*Avog
     elif 'mass' == units:
         #No need to look at solvent density
-        mass = 1e-3*num_solv*solv_mwweight/Avog #mw is in g/mol, convert to kg/mol
-        numsalt = salt_conc*np.round(mass*Avog).astype(int)
+        numsalt = salt_conc/min(salt_conc)*minmol
+        mass = numsalt[0]/Avog/salt_conc[0] #kg
+        num_solv = 1000*mass/solv_mwweight*Avog  
+        
+        numsolv = np.round(num_solv*solv_molfrac).astype(int)
+        numspec = np.append(numsalt,numsolv)
+        spec = cat+an+solv
+        natoms = 0
+        for j in range(len(spec)):
+            elements, counts = mb.extract_elements_and_counts(spec[j])
+            natoms += sum(counts)*numspec[j]
+        
+        scale_factor = natoms_max/natoms
+        if scale_factor > 1:
+           numsolv *= int(scale_factor) 
+           numsalt *= int(scale_factor)
+        num_solv = sum(numsolv)
     elif 'number' == units or 'Number' == units:
-        salt_molfrac = salt_conc/np.sum(salt_conc)
-        numsalt = salt_molfrac*np.round(num_solv).astype(int)
-
+        #We cannot use minmol to initiate this. Everything is salt. But we know
+        #We want to limit the number of atoms
+        spec_conc = np.array(cat_conc + an_conc + solv_ratio) 
+        spec = cat+an+solv
+        numsalt = salt_conc/min(salt_conc)*minmol
+        numsolv = solv_molfrac*minmol
+        numspec = np.append(numsalt,numsolv)
+        natoms = 0
+        for j in range(len(spec)):
+            elements, counts = mb.extract_elements_and_counts(spec[j])
+            natoms += sum(counts)*numspec[j]
+        scale_factor = natoms_max/natoms
+        if scale_factor > 1:
+            numsolv *= int(scale_factor) 
+            numsalt *= int(scale_factor)
+    num_solv = sum(numsolv)
     numsolv = np.round(num_solv*solv_molfrac).astype(int)
     Nmols = np.concatenate((numsalt,numsolv)).astype(int).tolist()
     print(cat,an,solv)

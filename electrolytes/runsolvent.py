@@ -2,6 +2,7 @@ import argparse
 import csv
 import glob
 import os
+import sys
 
 import openmm.app as app
 from openmm import *
@@ -28,6 +29,9 @@ def main(row_idx: int, job_dir: str):
     cwd = os.getcwd()
     os.chdir(os.path.join(job_dir, str(row_idx)))
 
+    if not os.path.exists("solvent_init.pdb"):
+        print("Solvent does not exist. Not an error, but check if system is a pure moltent salt/ionic liquid.")
+        sys.exit()
     pdb = app.PDBFile("solvent_init.pdb")
     modeller = app.Modeller(pdb.topology, pdb.positions)
     forcefield = app.ForceField("solvent.xml")
