@@ -136,6 +136,7 @@ def generate_system(row_idx, systems, job_dir, rho=None):
             boxsize = (totalmol/conc)**(1/3) #nm
         volume  = boxsize**3*1e-24 #nm3
         num_solv = rho/solv_mwweight*volume*Avog
+        numsolv = np.round(num_solv*solv_molfrac).astype(int)
     elif 'mass' == units:
         #No need to look at solvent density
         numsalt = salt_conc/min(salt_conc)*minmol
@@ -155,6 +156,7 @@ def generate_system(row_idx, systems, job_dir, rho=None):
            numsolv *= int(scale_factor) 
            numsalt *= int(scale_factor)
         num_solv = sum(numsolv)
+        numsolv = np.round(num_solv*solv_molfrac).astype(int)
     elif 'number' == units or 'Number' == units:
         #We cannot use minmol to initiate this. Everything is salt. But we know
         #We want to limit the number of atoms
@@ -171,8 +173,8 @@ def generate_system(row_idx, systems, job_dir, rho=None):
         if scale_factor > 1:
             numsolv *= int(scale_factor) 
             numsalt *= int(scale_factor)
-    num_solv = sum(numsolv)
-    numsolv = np.round(num_solv*solv_molfrac).astype(int)
+        num_solv = sum(numsolv)
+        numsolv = np.round(num_solv*solv_molfrac).astype(int)
     Nmols = np.concatenate((numsalt,numsolv)).astype(int).tolist()
     print(cat,an,solv)
     print(Nmols)
