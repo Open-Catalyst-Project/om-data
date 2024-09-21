@@ -9,12 +9,44 @@ The resulting random electrolytes are appended as new entry to the elytes.csv fi
 import pandas as pd
 import re
 import sys
-import data2lammps as d2l
+import molbuilder as mb
 import lammps2omm as lmm
 import os
 import csv 
 import numpy as np
 from pulp import LpProblem, LpVariable, lpSum, LpMinimize
+
+Avog = 6.023*10**23
+def write_elyte_entry(clas, name, temperature, cat, an, solv, salt_conc, stoich_solv):
+    newelectrolyte = dict()
+    newelectrolyte['category'] = 'random'
+    newelectrolyte['comment/name'] = name 
+    newelectrolyte['DOI'] = ''
+    if clas == 'MS':
+        newelectrolyte['units'] = 'number'
+    else:
+        newelectrolyte['units'] = 'volume'
+    newelectrolyte['temperature'] = temperature
+    for j in range(max_comp):
+        if j < len(cat):
+            newelectrolyte[f'cation{j+1}'] = cat[j]
+            newelectrolyte[f'cation{j+1}_conc'] = salt_conc[j]
+        else:
+            newelectrolyte[f'cation{j+1}'] = ''
+            newelectrolyte[f'cation{j+1}_conc'] = ''
+        if j < len(an):
+            newelectrolyte[f'anion{j+1}'] = an[j]
+            newelectrolyte[f'anion{j+1}_conc'] = salt_conc[j+len(cat)]
+        else:
+            newelectrolyte[f'anion{j+1}'] = ''
+            newelectrolyte[f'anion{j+1}_conc'] = ''
+        if j < len(solv):
+            newelectrolyte[f'solvent{j+1}'] = solv[j]
+            newelectrolyte[f'solvent{j+1}_ratio'] = stoich_solv[j]
+        else:
+            newelectrolyte[f'solvent{j+1}'] = ''
+            newelectrolyte[f'solvent{j+1}_ratio'] = ''
+    return newelectrolyte
 
 def remove_dup_species(formulas, ids):
     # Use a dictionary to keep track of unique formulas and corresponding ids
@@ -117,10 +149,10 @@ anions = load_csv(anions_file)
 solvents = load_csv(solvents_file)
 elytes= load_csv('elytes.csv')
 
-Nrandom = 200
+Nrandom = 50
 fac = 0.05
 for i in range(Nrandom):
-    max_comp = 8
+    max_comp = 3
 
     #Randomly select cations and cations
     cat, catcharges = choose_species(cations,max_comp)
@@ -152,36 +184,23 @@ for i in range(Nrandom):
 
 
     #Start preparing random electrolytes
-    concs = [1.0, 10.0]
-    for conc in concs:
+    distances = [2.25, 1.75] #nm 
+    minmol = 1
+    for dis in distances:
         for temperature  in [minT, maxT]:
-            salt_conc = conc*np.array(stoich)
-            
-            newelectrolyte = dict()
-            newelectrolyte['category'] = 'random'
-            newelectrolyte['comment/name'] = f'Rand-{i+1}'
-            newelectrolyte['DOI'] = ''
-            newelectrolyte['units'] = 'mass'
-            newelectrolyte['temperature'] = temperature
-            for j in range(max_comp):
-                if j < len(cat):
-                    newelectrolyte[f'cation{j+1}'] = cat[j]
-                    newelectrolyte[f'cation{j+1}_conc'] = salt_conc[j]/len(cat+an)
-                else:
-                    newelectrolyte[f'cation{j+1}'] = ''
-                    newelectrolyte[f'cation{j+1}_conc'] = ''
-                if j < len(an):
-                    newelectrolyte[f'anion{j+1}'] = an[j]
-                    newelectrolyte[f'anion{j+1}_conc'] = salt_conc[j+len(cat)]/len(cat+an)
-                else:
-                    newelectrolyte[f'anion{j+1}'] = ''
-                    newelectrolyte[f'anion{j+1}_conc'] = ''
-                if j < len(solv):
-                    newelectrolyte[f'solvent{j+1}'] = solv[j]
-                    newelectrolyte[f'solvent{j+1}_ratio'] = stoich_solv[j]
-                else:
-                    newelectrolyte[f'solvent{j+1}'] = ''
-                    newelectrolyte[f'solvent{j+1}_ratio'] = ''
-            
+            conc = 0.62035049089/dis**3 # number per nm3, concentration
+            mols = salt_molfrac/min(salt_molfrac)*minmol 
+            salt_conc = salt_molfrac*conc/Avog*1e24 #number per nm3
+            clas = 'Rand'            
+            name = f'{clas}-{i+1}'
+            if temperature == minT:
+                name += '-minT'
+            else:
+                name += '-maxT'
+            if dis == 2.25:
+                name += '-lowconc'
+            else:
+                name += '-highconc'
+            newelectrolyte = write_elyte_entry(clas, name, temperature, cat, an, solv, salt_conc, stoich_solv)
             elytes = pd.concat([elytes,pd.DataFrame([newelectrolyte])],ignore_index=True)
-elytes.to_csv('testelytes.csv', index=False)
+elytes.to_csv('elytes.csv', index=False)
