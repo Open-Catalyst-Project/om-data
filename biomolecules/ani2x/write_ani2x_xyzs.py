@@ -23,8 +23,6 @@ def main(args):
         for num_atoms, properties in h5.items():
             coordinates = properties['coordinates']
             species = properties['species']
-            print(num_atoms)
-            print(np.shape(species))
             nid = 0
             for atomic_numbers, positions in tqdm(zip(species, coordinates)):
                 atoms = Atoms(atomic_numbers, positions=positions)
