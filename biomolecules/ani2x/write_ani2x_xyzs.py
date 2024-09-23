@@ -23,11 +23,9 @@ def main(args):
         for num_atoms, properties in h5.items():
             coordinates = properties['coordinates']
             species = properties['species']
-            nid = 0
-            for atomic_numbers, positions in tqdm(zip(species, coordinates)):
+            for nid, (atomic_numbers, positions) in tqdm(enumerate(zip(species, coordinates))):
                 atoms = Atoms(atomic_numbers, positions=positions)
                 ase.io.write(os.path.join(args.output_path, f"ani2x_{num_atoms}_{nid}_0_1.xyz"), atoms, "xyz")
-                nid += 1
 
 def parse_args():
     parser = argparse.ArgumentParser()
