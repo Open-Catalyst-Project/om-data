@@ -237,6 +237,7 @@ def run_system_builder(species,Nmols,filename,directory,boxsize=40,mdengine='ope
             "-split_components",
             "-forcefield", general_ff,
             "monomers.maegz", f"{filename}",
+            "-preserve_res_info",
             "-JOBNAME", f"{filename}",
             "-HOST", "localhost:1"
         ]
