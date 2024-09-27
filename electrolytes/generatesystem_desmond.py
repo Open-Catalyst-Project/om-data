@@ -187,5 +187,5 @@ def generate_system(row_idx, systems, job_dir, rho=None):
         print("New number of cation/anion molecules: ",Nmols[:len(cat+an)])
 
     mb.prep_desmond_md('elyte',job_dir, temperature)
-    command, directory = mb.run_system_builder(species,Nmols,'elyte',job_dir,mdengine="desmond")
+    command, directory = mb.run_system_builder(cat,an, solv,Nmols,'elyte',job_dir,mdengine="desmond")
     return command, directory

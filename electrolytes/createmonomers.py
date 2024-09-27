@@ -2,17 +2,41 @@ import os
 from schrodinger.structure import StructureReader, StructureWriter
 from schrodinger.application.jaguar.utils import mmjag_update_lewis
 from schrodinger.structutils.analyze import evaluate_asl
+import string
 
-def write_monomers(species, charges, directory):
+def generate_molres(length):
+    molres = []
+    alphabet = string.ascii_uppercase
+    num_alphabet = len(alphabet)
+    
+    for i in range(length):
+        if i < num_alphabet:
+            letter = alphabet[i]
+            molres.append(letter * 3)
+        else:
+            number = i - num_alphabet + 1
+            molres.append(str(number) * 3)
+    
+    return molres
+
+def write_monomers(cat, an, solv, charges, directory):
     st_list = []
+    species = cat+an+solv
+    molres = generate_molres(len(cat+an+solv))#[]
+    chainIDs = len(cat + an)*['A']+len(solv)*['B']
     for sp, charge in zip(species, charges):
         print(sp+'.pdb')
-        for st in StructureReader(os.path.join('ff', sp+".pdb")):
+        for i, st in enumerate(StructureReader(os.path.join('ff', sp+".pdb"))):
             st.property['i_m_Molecular_charge'] = charge
             mmjag_update_lewis(st)
             zob_metals(st)
+            # Iterate over residues
+            for res in st.residue:
+                res.chain = chainIDs[i]#chain_id  # Set the chain ID
+                res.resnum = i
+                res.pdbres = molres[i]
+                print(res)
             st_list.append(st)
-    print(st_list)
     with StructureWriter(os.path.join(directory, 'monomers.maegz')) as writer:
          writer.extend(st_list)
 
