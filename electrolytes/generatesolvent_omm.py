@@ -59,7 +59,7 @@ if units == 'volume':
             Natoms.append(sum(counts)*int(num_solv*molfrac[j]))
     print(boxsize)
     #Run Packmol, followed up by moltemplate 
-    mb.run_system_builder(species,Nmols,'solvent',str(row_idx),boxsize=boxsize,mdengine='openmm')
+    mb.run_system_builder([],[],solv,Nmols,'solvent',str(row_idx),boxsize=boxsize,mdengine='openmm')
     lmm.prep_openmm_md("solvent",[],[],solv,Nmols,str(row_idx))
 else:
     print("Solvent does not exist. Not an error, but check if system is a pure moltent salt/ionic liquid.")

@@ -172,7 +172,7 @@ simulate {{
 """
         msj.write(multisim)
 
-def run_system_builder(species,Nmols,filename,directory,boxsize=40,mdengine='openmm'):
+def run_system_builder(cat,an, solv,Nmols,filename,directory,boxsize=40,mdengine='openmm'):
     """ Run Packmol and Moltemplate to generate system configuration (in LAMMPS data format) 
         as well as files to run a LAMMPS simulation.
 
@@ -184,6 +184,7 @@ def run_system_builder(species,Nmols,filename,directory,boxsize=40,mdengine='ope
             directory (string): directory to generate all the output files
     """
     Path(directory).mkdir(parents=True,exist_ok=True)
+    species = cat+an+solv
     if mdengine == 'desmond':
         #Create a metadata file for the disordered systems builder
         metadata = {}
@@ -216,7 +217,7 @@ def run_system_builder(species,Nmols,filename,directory,boxsize=40,mdengine='ope
             charges.append(0)
         metadata["charges"] = list(charges)
         print(metadata)
-        write_monomers(species, charges, directory)
+        write_monomers(cat, an, solv, charges, directory)
         
         general_ff = 'S-OPLS'
         #Run the disordered system builder

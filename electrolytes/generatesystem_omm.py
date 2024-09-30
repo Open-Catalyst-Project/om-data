@@ -205,5 +205,5 @@ else:
     Avog = 6.022e23
     volume = num_solv/molrho*1e27/Avog #A3
     boxsize = volume**(1/3)
-mb.run_system_builder(species,Nmols,'system',str(row_idx),boxsize=boxsize,mdengine='openmm')
+mb.run_system_builder(cat,an, solv,Nmols,'system',str(row_idx),boxsize=boxsize,mdengine='openmm')
 lmm.prep_openmm_md("system",cat,an,solv,Nmols.tolist(),str(row_idx))#-1))

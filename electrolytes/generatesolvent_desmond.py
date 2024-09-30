@@ -45,5 +45,5 @@ def generate_solvent_desmond(row_idx, systems, job_dir):
     
     #Run Desmond system builder
     mb.prep_desmond_md('solvent',job_dir, temperature)#,mdengine="desmond")
-    command, directory = mb.run_system_builder(species,Nmols,'solvent',job_dir,mdengine="desmond")
+    command, directory = mb.run_system_builder([],[],solv,Nmols,'solvent',job_dir,mdengine="desmond")
     return command, directory
