@@ -15,6 +15,7 @@
 
 idx=$((${SLURM_ARRAY_TASK_ID}+0))
 
+export SCHRODINGER=/private/home/levineds/desmond/mybuild/
 source /checkpoint/levineds/elytes/bin/activate
 echo python run_desmond.py --job_idx $idx --output_path /checkpoint/levineds/elytes_09_29_2024/
 python run_desmond.py --job_idx $idx --output_path /checkpoint/levineds/elytes_09_29_2024/

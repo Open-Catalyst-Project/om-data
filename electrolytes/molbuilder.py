@@ -68,10 +68,9 @@ def prep_desmond_md(filename, job_dir, temperature):
     with open(os.path.join(job_dir, f"{filename}_multisim.msj"),"w") as msj:
         time = 1000 #by default the runtime is 1 ns, unless we're running the elyte sim
         frames = 100
-        interval = time/frames
         if filename == 'elyte':
             time = 250*1000 #we set elyte MD time to 250 ns
-            interval = time/frames
+        interval = time/frames
         multisim = f"""task {{ task = "desmond:auto"  }}
 
 ### Start relaxation protocol: Compressive
