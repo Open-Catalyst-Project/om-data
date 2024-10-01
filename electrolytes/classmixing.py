@@ -147,7 +147,7 @@ solvents_file = 'solvent.csv'
 
 elytes= load_csv('elytes.csv')
 
-Nrandom = 100#800
+Nrandom = 700#800
 fac = 0.05
 for i in range(Nrandom):
     cations = load_csv(cations_file)
@@ -304,7 +304,7 @@ for i in range(Nrandom):
 
     species = cat+an+solv
     if clas == 'MS':
-        for temperature  in [np.random.choice([minT, maxT])]:
+        for temperature  in [minT, maxT]:
             salt_conc = salt_molfrac/min(salt_molfrac)
             name = f'{clas}-{i+1}'
             if temperature == minT:

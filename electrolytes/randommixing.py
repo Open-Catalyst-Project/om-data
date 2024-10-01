@@ -149,7 +149,7 @@ anions = load_csv(anions_file)
 solvents = load_csv(solvents_file)
 elytes= load_csv('elytes.csv')
 
-Nrandom = 50
+Nrandom = 60
 fac = 0.05
 for i in range(Nrandom):
     max_comp = 3
