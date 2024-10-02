@@ -25,8 +25,12 @@ def write_monomers(cat, an, solv, charges, directory):
     molres = generate_molres(len(cat+an+solv))
     chainIDs = len(cat + an)*['A']+len(solv)*['B']
     for sp, charge, res_name, chain_name in zip(species, charges, molres, chainIDs):
-        print(sp+'.pdb')
-        st = StructureReader.read(os.path.join('ff', sp+".pdb"))
+        fname = sp+'.pdb'
+        if sp == 'C9H18NO':
+            # Special treatment for TEMPO because Desmond does not like radicals
+            fname = sp + '.mae'
+        print(fname)
+        st = StructureReader.read(os.path.join('ff', fname))
         st.property['i_m_Molecular_charge'] = charge
         mmjag_update_lewis(st)
         zob_metals(st)
