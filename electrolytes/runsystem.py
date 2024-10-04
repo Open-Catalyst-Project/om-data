@@ -7,8 +7,94 @@ import openmm.app as app
 from openmm import *
 from openmm.unit import bar, kelvin, nanometer, picosecond
 
+class RPMDPDBReporter(object):
+    """RPMDPDBReporter outputs a series of frames from an RPMD Simulation to a PDB file.
 
-def main(row_idx: int, job_dir: str):
+    To use it, create a RPMDPDBReporter, then add it to the Simulation's list of reporters.
+    """
+
+    def __init__(self, file_prefix, reportInterval, enforcePeriodicBox=None,nbeads=1):
+        """Create an RPMDPDBReporter.
+
+        Parameters
+        ----------
+        file : string
+            The file to write to
+        reportInterval : int
+            The interval (in time steps) at which to write frames
+        enforcePeriodicBox: bool
+            Specifies whether particle positions should be translated so the center of every molecule
+            lies in the same periodic box.  If None (the default), it will automatically decide whether
+            to translate molecules based on whether the system being simulated uses periodic boundary
+            conditions.
+        nbeads: int
+            How many beads we want to output from the simulation. Defaults to one bead (the first one).
+        """
+        self._file_prefix = file_prefix
+        self._reportInterval = reportInterval
+        self._enforcePeriodicBox = enforcePeriodicBox
+        self.nbeads = nbeads
+        self._nextModel_beads= self.nbeads*[0] 
+        self._out_beads = []
+        for i in range(self.nbeads):
+            self._out_beads.append(open(f"{file_prefix}_bead_{i+1}.pdb","w"))
+        self._topology = None
+
+    def describeNextReport(self, simulation):
+        """Get information about the next report this object will generate.
+
+        Parameters
+        ----------
+        simulation : Simulation
+            The Simulation to generate a report for
+
+        Returns
+        -------
+        tuple
+            A six element tuple. The first element is the number of steps
+            until the next report. The next four elements specify whether
+            that report will require positions, velocities, forces, and
+            energies respectively.  The final element specifies whether
+            positions should be wrapped to lie in a single periodic box.
+        """
+        steps = self._reportInterval - simulation.currentStep%self._reportInterval
+        return (steps, True, False, False, False, self._enforcePeriodicBox)
+
+    def report(self, simulation,state):
+        """Generate a report.
+
+        Parameters
+        ----------
+        simulation : Simulation
+            The Simulation to generate a report for
+        state : State
+            The current state of the simulation. In practice this is not used but is needed
+            for compatibility. 
+        """
+        integrator = simulation.integrator
+        if not isinstance(integrator, RPMDIntegrator):
+            raise TypeError('RPMDPDBReporter only works with RPMDIntegrator.')
+        
+        for bead, f in enumerate(self._out_beads):
+            state = integrator.getState(bead,getPositions=True,enforcePeriodicBox=self._enforcePeriodicBox)
+            positions = state.getPositions()
+            if self._nextModel_beads[bead]  == 0:
+                app.PDBFile.writeHeader(simulation.topology, f)#f)
+                self._topology = simulation.topology
+                self._nextModel_beads[bead] += 1
+            app.PDBFile.writeModel(simulation.topology, positions, f, self._nextModel_beads[bead])
+            self._nextModel_beads[bead] += 1
+            if hasattr(f, 'flush') and callable(f.flush):
+                f.flush()
+
+    def __del__(self):
+        if self._topology is not None:
+            for f in self._out_beads:
+                app.PDBFile.writeFooter(self._topology, f)#self._out)
+                f.close()
+
+
+def main(row_idx: int, job_dir: str, rpmd: bool, nbeads: int):
     """
     Main job driver
 
@@ -20,8 +106,9 @@ def main(row_idx: int, job_dir: str):
         systems = list(csv.reader(f))
     temp = float(systems[row_idx][4])
 
-    dt = 0.002  # ps
+    dt = 0.001  # ps
     t_final = 500*1000 # ps, which is 500 ns
+    #t_final = 500*1000 # ps, which is 500 ns
     frames = 1000
     runtime = int(t_final / dt)
 
@@ -38,17 +125,28 @@ def main(row_idx: int, job_dir: str):
         constraints=None,
         switchDistance=0.9 * rdist,
     )
-
-    system.addForce(MonteCarloBarostat(1.0 * bar, temp * kelvin, 100))
-    integrator = LangevinMiddleIntegrator(
-        temp * kelvin,  # Temperate of head bath
-        1 / picosecond,  # Friction coefficient
-        dt * picosecond,
-    )  # Time step
+    if rpmd:
+        integrator = RPMDIntegrator(
+            nbeads, #number of beads
+            temp * kelvin,  # Temperate of head bath
+            1 / picosecond,  # Friction coefficient
+            dt * picosecond
+        )  # Time step
+    else:
+        system.addForce(MonteCarloBarostat(1.0 * bar, temp * kelvin, 100))
+        integrator = LangevinMiddleIntegrator(
+            temp * kelvin,  # Temperate of head bath
+            1 / picosecond,  # Friction coefficient
+            dt * picosecond,
+        )  # Time step
+    
     simulation = app.Simulation(modeller.topology, system, integrator)
     rate = max(1, int(runtime / frames))
-    if os.path.exists("md.chk"):
+    if os.path.exists("md.chk") or not rpmd:
         simulation.loadCheckpoint("md.chk")
+        if rpmd:
+            system.addForce(RPMDMonteCarloBarostat(1*bar, 100))
+            simulation.context.reinitialize(preserveState=True)
         restart = True
     else:
         simulation.loadState("equilsystem.state")
@@ -61,6 +159,9 @@ def main(row_idx: int, job_dir: str):
         box_lengths = [box_vectors[i][i].value_in_unit(unit.nanometer) for i in range(3)]
         print("Box dimensions (nm):", box_lengths)
         simulation.minimizeEnergy()
+        if rpmd:
+            system.addForce(RPMDMonteCarloBarostat(1*bar, 100))
+            simulation.context.reinitialize(preserveState=True)
         restart = False
 
     # Get name for PDBReporter (OpenMM cannot add to an existing .pdb file for restarts)
@@ -68,14 +169,20 @@ def main(row_idx: int, job_dir: str):
     other_name = sorted(glob.glob(output_pdb_basename + "*.pdb"))
     if other_name and other_name[-1] != output_pdb_basename + ".pdb":
         last_name = other_name[-1].replace(".pdb", "")
-        count = int(last_name.split("_")[-1]) + 1
+        if rpmd:
+            count = int(last_name.split("_")[-3]) + 1
+        else:
+            count = int(last_name.split("_")[-1]) + 1
     else:
         count = 0
-    output_name = f"{output_pdb_basename}_{count}.pdb"
+    output_name = f"{output_pdb_basename}_{count}"
 
-    simulation.reporters.append(
-        app.PDBReporter(output_name, rate, enforcePeriodicBox=True)
-    )
+    if rpmd:
+        simulation.reporters.append(RPMDPDBReporter(output_name, rate, enforcePeriodicBox=True,nbeads=nbeads))
+    else:
+        simulation.reporters.append(
+            app.PDBReporter(output_name+".pdb", rate, enforcePeriodicBox=True)
+        )
     simulation.reporters.append(
         app.StateDataReporter(
             "data.csv",
@@ -116,10 +223,16 @@ def parse_args():
     parser.add_argument(
         "--row_idx", type=int, help="Job specified in elytes.csv to be run"
     )
+    parser.add_argument(
+        "--nbeads", type=int, help="Number of beads in an RPMD simulation. Turn on --rpmd flag to use."
+    )
+    parser.add_argument(
+        "--rpmd", action="store_true", help="Do RPMD simulation"
+    )
     args = parser.parse_args()
     return args
 
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args.row_idx, args.job_dir)
+    main(args.row_idx, args.job_dir, args.rpmd, args.nbeads)
