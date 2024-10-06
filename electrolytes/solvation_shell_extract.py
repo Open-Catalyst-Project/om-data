@@ -12,6 +12,8 @@ from tqdm import tqdm
 import numpy as np
 
 from schrodinger.structure import StructureReader
+from schrodinger.structutils.analyze import evaluate_asl
+from schrodinger.application.jaguar.utils import get_stoichiometry_string
 
 from solvation_shell_utils import (
     extract_shells_from_structure,
@@ -22,6 +24,23 @@ from solvation_shell_utils import (
 )
 from utils import validate_metadata_file
 
+def get_species_from_res(res):
+    stoich = get_stoichiometry_string([at.element for at in res.atom])
+    charge = sum(at.formal_charge for at in res.atom)
+    label = stoich
+    if res.chain == 'A' and charge == 0:
+        label += '0'
+    elif charge > 0:
+        label += '+'
+        if charge > 1:
+            label += f'{charge}'
+    elif charge < 0:
+        label += f'{charge}'
+    return label
+
+def neutralize_tempo(st, tempo_res):
+    for at in evaluate_asl(st, f'res {tempo_res}'):
+        st.atom[at].formal_charge = 0
 
 def extract_solvation_shells(
     input_dir: str,
@@ -52,36 +71,29 @@ def extract_solvation_shells(
 
     # Read a structure and metadata file
     logging.info("Reading structure and metadata files")
-
-    # Read metadata
-    with open(os.path.join(input_dir, "metadata_system.json")) as f:
-        metadata = json.load(f)
-
-    validate_metadata_file(metadata)
-
-    partial_charges = np.array(metadata["partial_charges"])
+    # Read structures
+    structures = list(StructureReader(os.path.join(input_dir, "frames.maegz")))
 
     solutes = {}
     solvents = {}
+    for res in structures[0].chain['A'].residue:
+        species = get_species_from_res(res)
+        if species not in solutes:
+            solutes[species] = res.pdbres.strip()
+    for res in structures[0].chain['B'].residue:
+        species = get_species_from_res(res)
+        if species not in solutes:
+            solvents[species] = res.pdbres.strip()
 
-    for res, species, spec_type in zip(
-        metadata["residue"], metadata["species"], metadata["solute_or_solvent"]
-    ):
-        if spec_type == "solute":
-            solutes[species] = res
-        elif spec_type == "solvent":
-            solvents[species] = res
     spec_dicts = {"solute": solutes, "solvent": solvents}
 
-    # Read structures
-    structures = list(StructureReader(os.path.join(input_dir, "system_output.pdb")))
     if max_frames > 0:
         structures = random.sample(structures, max_frames)
     # assign partial charges to atoms
-    logging.info("Assigning partial charges to atoms")
-    for st in tqdm(structures):
-        for at, charge in zip(st.atom, partial_charges):
-            at.partial_charge = charge
+    if 'C9H18NO0' in solutes:
+        logging.info("Adjusting chargess")
+        for st in tqdm(structures):
+            neutralize_tempo(st, solutes['C9H18NO0'])
 
     # For each solute: extract shells around the solute of some heuristic radii and bin by composition/graph hash
     # Choose the N most diverse in each bin

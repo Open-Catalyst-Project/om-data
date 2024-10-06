@@ -64,26 +64,8 @@ def extract_shells_from_structure(
     elif spec_type == "solute":
         extracted_shells = []
         for shell_ats, central_solute in zip(shells, central_mol_nums):
-            # Now expand the shells
-            expanded_shell_ats = shell_ats
-            # If we have a solvent-free system, don't expand shells around solutes,
-            # because we'll always have solutes and will never terminate
-
-            # But if we have a solvent, we can expand the shell
-            if "B" in {ch.name for ch in st.chain}:  # solvent is present
-                # TODO: how to choose the mean/scale for sampling?
-                # Should the mean be set to the number of atoms in the non-expanded shell?
-                upper_bound = max(len(shell_ats), generate_lognormal_samples()[0])
-                upper_bound = min(upper_bound, max_shell_size)
-                expanded_shell_ats = expand_shell(
-                    st,
-                    shell_ats,
-                    central_solute,
-                    radius,
-                    max_shell_size=upper_bound,
-                )
             expanded_shell = extract_contracted_shell(
-                st, expanded_shell_ats, central_solute
+                st, shell_ats, central_solute
             )
 
             assert (
@@ -91,59 +73,6 @@ def extract_shells_from_structure(
             ), "Expanded shell too large"
             extracted_shells.append(expanded_shell)
     return extracted_shells
-
-
-def expand_shell(
-    st: Structure,
-    shell_ats: Set[int],
-    central_solute: int,
-    radius: float,
-    max_shell_size: int = 200,
-) -> Set[int]:
-    """
-    Expands a solvation shell. If there are any (non-central) solutes present in the shell,
-    recursively include shells around those solutes.
-    First, gets the molecule numbers of solute molecules that are within the radius
-    and not already expanded around. Then, continuously expand around them as long as we don't hit an atom limit.
-    Args:
-        st: Entire structure from the PDB file
-        shell_ats: Set of atom indices (of `st`) in a shell (1-indexed)
-        central_solute: Molecule index (of 'st') of the central solute in the shell
-        radius: Solvation radius (Angstroms) to consider
-        max_shell_size: Maximum size (in atoms) of the expanded shell
-    Returns:
-        Set of atom indices (of `st`) of the expanded shell (1-indexed)
-    """
-    solutes_included = set([central_solute])
-
-    def get_new_solutes(st, shell_ats, solutes_included):
-        new_solutes = set()
-        for at in shell_ats:
-            # If atom is part of a non-central solute molecule - should expand the shell
-            if (
-                st.atom[at].molecule_number not in solutes_included
-                and st.atom[at].chain == "A"
-            ):
-                new_solutes.add(st.atom[at].molecule_number)
-        return new_solutes
-
-    new_solutes = get_new_solutes(st, shell_ats, solutes_included)
-    while new_solutes:
-        # add entire residues within solvation shell radius of any extra solute atoms
-        new_shell_ats = shell_ats.union(
-            analyze.evaluate_asl(
-                st,
-                f'fillres within {radius} mol {",".join([str(i) for i in new_solutes])}',
-            )
-        )
-        if len(new_shell_ats) <= max_shell_size:
-            shell_ats = new_shell_ats
-            solutes_included.update(new_solutes)
-            new_solutes = get_new_solutes(st, shell_ats, solutes_included)
-        else:
-            break
-
-    return shell_ats
 
 
 def extract_contracted_shell(
@@ -338,19 +267,3 @@ def renumber_molecules_to_match(mol_list):
         _, r_mol = mapper.reorder_structures(mol_list[0], atlist, mol, atlist)
         renumbered_mols.append(r_mol)
     return renumbered_mols
-
-
-def generate_lognormal_samples(loc=75, sigma=0.45, size=1):
-    """
-    Generate random samples from a lognormal distribution.
-
-    Parameters:
-    - loc: float, mean of the distribution
-    - sigma: float, standard deviation of the log of the distribution
-    - size: int, number of samples to generate (default is 1000)
-
-    Returns:
-    - samples: numpy array, random samples from the lognormal distribution
-    """
-    samples = np.random.lognormal(mean=np.log(loc), sigma=sigma, size=size)
-    return samples
