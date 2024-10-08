@@ -1,0 +1,95 @@
+CF3O3S- inherits OPLSCM1A {
+  ### Inheriting from oplsaa.lt
+  write("Data Atoms") {
+    $atom:c1_cf3o3s $mol @atom:C1_cf3o3s  0.2692   -0.951   0.000  -0.000
+    $atom:f1_cf3o3s $mol @atom:F1_cf3o3s -0.1637   -1.417  -1.319  -0.000
+    $atom:f2_cf3o3s $mol @atom:F2_cf3o3s -0.1637   -1.417   0.660  -1.142
+    $atom:f3_cf3o3s $mol @atom:F3_cf3o3s -0.1637   -1.417   0.659   1.142
+    $atom:s1_cf3o3s $mol @atom:S1_cf3o3s  1.1887    0.863   0.000   0.000 
+    $atom:o1_cf3o3s $mol @atom:O1_cf3o3s -0.6556    1.344   1.373   0.000 
+    $atom:o2_cf3o3s $mol @atom:O2_cf3o3s -0.6556    1.344  -0.687   1.189 
+    $atom:o3_cf3o3s $mol @atom:O3_cf3o3s -0.6556    1.344  -0.686  -1.189 
+  }
+write_once("Data Masses") {
+    @atom:C1_cf3o3s  12.011
+    @atom:S1_cf3o3s  32.06
+    @atom:O1_cf3o3s  15.999 
+    @atom:O2_cf3o3s  15.999 
+    @atom:O3_cf3o3s  15.999 
+    @atom:F1_cf3o3s  18.998
+    @atom:F2_cf3o3s  18.998
+    @atom:F3_cf3o3s  18.998
+  }
+  write("Data Bonds") {
+    $bond:cs1_cf3o3s @bond:CS1_cf3o3s $atom:c1_cf3o3s $atom:s1_cf3o3s
+    $bond:cf1_cf3o3s @bond:CF1_cf3o3s $atom:c1_cf3o3s $atom:f1_cf3o3s
+    $bond:cf2_cf3o3s @bond:CF2_cf3o3s $atom:c1_cf3o3s $atom:f2_cf3o3s
+    $bond:cf3_cf3o3s @bond:CF3_cf3o3s $atom:c1_cf3o3s $atom:f3_cf3o3s
+    $bond:so1_cf3o3s @bond:SO1_cf3o3s $atom:s1_cf3o3s $atom:o1_cf3o3s
+    $bond:so2_cf3o3s @bond:SO2_cf3o3s $atom:s1_cf3o3s $atom:o2_cf3o3s
+    $bond:so3_cf3o3s @bond:SO3_cf3o3s $atom:s1_cf3o3s $atom:o3_cf3o3s
+  }
+  write("Data Angles") {
+    $angle:fcf1_cf3o3s @angle:FCF1_cf3o3s $atom:f1_cf3o3s $atom:c1_cf3o3s $atom:f2_cf3o3s
+    $angle:fcf2_cf3o3s @angle:FCF2_cf3o3s $atom:f2_cf3o3s $atom:c1_cf3o3s $atom:f3_cf3o3s
+    $angle:fcf3_cf3o3s @angle:FCF3_cf3o3s $atom:f3_cf3o3s $atom:c1_cf3o3s $atom:f1_cf3o3s
+    $angle:fcs1_cf3o3s @angle:FCS1_cf3o3s $atom:f1_cf3o3s $atom:c1_cf3o3s $atom:s1_cf3o3s
+    $angle:fcs2_cf3o3s @angle:FCS2_cf3o3s $atom:f2_cf3o3s $atom:c1_cf3o3s $atom:s1_cf3o3s
+    $angle:fcs3_cf3o3s @angle:FCS3_cf3o3s $atom:f3_cf3o3s $atom:c1_cf3o3s $atom:s1_cf3o3s
+    $angle:oso1_cf3o3s @angle:OSO1_cf3o3s $atom:o1_cf3o3s $atom:s1_cf3o3s $atom:o2_cf3o3s
+    $angle:oso2_cf3o3s @angle:OSO2_cf3o3s $atom:o2_cf3o3s $atom:s1_cf3o3s $atom:o3_cf3o3s
+    $angle:oso3_cf3o3s @angle:OSO3_cf3o3s $atom:o3_cf3o3s $atom:s1_cf3o3s $atom:o1_cf3o3s
+    $angle:cso1_cf3o3s @angle:CSO1_cf3o3s $atom:c1_cf3o3s $atom:s1_cf3o3s $atom:o1_cf3o3s
+    $angle:cso2_cf3o3s @angle:CSO2_cf3o3s $atom:c1_cf3o3s $atom:s1_cf3o3s $atom:o2_cf3o3s
+    $angle:cso3_cf3o3s @angle:CSO3_cf3o3s $atom:c1_cf3o3s $atom:s1_cf3o3s $atom:o3_cf3o3s
+  }
+  write("Data Impropers") {
+    $improper:oscf1_cf3o3s @improper:OSCF1_cf3o3s $atom:o1_cf3o3s $atom:s1_cf3o3s $atom:c1_cf3o3s $atom:f1_cf3o3s
+    $improper:oscf2_cf3o3s @improper:OSCF2_cf3o3s $atom:o1_cf3o3s $atom:s1_cf3o3s $atom:c1_cf3o3s $atom:f2_cf3o3s
+    $improper:oscf3_cf3o3s @improper:OSCF3_cf3o3s $atom:o1_cf3o3s $atom:s1_cf3o3s $atom:c1_cf3o3s $atom:f3_cf3o3s
+    $improper:oscf4_cf3o3s @improper:OSCF4_cf3o3s $atom:o2_cf3o3s $atom:s1_cf3o3s $atom:c1_cf3o3s $atom:f1_cf3o3s
+    $improper:oscf5_cf3o3s @improper:OSCF5_cf3o3s $atom:o2_cf3o3s $atom:s1_cf3o3s $atom:c1_cf3o3s $atom:f2_cf3o3s
+    $improper:oscf6_cf3o3s @improper:OSCF6_cf3o3s $atom:o2_cf3o3s $atom:s1_cf3o3s $atom:c1_cf3o3s $atom:f3_cf3o3s
+    $improper:oscf7_cf3o3s @improper:OSCF7_cf3o3s $atom:o3_cf3o3s $atom:s1_cf3o3s $atom:c1_cf3o3s $atom:f1_cf3o3s
+    $improper:oscf8_cf3o3s @improper:OSCF8_cf3o3s $atom:o3_cf3o3s $atom:s1_cf3o3s $atom:c1_cf3o3s $atom:f2_cf3o3s
+    $improper:oscf9_cf3o3s @improper:OSCF9_cf3o3s $atom:o3_cf3o3s $atom:s1_cf3o3s $atom:c1_cf3o3s $atom:f3_cf3o3s
+  }
+  write_once("In Settings") {
+    bond_coeff   @bond:CS1_cf3o3s         233.03 1.818
+    bond_coeff   @bond:CF1_cf3o3s         441.92 1.323
+    bond_coeff   @bond:CF2_cf3o3s         441.92 1.323
+    bond_coeff   @bond:CF3_cf3o3s         441.92 1.323
+    bond_coeff   @bond:SO1_cf3o3s         637.07 1.437
+    bond_coeff   @bond:SO2_cf3o3s         637.07 1.437
+    bond_coeff   @bond:SO3_cf3o3s         637.07 1.437
+    angle_coeff  @angle:FCF1_cf3o3s       93.33 107.1       
+    angle_coeff  @angle:FCF2_cf3o3s       93.33 107.1       
+    angle_coeff  @angle:FCF3_cf3o3s       93.33 107.1       
+    angle_coeff  @angle:FCS1_cf3o3s       82.93 111.7    
+    angle_coeff  @angle:FCS2_cf3o3s       82.93 111.7    
+    angle_coeff  @angle:FCS3_cf3o3s       82.93 111.7    
+    angle_coeff  @angle:OSO1_cf3o3s       115.80 118.5       
+    angle_coeff  @angle:OSO2_cf3o3s       115.80 118.5       
+    angle_coeff  @angle:OSO3_cf3o3s       115.80 118.5       
+    angle_coeff  @angle:CSO1_cf3o3s       103.97 102.6       
+    angle_coeff  @angle:CSO2_cf3o3s       103.97 102.6       
+    angle_coeff  @angle:CSO3_cf3o3s       103.97 102.6       
+    improper_coeff  @improper:OSCF1_cf3o3s  0.694 1 3       
+    improper_coeff  @improper:OSCF2_cf3o3s  0.694 1 3       
+    improper_coeff  @improper:OSCF3_cf3o3s  0.694 1 3       
+    improper_coeff  @improper:OSCF4_cf3o3s  0.694 1 3       
+    improper_coeff  @improper:OSCF5_cf3o3s  0.694 1 3       
+    improper_coeff  @improper:OSCF6_cf3o3s  0.694 1 3       
+    improper_coeff  @improper:OSCF7_cf3o3s  0.694 1 3       
+    improper_coeff  @improper:OSCF8_cf3o3s  0.694 1 3       
+    improper_coeff  @improper:OSCF9_cf3o3s  0.694 1 3       
+    pair_coeff  @atom:C1_cf3o3s  @atom:C1_cf3o3s   0.066 3.5
+    pair_coeff  @atom:S1_cf3o3s  @atom:S1_cf3o3s   0.25 2.55
+    pair_coeff  @atom:O1_cf3o3s  @atom:O1_cf3o3s   0.21 2.96
+    pair_coeff  @atom:O2_cf3o3s  @atom:O2_cf3o3s   0.21 2.96
+    pair_coeff  @atom:O3_cf3o3s  @atom:O3_cf3o3s   0.21 2.96
+    pair_coeff  @atom:F1_cf3o3s  @atom:F1_cf3o3s   0.053  2.95
+    pair_coeff  @atom:F2_cf3o3s  @atom:F2_cf3o3s   0.053  2.95
+    pair_coeff  @atom:F3_cf3o3s  @atom:F3_cf3o3s   0.053  2.95
+  }
+} # end of "CF3O3S-" type definition

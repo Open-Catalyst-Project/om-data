@@ -1,0 +1,13 @@
+Cr+3 {
+    # AtomID  MolID  AtomType  charge   X       Y         Z
+    write("Data Atoms") {
+        $atom:Cr3 $mol @atom:Cr3    3    0.00000  0.00000   0.000000
+    }
+    write_once("Data Masses") {
+        @atom:Cr3 52.0
+    }
+    # The "In Settings" section stores force-field parameters for this molecule
+    write_once("In Settings") {
+        pair_coeff @atom:Cr3 @atom:Cr3  0.00104974 2.1328115312279725
+    }
+}

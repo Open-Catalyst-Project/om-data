@@ -1,0 +1,67 @@
+CHO3- inherits OPLSCM1A {
+  ### LAMMPS commands for initialization
+  ### (These can be overridden later.)
+  write_once("In Init") {
+    atom_style full
+  }
+  write_once("In Settings") {
+    pair_coeff @atom:type1_o_unk_e2b78 @atom:type1_o_unk_e2b78 0.170 3.1200000
+    pair_coeff @atom:type2_c_unk_e2b78 @atom:type2_c_unk_e2b78 0.070 3.5500000
+    pair_coeff @atom:type3_o_unk_e2b78 @atom:type3_o_unk_e2b78 0.210 2.9600000
+    pair_coeff @atom:type4_o_unk_e2b78 @atom:type4_o_unk_e2b78 0.210 2.9600000
+    pair_coeff @atom:type5_h_unk_e2b78 @atom:type5_h_unk_e2b78 0.030 2.5000000
+  }
+  write_once("In Settings") {
+    bond_coeff @bond:type1_unk_e2b78 450.0000 1.3640
+    bond_coeff @bond:type2_unk_e2b78 656.0000 1.2500
+    bond_coeff @bond:type3_unk_e2b78 656.0000 1.2500
+    bond_coeff @bond:type4_unk_e2b78 553.0000 0.9450
+  }
+  write_once("In Settings") {
+    angle_coeff @angle:type1_unk_e2b78 80.000 121.000
+    angle_coeff @angle:type2_unk_e2b78 80.000 121.000
+    angle_coeff @angle:type3_unk_e2b78 35.000 113.000
+    angle_coeff @angle:type4_unk_e2b78 80.000 126.000
+  }
+  write_once("In Settings") {
+    dihedral_coeff @dihedral:type1_unk_e2b78 opls 0.000 5.500 0.000 0.000
+    dihedral_coeff @dihedral:type2_unk_e2b78 opls 0.000 5.500 0.000 0.000
+  }
+  write_once("In Settings") {
+    improper_coeff @improper:type1_unk_e2b78 10.500 -1 2
+  }
+  ### DATA sections
+  write_once("Data Masses") {
+    @atom:type1_o_unk_e2b78 15.999
+    @atom:type2_c_unk_e2b78 12.011
+    @atom:type3_o_unk_e2b78 15.999
+    @atom:type4_o_unk_e2b78 15.999
+    @atom:type5_h_unk_e2b78 1.008
+  }
+  write("Data Atoms") {
+    $atom:id1 $mol:m1 @atom:type1_o_unk_e2b78 -0.57190000 1.000 1.00000 0.00000
+    $atom:id2 $mol:m1 @atom:type2_c_unk_e2b78 0.49760000 -0.326 1.00000 0.00000
+    $atom:id3 $mol:m1 @atom:type3_o_unk_e2b78 -0.64920000 -0.764 1.00000 1.17557
+    $atom:id4 $mol:m1 @atom:type4_o_unk_e2b78 -0.64920000 -0.909 1.00140 -1.10672
+    $atom:id5 $mol:m1 @atom:type5_h_unk_e2b78 0.37280000 1.020 1.00000 0.97870
+  }
+  write("Data Bonds") {
+    $bond:id1 @bond:type1_unk_e2b78 $atom:id2 $atom:id1
+    $bond:id2 @bond:type2_unk_e2b78 $atom:id3 $atom:id2
+    $bond:id3 @bond:type3_unk_e2b78 $atom:id4 $atom:id2
+    $bond:id4 @bond:type4_unk_e2b78 $atom:id5 $atom:id1
+  }
+  write("Data Angles") {
+    $angle:id1 @angle:type1_unk_e2b78 $atom:id1 $atom:id2 $atom:id3
+    $angle:id2 @angle:type2_unk_e2b78 $atom:id1 $atom:id2 $atom:id4
+    $angle:id3 @angle:type3_unk_e2b78 $atom:id2 $atom:id1 $atom:id5
+    $angle:id4 @angle:type4_unk_e2b78 $atom:id3 $atom:id2 $atom:id4
+  }
+  write("Data Dihedrals") {
+    $dihedral:id1 @dihedral:type1_unk_e2b78 $atom:id5 $atom:id1 $atom:id2 $atom:id3
+    $dihedral:id2 @dihedral:type2_unk_e2b78 $atom:id5 $atom:id1 $atom:id2 $atom:id4
+  }
+  write("Data Impropers") {
+    $improper:id1 @improper:type1_unk_e2b78 $atom:id2 $atom:id1 $atom:id3 $atom:id4
+  }
+} # end of "CHO3- inherits OPLSCM1A" type definition

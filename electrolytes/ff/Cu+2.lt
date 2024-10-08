@@ -1,0 +1,13 @@
+Cu+2 {
+    # AtomID  MolID  AtomType  charge   X       Y         Z
+    write("Data Atoms") {
+        $atom:Cu2 $mol @atom:Cu2    2    0.00000  0.00000   0.000000
+    }
+    write_once("Data Masses") {
+        @atom:Cu2 63.55
+    }
+    # The "In Settings" section stores force-field parameters for this molecule
+    write_once("In Settings") {
+        pair_coeff @atom:Cu2 @atom:Cu2  0.00047746 2.0544124440316223
+    }
+}

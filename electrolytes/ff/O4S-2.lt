@@ -1,0 +1,48 @@
+O4S-2 inherits OPLSCM1A {
+  ### Inheriting from oplsaa.lt
+  write("Data Atoms") {
+    $atom:s1_so4 $mol:so4 @atom:S1_so4  2.832 -1.059   0.143   1.052 # S
+    $atom:o1_so4 $mol:so4 @atom:O1_so4 -1.208 -2.265  -0.956   0.656 # O
+    $atom:o2_so4 $mol:so4 @atom:O2_so4 -1.208 -1.672   1.493   1.294 # O
+    $atom:o3_so4 $mol:so4 @atom:O3_so4 -1.208 -0.351  -0.316   2.294 # O
+    $atom:o4_so4 $mol:so4 @atom:O4_so4 -1.208  0.041   0.247  -0.214 # O
+  }
+write_once("Data Masses") {
+    @atom:S1_so4  32.065
+    @atom:O1_so4  15.9994
+    @atom:O2_so4  15.9994
+    @atom:O3_so4  15.9994
+    @atom:O4_so4  15.9994
+  }
+  write("Data Bonds") {
+    $bond:so1_so4 @bond:SO1_so4 $atom:s1_so4 $atom:o1_so4
+    $bond:so2_so4 @bond:SO2_so4 $atom:s1_so4 $atom:o2_so4
+    $bond:so3_so4 @bond:SO3_so4 $atom:s1_so4 $atom:o3_so4
+    $bond:so4_so4 @bond:SO4_so4 $atom:s1_so4 $atom:o4_so4
+  }
+  write("Data Angles") {
+    $angle:oso1_so4 @angle:OSO1_so4 $atom:o1_so4 $atom:s1_so4 $atom:o2_so4
+    $angle:oso2_so4 @angle:OSO2_so4 $atom:o1_so4 $atom:s1_so4 $atom:o3_so4
+    $angle:oso3_so4 @angle:OSO3_so4 $atom:o1_so4 $atom:s1_so4 $atom:o4_so4
+    $angle:oso1_so4 @angle:OSO4_so4 $atom:o2_so4 $atom:s1_so4 $atom:o3_so4
+    $angle:oso2_so4 @angle:OSO5_so4 $atom:o2_so4 $atom:s1_so4 $atom:o4_so4
+    $angle:oso3_so4 @angle:OSO6_so4 $atom:o3_so4 $atom:s1_so4 $atom:o4_so4
+  }
+  write_once("In Settings") {
+    bond_coeff   @bond:SO1_so4         683.2 1.4530
+    bond_coeff   @bond:SO2_so4         683.2 1.4530
+    bond_coeff   @bond:SO3_so4         683.2 1.4530
+    bond_coeff   @bond:SO4_so4         683.2 1.4530
+    angle_coeff  @angle:OSO1_so4       128.2 120.05
+    angle_coeff  @angle:OSO2_so4       128.2 120.05
+    angle_coeff  @angle:OSO3_so4       128.2 120.05
+    angle_coeff  @angle:OSO4_so4       128.2 120.05
+    angle_coeff  @angle:OSO5_so4       128.2 120.05
+    angle_coeff  @angle:OSO6_so4       128.2 120.05
+    pair_coeff  @atom:O1_so4  @atom:O1_so4   0.1463 3.048120874245357
+    pair_coeff  @atom:O2_so4  @atom:O2_so4   0.1463 3.048120874245357
+    pair_coeff  @atom:O3_so4  @atom:O3_so4   0.1463 3.048120874245357
+    pair_coeff  @atom:O4_so4  @atom:O4_so4   0.1463 3.048120874245357
+    pair_coeff  @atom:S1_so4  @atom:S1_so4   0.2824 3.532413417426445
+  }
+} # end of "O4S-2" type definition

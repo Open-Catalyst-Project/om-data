@@ -1,0 +1,19 @@
+REMARK   1 PDBFIXER FROM: F6P-.pdb
+REMARK   1 CREATED WITH OPENMM 8.1.1, 2024-07-19
+HETATM    1  P00 UNK     1      -0.082  -0.291   0.000  1.00  0.00           P  
+HETATM    2  F01 UNK     1      -0.082   1.339   0.000  1.00  0.00           F  
+HETATM    3  F02 UNK     1      -0.082  -0.291  -1.630  1.00  0.00           F  
+HETATM    4  F03 UNK     1       1.548  -0.291   0.000  1.00  0.00           F  
+HETATM    5  F04 UNK     1      -0.082  -1.921   0.000  1.00  0.00           F  
+HETATM    6  F05 UNK     1      -0.082  -0.291   1.630  1.00  0.00           F  
+HETATM    7  F06 UNK     1      -1.712  -0.291   0.000  1.00  0.00           F  
+TER       8      UNK     1
+CONECT    1    2    3    4
+CONECT    1    6    7
+CONECT    2    1
+CONECT    3    1
+CONECT    4    1
+CONECT    5    1
+CONECT    6    1
+CONECT    7    1
+END

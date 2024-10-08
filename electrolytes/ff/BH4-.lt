@@ -1,0 +1,48 @@
+BH4- inherits OPLSCM1A {
+  ### Inheriting from oplsaa.lt
+  write("Data Atoms") {
+    $atom:b1_bh4 $mol @atom:B1_bh4  0.144 -1.061   0.122   1.017 # B
+    $atom:h1_bh4 $mol @atom:H1_bh4 -0.286 -1.107   0.846   1.962 # H
+    $atom:h2_bh4 $mol @atom:H2_bh4 -0.286 -1.680  -0.869   1.246 # H
+    $atom:h3_bh4 $mol @atom:H3_bh4 -0.286 -1.531   0.674   0.071 # H
+    $atom:h4_bh4 $mol @atom:H4_bh4 -0.286 -0.161  -0.161   0.787 # H
+  }
+write_once("Data Masses") {
+    @atom:B1_bh4  10.806
+    @atom:H1_bh4  1.008 
+    @atom:H2_bh4  1.008 
+    @atom:H3_bh4  1.008 
+    @atom:H4_bh4  1.008 
+  }
+  write("Data Bonds") {
+    $bond:bh1 @bond:BH1_bh4 $atom:b1_bh4 $atom:h1_bh4
+    $bond:bh2 @bond:BH2_bh4 $atom:b1_bh4 $atom:h2_bh4
+    $bond:bh3 @bond:BH3_bh4 $atom:b1_bh4 $atom:h3_bh4
+    $bond:bh4 @bond:BH4_bh4 $atom:b1_bh4 $atom:h4_bh4
+  }
+  write("Data Angles") {
+    $angle:hbh1_bh4 @angle:HBH1_bh4 $atom:h1_bh4 $atom:b1_bh4 $atom:h2_bh4
+    $angle:hbh2_bh4 @angle:HBH2_bh4 $atom:h2_bh4 $atom:b1_bh4 $atom:h3_bh4
+    $angle:hbh3_bh4 @angle:HBH3_bh4 $atom:h3_bh4 $atom:b1_bh4 $atom:h4_bh4
+    $angle:hbh4_bh4 @angle:HBH4_bh4 $atom:h1_bh4 $atom:b1_bh4 $atom:h3_bh4
+    $angle:hbh5_bh4 @angle:HBH5_bh4 $atom:h1_bh4 $atom:b1_bh4 $atom:h4_bh4
+    $angle:hbh6_bh4 @angle:HBH6_bh4 $atom:h2_bh4 $atom:b1_bh4 $atom:h4_bh4
+  }
+  write_once("In Settings") {
+    bond_coeff   @bond:BH1_bh4          450 1.24
+    bond_coeff   @bond:BH2_bh4          450 1.24
+    bond_coeff   @bond:BH3_bh4          450 1.24
+    bond_coeff   @bond:BH4_bh4          450 1.24
+    angle_coeff  @angle:HBH1_bh4        124.283 109.5       
+    angle_coeff  @angle:HBH2_bh4        124.283 109.5       
+    angle_coeff  @angle:HBH3_bh4        124.283 109.5       
+    angle_coeff  @angle:HBH4_bh4        124.283 109.5       
+    angle_coeff  @angle:HBH5_bh4        124.283 109.5       
+    angle_coeff  @angle:HBH6_bh4        124.283 109.5       
+    pair_coeff  @atom:B1_bh4  @atom:B1_bh4   0.0956023 3.48
+    pair_coeff  @atom:H1_bh4  @atom:H1_bh4   0.1362333  3.4
+    pair_coeff  @atom:H2_bh4  @atom:H2_bh4   0.1362333  3.4
+    pair_coeff  @atom:H3_bh4  @atom:H3_bh4   0.1362333  3.4
+    pair_coeff  @atom:H4_bh4  @atom:H4_bh4   0.1362333  3.4
+  }
+} # end of "BH4-" type definition

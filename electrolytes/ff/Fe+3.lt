@@ -1,0 +1,13 @@
+Fe+3 {
+    # AtomID  MolID  AtomType  charge   X       Y         Z
+    write("Data Atoms") {
+        $atom:Fe3 $mol @atom:Fe3    3    0.00000  0.00000   0.000000
+    }
+    write_once("Data Masses") {
+        @atom:Fe3 55.85
+    }
+    # The "In Settings" section stores force-field parameters for this molecule
+    write_once("In Settings") {
+        pair_coeff @atom:Fe3 @atom:Fe3  0.00016028 1.9581953824724656
+    }
+}

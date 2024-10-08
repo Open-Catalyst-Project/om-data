@@ -1,0 +1,65 @@
+H4N+ inherits OPLSCM1A {
+  ### LAMMPS commands for initialization
+  ### (These can be overridden later.)
+  write_once("In Init") {
+    atom_style full
+  }
+  write_once("In Settings") {
+    pair_coeff @atom:type1_n_unk_8e601 @atom:type1_n_unk_8e601 0.170 3.2500000
+    pair_coeff @atom:type2_h_unk_8e601 @atom:type2_h_unk_8e601 0.030 2.5000000
+    pair_coeff @atom:type3_h_unk_8e601 @atom:type3_h_unk_8e601 0.030 2.5000000
+    pair_coeff @atom:type4_h_unk_8e601 @atom:type4_h_unk_8e601 0.030 2.5000000
+    pair_coeff @atom:type5_h_unk_8e601 @atom:type5_h_unk_8e601 0.030 2.5000000
+  }
+  write_once("In Settings") {
+    bond_coeff @bond:type1_unk_8e601 434.0000 1.0100
+    bond_coeff @bond:type2_unk_8e601 434.0000 1.0100
+    bond_coeff @bond:type3_unk_8e601 434.0000 1.0100
+    bond_coeff @bond:type4_unk_8e601 434.0000 1.0100
+  }
+  write_once("In Settings") {
+    angle_coeff @angle:type1_unk_8e601 43.600 109.500
+    angle_coeff @angle:type2_unk_8e601 43.600 109.500
+    angle_coeff @angle:type3_unk_8e601 43.600 109.500
+    angle_coeff @angle:type4_unk_8e601 43.600 109.500
+    angle_coeff @angle:type5_unk_8e601 43.600 109.500
+    angle_coeff @angle:type6_unk_8e601 43.600 109.500
+  }
+  write_once("In Settings") {
+    improper_coeff @improper:type1_unk_8e601 0.000 -1 2
+    improper_coeff @improper:type2_unk_8e601 0.000 -1 2
+  }
+  ### DATA sections
+  write_once("Data Masses") {
+    @atom:type1_n_unk_8e601 14.007
+    @atom:type2_h_unk_8e601 1.008
+    @atom:type3_h_unk_8e601 1.008
+    @atom:type4_h_unk_8e601 1.008
+    @atom:type5_h_unk_8e601 1.008
+  }
+  write("Data Atoms") {
+    $atom:id1 $mol:m1 @atom:type1_n_unk_8e601 -0.51760000 1.000 1.00000 0.00000
+    $atom:id2 $mol:m1 @atom:type2_h_unk_8e601 0.37940000 -0.027 1.00000 0.00000
+    $atom:id3 $mol:m1 @atom:type3_h_unk_8e601 0.37940000 1.341 1.00000 -0.96841
+    $atom:id4 $mol:m1 @atom:type4_h_unk_8e601 0.37940000 1.341 0.16096 0.48348
+    $atom:id5 $mol:m1 @atom:type5_h_unk_8e601 0.37940000 1.341 1.83912 0.48352
+  }
+  write("Data Bonds") {
+    $bond:id1 @bond:type1_unk_8e601 $atom:id2 $atom:id1
+    $bond:id2 @bond:type2_unk_8e601 $atom:id3 $atom:id1
+    $bond:id3 @bond:type3_unk_8e601 $atom:id4 $atom:id1
+    $bond:id4 @bond:type4_unk_8e601 $atom:id5 $atom:id1
+  }
+  write("Data Angles") {
+    $angle:id1 @angle:type1_unk_8e601 $atom:id2 $atom:id1 $atom:id3
+    $angle:id2 @angle:type2_unk_8e601 $atom:id2 $atom:id1 $atom:id4
+    $angle:id3 @angle:type3_unk_8e601 $atom:id2 $atom:id1 $atom:id5
+    $angle:id4 @angle:type4_unk_8e601 $atom:id3 $atom:id1 $atom:id4
+    $angle:id5 @angle:type5_unk_8e601 $atom:id4 $atom:id1 $atom:id5
+    $angle:id6 @angle:type6_unk_8e601 $atom:id3 $atom:id1 $atom:id5
+  }
+  write("Data Impropers") {
+    $improper:id1 @improper:type1_unk_8e601 $atom:id1 $atom:id2 $atom:id3 $atom:id4
+    $improper:id2 @improper:type2_unk_8e601 $atom:id1 $atom:id2 $atom:id3 $atom:id5
+  }
+} # end of "H4N+ inherits OPLSCM1A" type definition

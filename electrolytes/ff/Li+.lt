@@ -1,0 +1,13 @@
+Li+ {
+    # AtomID  MolID  AtomType  charge   X       Y         Z
+    write("Data Atoms") {
+        $atom:Li $mol @atom:Li    1    0.00000  0.00000   0.000000
+    }
+    write_once("Data Masses") {
+        @atom:Li 6.94
+    }
+    # The "In Settings" section stores force-field parameters for this molecule
+    write_once("In Settings") {
+        pair_coeff @atom:Li @atom:Li  0.0028218 2.245064769713655
+    }
+}
