@@ -26,14 +26,16 @@ def write_monomers(cat, an, solv, charges, directory):
     chainIDs = len(cat + an)*['A']+len(solv)*['B']
     for sp, charge, res_name, chain_name in zip(species, charges, molres, chainIDs):
         fname = sp+'.pdb'
-        if sp == 'C9H18NO':
-            # Special treatment for TEMPO because Desmond does not like radicals
+        if sp in {'C9H18NO', 'AsF6-', 'OV+2', 'O2V+'}:
+            # Special treatment:
+            # TEMPO: Desmond does not like radicals
+            # As-F, OV+2, O2V+: No parameters
             fname = sp + '.mae'
         print(fname)
         st = StructureReader.read(os.path.join('ff', fname))
-        st.property['i_m_Molecular_charge'] = charge
-        mmjag_update_lewis(st)
-        zob_metals(st)
+        if fname.endswith('.pdb'):
+            st.property['i_m_Molecular_charge'] = charge
+            mmjag_update_lewis(st)
         # Iterate over residues
         for res in st.residue:
             res.chain = chain_name
