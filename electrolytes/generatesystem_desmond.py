@@ -172,12 +172,18 @@ def generate_system(row_idx, systems, job_dir, rho=None):
             numsolv *= int(scale_factor) 
             numsalt *= int(scale_factor)
         num_solv = sum(numsolv)
+
+    # round numsolv to the nearest multiple of the solvent ratio denominator
+    # to avoid round-off errors that can cause charge imbalance issues
+    solv_denom = sum(np.array(solv_ratio).astype(float).astype(int))
+    num_solv = solv_denom * round(num_solv/solv_denom)
+
     numsolv = np.round(num_solv*solv_molfrac).astype(int)
     Nmols = np.concatenate((numsalt,numsolv)).astype(int).tolist()
     print(cat,an,solv)
     print(Nmols)
     totalcharge = np.round(sum(np.array(charges)*np.array(Nmols[:len(cat+an)])))
-    if totalcharge > 0.0 or any(x == 0 for x in Nmols[:len(cat+an)]):
+    if totalcharge != 0.0 or any(x == 0 for x in Nmols[:len(cat+an)]):
         print(f"Charge neutrality is not satisfied for system {row_idx}")
         print(cat+an)
         print("Previous number of cation/anion molecules: ",Nmols[:len(cat+an)])
