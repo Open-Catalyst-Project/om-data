@@ -122,15 +122,27 @@ def contains_lanthanide(strings):
                 return True
     return False
 
-def choose_species(species,max_comp,solvent=False,cations=False):
-    
+# Function to check if selected species exist in the existing list
+def check_for_duplicates(existing_species, selected_species):
+    existing_cleaned = [re.split(r'[+-]', formula)[0] for formula in existing_species]
+    selected_cleaned = [re.split(r'[+-]', formula)[0] for formula in selected_species]
+
+    # Check if any selected species are already in the existing list
+    for selected in selected_cleaned:
+        if selected in existing_cleaned:
+            return True
+    return False
+
+def choose_species(species,max_comp,existing_species,solvent=False,cations=False):
     formulas = lanthanides
-    while contains_lanthanide(formulas):
-        indices = np.random.choice(len(species), size=max_comp, replace=False)
-        #indices = np.random.choice(len(species), size=np.random.randint(1,max_comp), replace=False)
-        #We want to make sure that we have no "identical" species, disregarding their charges
-        formulas = np.array(species["formula"])[indices].tolist() 
-        #formulas, indices = remove_dup_species(formulas,indices)
+    while contains_lanthanide(formulas) or check_for_duplicates(existing_species, formulas):
+        # Keep randomly choosing until there are no duplicates
+        indices = np.random.choice(len(species), size=np.random.randint(1, max_comp), replace=False)
+        formulas = np.array(species["formula"])[indices].tolist()
+
+        # Check for duplicates, loop continues until no duplicates are found
+        if not contains_lanthanide(formulas) and not check_for_duplicates(existing_species, formulas):
+            break
     if solvent:
         return np.array(species["formula"])[indices].tolist(), np.array(species["charge"])[indices].tolist(), np.array(species["min_temperature"])[indices].tolist(), np.array(species["max_temperature"])[indices].tolist()
     else:
@@ -155,21 +167,21 @@ for i in range(Nrandom):
     max_comp = 3
 
     #Randomly select cations and cations
-    cat, catcharges = choose_species(cations,max_comp)
-    an, ancharges = choose_species(anions,max_comp)
+    cat, catcharges = choose_species(cations,max_comp,[])
+    an, ancharges = choose_species(anions,max_comp,cat)
 
     #Solve for stoichiometry that preserves charge neutrality
     charges = catcharges + ancharges
     stoich = solve_single_equation(charges)
 
     #Randomly select solvents
-    solv, solvcharges, minT, maxT= choose_species(solvents,max_comp,solvent=True)
+    solv, solvcharges, minT, maxT= choose_species(solvents,max_comp,cat+ansolvent=True)
     stoich_solv = np.random.randint(1, 3, size=len(solv))
         
-    formulas = remove_duplicates([cat,an,solv])
-    cat = formulas[0]
-    an = formulas[1]
-    solv = formulas[2]
+    #formulas = remove_duplicates([cat,an,solv])
+    #cat = formulas[0]
+    #an = formulas[1]
+    #solv = formulas[2]
     soltorsolv = len(cat+an)*['A']+len(solv)*['B']
        
     species = cat+an+solv

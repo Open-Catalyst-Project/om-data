@@ -127,12 +127,27 @@ def contains_lanthanide(strings):
                 return True
     return False
 
-def choose_species(species,max_comp,solvent=False,cations=False):
+# Function to check if selected species exist in the existing list
+def check_for_duplicates(existing_species, selected_species):
+    existing_cleaned = [re.split(r'[+-]', formula)[0] for formula in existing_species]
+    selected_cleaned = [re.split(r'[+-]', formula)[0] for formula in selected_species]
+
+    # Check if any selected species are already in the existing list
+    for selected in selected_cleaned:
+        if selected in existing_cleaned:
+            return True
+    return False
+
+def choose_species(species,max_comp,existing_species,solvent=False,cations=False):
     formulas = lanthanides
-    while contains_lanthanide(formulas):
-        indices = np.random.choice(len(species), size=np.random.randint(1,max_comp), replace=False)
-        #We want to make sure that we have no "identical" species, disregarding their charges
-        formulas = np.array(species["formula"])[indices].tolist() 
+    while contains_lanthanide(formulas) or check_for_duplicates(existing_species, formulas):
+        # Keep randomly choosing until there are no duplicates
+        indices = np.random.choice(len(species), size=np.random.randint(1, max_comp), replace=False)
+        formulas = np.array(species["formula"])[indices].tolist()
+
+        # Check for duplicates, loop continues until no duplicates are found
+        if not contains_lanthanide(formulas) and not check_for_duplicates(existing_species, formulas):
+            break
     if solvent:
         return np.array(species["formula"])[indices].tolist(), np.array(species["charge"])[indices].tolist(), np.array(species["min_temperature"])[indices].tolist(), np.array(species["max_temperature"])[indices].tolist()
     else:
@@ -147,7 +162,7 @@ solvents_file = 'solvent.csv'
 
 elytes= load_csv('elytes.csv')
 
-Nrandom = 700#800
+Nrandom = 700#700#800
 fac = 0.05
 for i in range(Nrandom):
     cations = load_csv(cations_file)
@@ -157,16 +172,16 @@ for i in range(Nrandom):
     #Randomly select which class we want to create
     classes = ['protic','aprotic','IL','MS','aq']
     clas = np.random.choice(classes,p=[0.4,0.4,0.1,0.05,0.05])
-    
+    clas = 'IL'    
     #(1) Aqueous electrolytes
     if clas == 'aq':
         aq_idx = list(cations['in_aq'])
         cations = cations.iloc[aq_idx]
-        cat, catcharges = choose_species(cations,max_comp)#,cations=True)
+        cat, catcharges = choose_species(cations,max_comp,[])#,cations=True)
          
         aq_idx = list(anions['in_aq'])
         anions = anions.iloc[aq_idx]
-        an, ancharges = choose_species(anions,max_comp)
+        an, ancharges = choose_species(anions,max_comp,cat)
         
         charges = catcharges + ancharges
         stoich = solve_single_equation(charges)
@@ -174,10 +189,10 @@ for i in range(Nrandom):
         solv = ['H2O']
         stoich_solv = [1]
         
-        formulas = remove_duplicates([cat,an,solv])
-        cat = formulas[0]
-        an = formulas[1]
-        solv = formulas[2]
+        #formulas = remove_duplicates([cat,an,solv])
+        #cat = formulas[0]
+        #an = formulas[1]
+        #solv = formulas[2]
         
         salt_molfrac = np.array(stoich)/sum(stoich)
         solv_molfrac = np.array(stoich_solv)/sum(stoich_solv)
@@ -188,24 +203,24 @@ for i in range(Nrandom):
     elif clas == 'protic':
         protic_idx = list(cations['in_protic'])
         cations = cations.iloc[protic_idx]
-        cat, catcharges = choose_species(cations,max_comp)#,cations=True)
+        cat, catcharges = choose_species(cations,max_comp,[])#,cations=True)
         
         protic_idx = list(anions['in_protic'])
         anions = anions.iloc[protic_idx]
-        an, ancharges = choose_species(anions,max_comp)
+        an, ancharges = choose_species(anions,max_comp,an)
         
         charges = list(catcharges)+list(ancharges)
         stoich = solve_single_equation(charges)
 
         protic_idx = list(solvents['protic'])
         solvents = solvents.iloc[protic_idx]
-        solv, solvcharges, minT, maxT= choose_species(solvents,max_comp,solvent=True)
+        solv, solvcharges, minT, maxT= choose_species(solvents,max_comp,cat+an,solvent=True)
         stoich_solv = np.random.randint(1, 4, size=len(solv))
         
-        formulas = remove_duplicates([cat,an,solv])
-        cat = formulas[0]
-        an = formulas[1]
-        solv = formulas[2]
+        #formulas = remove_duplicates([cat,an,solv])
+        #cat = formulas[0]
+        #an = formulas[1]
+        #solv = formulas[2]
         
         salt_molfrac = np.array(stoich)/sum(stoich)
         solv_molfrac = np.array(stoich_solv)/sum(stoich_solv)
@@ -217,24 +232,24 @@ for i in range(Nrandom):
     elif clas == 'aprotic':
         aprotic_idx = list(cations['in_aprotic'])
         cations = cations.iloc[aprotic_idx]
-        cat, catcharges = choose_species(cations,max_comp)#,cations=True)
+        cat, catcharges = choose_species(cations,max_comp,[])#,cations=True)
         
         aprotic_idx = list(anions['in_aprotic'])
         anions = anions.iloc[aprotic_idx]
-        an, ancharges = choose_species(anions,max_comp)
+        an, ancharges = choose_species(anions,max_comp,cat)
 
         charges = list(catcharges)+list(ancharges)
         stoich = solve_single_equation(charges)
 
         aprotic_idx = list(solvents['polar_aprotic'])
         solvents = solvents.iloc[aprotic_idx]
-        solv, solvcharges, minT, maxT= choose_species(solvents,max_comp,solvent=True)
+        solv, solvcharges, minT, maxT= choose_species(solvents,max_comp,cat+an,solvent=True)
         stoich_solv = np.random.randint(1, 4, size=len(solv))
         
-        formulas = remove_duplicates([cat,an,solv])
-        cat = formulas[0]
-        an = formulas[1]
-        solv = formulas[2]
+        #formulas = remove_duplicates([cat,an,solv])
+        #cat = formulas[0]
+        #an = formulas[1]
+        #solv = formulas[2]
         
         salt_molfrac = np.array(stoich)/sum(stoich)
         solv_molfrac = np.array(stoich_solv)/sum(stoich_solv)
@@ -246,22 +261,22 @@ for i in range(Nrandom):
     elif clas == 'IL': 
         IL_idx = list(cations['in_IL'])
         cations_il = cations.iloc[IL_idx]
-        cat, catcharges = choose_species(cations_il,max_comp)#,cations=True)
+        cat, catcharges = choose_species(cations_il,max_comp,[])#,cations=True)
         
         IL_idx = list(anions['in_IL'])
         anions_il = anions.iloc[IL_idx]
-        an, ancharges = choose_species(anions_il,max_comp)
+        an, ancharges = choose_species(anions_il,max_comp,cat)
 
         charges = list(catcharges)+list(ancharges)
         stoich = solve_single_equation(charges)
 
         IL_idx = list(cations['IL_comp'])
         cations = cations.iloc[IL_idx]
-        solv, solvcharges = choose_species(cations,max_comp)#,cations=True) 
+        solv, solvcharges = choose_species(cations,max_comp,cat+an)#,cations=True) 
         
         IL_idx = list(anions['IL_comp'])
         anions = anions.iloc[IL_idx]
-        solv1, solvcharges1 = choose_species(anions,max_comp) 
+        solv1, solvcharges1 = choose_species(anions,max_comp,cat+an+solv) 
         solv += solv1
         solvcharges += solvcharges1
 
@@ -269,10 +284,10 @@ for i in range(Nrandom):
         maxT = 400
         stoich_solv = solve_single_equation(solvcharges)
         
-        formulas = remove_duplicates([cat,an,solv])
-        cat = formulas[0]
-        an = formulas[1]
-        solv = formulas[2]
+        #formulas = remove_duplicates([cat,an,solv])
+        #cat = formulas[0]
+        #an = formulas[1]
+        #solv = formulas[2]
         
         salt_molfrac = np.array(stoich)/sum(stoich)
         solv_molfrac = np.array(stoich_solv)/sum(stoich_solv)
@@ -281,11 +296,11 @@ for i in range(Nrandom):
     elif clas == 'MS':
         MS_idx = list(cations['MS_comp'])
         cations_ms = cations.iloc[MS_idx]
-        cat, catcharges = choose_species(cations_ms,max_comp)#,cations=True)
+        cat, catcharges = choose_species(cations_ms,max_comp,[])#,cations=True)
         
         MS_idx = list(anions['MS_comp'])
         anions_ms = anions.iloc[MS_idx]
-        an, ancharges = choose_species(anions_ms,max_comp)
+        an, ancharges = choose_species(anions_ms,max_comp,cat)
 
         charges = list(catcharges)+list(ancharges)
         stoich = solve_single_equation(charges)
@@ -297,10 +312,10 @@ for i in range(Nrandom):
         salt_molfrac = np.array(stoich)/sum(stoich)
         solv_molfrac = []
         
-        formulas = remove_duplicates([cat,an,solv])
-        cat = formulas[0]
-        an = formulas[1]
-        solv = formulas[2]
+        #formulas = remove_duplicates([cat,an,solv])
+        #cat = formulas[0]
+        #an = formulas[1]
+        #solv = formulas[2]
 
     species = cat+an+solv
     if clas == 'MS':
