@@ -1,0 +1,104 @@
+{ 
+ s_m_m2io_version
+ :::
+ 2.0.0 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_m_Spin_multiplicity
+ s_m_Source_Path
+ s_m_Source_File
+ i_j_Number_of_canonical_orbitals
+ r_j_Final_Energy
+ r_j_Gas_Phase_Energy
+ r_j_HOMO
+ r_j_LUMO
+ s_j_Jaguar_input_file
+ s_j_Jaguar_log_file
+ s_j_Jaguar_mae_file
+ s_j_Jaguar_output_file
+ s_j_Jaguar_restart_input_file
+ s_j_Jaguar_restart_mae_file
+ s_j_QM_Basis
+ s_j_QM_Method
+ s_j_Task
+ s_m_job_name
+ i_j_geopt_step_num
+ i_matsci_Geometry_Iteration
+ i_j_Geometry_convergence_category
+ b_ffio_use_custom_oplsdir
+ i_m_ct_format
+ :::
+ AsF6- 
+  352 
+  jag_AsF6-_opt_wB97M-V_DEF2-TZVPD_iter2 
+  1
+  /Users/levineds/jag_AsF6-_opt_wB97M-V_DEF2-TZVPD_2 
+  jag_AsF6-_opt_wB97M-V_DEF2-TZVPD_2.01.mae 
+  291
+  -2835.20139059621
+  -2835.20139059621
+  -0.31495165727973
+  0.177647024676917
+  /Users/levineds/jag_AsF6-_opt_wB97M-V_DEF2-TZVPD_2/jag_AsF6-_opt_wB97M-V_DEF2-TZVPD_2.in 
+  /Users/levineds/jag_AsF6-_opt_wB97M-V_DEF2-TZVPD_2/jag_AsF6-_opt_wB97M-V_DEF2-TZVPD_2.log 
+  /Users/levineds/jag_AsF6-_opt_wB97M-V_DEF2-TZVPD_2/jag_AsF6-_opt_wB97M-V_DEF2-TZVPD_2.mae 
+  /Users/levineds/jag_AsF6-_opt_wB97M-V_DEF2-TZVPD_2/jag_AsF6-_opt_wB97M-V_DEF2-TZVPD_2.out 
+  /Users/levineds/jag_AsF6-_opt_wB97M-V_DEF2-TZVPD_2/jag_AsF6-_opt_wB97M-V_DEF2-TZVPD_2.01.in 
+  /Users/levineds/jag_AsF6-_opt_wB97M-V_DEF2-TZVPD_2/jag_AsF6-_opt_wB97M-V_DEF2-TZVPD_2.01.mae 
+  def2-tzvpd 
+  DFT(wb97m-v) 
+  Optimization 
+  jag_AsF6-_opt_wB97M-V_DEF2-TZVPD_2 
+  2
+  2
+  0
+  0
+  2
+ m_atom[7] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_color
+  r_m_charge1
+  r_m_charge2
+  i_m_atomic_number
+  i_m_formal_charge
+  s_m_color_rgb
+  s_m_atom_name
+  s_m_label_format
+  i_m_label_color
+  s_m_label_user_text
+  r_ffio_custom_charge
+  r_j_ESP_Charges
+  :::
+  1 96 -0.000002 0.000004 0.000000 4 1.40650 1.40650 33 -1 1E1EE1  As1  %C1.3  2 ""  1.4065 1.40649572253694
+  2 56 1.734996 -0.000004 0.000000 8 -0.40108 -0.40108 9 0 00FF7F  F2  %C1.3  2 ""  -0.40108 -0.401082788450071
+  3 56 0.000030 1.735011 0.000000 8 -0.40108 -0.40108 9 0 00FF7F  F3  %C1.3  2 ""  -0.40108 -0.401084342278652
+  4 56 -1.735003 -0.000007 0.000000 8 -0.40108 -0.40108 9 0 00FF7F  F4  %C1.3  2 ""  -0.40108 -0.4010830262755
+  5 56 0.000028 -1.734989 0.000000 8 -0.40108 -0.40108 9 0 00FF7F  F5  %C1.3  2 ""  -0.40108 -0.401082267885471
+  6 56 -0.000026 -0.000009 1.734994 8 -0.40108 -0.40108 9 0 00FF7F  F6  %C1.3  2 ""  -0.40108 -0.40108164714657
+  7 56 -0.000026 -0.000009 -1.734994 8 -0.40108 -0.40108 9 0 00FF7F  F7  %C1.3  2 ""  -0.40108 -0.401081650500673
+  :::
+ } 
+ m_bond[6] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 0
+  2 1 3 0
+  3 1 4 0
+  4 1 5 0
+  5 1 6 0
+  6 1 7 0
+  :::
+ } 
+} 
+

@@ -1,0 +1,103 @@
+{ 
+ s_m_m2io_version
+ :::
+ 2.0.0 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_m_Spin_multiplicity
+ i_m_Source_File_Index
+ s_m_Source_Path
+ s_m_Source_File
+ s_pdb_PDB_format_version
+ i_m_Molecular_charge
+ i_j_Number_of_canonical_orbitals
+ r_j_Final_Energy
+ r_j_Gas_Phase_Energy
+ r_j_HOMO
+ r_j_LUMO
+ s_j_Jaguar_input_file
+ s_j_Jaguar_log_file
+ s_j_Jaguar_mae_file
+ s_j_Jaguar_output_file
+ s_j_Jaguar_restart_input_file
+ s_j_Jaguar_restart_mae_file
+ s_j_QM_Basis
+ s_j_QM_Method
+ s_j_Task
+ s_m_job_name
+ i_j_Geometry_convergence_category
+ b_ffio_use_custom_oplsdir
+ i_m_ct_format
+ :::
+ O2V+ 
+  356 
+  O2V+.1 
+  1
+  1
+  /Users/levineds/jag_O2Vplus_opt_wB97M-V_DEF2-TZVPD 
+  jag_O2Vplus_opt_wB97M-V_DEF2-TZVPD.01.mae 
+  3.0 
+  1
+  128
+  -1094.09068516015
+  -1094.09068516015
+  -0.673428628215974
+  -0.311284949903181
+  /Users/levineds/jag_O2Vplus_opt_wB97M-V_DEF2-TZVPD/jag_O2Vplus_opt_wB97M-V_DEF2-TZVPD.in 
+  /Users/levineds/jag_O2Vplus_opt_wB97M-V_DEF2-TZVPD/jag_O2Vplus_opt_wB97M-V_DEF2-TZVPD.log 
+  /Users/levineds/jag_O2Vplus_opt_wB97M-V_DEF2-TZVPD/jag_O2Vplus_opt_wB97M-V_DEF2-TZVPD.mae 
+  /Users/levineds/jag_O2Vplus_opt_wB97M-V_DEF2-TZVPD/jag_O2Vplus_opt_wB97M-V_DEF2-TZVPD.out 
+  /Users/levineds/jag_O2Vplus_opt_wB97M-V_DEF2-TZVPD/jag_O2Vplus_opt_wB97M-V_DEF2-TZVPD.01.in 
+  /Users/levineds/jag_O2Vplus_opt_wB97M-V_DEF2-TZVPD/jag_O2Vplus_opt_wB97M-V_DEF2-TZVPD.01.mae 
+  def2-tzvpd 
+  DFT(wb97m-v) 
+  Optimization 
+  jag_O2Vplus_opt_wB97M-V_DEF2-TZVPD 
+  3
+  0
+  2
+ m_atom[3] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  r_m_charge1
+  r_m_charge2
+  s_m_pdb_atom_name
+  i_m_atomic_number
+  s_m_color_rgb
+  s_m_atom_name
+  s_m_label_format
+  i_m_label_color
+  s_m_label_user_text
+  r_ffio_custom_charge
+  r_j_ESP_Charges
+  r_m_pdb_occupancy
+  i_m_pdb_convert_problem
+  i_pdb_PDB_serial
+  i_m_formal_charge
+  :::
+  1 23 -0.437116 0.396023 -1.110466 1 70 -0.41094 -0.41094 " O1 " 8 FF2E2E  O1  %C1.3  2 ""  -0.41094 -0.410938042651609 1 4 1 0
+  2 154 0.463676 0.386672 0.126900 1 2 1.82139 1.82139 " V1 " 23 A6A6AB  V2  %C1.3  2 ""  1.82139 1.82138858924874 1 4 2 1
+  3 23 -0.026561 -0.782694 0.983565 1 70 -0.41045 -0.41045 " O2 " 8 FF2E2E  O3  %C1.3  2 ""  -0.41045 -0.410450546597132 1 4 3 0
+  :::
+ } 
+ m_bond[2] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 0
+  2 2 3 0
+  :::
+ } 
+} 
+
