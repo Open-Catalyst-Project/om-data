@@ -210,6 +210,7 @@ def write_orca_inputs(
     output_directory,
     charge: int = 0,
     mult: int = 1,
+    nbo: bool = True,
     orcasimpleinput: str = ORCA_ASE_SIMPLE_INPUT,
     orcablocks: str = " ".join(ORCA_BLOCKS),
     vertical: Enum = Vertical.Default,
@@ -224,6 +225,10 @@ def write_orca_inputs(
     # Include estimate of memory needs
     mem_est = get_mem_estimate(atoms, vertical, mult)
     orcablocks += f" %maxcore {mem_est}"
+    if not nbo:
+        orcasimpleinput += " NONBO NONPA"
+    else:
+        orcablocks += f" {NBO_FLAGS}"
 
     if vertical == Vertical.MetalOrganics and mult == 1:
         orcasimpleinput += " UKS"
