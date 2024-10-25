@@ -11,7 +11,7 @@
 #SBATCH --mem=500m
 #SBATCH --time=72:00:00
 
-#SBATCH --array=1-802
+#SBATCH --array=1-4000
 
 idx=$((${SLURM_ARRAY_TASK_ID}+0))
 

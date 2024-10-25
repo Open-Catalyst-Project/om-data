@@ -176,7 +176,8 @@ def generate_system(row_idx, systems, job_dir, rho=None):
     # round numsolv to the nearest multiple of the solvent ratio denominator
     # to avoid round-off errors that can cause charge imbalance issues
     solv_denom = sum(np.array(solv_ratio).astype(float).astype(int))
-    num_solv = solv_denom * round(num_solv/solv_denom)
+    if solv_denom > 0:
+        num_solv = solv_denom * round(num_solv/solv_denom)
 
     numsolv = np.round(num_solv*solv_molfrac).astype(int)
     Nmols = np.concatenate((numsalt,numsolv)).astype(int).tolist()

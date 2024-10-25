@@ -53,7 +53,11 @@ def main():
 
         job_dir = os.path.join(args.output_path, str(job_idx))
         if os.path.exists(job_dir):
-            shutil.rmtree(job_dir)
+            if os.path.exists(os.path.join(job_dir, 'final-out.cms')):
+                print('Job appears to be complete, skipping')
+                continue
+            else:
+                shutil.rmtree(job_dir)
         os.makedirs(job_dir)
         
         if units == 'volume':
