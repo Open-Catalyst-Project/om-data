@@ -1,0 +1,18 @@
+OV+2 inherits OPLSCM1A {
+  write("Data Atoms") {
+    $atom:o1_ov $mol @atom:O_ov    -0.750   -0.944   3.164  -0.126
+    $atom:v_ov  $mol @atom:V_ov   2.750   -2.505   2.219  -1.016 
+  }
+  write_once("Data Masses") {
+    @atom:V_ov  50.943964
+    @atom:O_ov  15.999
+  } 
+  write("Data Bonds") {
+    $bond:ov1_ov @bond:OV1_ov $atom:v_ov $atom:o1_ov
+  }
+  write_once("In Settings") {
+    bond_coeff   @bond:OV1_ov         514.24402486  1.57
+    pair_coeff  @atom:V_ov  @atom:V_ov   0.0190726577  2.517
+    pair_coeff  @atom:O_ov  @atom:O_ov   0.715535373 2.253
+  }
+} # "OV+2"

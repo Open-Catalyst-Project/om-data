@@ -1,0 +1,19 @@
+# This file contains the settings appropriate for the OPLSCM1A + force-field 
+# specifications of other molecules not described by OPLSCM1A.
+
+OPLSCM1A {
+    # In this "In Init" section, we specify the LAMMPS styles for bonded interactions
+    # (bond, angle, dihedral, and improper) as well as non-bonded interactions (LJ + Coulombic)
+    # More details regarding each style can be found in LAMMPS documentation (https://docs.lammps.org/)
+    write_once("In Init") {
+        units real
+        atom_style full
+        bond_style harmonic
+        angle_style harmonic
+        dihedral_style hybrid fourier opls
+        improper_style cvff
+        pair_style lj/cut/coul/long 11.0 11.0
+        pair_modify mix arithmetic
+        kspace_style pppm 0.0001
+    } 
+}  

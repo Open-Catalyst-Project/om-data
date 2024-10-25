@@ -1,0 +1,57 @@
+CH3O- inherits OPLSCM1A {
+  ### LAMMPS commands for initialization
+  ### (These can be overridden later.)
+  write_once("In Init") {
+    atom_style full
+  }
+  write_once("In Settings") {
+    pair_coeff @atom:type1_c_ch3o- @atom:type1_c_ch3o- 0.066 3.5000000
+    pair_coeff @atom:type2_o_ch3o- @atom:type2_o_ch3o- 0.170 3.1200000
+    pair_coeff @atom:type3_h_ch3o- @atom:type3_h_ch3o- 0.030 2.5000000
+    pair_coeff @atom:type4_h_ch3o- @atom:type4_h_ch3o- 0.030 2.5000000
+    pair_coeff @atom:type5_h_ch3o- @atom:type5_h_ch3o- 0.030 2.5000000
+  }
+  write_once("In Settings") {
+    bond_coeff @bond:type1_ch3o 320.0000 1.4100
+    bond_coeff @bond:type2_ch3o 340.0000 1.0900
+    bond_coeff @bond:type3_ch3o 340.0000 1.0900
+    bond_coeff @bond:type4_ch3o 340.0000 1.0900
+  }
+  write_once("In Settings") {
+    angle_coeff @angle:type1_ch3o 35.000 109.500
+    angle_coeff @angle:type2_ch3o 35.000 109.500
+    angle_coeff @angle:type3_ch3o 35.000 109.500
+    angle_coeff @angle:type4_ch3o 33.000 107.800
+    angle_coeff @angle:type5_ch3o 33.000 107.800
+    angle_coeff @angle:type6_ch3o 33.000 107.800
+  }
+  ### DATA sections
+  write_once("Data Masses") {
+    @atom:type1_c_ch3o- 12.011
+    @atom:type2_o_ch3o- 15.999
+    @atom:type3_h_ch3o- 1.008
+    @atom:type4_h_ch3o- 1.008
+    @atom:type5_h_ch3o- 1.008
+  }
+  write("Data Atoms") {
+    $atom:id1 $mol:m1 @atom:type1_c_ch3o- -0.135268 -0.05600 -0.01200 0.01600
+    $atom:id2 $mol:m1 @atom:type2_o_ch3o- 0.150581 1.34100 -0.13700 -0.12800
+    $atom:id3 $mol:m1 @atom:type3_h_ch3o- 0.328229 -0.34400 0.05200 1.06500
+    $atom:id4 $mol:m1 @atom:type4_h_ch3o- 0.328229 -0.37200 0.91500 -0.46200
+    $atom:id5 $mol:m1 @atom:type5_h_ch3o- 0.328229 -0.57800 -0.81800 -0.50000
+  }
+  write("Data Bonds") {
+    $bond:id1 @bond:type1_ch3o $atom:id2 $atom:id1
+    $bond:id2 @bond:type2_ch3o $atom:id3 $atom:id1
+    $bond:id3 @bond:type3_ch3o $atom:id4 $atom:id1
+    $bond:id4 @bond:type4_ch3o $atom:id5 $atom:id1
+  }
+  write("Data Angles") {
+    $angle:id1 @angle:type1_ch3o $atom:id3 $atom:id1 $atom:id2
+    $angle:id2 @angle:type2_ch3o $atom:id4 $atom:id1 $atom:id2
+    $angle:id3 @angle:type3_ch3o $atom:id5 $atom:id1 $atom:id2
+    $angle:id4 @angle:type4_ch3o $atom:id4 $atom:id1 $atom:id3
+    $angle:id5 @angle:type5_ch3o $atom:id5 $atom:id1 $atom:id3
+    $angle:id6 @angle:type6_ch3o $atom:id5 $atom:id1 $atom:id4
+  }
+} # end of "CH3O- inherits OPLSCM1A" type definition

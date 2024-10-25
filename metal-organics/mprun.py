@@ -1,14 +1,15 @@
 """ Adapted from Architector/development/lig_sampling/production_scripts/mpirun.py """
 
 import argparse
+import multiprocessing as mp
 import os
 import pathlib
 import pickle
 import subprocess
 import sys
 import time
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
+from functools import partial
 
 import pandas as pd
 from tqdm import tqdm
@@ -37,8 +38,9 @@ def calc(input_dict: dict, outpath: str) -> bool:
         subprocess.check_output(
             ["python", "generate_structures.py", pickle_input, outpath],
             universal_newlines=True,
+            timeout=3600 * 12,
         )
-    except subprocess.CalledProcessError as e:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
         end = time.time()
         with open(
             os.path.join(outpath, input_dict["name"] + "_failed.txt"), "w"
@@ -84,7 +86,6 @@ def parse_args():
 
 def main():
     args = parse_args()
-    n_workers = args.n_workers
     batch_idx = args.batch_idx
     if not os.path.exists(args.outpath):
         os.mkdir(args.outpath)
@@ -100,21 +101,17 @@ def main():
     # Add index as name of job from input dataframe.
     newindf_rows = []
     for i, row in indf.iterrows():
-        if str(i) in done_list:
-            continue
         inp_dict = row["architector_input"]
         inp_dict["name"] = str(i)
         newindf_rows.append(inp_dict)
 
-    with ProcessPoolExecutor(max_workers=n_workers) as exe:
-        futs = []
-        for d in newindf_rows[batch_idx * args.batch_size : (batch_idx + 1) * args.batch_size]:
-            # print('Submitting: {}'.format(i))
-            fut = exe.submit(calc, d, args.outpath)
-            futs.append(fut)
-        # Track progress of completed jobs.
-        for x in tqdm(as_completed(futs), total=len(futs)):
-            res = x.result()
+    pool = mp.Pool(args.n_workers)
+    fxn = partial(calc, outpath=args.outpath)
+    batch = newindf_rows[
+        batch_idx * args.batch_size : (batch_idx + 1) * args.batch_size
+    ]
+    batch = [inp for inp in batch if inp["name"] not in done_list]
+    list(tqdm(pool.imap(fxn, batch), total=len(batch)))
 
 
 if __name__ == "__main__":

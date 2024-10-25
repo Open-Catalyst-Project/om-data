@@ -1,0 +1,14 @@
+REMARK   1 PDBFIXER FROM: BH4-.pdb
+REMARK   1 CREATED WITH OPENMM 8.1.1, 2024-08-10
+HETATM    1  B1  UNK     1      -1.061   0.122   1.017  1.00  0.00           B  
+HETATM    2  H   UNK     1      -1.107   0.846   1.962  1.00  0.00           H  
+HETATM    3  H2  UNK     1      -1.680  -0.869   1.246  1.00  0.00           H  
+HETATM    4  H3  UNK     1      -1.531   0.674   0.071  1.00  0.00           H  
+HETATM    5  H4  UNK     1       0.073  -0.161   0.787  1.00  0.00           H  
+TER       6      UNK     1
+CONECT    1    2    3    4    5
+CONECT    2    1
+CONECT    3    1
+CONECT    4    1
+CONECT    5    1
+END

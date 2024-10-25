@@ -1,0 +1,10 @@
+REMARK   1 PDBFIXER FROM: H2O.pdb
+REMARK   1 CREATED WITH OPENMM 8.1.1, 2024-07-13
+HETATM    1  OW0 HOH     1       0.000   0.000   0.000  1.00  0.00           O  
+HETATM    2  HW1 HOH     1       0.818   0.593   0.000  1.00  0.00           H  
+HETATM    3  HW2 HOH     1      -0.818   0.593   0.000  1.00  0.00           H  
+TER       4      HOH     1
+CONECT    1    2    3
+CONECT    2    1
+CONECT    3    1
+END

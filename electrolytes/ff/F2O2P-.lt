@@ -1,0 +1,48 @@
+F2O2P- inherits OPLSCM1A {
+  ### Inheriting from oplsaa.lt
+  write("Data Atoms") {
+    $atom:o1_f2o2p $mol:m @atom:O1_f2o2p -1.181 -1.432 0.526 -0.568
+    $atom:p1_f2o2p $mol:m @atom:P1_f2o2p 2.548 -1.064 0.148 1.038
+    $atom:o2_f2o2p $mol:m @atom:Os2_f2o2p -1.181 -1.228 1.381 1.896
+    $atom:f1_f2o2p $mol:m @atom:F1_f2o2p -0.593 0.517 -0.393 1.136
+    $atom:f2_f2o2p $mol:m @atom:F2_f2o2p -0.593 -2.099 -1.051 1.581
+  }
+  write_once("Data Masses") {
+    @atom:O1_f2o2p 15.9994
+    @atom:Os2_f2o2p  15.9994
+    @atom:P1_f2o2p  30.97
+    @atom:F1_f2o2p  19.00
+    @atom:F2_f2o2p  19.00
+  }
+  write("Data Bonds") {
+    $bond:fp1_f2o2p @bond:FP1_f2o2p $atom:f1_f2o2p $atom:p1_f2o2p
+    $bond:fp2_f2o2p @bond:FP2_f2o2p $atom:f2_f2o2p $atom:p1_f2o2p
+    $bond:po1_f2o2p @bond:PO_f2o2p $atom:p1_f2o2p $atom:o1_f2o2p
+    $bond:po2_f2o2p @bond:POs_f2o2p $atom:p1_f2o2p $atom:o2_f2o2p
+  }
+  write("Data Angles") {
+    $angle:fpf1_f2o2p @angle:FPF_f2o2p $atom:f1_f2o2p $atom:p1_f2o2p $atom:f2_f2o2p
+    $angle:fpo1_f2o2p @angle:FPO1_f2o2p $atom:f1_f2o2p $atom:p1_f2o2p $atom:o1_f2o2p
+    $angle:fpo2_f2o2p @angle:FPOs2_f2o2p $atom:f1_f2o2p $atom:p1_f2o2p $atom:o2_f2o2p
+    $angle:fpo3_f2o2p @angle:FPO3_f2o2p $atom:f2_f2o2p $atom:p1_f2o2p $atom:o1_f2o2p
+    $angle:fpo4_f2o2p @angle:FPOs4_f2o2p $atom:f2_f2o2p $atom:p1_f2o2p $atom:o2_f2o2p
+    $angle:opo3_f2o2p @angle:OPOs_f2o2p $atom:o1_f2o2p $atom:p1_f2o2p $atom:o2_f2o2p
+  }
+  write_once("In Settings") {
+    bond_coeff @bond:PO_f2o2p 529.5 1.4870   
+    bond_coeff @bond:POs_f2o2p 346.2 1.6150   
+    bond_coeff @bond:FP1_f2o2p 442.7 1.5860   
+    bond_coeff @bond:FP2_f2o2p 442.7 1.5860   
+    angle_coeff @angle:FPF_f2o2p 92.4 92.22   
+    angle_coeff @angle:FPO1_f2o2p 85.1 112.07   
+    angle_coeff @angle:FPOs2_f2o2p 85.7 102.27   
+    angle_coeff @angle:FPO3_f2o2p 85.1 112.27   
+    angle_coeff @angle:FPOs4_f2o2p 85.7 102.27   
+    angle_coeff @angle:OPOs_f2o2p 81.8 115.46   
+    pair_coeff @atom:O1_f2o2p @atom:O1_f2o2p 0.1463 3.048120874245357
+    pair_coeff @atom:Os2_f2o2p @atom:Os2_f2o2p 0.0726 3.156097798883966
+    pair_coeff @atom:P1_f2o2p @atom:P1_f2o2p 0.2295 3.6940224448971026
+    pair_coeff @atom:F1_f2o2p @atom:F1_f2o2p 0.0832 3.0342228542423677
+    pair_coeff @atom:F2_f2o2p @atom:F2_f2o2p 0.0832 3.0342228542423677
+  }
+} # end of "F2O2P-" type definition

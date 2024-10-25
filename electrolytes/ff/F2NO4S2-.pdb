@@ -1,0 +1,21 @@
+REMARK   1 PDBFIXER FROM: F2NO4S2-.pdb
+ATOM      1  N1  UNK     1       0.774   0.377   1.812  
+ATOM      2  S1  UNK     1      -0.499  -0.766   2.095  
+ATOM      3  O1  UNK     1      -1.690  -0.067   2.689  
+ATOM      4  O2  UNK     1      -0.013  -1.813   3.056  
+ATOM      5  F1  UNK     1      -0.945  -1.510   0.662  
+ATOM      6  S2  UNK     1       0.297   1.459   0.543  
+ATOM      7  O3  UNK     1      -0.995   2.141   0.897  
+ATOM      8  O4  UNK     1       0.133   0.703  -0.745  
+ATOM      9  F2  UNK     1       1.488   2.619   0.345  
+TER      
+CONECT    1    2    6
+CONECT    2    5    1    3    4
+CONECT    3    2
+CONECT    4    2
+CONECT    5    2
+CONECT    6    9    1    7    8
+CONECT    7    6
+CONECT    8    6
+CONECT    9    6
+END

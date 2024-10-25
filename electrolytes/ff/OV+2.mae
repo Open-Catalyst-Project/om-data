@@ -1,0 +1,104 @@
+{ 
+ s_m_m2io_version
+ :::
+ 2.0.0 
+} 
+
+f_m_ct { 
+ s_m_title
+ s_m_entry_id
+ s_m_entry_name
+ i_m_Spin_multiplicity
+ i_m_Source_File_Index
+ s_m_Source_Path
+ s_m_Source_File
+ s_pdb_PDB_format_version
+ i_m_Molecular_charge
+ i_j_Number_of_canonical_orbitals
+ r_j_Final_Energy
+ r_j_Gas_Phase_Energy
+ s_j_Jaguar_input_file
+ s_j_Jaguar_log_file
+ s_j_Jaguar_mae_file
+ s_j_Jaguar_output_file
+ s_j_Jaguar_restart_input_file
+ s_j_Jaguar_restart_mae_file
+ s_j_QM_Basis
+ s_j_QM_Method
+ s_j_Task
+ s_m_job_name
+ i_j_Geometry_convergence_category
+ r_j_S2_Value
+ r_j_alpha_HOMO
+ r_j_alpha_LUMO
+ r_j_beta_HOMO
+ r_j_beta_LUMO
+ b_ffio_use_custom_oplsdir
+ i_m_ct_format
+ :::
+ OV+2 
+  355 
+  OV+2.1 
+  2
+  1
+  /Users/levineds/jag_OV2plus_opt_wB97M-V_DEF2-TZVPD 
+  jag_OV2plus_opt_wB97M-V_DEF2-TZVPD.01.mae 
+  3.0 
+  2
+  88
+  -1018.26187573007
+  -1018.26187573007
+  /Users/levineds/jag_OV2plus_opt_wB97M-V_DEF2-TZVPD/jag_OV2plus_opt_wB97M-V_DEF2-TZVPD.in 
+  /Users/levineds/jag_OV2plus_opt_wB97M-V_DEF2-TZVPD/jag_OV2plus_opt_wB97M-V_DEF2-TZVPD.log 
+  /Users/levineds/jag_OV2plus_opt_wB97M-V_DEF2-TZVPD/jag_OV2plus_opt_wB97M-V_DEF2-TZVPD.mae 
+  /Users/levineds/jag_OV2plus_opt_wB97M-V_DEF2-TZVPD/jag_OV2plus_opt_wB97M-V_DEF2-TZVPD.out 
+  /Users/levineds/jag_OV2plus_opt_wB97M-V_DEF2-TZVPD/jag_OV2plus_opt_wB97M-V_DEF2-TZVPD.01.in 
+  /Users/levineds/jag_OV2plus_opt_wB97M-V_DEF2-TZVPD/jag_OV2plus_opt_wB97M-V_DEF2-TZVPD.01.mae 
+  def2-tzvpd 
+  UDFT(wb97m-v) 
+  Optimization 
+  jag_OV2plus_opt_wB97M-V_DEF2-TZVPD 
+  3
+  0.788811390901962
+  -1.0357568805595
+  -0.639620561115342
+  -1.10192318436367
+  -0.618556003664966
+  0
+  2
+ m_atom[2] { 
+  # First column is atom index #
+  i_m_mmod_type
+  r_m_x_coord
+  r_m_y_coord
+  r_m_z_coord
+  i_m_residue_number
+  i_m_color
+  r_m_charge1
+  r_m_charge2
+  s_m_pdb_atom_name
+  i_m_atomic_number
+  s_m_color_rgb
+  s_m_atom_name
+  r_ffio_custom_charge
+  r_j_ESP_Charges
+  r_m_pdb_occupancy
+  i_m_pdb_convert_problem
+  i_pdb_PDB_serial
+  i_m_formal_charge
+  :::
+  1 23 0.595872 0.360740 0.339746 1 70 -0.10301 -0.10301 " O1 " 8 FF2E2E  O1  -0.10301 -0.103013578044564 1 4 1 0
+  2 152 -0.595872 -0.360740 -0.339746 1 2 2.10301 2.10301 " V1 " 23 A6A6AB  V2  2.10301 2.10301357804456 1 4 2 2
+  :::
+ } 
+ m_bond[1] { 
+  # First column is bond index #
+  i_m_from
+  i_m_to
+  i_m_order
+  :::
+  1 1 2 0
+  :::
+ } 
+} 
+

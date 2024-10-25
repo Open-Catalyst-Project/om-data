@@ -1,0 +1,5 @@
+REMARK   1 PDBFIXER FROM: Hg+2.pdb
+REMARK   1 CREATED WITH OPENMM 8.1.1, 2024-08-10
+HETATM    1 HG0  UNK     1       0.000   0.000   0.000  1.00  0.00          Hg  
+TER       2      UNK     1
+END

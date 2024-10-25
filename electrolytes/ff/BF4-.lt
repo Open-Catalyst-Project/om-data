@@ -1,0 +1,48 @@
+BF4- inherits OPLSCM1A {
+  ### Inheriting from oplsaa.lt
+  write("Data Atoms") {
+    $atom:b1_bf4 $mol @atom:B1_bf4  0.8276  1.290  -0.392  -0.010 # B
+    $atom:f1_bf4 $mol @atom:F1_bf4 -0.4569  0.226  -1.449  -0.054 # F
+    $atom:f2_bf4 $mol @atom:F2_bf4 -0.4569  2.641  -1.042  -0.048 # F
+    $atom:f3_bf4 $mol @atom:F3_bf4 -0.4569  1.140   0.519  -1.191 # F
+    $atom:f4_bf4 $mol @atom:F4_bf4 -0.4569  1.152   0.402   1.255 # F
+  }
+write_once("Data Masses") {
+    @atom:B1_bf4  10.811
+    @atom:F1_bf4  18.998
+    @atom:F2_bf4  18.998
+    @atom:F3_bf4  18.998
+    @atom:F4_bf4  18.998
+  }
+  write("Data Bonds") {
+    $bond:bf1 @bond:BF1_bf4 $atom:b1_bf4 $atom:f1_bf4
+    $bond:bf2 @bond:BF2_bf4 $atom:b1_bf4 $atom:f2_bf4
+    $bond:bf3 @bond:BF3_bf4 $atom:b1_bf4 $atom:f3_bf4
+    $bond:bf4 @bond:BF4_bf4 $atom:b1_bf4 $atom:f4_bf4
+  }
+  write("Data Angles") {
+    $angle:fbf1_bf4 @angle:FBF1_bf4 $atom:f2_bf4 $atom:b1_bf4 $atom:f1_bf4
+    $angle:fbf2_bf4 @angle:FBF2_bf4 $atom:f3_bf4 $atom:b1_bf4 $atom:f1_bf4
+    $angle:fbf3_bf4 @angle:FBF3_bf4 $atom:f3_bf4 $atom:b1_bf4 $atom:f2_bf4
+    $angle:fbf4_bf4 @angle:FBF4_bf4 $atom:f4_bf4 $atom:b1_bf4 $atom:f1_bf4
+    $angle:fbf5_bf4 @angle:FBF5_bf4 $atom:f4_bf4 $atom:b1_bf4 $atom:f2_bf4
+    $angle:fbf6_bf4 @angle:FBF6_bf4 $atom:f4_bf4 $atom:b1_bf4 $atom:f3_bf4
+  }
+  write_once("In Settings") {
+    bond_coeff   @bond:BF1_bf4         386.59 1.394
+    bond_coeff   @bond:BF2_bf4         386.59 1.394
+    bond_coeff   @bond:BF3_bf4         386.59 1.394
+    bond_coeff   @bond:BF4_bf4         386.59 1.394
+    angle_coeff  @angle:FBF1_bf4       80 109.47       
+    angle_coeff  @angle:FBF2_bf4       80 109.47       
+    angle_coeff  @angle:FBF3_bf4       80 109.47       
+    angle_coeff  @angle:FBF4_bf4       80 109.47       
+    angle_coeff  @angle:FBF5_bf4       80 109.47       
+    angle_coeff  @angle:FBF6_bf4       80 109.47       
+    pair_coeff  @atom:B1_bf4  @atom:B1_bf4   0.095 3.5814
+    pair_coeff  @atom:F1_bf4  @atom:F1_bf4   0.06  3.1181
+    pair_coeff  @atom:F2_bf4  @atom:F2_bf4   0.06  3.1181
+    pair_coeff  @atom:F3_bf4  @atom:F3_bf4   0.06  3.1181
+    pair_coeff  @atom:F4_bf4  @atom:F4_bf4   0.06  3.1181
+  }
+} # end of "BF4-" type definition

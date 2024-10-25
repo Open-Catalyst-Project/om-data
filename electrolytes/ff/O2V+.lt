@@ -1,0 +1,25 @@
+O2V+ inherits OPLSCM1A {
+  write("Data Atoms") {
+    $atom:o1_o2v $mol @atom:O_o2v   -0.65   -3.281   1.488  -1.117
+    $atom:v_o2v  $mol @atom:V_o2v   2.3   -2.133   1.242   0.765
+    $atom:o2_o2v $mol @atom:O_o2v   -0.65 -2.615  -0.071   1.820
+  }
+  write_once("Data Masses") {
+    @atom:V_o2v  50.943964
+    @atom:O_o2v  15.999
+  } 
+  write("Data Bonds") {
+    $bond:ov1_o2v @bond:OV1_o2v $atom:v_o2v $atom:o1_o2v
+    $bond:ov2_o2v @bond:OV2_o2v $atom:v_o2v $atom:o2_o2v
+  }
+  write("Data Angles") {
+    $angle:ovo_w_o2v @angle:OVO_o2v $atom:o1_o2v $atom:v_o2v $atom:o2_o2v
+  }
+  write_once("In Settings") {
+    bond_coeff   @bond:OV1_o2v         1217.1804493 1.6
+    bond_coeff   @bond:OV2_o2v         1217.1804493 1.6
+    angle_coeff  @angle:OVO_o2v       123.4311663 105.0
+    pair_coeff  @atom:V_o2v  @atom:V_o2v   0.0190726577  2.517
+    pair_coeff  @atom:O_o2v  @atom:O_o2v   0.715535373 2.253
+  }
+} # "O2V+"

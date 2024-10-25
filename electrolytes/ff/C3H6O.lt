@@ -1,0 +1,142 @@
+C3H6O inherits OPLSCM1A {
+  ### LAMMPS commands for initialization
+  ### (These can be overridden later.)
+  write_once("In Init") {
+    atom_style full
+  }
+  write_once("In Settings") {
+    pair_coeff @atom:type1_c_unk_a96c5 @atom:type1_c_unk_a96c5 0.066 3.5000000
+    pair_coeff @atom:type2_c_unk_a96c5 @atom:type2_c_unk_a96c5 0.070 3.5500000
+    pair_coeff @atom:type3_o_unk_a96c5 @atom:type3_o_unk_a96c5 0.210 2.9600000
+    pair_coeff @atom:type4_c_unk_a96c5 @atom:type4_c_unk_a96c5 0.066 3.5000000
+    pair_coeff @atom:type5_h_unk_a96c5 @atom:type5_h_unk_a96c5 0.030 2.5000000
+    pair_coeff @atom:type6_h_unk_a96c5 @atom:type6_h_unk_a96c5 0.030 2.5000000
+    pair_coeff @atom:type7_h_unk_a96c5 @atom:type7_h_unk_a96c5 0.030 2.5000000
+    pair_coeff @atom:type8_h_unk_a96c5 @atom:type8_h_unk_a96c5 0.030 2.5000000
+    pair_coeff @atom:type9_h_unk_a96c5 @atom:type9_h_unk_a96c5 0.030 2.5000000
+    pair_coeff @atom:type10_h_unk_a96c5 @atom:type10_h_unk_a96c5 0.030 2.5000000
+  }
+  write_once("In Settings") {
+    bond_coeff @bond:type1_unk_a96c5 317.0000 1.5220
+    bond_coeff @bond:type2_unk_a96c5 570.0000 1.2290
+    bond_coeff @bond:type3_unk_a96c5 317.0000 1.5220
+    bond_coeff @bond:type4_unk_a96c5 340.0000 1.0900
+    bond_coeff @bond:type5_unk_a96c5 340.0000 1.0900
+    bond_coeff @bond:type6_unk_a96c5 340.0000 1.0900
+    bond_coeff @bond:type7_unk_a96c5 340.0000 1.0900
+    bond_coeff @bond:type8_unk_a96c5 340.0000 1.0900
+    bond_coeff @bond:type9_unk_a96c5 340.0000 1.0900
+  }
+  write_once("In Settings") {
+    angle_coeff @angle:type1_unk_a96c5 80.000 120.400
+    angle_coeff @angle:type2_unk_a96c5 70.000 116.000
+    angle_coeff @angle:type3_unk_a96c5 35.000 109.500
+    angle_coeff @angle:type4_unk_a96c5 35.000 109.500
+    angle_coeff @angle:type5_unk_a96c5 35.000 109.500
+    angle_coeff @angle:type6_unk_a96c5 35.000 109.500
+    angle_coeff @angle:type7_unk_a96c5 35.000 109.500
+    angle_coeff @angle:type8_unk_a96c5 35.000 109.500
+    angle_coeff @angle:type9_unk_a96c5 33.000 107.800
+    angle_coeff @angle:type10_unk_a96c5 33.000 107.800
+    angle_coeff @angle:type11_unk_a96c5 33.000 107.800
+    angle_coeff @angle:type12_unk_a96c5 80.000 120.400
+    angle_coeff @angle:type13_unk_a96c5 33.000 107.800
+    angle_coeff @angle:type14_unk_a96c5 33.000 107.800
+    angle_coeff @angle:type15_unk_a96c5 33.000 107.800
+  }
+  write_once("In Settings") {
+    dihedral_coeff @dihedral:type1_unk_a96c5 opls 0.000 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type2_unk_a96c5 opls 0.000 0.000 0.275 0.000
+    dihedral_coeff @dihedral:type3_unk_a96c5 opls 0.000 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type4_unk_a96c5 opls 0.000 0.000 0.275 0.000
+    dihedral_coeff @dihedral:type5_unk_a96c5 opls 0.000 0.000 0.275 0.000
+    dihedral_coeff @dihedral:type6_unk_a96c5 opls 0.000 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type7_unk_a96c5 opls 0.000 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type8_unk_a96c5 opls 0.000 0.000 0.275 0.000
+    dihedral_coeff @dihedral:type9_unk_a96c5 opls 0.000 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type10_unk_a96c5 opls 0.000 0.000 0.000 0.000
+    dihedral_coeff @dihedral:type11_unk_a96c5 opls 0.000 0.000 0.275 0.000
+    dihedral_coeff @dihedral:type12_unk_a96c5 opls 0.000 0.000 0.275 0.000
+  }
+  write_once("In Settings") {
+    improper_coeff @improper:type1_unk_a96c5 10.500 -1 2
+    improper_coeff @improper:type2_unk_a96c5 0.000 -1 2
+    improper_coeff @improper:type3_unk_a96c5 0.000 -1 2
+    improper_coeff @improper:type4_unk_a96c5 0.000 -1 2
+    improper_coeff @improper:type5_unk_a96c5 0.000 -1 2
+  }
+  ### DATA sections
+  write_once("Data Masses") {
+    @atom:type1_c_unk_a96c5 12.011
+    @atom:type2_c_unk_a96c5 12.011
+    @atom:type3_o_unk_a96c5 15.999
+    @atom:type4_c_unk_a96c5 12.011
+    @atom:type5_h_unk_a96c5 1.008
+    @atom:type6_h_unk_a96c5 1.008
+    @atom:type7_h_unk_a96c5 1.008
+    @atom:type8_h_unk_a96c5 1.008
+    @atom:type9_h_unk_a96c5 1.008
+    @atom:type10_h_unk_a96c5 1.008
+  }
+  write("Data Atoms") {
+    $atom:id1 $mol:m1 @atom:type1_c_unk_a96c5 -0.30450000 1.000 1.00000 0.00000
+    $atom:id2 $mol:m1 @atom:type2_c_unk_a96c5 0.31120000 -0.504 1.00000 0.00000
+    $atom:id3 $mol:m1 @atom:type3_o_unk_a96c5 -0.40200000 -1.147 1.00000 1.04939
+    $atom:id4 $mol:m1 @atom:type4_c_unk_a96c5 -0.30340000 -1.192 1.00169 -1.33821
+    $atom:id5 $mol:m1 @atom:type5_h_unk_a96c5 0.11690000 1.368 1.00000 1.02987
+    $atom:id6 $mol:m1 @atom:type6_h_unk_a96c5 0.11690000 1.365 1.89707 -0.50597
+    $atom:id7 $mol:m1 @atom:type7_h_unk_a96c5 0.11690000 1.365 0.10289 -0.50599
+    $atom:id8 $mol:m1 @atom:type8_h_unk_a96c5 0.11600000 -0.456 1.00271 -2.14624
+    $atom:id9 $mol:m1 @atom:type9_h_unk_a96c5 0.11600000 -1.809 1.89991 -1.42481
+    $atom:id10 $mol:m1 @atom:type10_h_unk_a96c5 0.11600000 -1.809 0.10362 -1.42709
+  }
+  write("Data Bonds") {
+    $bond:id1 @bond:type1_unk_a96c5 $atom:id2 $atom:id1
+    $bond:id2 @bond:type2_unk_a96c5 $atom:id3 $atom:id2
+    $bond:id3 @bond:type3_unk_a96c5 $atom:id4 $atom:id2
+    $bond:id4 @bond:type4_unk_a96c5 $atom:id5 $atom:id1
+    $bond:id5 @bond:type5_unk_a96c5 $atom:id6 $atom:id1
+    $bond:id6 @bond:type6_unk_a96c5 $atom:id7 $atom:id1
+    $bond:id7 @bond:type7_unk_a96c5 $atom:id8 $atom:id4
+    $bond:id8 @bond:type8_unk_a96c5 $atom:id9 $atom:id4
+    $bond:id9 @bond:type9_unk_a96c5 $atom:id10 $atom:id4
+  }
+  write("Data Angles") {
+    $angle:id1 @angle:type1_unk_a96c5 $atom:id1 $atom:id2 $atom:id3
+    $angle:id2 @angle:type2_unk_a96c5 $atom:id1 $atom:id2 $atom:id4
+    $angle:id3 @angle:type3_unk_a96c5 $atom:id2 $atom:id1 $atom:id5
+    $angle:id4 @angle:type4_unk_a96c5 $atom:id2 $atom:id1 $atom:id6
+    $angle:id5 @angle:type5_unk_a96c5 $atom:id2 $atom:id1 $atom:id7
+    $angle:id6 @angle:type6_unk_a96c5 $atom:id2 $atom:id4 $atom:id8
+    $angle:id7 @angle:type7_unk_a96c5 $atom:id2 $atom:id4 $atom:id9
+    $angle:id8 @angle:type8_unk_a96c5 $atom:id2 $atom:id4 $atom:id10
+    $angle:id9 @angle:type9_unk_a96c5 $atom:id8 $atom:id4 $atom:id10
+    $angle:id10 @angle:type10_unk_a96c5 $atom:id6 $atom:id1 $atom:id7
+    $angle:id11 @angle:type11_unk_a96c5 $atom:id5 $atom:id1 $atom:id6
+    $angle:id12 @angle:type12_unk_a96c5 $atom:id3 $atom:id2 $atom:id4
+    $angle:id13 @angle:type13_unk_a96c5 $atom:id9 $atom:id4 $atom:id10
+    $angle:id14 @angle:type14_unk_a96c5 $atom:id8 $atom:id4 $atom:id9
+    $angle:id15 @angle:type15_unk_a96c5 $atom:id5 $atom:id1 $atom:id7
+  }
+  write("Data Dihedrals") {
+    $dihedral:id1 @dihedral:type1_unk_a96c5 $atom:id5 $atom:id1 $atom:id2 $atom:id3
+    $dihedral:id2 @dihedral:type2_unk_a96c5 $atom:id8 $atom:id4 $atom:id2 $atom:id1
+    $dihedral:id3 @dihedral:type3_unk_a96c5 $atom:id8 $atom:id4 $atom:id2 $atom:id3
+    $dihedral:id4 @dihedral:type4_unk_a96c5 $atom:id10 $atom:id4 $atom:id2 $atom:id1
+    $dihedral:id5 @dihedral:type5_unk_a96c5 $atom:id7 $atom:id1 $atom:id2 $atom:id4
+    $dihedral:id6 @dihedral:type6_unk_a96c5 $atom:id10 $atom:id4 $atom:id2 $atom:id3
+    $dihedral:id7 @dihedral:type7_unk_a96c5 $atom:id9 $atom:id4 $atom:id2 $atom:id3
+    $dihedral:id8 @dihedral:type8_unk_a96c5 $atom:id5 $atom:id1 $atom:id2 $atom:id4
+    $dihedral:id9 @dihedral:type9_unk_a96c5 $atom:id6 $atom:id1 $atom:id2 $atom:id3
+    $dihedral:id10 @dihedral:type10_unk_a96c5 $atom:id7 $atom:id1 $atom:id2 $atom:id3
+    $dihedral:id11 @dihedral:type11_unk_a96c5 $atom:id6 $atom:id1 $atom:id2 $atom:id4
+    $dihedral:id12 @dihedral:type12_unk_a96c5 $atom:id9 $atom:id4 $atom:id2 $atom:id1
+  }
+  write("Data Impropers") {
+    $improper:id1 @improper:type1_unk_a96c5 $atom:id2 $atom:id1 $atom:id3 $atom:id4
+    $improper:id2 @improper:type2_unk_a96c5 $atom:id1 $atom:id2 $atom:id5 $atom:id6
+    $improper:id3 @improper:type3_unk_a96c5 $atom:id1 $atom:id2 $atom:id5 $atom:id7
+    $improper:id4 @improper:type4_unk_a96c5 $atom:id4 $atom:id9 $atom:id2 $atom:id8
+    $improper:id5 @improper:type5_unk_a96c5 $atom:id4 $atom:id8 $atom:id10 $atom:id2
+  }
+} # end of "C3H6O inherits OPLSCM1A" type definition

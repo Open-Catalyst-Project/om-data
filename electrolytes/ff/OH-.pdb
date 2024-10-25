@@ -1,0 +1,7 @@
+HEADER    water
+COMPND
+SOURCE
+HETATM    1  O00 UNK     1      -0.057   0.000   0.000
+HETATM    2  H01 UNK     1       0.910   0.000   0.000
+CONECT    1    2
+END
