@@ -72,7 +72,10 @@ def extract_solvation_shells(
     # Read a structure and metadata file
     logging.info("Reading structure and metadata files")
     # Read structures
-    structures = list(StructureReader(os.path.join(input_dir, "frames.maegz")))
+    fname = os.path.join(input_dir, "frames.maegz")
+    if not os.path.exists(fname):
+        return
+    structures = list(StructureReader(fname))
 
     solutes = {}
     solvents = {}
