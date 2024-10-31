@@ -27,6 +27,8 @@ from utils import validate_metadata_file
 def get_species_from_res(res):
     stoich = get_stoichiometry_string([at.element for at in res.atom])
     charge = sum(at.formal_charge for at in res.atom)
+    if stoich == 'C9H18NO' and 'r_ffio_custom_charge' in res.atom[1].property:
+        charge = 0
     label = stoich
     if res.chain == 'A' and charge == 0:
         label += '0'
@@ -79,24 +81,27 @@ def extract_solvation_shells(
 
     solutes = {}
     solvents = {}
-    for res in structures[0].chain['A'].residue:
-        species = get_species_from_res(res)
-        if species not in solutes:
-            solutes[species] = res.pdbres.strip()
-    for res in structures[0].chain['B'].residue:
-        species = get_species_from_res(res)
-        if species not in solutes:
-            solvents[species] = res.pdbres.strip()
+    chains ={ch.name for ch in structures[0].chain}
+    if 'A' in chains:
+        for res in structures[0].chain['A'].residue:
+            species = get_species_from_res(res)
+            if species not in solutes:
+                solutes[species] = res.pdbres.strip()
+    if 'B' in chains:
+        for res in structures[0].chain['B'].residue:
+            species = get_species_from_res(res)
+            if species not in solutes:
+                solvents[species] = res.pdbres.strip()
 
     spec_dicts = {"solute": solutes, "solvent": solvents}
 
     if max_frames > 0:
         structures = random.sample(structures, max_frames)
     # assign partial charges to atoms
-    if 'C9H18NO0' in solutes:
+    if 'C9H18NO' in solutes:
         logging.info("Adjusting chargess")
         for st in tqdm(structures):
-            neutralize_tempo(st, solutes['C9H18NO0'])
+            neutralize_tempo(st, solutes['C9H18NO'])
 
     # For each solute: extract shells around the solute of some heuristic radii and bin by composition/graph hash
     # Choose the N most diverse in each bin
@@ -110,6 +115,11 @@ def extract_solvation_shells(
             for radius in radii:
                 logging.info(f"Radius = {radius} A")
                 extracted_shells = []
+                save_path = os.path.join(
+                    save_dir, system_name, species, f"radius_{radius}"
+                )
+                if os.path.exists(save_path):
+                    continue
                 for i, st in tqdm(
                     enumerate(structures), total=len(structures)
                 ):  # loop over timesteps
@@ -126,9 +136,9 @@ def extract_solvation_shells(
                         )
                     )
 
-                if spec_type == "solvent" and not extracted_shells:
+                if not extracted_shells:
                     # raise a warning and continue to the next radii/species
-                    logging.warning("No solute-free shells found for solvent")
+                    logging.warning(f"No acceptable shells found for {system_name}, {species}, radius={radius}")
                     continue
 
                 grouped_shells = group_shells(extracted_shells, spec_type)
@@ -153,9 +163,6 @@ def extract_solvation_shells(
 
                 # Save the final shells
                 logging.info("Saving final shells")
-                save_path = os.path.join(
-                    save_dir, system_name, species, f"radius_{radius}"
-                )
                 os.makedirs(save_path, exist_ok=True)
                 for i, (group_idx, st) in enumerate(final_shells):
                     charge = get_structure_charge(st)
