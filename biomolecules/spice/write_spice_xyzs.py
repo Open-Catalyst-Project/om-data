@@ -16,29 +16,27 @@ def write_xyz(args):
     ase.io.write(output_path, atoms, "xyz")
 
 
-def main(args):
-    hf_name = "final_h5/ANI-2x-wB97X-631Gd.h5"
-    if not os.path.exists(hf_name):
-        urlretrieve(
-            "https://zenodo.org/records/10975225/files/SPICE-2.0.1.hdf5",
-            "SPICE-2.0.1.hdf5",
-        )
     with h5py.File(hf_name) as h5:
         for group, properties in h5.items():
-            subset = list(properties["subset"])[0]
-            coordinates = list(properties["conformations"])
-            species = [
-                [int(val) for val in list(properties["atomic_numbers"])]
-                for entry in coordinates
-            ]
+            subset = list(properties["subset"])[0].decode("utf-8").replace(" ", "_")
+            fixed_group = group.replace(" ", "_")
+            group_output_path = os.path.join(args.output_path, subset)
+            if not os.path.exists(group_output_path):
+                os.mkdir(group_output_path)
+            coordinates = [coords*0.529177 for coords in list(properties["conformations"])]
+            species = [[int(val) for val in list(properties["atomic_numbers"])] for entry in coordinates]
             charge = int(round(sum(list(properties["mbis_charges"])[0])[0]))
+
+            check_charges = [int(round(sum(charges)[0])) for charges in list(properties["mbis_charges"])]
+            for one_charge in check_charges:
+                assert one_charge == charge
 
             mp_args = []
             for nid, (atomic_numbers, positions) in tqdm(
                 enumerate(zip(species, coordinates))
             ):
                 output_path = os.path.join(
-                    args.output_path, f"spice_{subset}_{group}_{nid}_{charge}_1.xyz"
+                    group_output_path, f"spice_{fixed_group}_{nid}_{charge}_1.xyz"
                 )
                 mp_args.append((atomic_numbers, positions, output_path))
 
