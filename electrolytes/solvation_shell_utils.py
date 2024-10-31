@@ -68,10 +68,8 @@ def extract_shells_from_structure(
                 st, shell_ats, central_solute
             )
 
-            assert (
-                expanded_shell.atom_total <= max_shell_size
-            ), "Expanded shell too large"
-            extracted_shells.append(expanded_shell)
+            if expanded_shell.atom_total <= max_shell_size:
+                extracted_shells.append(expanded_shell)
     return extracted_shells
 
 
@@ -159,14 +157,14 @@ def are_isomeric_molecules(st1: Structure, st2: Structure) -> bool:
             at.atomic_number for at in st2.atom
         )
     if isomers:
-        cnt1 = {
+        cnt1 = Counter(
             frozenset(Counter(at.atomic_number for at in mol.atom).items())
             for mol in st1.molecule
-        }
-        cnt2 = {
+        )
+        cnt2 = Counter(
             frozenset(Counter(at.atomic_number for at in mol.atom).items())
             for mol in st2.molecule
-        }
+        )
         isomers = cnt1 == cnt2
     return isomers
 
