@@ -138,6 +138,7 @@ OPT_PARAMETERS = {
 class Vertical(Enum):
     Default = "default"
     MetalOrganics = "metal-organics"
+    Oss = "open-shell-singlet"
 
 
 def get_symm_break_block(atoms: Atoms, charge: int) -> str:
@@ -230,7 +231,7 @@ def write_orca_inputs(
     else:
         orcablocks += f" {NBO_FLAGS}"
 
-    if vertical == Vertical.MetalOrganics and mult == 1:
+    if vertical in {Vertical.MetalOrganics, Vertical.Oss} and mult == 1:
         orcasimpleinput += " UKS"
         orcablocks += f" {get_symm_break_block(atoms, charge)}"
 
