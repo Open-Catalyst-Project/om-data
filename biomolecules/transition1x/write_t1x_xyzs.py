@@ -23,24 +23,27 @@ def main(args):
             "https://figshare.com/ndownloader/files/36035789",
             "transition1x.h5",
         )
+    pool = mp.Pool(60)
     with h5py.File(hf_name) as h5:
-        for formula, grp in h5["data"].items():
+        for formula, grp in tqdm(h5["data"].items()):
+            mp_args = []
             for rxn, subgrp in grp.items():
                 coordinates = list(subgrp["positions"])
-                species = [[int(val) for val in list(subgrp["atomic_numbers"])] for entry in coordinates]
+                species = [
+                    [int(val) for val in list(subgrp["atomic_numbers"])]
+                    for entry in coordinates
+                ]
                 num_atoms = len(species)
 
-                mp_args = []
-                for nid, (atomic_numbers, positions) in tqdm(
-                    enumerate(zip(species, coordinates))
+                for nid, (atomic_numbers, positions) in enumerate(
+                    zip(species, coordinates)
                 ):
                     output_path = os.path.join(
                         args.output_path, f"t1x_{rxn}_{num_atoms}_{nid}_0_1.xyz"
                     )
-                    mp_args.append((atomic_numbers, positions, output_path))
-
-                pool = mp.Pool(60)
-                list(tqdm(pool.imap(write_xyz, mp_args), total=len(mp_args)))
+                    if not os.path.exists(output_path):
+                        mp_args.append((atomic_numbers, positions, output_path))
+            list(tqdm(pool.imap(write_xyz, mp_args), total=len(mp_args)))
 
 
 def parse_args():
