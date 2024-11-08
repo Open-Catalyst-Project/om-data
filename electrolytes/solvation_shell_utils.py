@@ -47,8 +47,6 @@ def extract_shells_from_structure(
         set(analyze.evaluate_asl(st, f"fillres within {radius} mol {mol_num}"))
         for mol_num in central_mol_nums
     ]
-    # Retain shells only smaller than the max_shell_size
-    shells = [shell for shell in shells if len(shell) <= max_shell_size]
 
     if spec_type == "solvent":
         # Only keep the shells that have no solute atoms and below a maximum size
@@ -56,7 +54,7 @@ def extract_shells_from_structure(
         shells = [
             (shell, central_mol)
             for shell, central_mol in zip(shells, central_mol_nums)
-            if (not shell.intersection(solute_atoms))
+            if len(shell) <= max_shell_size and (not shell.intersection(solute_atoms))
         ]
         extracted_shells = [
             extract_contracted_shell(st, at_list, central_mol)
@@ -66,6 +64,8 @@ def extract_shells_from_structure(
     elif spec_type == "solute":
         extracted_shells = []
         for shell_ats, central_solute in zip(shells, central_mol_nums):
+            if len(shell_ats) > max_shell_size:
+                continue
             expanded_shell = extract_contracted_shell(
                 st, shell_ats, central_solute
             )
