@@ -16,6 +16,13 @@ def write_xyz(args):
     ase.io.write(output_path, atoms, "xyz")
 
 
+def main(args):
+    hf_name = "SPICE-2.0.1.hdf5"
+    if not os.path.exists(hf_name):
+        urlretrieve(
+            "https://zenodo.org/records/10975225/files/SPICE-2.0.1.hdf5",
+            "SPICE-2.0.1.hdf5",
+        )
     with h5py.File(hf_name) as h5:
         for group, properties in h5.items():
             subset = list(properties["subset"])[0].decode("utf-8").replace(" ", "_")
