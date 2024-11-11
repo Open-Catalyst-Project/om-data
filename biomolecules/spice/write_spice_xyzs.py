@@ -23,8 +23,9 @@ def main(args):
             "https://zenodo.org/records/10975225/files/SPICE-2.0.1.hdf5",
             "SPICE-2.0.1.hdf5",
         )
+    pool = mp.Pool(60)
     with h5py.File(hf_name) as h5:
-        for group, properties in h5.items():
+        for group, properties in tqdm(h5.items()):
             subset = list(properties["subset"])[0].decode("utf-8").replace(" ", "_")
             fixed_group = group.replace(" ", "_")
             group_output_path = os.path.join(args.output_path, subset)
@@ -39,15 +40,13 @@ def main(args):
                 assert one_charge == charge
 
             mp_args = []
-            for nid, (atomic_numbers, positions) in tqdm(
-                enumerate(zip(species, coordinates))
-            ):
+            for nid, (atomic_numbers, positions) in enumerate(zip(species, coordinates)):
                 output_path = os.path.join(
                     group_output_path, f"spice_{fixed_group}_{nid}_{charge}_1.xyz"
                 )
-                mp_args.append((atomic_numbers, positions, output_path))
+                if not os.path.exists(output_path):
+                    mp_args.append((atomic_numbers, positions, output_path))
 
-            pool = mp.Pool(60)
             list(tqdm(pool.imap(write_xyz, mp_args), total=len(mp_args)))
 
 

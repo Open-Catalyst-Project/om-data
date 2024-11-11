@@ -31,15 +31,17 @@ def main(args):
     if not os.path.exists(xyz_dir_name):
         with tarfile.open(tar_name, "r:gz") as tar:
             tar.extractall()
-    mp_args = []
+
+    pool = mp.Pool(60)
     nid = 0
-    for subdir, dirs, files in os.walk(xyz_dir_name):
+    os_walk = tuple(os.walk(xyz_dir_name))
+    for subdir, dirs, files in tqdm(os_walk, total=len(os_walk)):
+        mp_args = []
         for file in files:
             mp_args.append((os.path.join(subdir, file), args.output_path, nid))
             nid += 1
 
-    pool = mp.Pool(60)
-    list(tqdm(pool.imap(copy_with_new_name, mp_args), total=len(mp_args)))
+        list(tqdm(pool.imap(copy_with_new_name, mp_args), total=len(mp_args)))
 
 
 def parse_args():
