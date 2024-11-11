@@ -33,11 +33,12 @@ def main(args):
                 os.mkdir(group_output_path)
             coordinates = [coords*0.529177 for coords in list(properties["conformations"])]
             species = [[int(val) for val in list(properties["atomic_numbers"])] for entry in coordinates]
-            charge = int(round(sum(list(properties["mbis_charges"])[0])[0]))
+            if list(properties["mbis_charges"]):
+                charge = int(round(sum(list(properties["mbis_charges"])[0])[0]))
 
-            check_charges = [int(round(sum(charges)[0])) for charges in list(properties["mbis_charges"])]
-            for one_charge in check_charges:
-                assert one_charge == charge
+                check_charges = [int(round(sum(charges)[0])) for charges in list(properties["mbis_charges"])]
+                for one_charge in check_charges:
+                    assert one_charge == charge
 
             mp_args = []
             for nid, (atomic_numbers, positions) in enumerate(zip(species, coordinates)):
@@ -47,7 +48,7 @@ def main(args):
                 if not os.path.exists(output_path):
                     mp_args.append((atomic_numbers, positions, output_path))
 
-            list(tqdm(pool.imap(write_xyz, mp_args), total=len(mp_args)))
+            list(pool.imap(write_xyz, mp_args))
 
 
 def parse_args():
