@@ -1,0 +1,100 @@
+# Desmond standard NVT relaxation protocol
+# All times are in the unit of ps.
+# Energy is in the unit of kcal/mol.
+task {
+   task = "desmond:auto"
+   set_family = {
+      desmond = {
+         checkpt.write_last_step = no
+      }
+   }
+}
+
+build_geometry {
+  box = {
+     shape = orthorhombic
+     size = [50.0 50.0 50.0 ]
+     size_type = buffer
+  }
+  neutralize_system = false
+  override_forcefield = OPLS_2005
+  rezero_system = false
+  solvate_system = false
+}
+
+assign_forcefield {
+  forcefield = OPLS_2005
+}
+
+simulate {
+   title       = "Brownian Dynamics NVT, T = 10 K, small timesteps, and restraints on solute heavy atoms, 100ps"
+   annealing   = off
+   time        = 100
+   timestep    = [0.001 0.001 0.003 ]
+   temperature = 10.0
+   ensemble = {
+      class = "NVT"
+      method = "Brownie"
+      brownie = {
+         delta_max = 0.1
+      }
+   }
+   restraints.new = [{
+      name = posre_harm
+      atoms = solute_heavy_atom
+      force_constants = 50.0
+   }]
+}
+
+
+simulate {
+   title       = "NVT, T = 10 K, small timesteps, and restraints on solute heavy atoms, 12ps"
+   annealing   = off
+   time        = 12
+   timestep    = [0.001 0.001 0.003]
+   temperature = 10.0
+   restraints.new = [{
+      name = posre_harm
+      atoms = solute_heavy_atom
+      force_constants = 50.0
+   }]
+   ensemble    = {
+      class  = NVT
+      method = Langevin
+      thermostat.tau = 0.1
+   }
+
+   randomize_velocity.interval = 1.0
+   eneseq.interval             = 0.3
+   trajectory.center           = solute
+}
+
+simulate {
+   title       = "Minimization, 100ps"
+   annealing   = off
+   time        = 100
+   timestep    = [0.001 0.001 0.003 ]
+   temperature = 10.0
+   ensemble = {
+      class = "NVT"
+      method = "Brownie"
+      brownie = {
+         delta_max = 0.1
+      }
+      thermostat = {
+         tau = 1.0
+      }
+   }
+   restrain = none
+   restraints = {
+      existing = ignore
+      new = []
+   }
+}
+simulate {
+   cfg_file = "/private/home/levineds/om-data/biomolecules/pdb_pockets/desmond_md.cfg"
+   jobname  = "$MAINJOBNAME"
+   dir      = "."
+   compress = ""
+}
+
