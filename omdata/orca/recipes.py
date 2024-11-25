@@ -112,6 +112,7 @@ def ase_relaxation(
     vertical=Vertical.Default,
     copy_files=None,
     nbo=False,
+    step_counter_start=0,
     **calc_kwargs,
 ):
     """
@@ -142,6 +143,8 @@ def ase_relaxation(
         Dictionary of optimizer parameters
     nbo: bool
         Run NBO as part of the Orca calculation
+    step_counter_start: int
+        Index to start step counter from (used for optimization restarts)
     outputdir: str
         Directory to move results to upon completion
     calc_kwargs:
@@ -179,6 +182,7 @@ def ase_relaxation(
         block_swaps=orcablocks,
         opt_params=opt_params,
         copy_files=copy_files,
+        step_counter_start=step_counter_start,
         **calc_kwargs,
     )
 
