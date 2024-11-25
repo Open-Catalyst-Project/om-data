@@ -1,11 +1,12 @@
 import argparse
 import multiprocessing as mp
 import os
+import shutil
 import tarfile
 from urllib.request import urlretrieve
 
 from tqdm import tqdm
-import shutil
+
 
 def copy_with_new_name(args):
     orig_filepath, output_path, nid = args
@@ -17,8 +18,11 @@ def copy_with_new_name(args):
         fh.readline()
         line = fh.readline()
         charge, spin = line.split()
-    new_filepath = os.path.join(output_path, f"orbnet_{specific_subdir}_{file_hash}_{nid}_{charge}_{spin}.xyz")
+    new_filepath = os.path.join(
+        output_path, f"orbnet_{specific_subdir}_{file_hash}_{nid}_{charge}_{spin}.xyz"
+    )
     shutil.copyfile(orig_filepath, new_filepath)
+
 
 def main(args):
     tar_name = "denali_xyz_files.tar.gz"

@@ -2,13 +2,13 @@ import argparse
 import multiprocessing as mp
 import os
 import tarfile
+from functools import partial
 from urllib.request import urlretrieve
 
 import ase.io
 import h5py
-from rdkit import Chem
-from functools import partial
 from ase import Atoms
+from rdkit import Chem
 from tqdm import tqdm
 
 
@@ -17,13 +17,19 @@ def write_xyz(args):
     atoms = Atoms(atomic_numbers, positions=positions)
     ase.io.write(output_path, atoms, "xyz")
 
+
 def work(group, hf_name):
     with h5py.File(hf_name, swmr=True) as h5:
         properties = h5[group]
-        subset = list(properties["subset"])[0].decode("utf-8").replace(" ", "_").replace('.', '_')
-        fixed_group = group.replace(" ", "_").replace('[','').replace(']', '').replace('.','_').replace(':','')
-        coordinates = [coords*0.529177 for coords in list(properties["conformations"])]
-        species = [[int(val) for val in list(properties["atomic_numbers"])] for entry in coordinates]
+        subset = list(properties["subset"])[0].decode("utf-8").replace(" ", "_").replace(".", "_")
+        fixed_group = group.replace(" ", "_").replace("[", "").replace("]", "").replace(".", "_").replace(":", "")
+        coordinates = [
+            coords * 0.529177 for coords in list(properties["conformations"])
+        ]
+        species = [
+            [int(val) for val in list(properties["atomic_numbers"])]
+            for entry in coordinates
+        ]
         mol = Chem.MolFromSmiles(list(properties["smiles"])[0])
         charge = Chem.GetFormalCharge(mol)
 
@@ -48,6 +54,7 @@ def main(args):
         groups = list(h5.keys())
     work_fxn = partial(work, hf_name=hf_name)
     list(tqdm(pool.imap(work_fxn, groups), total=len(groups)))
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
