@@ -138,6 +138,7 @@ OPT_PARAMETERS = {
 class Vertical(Enum):
     Default = "default"
     MetalOrganics = "metal-organics"
+    Oss = "open-shell-singlet"
 
 
 def get_symm_break_block(atoms: Atoms, charge: int) -> str:
@@ -178,7 +179,9 @@ def get_n_basis(atoms: Atoms) -> int:
     return nbasis
 
 
-def get_mem_estimate(atoms: Atoms, vertical=Vertical.Default, mult=1) -> int:
+def get_mem_estimate(
+    atoms: Atoms, vertical: Enum = Vertical.Default, mult: int = 1
+) -> int:
     """
     Get an estimate of the memory requirement for given input in MB.
 
@@ -192,9 +195,11 @@ def get_mem_estimate(atoms: Atoms, vertical=Vertical.Default, mult=1) -> int:
     """
     nbasis = get_n_basis(atoms)
     if vertical == Vertical.Default and mult == 1:
-        a = 0.013060654016809259
-        b = -145.62585242047592
+        # Default RKS scaling as determined by PDB-ligand pockets in Orca6
+        a = 0.0076739752343756434
+        b = 361.4745947062764
     else:
+        # Default UKS scaling as determined by metal-organics in Orca5
         a = 0.016460518374501867
         b = -320.38502508802776
     mem_est = max(a * nbasis**1.5 + b, 1000)
@@ -206,9 +211,10 @@ def write_orca_inputs(
     output_directory,
     charge: int = 0,
     mult: int = 1,
+    nbo: bool = True,
     orcasimpleinput: str = ORCA_ASE_SIMPLE_INPUT,
     orcablocks: str = " ".join(ORCA_BLOCKS),
-    vertical=Vertical.Default,
+    vertical: Enum = Vertical.Default,
 ):
     """
     One-off method to be used if you wanted to write inputs for an arbitrary
@@ -216,7 +222,16 @@ def write_orca_inputs(
     """
 
     MyOrcaProfile = OrcaProfile([which("orca")])
-    if vertical == Vertical.MetalOrganics and mult == 1:
+
+    # Include estimate of memory needs
+    mem_est = get_mem_estimate(atoms, vertical, mult)
+    orcablocks += f" %maxcore {mem_est}"
+    if not nbo:
+        orcasimpleinput += " NONBO NONPA"
+    else:
+        orcablocks += f" {NBO_FLAGS}"
+
+    if vertical in {Vertical.MetalOrganics, Vertical.Oss} and mult == 1:
         orcasimpleinput += " UKS"
         orcablocks += f" {get_symm_break_block(atoms, charge)}"
 
