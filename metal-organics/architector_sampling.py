@@ -89,6 +89,8 @@ def select_ligands(
     Removing the heavy main-group elements are one option to promote more "normal" complexes
 
     :param ligand_df: DataFrame of ligands to select from
+    :param heavy_maingroup: If True, ligands may include heavy main-group atoms (e.g. Te, Se, As, Sb, Ge)
+    :param add_hydride: If True, the hydride ligand is added to the ligand dataframe
     :return: selected ligands
     """
 
@@ -260,8 +262,10 @@ def create_sample(
     :param metal_df: Metals dataframe to sample from
     :param ligands_df: Ligands dataframe to sample from
     :param history_uids: List of chemistries already sampled to avoid, by default None
+    :param do_hydride: If True, ensure at least one of the ligands is a hydride
     :param nsamples: Number of samples to create in this pass, by default 100
     :param test: Use faster parameters for architector
+    :param maxCN: Maximum coordination number
     :return: Sample chemistries with architector_input to pass to generation script and
              the UIDS of the chemistries sampled up to this point by the sampler routine.
     """
@@ -305,7 +309,7 @@ def parse_args():
     parser.add_argument(
         "--do_hydride",
         action='store_true',
-        help="Add hydride ligands and upweight them",
+        help="Ensure at least one of the ligands is a hydride",
     )
 
     return parser.parse_args()
