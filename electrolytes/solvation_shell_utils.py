@@ -12,7 +12,26 @@ from schrodinger.structure import Structure
 from schrodinger.structutils import analyze, rmsd
 from schrodinger.application.jaguar.utils import group_with_comparison
 from schrodinger.application.matsci import clusterstruct
+from schrodinger.application.jaguar.utils import get_stoichiometry_string
 
+ION_SPIN = {
+    "Ag+2": 1,
+    "Co+2": 3,
+    "Cr+2": 4,
+    "Cr+3": 3,
+    "Cu+2": 1,
+    "Fe+2": 4,
+    "Fe+3": 5,
+    "Mn+2": 5,
+    "Ni+2": 2,
+    "Pd+2": 2,
+    "Pt+2": 2,
+    "Ti+": 3,
+    "OV+2": 1,
+    "V+2": 3,
+    "V+3": 2,
+    "C9H18NO": 1,
+}
 
 def extract_shells_from_structure(
     st: Structure,
@@ -144,6 +163,32 @@ def get_structure_charge(st: Structure) -> int:
     charge = sum(at.partial_charge for at in st.atom)
     return round(charge)
 
+def get_structure_spin(st: Structure) -> int:
+    """
+    Get the overall spin of the structure by adding up unpaired
+    spins for each molecule.
+
+    We use a dictionary for this since things are fairly circumscribed.
+    Anything not in the dictionary is assumed to have no unpaired spins.
+    """
+    unpaired_count = sum(ION_SPIN.get(get_species_from_res(res), 0) for res in st.residue)
+    return unpaired_count + 1
+
+def get_species_from_res(res):
+    stoich = get_stoichiometry_string([at.element for at in res.atom])
+    charge = sum(at.formal_charge for at in res.atom)
+    if stoich == 'C9H18NO' and 'r_ffio_custom_charge' in res.atom[1].property:
+        charge = 0
+    label = stoich
+    if res.chain == 'A' and charge == 0:
+        label += '0'
+    elif charge > 0:
+        label += '+'
+        if charge > 1:
+            label += f'{charge}'
+    elif charge < 0:
+        label += f'{charge}'
+    return label
 
 def are_isomeric_molecules(st1: Structure, st2: Structure) -> bool:
     """

@@ -13,32 +13,18 @@ import numpy as np
 
 from schrodinger.structure import StructureReader
 from schrodinger.structutils.analyze import evaluate_asl
-from schrodinger.application.jaguar.utils import get_stoichiometry_string
 
 from solvation_shell_utils import (
     extract_shells_from_structure,
     group_shells,
+    get_species_from_res,
     get_structure_charge,
+    get_structure_spin,
     filter_by_rmsd,
     renumber_molecules_to_match,
 )
 from utils import validate_metadata_file
 
-def get_species_from_res(res):
-    stoich = get_stoichiometry_string([at.element for at in res.atom])
-    charge = sum(at.formal_charge for at in res.atom)
-    if stoich == 'C9H18NO' and 'r_ffio_custom_charge' in res.atom[1].property:
-        charge = 0
-    label = stoich
-    if res.chain == 'A' and charge == 0:
-        label += '0'
-    elif charge > 0:
-        label += '+'
-        if charge > 1:
-            label += f'{charge}'
-    elif charge < 0:
-        label += f'{charge}'
-    return label
 
 def neutralize_tempo(st, tempo_res):
     for at in evaluate_asl(st, f'res {tempo_res}'):
@@ -157,6 +143,7 @@ def extract_solvation_shells(
                 for group_idx, shell_group in tqdm(
                     enumerate(grouped_shells), total=len(grouped_shells)
                 ):
+                    #filtered = random.sample(shell_group, min(top_n, len(shell_group)))
                     filtered = filter_by_rmsd(shell_group, n=top_n)
                     filtered = [(group_idx, st) for st in filtered]
                     final_shells.extend(filtered)
@@ -166,12 +153,13 @@ def extract_solvation_shells(
                 os.makedirs(save_path, exist_ok=True)
                 for i, (group_idx, st) in enumerate(final_shells):
                     charge = get_structure_charge(st)
+                    spin = get_structure_spin(st)
                     if spec_type == "solute":
                         fname = os.path.join(
-                            save_path, f"group_{group_idx}_shell_{i}_{charge}.xyz"
+                            save_path, f"group_{group_idx}_shell_{i}_{charge}_{spin}.mae"
                         )
                     elif spec_type == "solvent":
-                        fname = os.path.join(save_path, f"shell_{i}_{charge}.xyz")
+                        fname = os.path.join(save_path, f"shell_{i}_{charge}_{spin}.mae")
 
                     st.write(fname)
 
