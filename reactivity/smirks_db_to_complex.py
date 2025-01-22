@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 from more_itertools import collapse
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -21,7 +23,7 @@ from schrodinger.application.jaguar.packages.reaction_mapping import (
 )
 from schrodinger.application.jaguar.packages.reaction_mapping import flatten_st_list
 from schrodinger.rdkit import rdkit_adapter
-from schrodinger.structure import StructureWriter
+from schrodinger.structure import Structure, StructureWriter
 
 """
 Convert Reaction SMIRKS (from RMechDB/PMechDB) to 3D fully mapped complexes.
@@ -29,6 +31,10 @@ Convert Reaction SMIRKS (from RMechDB/PMechDB) to 3D fully mapped complexes.
 
 
 class local_rinp(AutoTSInput):
+    """
+    Need a patched version that I can populated programatically easily
+    """
+
     def __init__(self, reactants, products):
         super().__init__()
         self.reactants = reactants
@@ -41,7 +47,17 @@ class local_rinp(AutoTSInput):
         return self.products
 
 
-def build_complexes(reactants, products):
+def build_complexes(
+    reactants: List[Structure], products: List[Structure]
+) -> Tuple[Structure, Structure]:
+    """
+    Build the reaction complexes.
+
+    This tries to use the built-in Schrodinger tools but if you don't
+    have full licenses (i.e. the academic version), you might not be
+    able to use it. Hence, I've also written a minimal version that will
+    at least work if not as well as the Schrodinger one.
+    """
     rinp = local_rinp(reactants, products)
     rinp.values.debug = False
     reactants, products = mark_active_bonds(
@@ -61,14 +77,16 @@ def build_complexes(reactants, products):
         reactants = flatten_st_list(reactants)
         products = flatten_st_list(products)
         reactant_complex, product_complex = get_renumbered_complex(reactants, products)
-        reactant_complex, product_complex = poor_mans_form_reaction_complex(
+        reactant_complex, product_complex = minimal_form_reaction_complex(
             reactant_complex, product_complex, rinp
         )
 
     return reactant_complex, product_complex
 
 
-def poor_mans_form_reaction_complex(reactant, product, rinp):
+def minimal_form_reaction_complex(
+    reactant: Structure, product: Structure, rinp: local_rinp
+) -> Tuple[Structure, Structure]:
     reactant_out = reactant.copy()
     product_out = product.copy()
 
@@ -108,6 +126,10 @@ rxn = AllChem.ReactionFromSmarts(rxn_smirks)
 reactants = [rdkit_adapter.from_rdkit(mol) for mol in rxn.GetReactants()]
 products = [rdkit_adapter.from_rdkit(mol) for mol in rxn.GetProducts()]
 rxn_st = []
+
+# *MechDBs sometimes include molecules with no mapped atoms which
+# seem to be spectators. We exclude these molecules from the reaction
+# complexes
 for st_list in (reactants, products):
     rxn_st.append(
         [
@@ -129,7 +151,8 @@ for name, rxn in rxn_list.items():
         print(e)
         continue
     else:
-        r.title = f'charge={r.formal_charge}'
-        p.title = f'charge={p.formal_charge}'
+        # Stick the total charge in the comment line of the .xyz
+        r.title = f"charge={r.formal_charge}"
+        p.title = f"charge={p.formal_charge}"
         with StructureWriter(f"{name}.xyz") as writer:
             writer.extend([r, p])
