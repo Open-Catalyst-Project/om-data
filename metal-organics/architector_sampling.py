@@ -4,7 +4,8 @@ Settings used were as follows"
 Initial generation of metal-organics: MAX_N_ATOMS = 250, random_seed = 46139, lanthanides were excluded, no ligands were excluded, 1m were generated
 "Small" metal-organics: MAX_N_ATOMS = 120, random_seed = 98745, lanthandies were excluded, no ligands were excluded, 1m were generated
 Lanthanides: MAX_N_ATOMS = 120, random_seed = 46139, non-lanthanides were excluded, ligands with heavy main-group elements were excluded, 255k were generated
-Hydrides: MAX_N_ATOMS = 120, random_seed = 34231, no metals were exluced, no ligands were excluded, hydride was added as a ligand and given additional weight of XX, 91000 were generated
+Hydrides: MAX_N_ATOMS = 120, random_seed = 34231, no metals were exluced, no ligands were excluded, hydride was added as a ligand and forced to be included, 91000 were generated
+ML-MD: MAX_N_ATOMS = 120, random_seed = 569, no metals were exluced, no ligands were excluded, hydride was added as a ligand, 91000 were generated
 """
 
 import argparse
@@ -124,6 +125,7 @@ def select_ligands(
 def sample(
     metal_df: pd.DataFrame,
     ligands_df: pd.DataFrame,
+    rough_opt: bool = False,
     test: bool = False,
     add_hydride: bool = False,
     maxCN: int = 12,
@@ -137,6 +139,7 @@ def sample(
 
     :param metal_df: Metals dataframe to sample from
     :param ligands_df: Ligands dataframe to sample from
+    :param rough_opt: If True, do only a rough optimization
     :param test: Whether to generate test dataframe (faster for Architector)
     :param add_hydride: If True, force the first ligand to be a hydride
     :param maxCN: Maximum coordination number to sample
@@ -171,7 +174,11 @@ def sample(
             "full_graph_sanity_cutoff": 2.0,  # Increasing to loop in more structures where ligand may be falling off
         },
     }
-    if test:
+    if rough_opt:
+        architector_input["parameters"].update(
+            {"assemble_method": "GFN-FF", "full_method": "GFN-FF", "relax": False}
+        )
+    elif test:
         architector_input["parameters"].update(
             {"assemble_method": "UFF", "full_method": "UFF", "n_conformers": 1}
         )
@@ -250,6 +257,7 @@ def create_sample(
     ligands_df: pd.DataFrame,
     history_uids: Optional[list] = None,
     do_hydride: bool = False,
+    rough_opt: bool = False,
     nsamples: int = 100,
     test: bool = False,
     maxCN: int = 12,
@@ -263,6 +271,7 @@ def create_sample(
     :param ligands_df: Ligands dataframe to sample from
     :param history_uids: List of chemistries already sampled to avoid, by default None
     :param do_hydride: If True, ensure at least one of the ligands is a hydride
+    :param rough_opt: If True, do only a rough optimization
     :param nsamples: Number of samples to create in this pass, by default 100
     :param test: Use faster parameters for architector
     :param maxCN: Maximum coordination number
@@ -311,6 +320,11 @@ def parse_args():
         action='store_true',
         help="Ensure at least one of the ligands is a hydride",
     )
+    parser.add_argument(
+        "--rough_opt",
+        action='store_true',
+        help="Do only a rough optimization",
+    )
 
     return parser.parse_args()
 
@@ -332,6 +346,7 @@ def main():
         metal_df=gen_metal_df,
         ligands_df=ligands_df,
         do_hydride=args.do_hydride,
+        rough_opt=args.rough_opt,
         test=False,
         history_uids=history,
         nsamples=args.n_samples,
