@@ -1,0 +1,32 @@
+H3O+ {
+  write("Data Atoms") {
+    $atom:o_h3o  $mol:w @atom:O_h3o  -0.3818  -2.079  -0.869   1.186
+    $atom:h1_h3o $mol:w @atom:H_h3o   0.4606  -1.243  -0.359   1.336
+    $atom:h2_h3o $mol:w @atom:H_h3o   0.4606  -2.588  -0.764   2.029
+    $atom:h3_h3o $mol:w @atom:H_h3o   0.4606  -2.582  -0.331   0.524
+  }
+  write_once("Data Masses") {
+    @atom:O_h3o  15.9994
+    @atom:H_h3o  1.008
+  }
+  write("Data Bonds") {
+    $bond:oh1_h3o @bond:OH1_h3o $atom:o_h3o $atom:h1_h3o
+    $bond:oh2_h3o @bond:OH2_h3o $atom:o_h3o $atom:h2_h3o
+    $bond:oh2_h3o @bond:OH3_h3o $atom:o_h3o $atom:h3_h3o
+  }
+  write("Data Angles") {
+    $angle:hoh_h3o @angle:HOH1_h3o $atom:h1_h3o $atom:o_h3o $atom:h2_h3o
+    $angle:hoh_h3o @angle:HOH2_h3o $atom:h2_h3o $atom:o_h3o $atom:h3_h3o
+    $angle:hoh_h3o @angle:HOH3_h3o $atom:h1_h3o $atom:o_h3o $atom:h3_h3o
+  }
+  write_once("In Settings") {
+    bond_coeff   @bond:OH1_h3o         542.97825  0.9820
+    bond_coeff   @bond:OH2_h3o         542.97825  0.9820 
+    bond_coeff   @bond:OH3_h3o         542.97825  0.9820
+    angle_coeff  @angle:HOH1_h3o       39.51315 113.4000 
+    angle_coeff  @angle:HOH2_h3o       39.51315 113.4000 
+    angle_coeff  @angle:HOH3_h3o       39.51315 113.4000 
+    pair_coeff  @atom:O_h3o  @atom:O_h3o   0.1848  3.1655413253
+    pair_coeff  @atom:H_h3o  @atom:H_h3o   0.0100  0.80180884632
+  }
+} # "H3O+"

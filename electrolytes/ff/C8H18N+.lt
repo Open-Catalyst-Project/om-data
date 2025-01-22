@@ -1,0 +1,471 @@
+C8H18N+ inherits OPLSCM1A {
+  ### LAMMPS commands for initialization
+  ### (These can be overridden later.)
+  write_once("In Init") {
+    atom_style full
+  }
+  write_once("In Settings") {
+    pair_coeff @atom:type1_c_unk_85ed8 @atom:type1_c_unk_85ed8 0.066 3.5000000
+    pair_coeff @atom:type2_c_unk_85ed8 @atom:type2_c_unk_85ed8 0.066 3.5000000
+    pair_coeff @atom:type3_c_unk_85ed8 @atom:type3_c_unk_85ed8 0.066 3.5000000
+    pair_coeff @atom:type4_n_unk_85ed8 @atom:type4_n_unk_85ed8 0.170 3.2500000
+    pair_coeff @atom:type5_c_unk_85ed8 @atom:type5_c_unk_85ed8 0.066 3.5000000
+    pair_coeff @atom:type6_c_unk_85ed8 @atom:type6_c_unk_85ed8 0.066 3.5000000
+    pair_coeff @atom:type7_c_unk_85ed8 @atom:type7_c_unk_85ed8 0.066 3.5000000
+    pair_coeff @atom:type8_c_unk_85ed8 @atom:type8_c_unk_85ed8 0.066 3.5000000
+    pair_coeff @atom:type9_c_unk_85ed8 @atom:type9_c_unk_85ed8 0.066 3.5000000
+    pair_coeff @atom:type10_h_unk_85ed8 @atom:type10_h_unk_85ed8 0.030 2.5000000
+    pair_coeff @atom:type11_h_unk_85ed8 @atom:type11_h_unk_85ed8 0.030 2.5000000
+    pair_coeff @atom:type12_h_unk_85ed8 @atom:type12_h_unk_85ed8 0.030 2.5000000
+    pair_coeff @atom:type13_h_unk_85ed8 @atom:type13_h_unk_85ed8 0.030 2.5000000
+    pair_coeff @atom:type14_h_unk_85ed8 @atom:type14_h_unk_85ed8 0.030 2.5000000
+    pair_coeff @atom:type15_h_unk_85ed8 @atom:type15_h_unk_85ed8 0.030 2.5000000
+    pair_coeff @atom:type16_h_unk_85ed8 @atom:type16_h_unk_85ed8 0.030 2.5000000
+    pair_coeff @atom:type17_h_unk_85ed8 @atom:type17_h_unk_85ed8 0.030 2.5000000
+    pair_coeff @atom:type18_h_unk_85ed8 @atom:type18_h_unk_85ed8 0.030 2.5000000
+    pair_coeff @atom:type19_h_unk_85ed8 @atom:type19_h_unk_85ed8 0.030 2.5000000
+    pair_coeff @atom:type20_h_unk_85ed8 @atom:type20_h_unk_85ed8 0.030 2.5000000
+    pair_coeff @atom:type21_h_unk_85ed8 @atom:type21_h_unk_85ed8 0.030 2.5000000
+    pair_coeff @atom:type22_h_unk_85ed8 @atom:type22_h_unk_85ed8 0.030 2.5000000
+    pair_coeff @atom:type23_h_unk_85ed8 @atom:type23_h_unk_85ed8 0.030 2.5000000
+    pair_coeff @atom:type24_h_unk_85ed8 @atom:type24_h_unk_85ed8 0.030 2.5000000
+    pair_coeff @atom:type25_h_unk_85ed8 @atom:type25_h_unk_85ed8 0.030 2.5000000
+    pair_coeff @atom:type26_h_unk_85ed8 @atom:type26_h_unk_85ed8 0.030 2.5000000
+    pair_coeff @atom:type27_h_unk_85ed8 @atom:type27_h_unk_85ed8 0.030 2.5000000
+  }
+  write_once("In Settings") {
+    bond_coeff @bond:type1_unk_85ed8 268.0000 1.5290
+    bond_coeff @bond:type2_unk_85ed8 268.0000 1.5290
+    bond_coeff @bond:type3_unk_85ed8 367.0000 1.4710
+    bond_coeff @bond:type4_unk_85ed8 367.0000 1.4710
+    bond_coeff @bond:type5_unk_85ed8 367.0000 1.4710
+    bond_coeff @bond:type6_unk_85ed8 268.0000 1.5290
+    bond_coeff @bond:type7_unk_85ed8 268.0000 1.5290
+    bond_coeff @bond:type8_unk_85ed8 367.0000 1.4710
+    bond_coeff @bond:type9_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type10_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type11_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type12_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type13_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type14_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type15_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type16_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type17_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type18_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type19_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type20_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type21_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type22_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type23_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type24_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type25_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type26_unk_85ed8 340.0000 1.0900
+    bond_coeff @bond:type27_unk_85ed8 268.0000 1.5290
+  }
+  write_once("In Settings") {
+    angle_coeff @angle:type1_unk_85ed8 58.350 112.700
+    angle_coeff @angle:type2_unk_85ed8 80.000 111.200
+    angle_coeff @angle:type3_unk_85ed8 50.000 113.000
+    angle_coeff @angle:type4_unk_85ed8 50.000 113.000
+    angle_coeff @angle:type5_unk_85ed8 80.000 111.200
+    angle_coeff @angle:type6_unk_85ed8 58.350 112.700
+    angle_coeff @angle:type7_unk_85ed8 50.000 113.000
+    angle_coeff @angle:type8_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type9_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type10_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type11_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type12_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type13_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type14_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type15_unk_85ed8 35.000 109.500
+    angle_coeff @angle:type16_unk_85ed8 35.000 109.500
+    angle_coeff @angle:type17_unk_85ed8 35.000 109.500
+    angle_coeff @angle:type18_unk_85ed8 35.000 109.500
+    angle_coeff @angle:type19_unk_85ed8 35.000 109.500
+    angle_coeff @angle:type20_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type21_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type22_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type23_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type24_unk_85ed8 35.000 109.500
+    angle_coeff @angle:type25_unk_85ed8 35.000 109.500
+    angle_coeff @angle:type26_unk_85ed8 50.000 113.000
+    angle_coeff @angle:type27_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type28_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type29_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type30_unk_85ed8 33.000 107.800
+    angle_coeff @angle:type31_unk_85ed8 33.000 107.800
+    angle_coeff @angle:type32_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type33_unk_85ed8 50.000 113.000
+    angle_coeff @angle:type34_unk_85ed8 33.000 107.800
+    angle_coeff @angle:type35_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type36_unk_85ed8 58.350 112.700
+    angle_coeff @angle:type37_unk_85ed8 33.000 107.800
+    angle_coeff @angle:type38_unk_85ed8 33.000 107.800
+    angle_coeff @angle:type39_unk_85ed8 80.000 111.200
+    angle_coeff @angle:type40_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type41_unk_85ed8 33.000 107.800
+    angle_coeff @angle:type42_unk_85ed8 50.000 113.000
+    angle_coeff @angle:type43_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type44_unk_85ed8 33.000 107.800
+    angle_coeff @angle:type45_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type46_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type47_unk_85ed8 33.000 107.800
+    angle_coeff @angle:type48_unk_85ed8 33.000 107.800
+    angle_coeff @angle:type49_unk_85ed8 33.000 107.800
+    angle_coeff @angle:type50_unk_85ed8 35.000 109.500
+    angle_coeff @angle:type51_unk_85ed8 33.000 107.800
+    angle_coeff @angle:type52_unk_85ed8 37.500 110.700
+    angle_coeff @angle:type53_unk_85ed8 35.000 109.500
+    angle_coeff @angle:type54_unk_85ed8 33.000 107.800
+  }
+  write_once("In Settings") {
+    dihedral_coeff @dihedral:type1_unk_85ed8 opls 2.732 -0.229 0.485 0.000
+    dihedral_coeff @dihedral:type2_unk_85ed8 opls 1.438 -0.124 0.264 0.000
+    dihedral_coeff @dihedral:type3_unk_85ed8 opls 1.438 -0.124 0.264 0.000
+    dihedral_coeff @dihedral:type4_unk_85ed8 opls 2.732 -0.229 0.485 0.000
+    dihedral_coeff @dihedral:type5_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type6_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type7_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type8_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type9_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type10_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type11_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type12_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type13_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type14_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type15_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type16_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type17_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type18_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type19_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type20_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type21_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type22_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type23_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type24_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type25_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type26_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type27_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type28_unk_85ed8 opls 0.000 0.000 0.384 0.000
+    dihedral_coeff @dihedral:type29_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type30_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type31_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type32_unk_85ed8 opls 1.438 -0.124 0.264 0.000
+    dihedral_coeff @dihedral:type33_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type34_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type35_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type36_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type37_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type38_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type39_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type40_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type41_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type42_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type43_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type44_unk_85ed8 opls 0.000 0.000 0.384 0.000
+    dihedral_coeff @dihedral:type45_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type46_unk_85ed8 opls 0.000 0.000 0.384 0.000
+    dihedral_coeff @dihedral:type47_unk_85ed8 opls 0.000 0.000 0.384 0.000
+    dihedral_coeff @dihedral:type48_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type49_unk_85ed8 opls 0.000 0.000 0.384 0.000
+    dihedral_coeff @dihedral:type50_unk_85ed8 opls 1.300 -0.200 0.200 0.000
+    dihedral_coeff @dihedral:type51_unk_85ed8 opls 1.438 -0.124 0.264 0.000
+    dihedral_coeff @dihedral:type52_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type53_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type54_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type55_unk_85ed8 opls 0.000 0.000 0.384 0.000
+    dihedral_coeff @dihedral:type56_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type57_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type58_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type59_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type60_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type61_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type62_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type63_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type64_unk_85ed8 opls 1.438 -0.124 0.264 0.000
+    dihedral_coeff @dihedral:type65_unk_85ed8 opls 1.438 -0.124 0.264 0.000
+    dihedral_coeff @dihedral:type66_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type67_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type68_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type69_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type70_unk_85ed8 opls 1.438 -0.124 0.264 0.000
+    dihedral_coeff @dihedral:type71_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type72_unk_85ed8 opls 1.438 -0.124 0.264 0.000
+    dihedral_coeff @dihedral:type73_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type74_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type75_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type76_unk_85ed8 opls 0.000 0.000 0.300 0.000
+    dihedral_coeff @dihedral:type77_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type78_unk_85ed8 opls 0.000 0.000 0.302 0.000
+    dihedral_coeff @dihedral:type79_unk_85ed8 opls 1.438 -0.124 0.264 0.000
+    dihedral_coeff @dihedral:type80_unk_85ed8 opls 2.732 -0.229 0.485 0.000
+    dihedral_coeff @dihedral:type81_unk_85ed8 opls 0.000 0.000 0.300 0.000
+  }
+  write_once("In Settings") {
+    improper_coeff @improper:type1_unk_85ed8 0.000 -1 2
+    improper_coeff @improper:type2_unk_85ed8 0.000 -1 2
+    improper_coeff @improper:type3_unk_85ed8 0.000 -1 2
+    improper_coeff @improper:type4_unk_85ed8 0.000 -1 2
+    improper_coeff @improper:type5_unk_85ed8 0.000 -1 2
+    improper_coeff @improper:type6_unk_85ed8 0.000 -1 2
+    improper_coeff @improper:type7_unk_85ed8 0.000 -1 2
+    improper_coeff @improper:type8_unk_85ed8 0.000 -1 2
+    improper_coeff @improper:type9_unk_85ed8 0.000 -1 2
+    improper_coeff @improper:type10_unk_85ed8 0.000 -1 2
+    improper_coeff @improper:type11_unk_85ed8 0.000 -1 2
+    improper_coeff @improper:type12_unk_85ed8 0.000 -1 2
+    improper_coeff @improper:type13_unk_85ed8 0.000 -1 2
+    improper_coeff @improper:type14_unk_85ed8 0.000 -1 2
+    improper_coeff @improper:type15_unk_85ed8 0.000 -1 2
+    improper_coeff @improper:type16_unk_85ed8 0.000 -1 2
+    improper_coeff @improper:type17_unk_85ed8 0.000 -1 2
+    improper_coeff @improper:type18_unk_85ed8 0.000 -1 2
+  }
+  ### DATA sections
+  write_once("Data Masses") {
+    @atom:type1_c_unk_85ed8 12.011
+    @atom:type2_c_unk_85ed8 12.011
+    @atom:type3_c_unk_85ed8 12.011
+    @atom:type4_n_unk_85ed8 14.007
+    @atom:type5_c_unk_85ed8 12.011
+    @atom:type6_c_unk_85ed8 12.011
+    @atom:type7_c_unk_85ed8 12.011
+    @atom:type8_c_unk_85ed8 12.011
+    @atom:type9_c_unk_85ed8 12.011
+    @atom:type10_h_unk_85ed8 1.008
+    @atom:type11_h_unk_85ed8 1.008
+    @atom:type12_h_unk_85ed8 1.008
+    @atom:type13_h_unk_85ed8 1.008
+    @atom:type14_h_unk_85ed8 1.008
+    @atom:type15_h_unk_85ed8 1.008
+    @atom:type16_h_unk_85ed8 1.008
+    @atom:type17_h_unk_85ed8 1.008
+    @atom:type18_h_unk_85ed8 1.008
+    @atom:type19_h_unk_85ed8 1.008
+    @atom:type20_h_unk_85ed8 1.008
+    @atom:type21_h_unk_85ed8 1.008
+    @atom:type22_h_unk_85ed8 1.008
+    @atom:type23_h_unk_85ed8 1.008
+    @atom:type24_h_unk_85ed8 1.008
+    @atom:type25_h_unk_85ed8 1.008
+    @atom:type26_h_unk_85ed8 1.008
+    @atom:type27_h_unk_85ed8 1.008
+  }
+  write("Data Atoms") {
+    $atom:id1 $mol:m1 @atom:type1_c_unk_85ed8 -0.21450000 1.000 1.00000 0.00000
+    $atom:id2 $mol:m1 @atom:type2_c_unk_85ed8 -0.18130000 -0.523 1.00000 0.00000
+    $atom:id3 $mol:m1 @atom:type3_c_unk_85ed8 -0.08360000 -1.060 1.00000 1.43244
+    $atom:id4 $mol:m1 @atom:type4_n_unk_85ed8 -0.06870000 -2.601 0.93500 1.51799
+    $atom:id5 $mol:m1 @atom:type5_c_unk_85ed8 -0.14450000 -3.235 2.10547 0.77974
+    $atom:id6 $mol:m1 @atom:type6_c_unk_85ed8 -0.09020000 -3.023 0.98528 3.00221
+    $atom:id7 $mol:m1 @atom:type7_c_unk_85ed8 -0.18200000 -2.980 -0.46054 3.44127
+    $atom:id8 $mol:m1 @atom:type8_c_unk_85ed8 -0.18560000 -3.565 -1.19856 2.25756
+    $atom:id9 $mol:m1 @atom:type9_c_unk_85ed8 -0.08980000 -3.151 -0.41572 1.01710
+    $atom:id10 $mol:m1 @atom:type10_h_unk_85ed8 0.09760000 1.378 1.00130 -1.02711
+    $atom:id11 $mol:m1 @atom:type11_h_unk_85ed8 0.09760000 1.393 0.11249 0.50584
+    $atom:id12 $mol:m1 @atom:type12_h_unk_85ed8 0.09760000 1.390 1.89093 0.50399
+    $atom:id13 $mol:m1 @atom:type13_h_unk_85ed8 0.10080000 -0.864 0.12310 -0.55861
+    $atom:id14 $mol:m1 @atom:type14_h_unk_85ed8 0.10080000 -0.862 1.88740 -0.54348
+    $atom:id15 $mol:m1 @atom:type15_h_unk_85ed8 0.13260000 -0.754 1.91815 1.94810
+    $atom:id16 $mol:m1 @atom:type16_h_unk_85ed8 0.13260000 -0.668 0.14046 1.98715
+    $atom:id17 $mol:m1 @atom:type17_h_unk_85ed8 0.13330000 -2.799 3.03174 1.16452
+    $atom:id18 $mol:m1 @atom:type18_h_unk_85ed8 0.13330000 -4.315 2.08800 0.95866
+    $atom:id19 $mol:m1 @atom:type19_h_unk_85ed8 0.13330000 -3.043 1.99257 -0.29005
+    $atom:id20 $mol:m1 @atom:type20_h_unk_85ed8 0.14000000 -4.047 1.37465 3.04863
+    $atom:id21 $mol:m1 @atom:type21_h_unk_85ed8 0.14000000 -2.347 1.64341 3.55563
+    $atom:id22 $mol:m1 @atom:type22_h_unk_85ed8 0.13130000 -3.553 -0.62986 4.35749
+    $atom:id23 $mol:m1 @atom:type23_h_unk_85ed8 0.13130000 -1.950 -0.78345 3.62753
+    $atom:id24 $mol:m1 @atom:type24_h_unk_85ed8 0.12990000 -4.658 -1.22398 2.32887
+    $atom:id25 $mol:m1 @atom:type25_h_unk_85ed8 0.12990000 -3.215 -2.23529 2.21330
+    $atom:id26 $mol:m1 @atom:type26_h_unk_85ed8 0.13920000 -4.009 -0.22490 0.36433
+    $atom:id27 $mol:m1 @atom:type27_h_unk_85ed8 0.13920000 -2.374 -0.93675 0.45413
+  }
+  write("Data Bonds") {
+    $bond:id1 @bond:type1_unk_85ed8 $atom:id2 $atom:id1
+    $bond:id2 @bond:type2_unk_85ed8 $atom:id3 $atom:id2
+    $bond:id3 @bond:type3_unk_85ed8 $atom:id4 $atom:id3
+    $bond:id4 @bond:type4_unk_85ed8 $atom:id5 $atom:id4
+    $bond:id5 @bond:type5_unk_85ed8 $atom:id6 $atom:id4
+    $bond:id6 @bond:type6_unk_85ed8 $atom:id7 $atom:id6
+    $bond:id7 @bond:type7_unk_85ed8 $atom:id8 $atom:id7
+    $bond:id8 @bond:type8_unk_85ed8 $atom:id9 $atom:id4
+    $bond:id9 @bond:type9_unk_85ed8 $atom:id10 $atom:id1
+    $bond:id10 @bond:type10_unk_85ed8 $atom:id11 $atom:id1
+    $bond:id11 @bond:type11_unk_85ed8 $atom:id12 $atom:id1
+    $bond:id12 @bond:type12_unk_85ed8 $atom:id13 $atom:id2
+    $bond:id13 @bond:type13_unk_85ed8 $atom:id14 $atom:id2
+    $bond:id14 @bond:type14_unk_85ed8 $atom:id15 $atom:id3
+    $bond:id15 @bond:type15_unk_85ed8 $atom:id16 $atom:id3
+    $bond:id16 @bond:type16_unk_85ed8 $atom:id17 $atom:id5
+    $bond:id17 @bond:type17_unk_85ed8 $atom:id18 $atom:id5
+    $bond:id18 @bond:type18_unk_85ed8 $atom:id19 $atom:id5
+    $bond:id19 @bond:type19_unk_85ed8 $atom:id20 $atom:id6
+    $bond:id20 @bond:type20_unk_85ed8 $atom:id21 $atom:id6
+    $bond:id21 @bond:type21_unk_85ed8 $atom:id22 $atom:id7
+    $bond:id22 @bond:type22_unk_85ed8 $atom:id23 $atom:id7
+    $bond:id23 @bond:type23_unk_85ed8 $atom:id24 $atom:id8
+    $bond:id24 @bond:type24_unk_85ed8 $atom:id25 $atom:id8
+    $bond:id25 @bond:type25_unk_85ed8 $atom:id26 $atom:id9
+    $bond:id26 @bond:type26_unk_85ed8 $atom:id27 $atom:id9
+    $bond:id27 @bond:type27_unk_85ed8 $atom:id9 $atom:id8
+  }
+  write("Data Angles") {
+    $angle:id1 @angle:type1_unk_85ed8 $atom:id1 $atom:id2 $atom:id3
+    $angle:id2 @angle:type2_unk_85ed8 $atom:id2 $atom:id3 $atom:id4
+    $angle:id3 @angle:type3_unk_85ed8 $atom:id3 $atom:id4 $atom:id5
+    $angle:id4 @angle:type4_unk_85ed8 $atom:id3 $atom:id4 $atom:id6
+    $angle:id5 @angle:type5_unk_85ed8 $atom:id4 $atom:id6 $atom:id7
+    $angle:id6 @angle:type6_unk_85ed8 $atom:id6 $atom:id7 $atom:id8
+    $angle:id7 @angle:type7_unk_85ed8 $atom:id3 $atom:id4 $atom:id9
+    $angle:id8 @angle:type8_unk_85ed8 $atom:id2 $atom:id1 $atom:id10
+    $angle:id9 @angle:type9_unk_85ed8 $atom:id2 $atom:id1 $atom:id11
+    $angle:id10 @angle:type10_unk_85ed8 $atom:id2 $atom:id1 $atom:id12
+    $angle:id11 @angle:type11_unk_85ed8 $atom:id1 $atom:id2 $atom:id13
+    $angle:id12 @angle:type12_unk_85ed8 $atom:id1 $atom:id2 $atom:id14
+    $angle:id13 @angle:type13_unk_85ed8 $atom:id2 $atom:id3 $atom:id15
+    $angle:id14 @angle:type14_unk_85ed8 $atom:id2 $atom:id3 $atom:id16
+    $angle:id15 @angle:type15_unk_85ed8 $atom:id4 $atom:id5 $atom:id17
+    $angle:id16 @angle:type16_unk_85ed8 $atom:id4 $atom:id5 $atom:id18
+    $angle:id17 @angle:type17_unk_85ed8 $atom:id4 $atom:id5 $atom:id19
+    $angle:id18 @angle:type18_unk_85ed8 $atom:id4 $atom:id6 $atom:id20
+    $angle:id19 @angle:type19_unk_85ed8 $atom:id4 $atom:id6 $atom:id21
+    $angle:id20 @angle:type20_unk_85ed8 $atom:id6 $atom:id7 $atom:id22
+    $angle:id21 @angle:type21_unk_85ed8 $atom:id6 $atom:id7 $atom:id23
+    $angle:id22 @angle:type22_unk_85ed8 $atom:id7 $atom:id8 $atom:id24
+    $angle:id23 @angle:type23_unk_85ed8 $atom:id7 $atom:id8 $atom:id25
+    $angle:id24 @angle:type24_unk_85ed8 $atom:id4 $atom:id9 $atom:id26
+    $angle:id25 @angle:type25_unk_85ed8 $atom:id4 $atom:id9 $atom:id27
+    $angle:id26 @angle:type26_unk_85ed8 $atom:id5 $atom:id4 $atom:id6
+    $angle:id27 @angle:type27_unk_85ed8 $atom:id9 $atom:id8 $atom:id25
+    $angle:id28 @angle:type28_unk_85ed8 $atom:id3 $atom:id2 $atom:id14
+    $angle:id29 @angle:type29_unk_85ed8 $atom:id8 $atom:id9 $atom:id26
+    $angle:id30 @angle:type30_unk_85ed8 $atom:id13 $atom:id2 $atom:id14
+    $angle:id31 @angle:type31_unk_85ed8 $atom:id17 $atom:id5 $atom:id19
+    $angle:id32 @angle:type32_unk_85ed8 $atom:id9 $atom:id8 $atom:id24
+    $angle:id33 @angle:type33_unk_85ed8 $atom:id5 $atom:id4 $atom:id9
+    $angle:id34 @angle:type34_unk_85ed8 $atom:id26 $atom:id9 $atom:id27
+    $angle:id35 @angle:type35_unk_85ed8 $atom:id8 $atom:id9 $atom:id27
+    $angle:id36 @angle:type36_unk_85ed8 $atom:id7 $atom:id8 $atom:id9
+    $angle:id37 @angle:type37_unk_85ed8 $atom:id17 $atom:id5 $atom:id18
+    $angle:id38 @angle:type38_unk_85ed8 $atom:id15 $atom:id3 $atom:id16
+    $angle:id39 @angle:type39_unk_85ed8 $atom:id4 $atom:id9 $atom:id8
+    $angle:id40 @angle:type40_unk_85ed8 $atom:id8 $atom:id7 $atom:id23
+    $angle:id41 @angle:type41_unk_85ed8 $atom:id11 $atom:id1 $atom:id12
+    $angle:id42 @angle:type42_unk_85ed8 $atom:id6 $atom:id4 $atom:id9
+    $angle:id43 @angle:type43_unk_85ed8 $atom:id8 $atom:id7 $atom:id22
+    $angle:id44 @angle:type44_unk_85ed8 $atom:id10 $atom:id1 $atom:id11
+    $angle:id45 @angle:type45_unk_85ed8 $atom:id3 $atom:id2 $atom:id13
+    $angle:id46 @angle:type46_unk_85ed8 $atom:id7 $atom:id6 $atom:id20
+    $angle:id47 @angle:type47_unk_85ed8 $atom:id18 $atom:id5 $atom:id19
+    $angle:id48 @angle:type48_unk_85ed8 $atom:id22 $atom:id7 $atom:id23
+    $angle:id49 @angle:type49_unk_85ed8 $atom:id24 $atom:id8 $atom:id25
+    $angle:id50 @angle:type50_unk_85ed8 $atom:id4 $atom:id3 $atom:id16
+    $angle:id51 @angle:type51_unk_85ed8 $atom:id20 $atom:id6 $atom:id21
+    $angle:id52 @angle:type52_unk_85ed8 $atom:id7 $atom:id6 $atom:id21
+    $angle:id53 @angle:type53_unk_85ed8 $atom:id4 $atom:id3 $atom:id15
+    $angle:id54 @angle:type54_unk_85ed8 $atom:id10 $atom:id1 $atom:id12
+  }
+  write("Data Dihedrals") {
+    $dihedral:id1 @dihedral:type1_unk_85ed8 $atom:id4 $atom:id3 $atom:id2 $atom:id1
+    $dihedral:id2 @dihedral:type2_unk_85ed8 $atom:id5 $atom:id4 $atom:id3 $atom:id2
+    $dihedral:id3 @dihedral:type3_unk_85ed8 $atom:id7 $atom:id6 $atom:id4 $atom:id3
+    $dihedral:id4 @dihedral:type4_unk_85ed8 $atom:id8 $atom:id7 $atom:id6 $atom:id4
+    $dihedral:id5 @dihedral:type5_unk_85ed8 $atom:id10 $atom:id1 $atom:id2 $atom:id3
+    $dihedral:id6 @dihedral:type6_unk_85ed8 $atom:id17 $atom:id5 $atom:id4 $atom:id3
+    $dihedral:id7 @dihedral:type7_unk_85ed8 $atom:id26 $atom:id9 $atom:id4 $atom:id5
+    $dihedral:id8 @dihedral:type8_unk_85ed8 $atom:id15 $atom:id3 $atom:id4 $atom:id5
+    $dihedral:id9 @dihedral:type9_unk_85ed8 $atom:id16 $atom:id3 $atom:id4 $atom:id9
+    $dihedral:id10 @dihedral:type10_unk_85ed8 $atom:id25 $atom:id8 $atom:id7 $atom:id22
+    $dihedral:id11 @dihedral:type11_unk_85ed8 $atom:id27 $atom:id9 $atom:id8 $atom:id24
+    $dihedral:id12 @dihedral:type12_unk_85ed8 $atom:id26 $atom:id9 $atom:id8 $atom:id25
+    $dihedral:id13 @dihedral:type13_unk_85ed8 $atom:id20 $atom:id6 $atom:id4 $atom:id3
+    $dihedral:id14 @dihedral:type14_unk_85ed8 $atom:id23 $atom:id7 $atom:id6 $atom:id20
+    $dihedral:id15 @dihedral:type15_unk_85ed8 $atom:id14 $atom:id2 $atom:id1 $atom:id11
+    $dihedral:id16 @dihedral:type16_unk_85ed8 $atom:id21 $atom:id6 $atom:id4 $atom:id9
+    $dihedral:id17 @dihedral:type17_unk_85ed8 $atom:id16 $atom:id3 $atom:id2 $atom:id13
+    $dihedral:id18 @dihedral:type18_unk_85ed8 $atom:id11 $atom:id1 $atom:id2 $atom:id3
+    $dihedral:id19 @dihedral:type19_unk_85ed8 $atom:id16 $atom:id3 $atom:id4 $atom:id6
+    $dihedral:id20 @dihedral:type20_unk_85ed8 $atom:id23 $atom:id7 $atom:id8 $atom:id9
+    $dihedral:id21 @dihedral:type21_unk_85ed8 $atom:id22 $atom:id7 $atom:id6 $atom:id21
+    $dihedral:id22 @dihedral:type22_unk_85ed8 $atom:id25 $atom:id8 $atom:id7 $atom:id23
+    $dihedral:id23 @dihedral:type23_unk_85ed8 $atom:id17 $atom:id5 $atom:id4 $atom:id6
+    $dihedral:id24 @dihedral:type24_unk_85ed8 $atom:id15 $atom:id3 $atom:id2 $atom:id14
+    $dihedral:id25 @dihedral:type25_unk_85ed8 $atom:id17 $atom:id5 $atom:id4 $atom:id9
+    $dihedral:id26 @dihedral:type26_unk_85ed8 $atom:id27 $atom:id9 $atom:id8 $atom:id7
+    $dihedral:id27 @dihedral:type27_unk_85ed8 $atom:id27 $atom:id9 $atom:id8 $atom:id25
+    $dihedral:id28 @dihedral:type28_unk_85ed8 $atom:id25 $atom:id8 $atom:id9 $atom:id4
+    $dihedral:id29 @dihedral:type29_unk_85ed8 $atom:id21 $atom:id6 $atom:id7 $atom:id8
+    $dihedral:id30 @dihedral:type30_unk_85ed8 $atom:id24 $atom:id8 $atom:id7 $atom:id22
+    $dihedral:id31 @dihedral:type31_unk_85ed8 $atom:id18 $atom:id5 $atom:id4 $atom:id6
+    $dihedral:id32 @dihedral:type32_unk_85ed8 $atom:id6 $atom:id4 $atom:id3 $atom:id2
+    $dihedral:id33 @dihedral:type33_unk_85ed8 $atom:id13 $atom:id2 $atom:id1 $atom:id12
+    $dihedral:id34 @dihedral:type34_unk_85ed8 $atom:id22 $atom:id7 $atom:id8 $atom:id9
+    $dihedral:id35 @dihedral:type35_unk_85ed8 $atom:id21 $atom:id6 $atom:id4 $atom:id3
+    $dihedral:id36 @dihedral:type36_unk_85ed8 $atom:id16 $atom:id3 $atom:id2 $atom:id14
+    $dihedral:id37 @dihedral:type37_unk_85ed8 $atom:id12 $atom:id1 $atom:id2 $atom:id3
+    $dihedral:id38 @dihedral:type38_unk_85ed8 $atom:id22 $atom:id7 $atom:id6 $atom:id20
+    $dihedral:id39 @dihedral:type39_unk_85ed8 $atom:id18 $atom:id5 $atom:id4 $atom:id9
+    $dihedral:id40 @dihedral:type40_unk_85ed8 $atom:id20 $atom:id6 $atom:id4 $atom:id9
+    $dihedral:id41 @dihedral:type41_unk_85ed8 $atom:id15 $atom:id3 $atom:id2 $atom:id1
+    $dihedral:id42 @dihedral:type42_unk_85ed8 $atom:id20 $atom:id6 $atom:id4 $atom:id5
+    $dihedral:id43 @dihedral:type43_unk_85ed8 $atom:id13 $atom:id2 $atom:id1 $atom:id11
+    $dihedral:id44 @dihedral:type44_unk_85ed8 $atom:id22 $atom:id7 $atom:id6 $atom:id4
+    $dihedral:id45 @dihedral:type45_unk_85ed8 $atom:id14 $atom:id2 $atom:id1 $atom:id10
+    $dihedral:id46 @dihedral:type46_unk_85ed8 $atom:id24 $atom:id8 $atom:id9 $atom:id4
+    $dihedral:id47 @dihedral:type47_unk_85ed8 $atom:id13 $atom:id2 $atom:id3 $atom:id4
+    $dihedral:id48 @dihedral:type48_unk_85ed8 $atom:id16 $atom:id3 $atom:id2 $atom:id1
+    $dihedral:id49 @dihedral:type49_unk_85ed8 $atom:id14 $atom:id2 $atom:id3 $atom:id4
+    $dihedral:id50 @dihedral:type50_unk_85ed8 $atom:id9 $atom:id8 $atom:id7 $atom:id6
+    $dihedral:id51 @dihedral:type51_unk_85ed8 $atom:id9 $atom:id4 $atom:id6 $atom:id7
+    $dihedral:id52 @dihedral:type52_unk_85ed8 $atom:id19 $atom:id5 $atom:id4 $atom:id3
+    $dihedral:id53 @dihedral:type53_unk_85ed8 $atom:id26 $atom:id9 $atom:id8 $atom:id24
+    $dihedral:id54 @dihedral:type54_unk_85ed8 $atom:id20 $atom:id6 $atom:id7 $atom:id8
+    $dihedral:id55 @dihedral:type55_unk_85ed8 $atom:id23 $atom:id7 $atom:id6 $atom:id4
+    $dihedral:id56 @dihedral:type56_unk_85ed8 $atom:id27 $atom:id9 $atom:id4 $atom:id6
+    $dihedral:id57 @dihedral:type57_unk_85ed8 $atom:id26 $atom:id9 $atom:id8 $atom:id7
+    $dihedral:id58 @dihedral:type58_unk_85ed8 $atom:id19 $atom:id5 $atom:id4 $atom:id6
+    $dihedral:id59 @dihedral:type59_unk_85ed8 $atom:id24 $atom:id8 $atom:id7 $atom:id6
+    $dihedral:id60 @dihedral:type60_unk_85ed8 $atom:id24 $atom:id8 $atom:id7 $atom:id23
+    $dihedral:id61 @dihedral:type61_unk_85ed8 $atom:id19 $atom:id5 $atom:id4 $atom:id9
+    $dihedral:id62 @dihedral:type62_unk_85ed8 $atom:id26 $atom:id9 $atom:id4 $atom:id3
+    $dihedral:id63 @dihedral:type63_unk_85ed8 $atom:id15 $atom:id3 $atom:id4 $atom:id9
+    $dihedral:id64 @dihedral:type64_unk_85ed8 $atom:id8 $atom:id9 $atom:id4 $atom:id6
+    $dihedral:id65 @dihedral:type65_unk_85ed8 $atom:id8 $atom:id9 $atom:id4 $atom:id5
+    $dihedral:id66 @dihedral:type66_unk_85ed8 $atom:id26 $atom:id9 $atom:id4 $atom:id6
+    $dihedral:id67 @dihedral:type67_unk_85ed8 $atom:id25 $atom:id8 $atom:id7 $atom:id6
+    $dihedral:id68 @dihedral:type68_unk_85ed8 $atom:id13 $atom:id2 $atom:id1 $atom:id10
+    $dihedral:id69 @dihedral:type69_unk_85ed8 $atom:id23 $atom:id7 $atom:id6 $atom:id21
+    $dihedral:id70 @dihedral:type70_unk_85ed8 $atom:id9 $atom:id4 $atom:id3 $atom:id2
+    $dihedral:id71 @dihedral:type71_unk_85ed8 $atom:id27 $atom:id9 $atom:id4 $atom:id5
+    $dihedral:id72 @dihedral:type72_unk_85ed8 $atom:id8 $atom:id9 $atom:id4 $atom:id3
+    $dihedral:id73 @dihedral:type73_unk_85ed8 $atom:id15 $atom:id3 $atom:id4 $atom:id6
+    $dihedral:id74 @dihedral:type74_unk_85ed8 $atom:id16 $atom:id3 $atom:id4 $atom:id5
+    $dihedral:id75 @dihedral:type75_unk_85ed8 $atom:id27 $atom:id9 $atom:id4 $atom:id3
+    $dihedral:id76 @dihedral:type76_unk_85ed8 $atom:id14 $atom:id2 $atom:id1 $atom:id12
+    $dihedral:id77 @dihedral:type77_unk_85ed8 $atom:id18 $atom:id5 $atom:id4 $atom:id3
+    $dihedral:id78 @dihedral:type78_unk_85ed8 $atom:id21 $atom:id6 $atom:id4 $atom:id5
+    $dihedral:id79 @dihedral:type79_unk_85ed8 $atom:id7 $atom:id6 $atom:id4 $atom:id5
+    $dihedral:id80 @dihedral:type80_unk_85ed8 $atom:id7 $atom:id8 $atom:id9 $atom:id4
+    $dihedral:id81 @dihedral:type81_unk_85ed8 $atom:id15 $atom:id3 $atom:id2 $atom:id13
+  }
+  write("Data Impropers") {
+    $improper:id1 @improper:type1_unk_85ed8 $atom:id4 $atom:id3 $atom:id5 $atom:id6
+    $improper:id2 @improper:type2_unk_85ed8 $atom:id4 $atom:id9 $atom:id3 $atom:id5
+    $improper:id3 @improper:type3_unk_85ed8 $atom:id1 $atom:id2 $atom:id11 $atom:id10
+    $improper:id4 @improper:type4_unk_85ed8 $atom:id1 $atom:id2 $atom:id12 $atom:id10
+    $improper:id5 @improper:type5_unk_85ed8 $atom:id2 $atom:id1 $atom:id3 $atom:id13
+    $improper:id6 @improper:type6_unk_85ed8 $atom:id2 $atom:id1 $atom:id3 $atom:id14
+    $improper:id7 @improper:type7_unk_85ed8 $atom:id3 $atom:id2 $atom:id4 $atom:id15
+    $improper:id8 @improper:type8_unk_85ed8 $atom:id3 $atom:id2 $atom:id4 $atom:id16
+    $improper:id9 @improper:type9_unk_85ed8 $atom:id5 $atom:id17 $atom:id18 $atom:id4
+    $improper:id10 @improper:type10_unk_85ed8 $atom:id5 $atom:id17 $atom:id19 $atom:id4
+    $improper:id11 @improper:type11_unk_85ed8 $atom:id6 $atom:id4 $atom:id20 $atom:id7
+    $improper:id12 @improper:type12_unk_85ed8 $atom:id6 $atom:id4 $atom:id21 $atom:id7
+    $improper:id13 @improper:type13_unk_85ed8 $atom:id7 $atom:id8 $atom:id22 $atom:id6
+    $improper:id14 @improper:type14_unk_85ed8 $atom:id7 $atom:id8 $atom:id23 $atom:id6
+    $improper:id15 @improper:type15_unk_85ed8 $atom:id8 $atom:id9 $atom:id7 $atom:id24
+    $improper:id16 @improper:type16_unk_85ed8 $atom:id8 $atom:id25 $atom:id9 $atom:id7
+    $improper:id17 @improper:type17_unk_85ed8 $atom:id9 $atom:id26 $atom:id4 $atom:id8
+    $improper:id18 @improper:type18_unk_85ed8 $atom:id9 $atom:id27 $atom:id4 $atom:id8
+  }
+} # end of "C8H18N+ inherits OPLSCM1A" type definition

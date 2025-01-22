@@ -1,0 +1,13 @@
+Lu+3 {
+    # AtomID  MolID  AtomType  charge   X       Y         Z
+    write("Data Atoms") {
+        $atom:Lu $mol @atom:Lu    3    0.00000  0.00000   0.000000
+    }
+    write_once("Data Masses") {
+        @atom:Lu 174.967
+    }
+    # The "In Settings" section stores force-field parameters for this molecule
+    write_once("In Settings") {
+        pair_coeff @atom:Lu @atom:Lu  0.01773416 2.515897980028318
+    }
+}

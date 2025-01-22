@@ -1,0 +1,37 @@
+CO3-2 inherits OPLSCM1A {
+  ### Inheriting from oplsaa.lt
+  write("Data Atoms") {
+    $atom:c1_co3 $mol:m @atom:C1_co3 0.401 -2.14 -0.595 1.245
+    $atom:o1_co3 $mol:m @atom:Os1_co3 -0.8 -2.799 -1.157 0.332
+    $atom:o2_co3 $mol:m @atom:O2_co3 -0.8 -2.801 0.055 2.278
+    $atom:o3_co3 $mol:m @atom:O3_co3 -0.8 -0.753 -0.626 1.219
+  }
+  write_once("Data Masses") {
+    @atom:Os1_co3  15.9994
+    @atom:O2_co3  15.9994
+    @atom:O3_co3  15.9994
+    @atom:C1_co3   12.00  
+  }
+  write("Data Bonds") {
+    $bond:co1_co3 @bond:COs1_co3 $atom:c1_co3 $atom:o1_co3
+    $bond:co2_co3 @bond:CO2_co3 $atom:c1_co3 $atom:o2_co3
+    $bond:co3_co3 @bond:CO3_co3 $atom:c1_co3 $atom:o3_co3
+  }
+  write("Data Angles") {
+    $angle:oco1_co3 @angle:OCOs1_co3 $atom:o1_co3 $atom:c1_co3 $atom:o2_co3
+    $angle:oco2_co3 @angle:OCO2_co3 $atom:o2_co3 $atom:c1_co3 $atom:o3_co3
+    $angle:oco3_co3 @angle:OCOs3_co3 $atom:o3_co3 $atom:c1_co3 $atom:o1_co3
+  }
+  write_once("In Settings") {
+    bond_coeff @bond:COs1_co3 284.8 1.4320   
+    bond_coeff @bond:CO2_co3 438.1 1.3170 
+    bond_coeff @bond:CO3_co3 438.1 1.3170 
+    angle_coeff @angle:OCOs1_co3 114.8 123.25   
+    angle_coeff @angle:OCO2_co3 118.8 130.25   
+    angle_coeff @angle:OCOs3_co3 114.8 123.25   
+    pair_coeff @atom:Os1_co3 @atom:Os1_co3 0.0726 3.156097798883966
+    pair_coeff @atom:O2_co3 @atom:O2_co3 0.1463 3.048120874245357
+    pair_coeff @atom:O3_co3 @atom:O3_co3 0.1463 3.048120874245357
+    pair_coeff @atom:C1_co3 @atom:C1_co3 0.1078 3.397709531243626
+  }
+} # end of "CO3-2" type definition

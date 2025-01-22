@@ -1,0 +1,27 @@
+REMARK   1 CREATED WITH OPENMM 8.1.1, 2024-09-20
+HETATM    1  F1  UNL     1      -1.573  -2.233   0.090  1.00  0.00           F  
+HETATM    2  C1  UNL     1      -0.793  -1.125   0.045  1.00  0.00           C  
+HETATM    3  C2  UNL     1       0.601  -1.250   0.056  1.00  0.00           C  
+HETATM    4  C3  UNL     1       1.406  -0.107   0.009  1.00  0.00           C  
+HETATM    5  C4  UNL     1       0.818   1.162  -0.047  1.00  0.00           C  
+HETATM    6  C5  UNL     1      -0.575   1.287  -0.057  1.00  0.00           C  
+HETATM    7  C6  UNL     1      -1.380   0.144  -0.011  1.00  0.00           C  
+HETATM    8  H1  UNL     1       1.058  -2.230   0.099  1.00  0.00           H  
+HETATM    9  H2  UNL     1       2.484  -0.203   0.017  1.00  0.00           H  
+HETATM   10  H3  UNL     1       1.441   2.046  -0.083  1.00  0.00           H  
+HETATM   11  H4  UNL     1      -1.030   2.268  -0.101  1.00  0.00           H  
+HETATM   12  H5  UNL     1      -2.458   0.242  -0.019  1.00  0.00           H  
+TER      13      UNL     1
+CONECT    1    2
+CONECT    2    1    3    7
+CONECT    3    2    4    8
+CONECT    4    3    5    9
+CONECT    5    4    6   10
+CONECT    6    5    7   11
+CONECT    7    2    6   12
+CONECT    8    3
+CONECT    9    4
+CONECT   10    5
+CONECT   11    6
+CONECT   12    7
+END

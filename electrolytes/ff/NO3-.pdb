@@ -1,0 +1,13 @@
+REMARK   1 PDBFIXER FROM: NO3-.pdb
+REMARK   1 CREATED WITH OPENMM 8.1.1, 2024-07-14
+CRYST1    7.377    6.992    6.000  90.00  90.00  90.00 P 1           1 
+HETATM    1  NX1 UNK     1      -0.002   0.032   0.000  1.00  0.00           N  
+HETATM    2  OX1 UNK     1      -0.065   1.277  -0.002  1.00  0.00           O  
+HETATM    3  OX2 UNK     1       1.222  -0.594   0.001  1.00  0.00           O  
+HETATM    4  OX3 UNK     1      -1.155  -0.715   0.001  1.00  0.00           O  
+TER       5      UNK     1
+CONECT    1    2    3    4
+CONECT    2    1
+CONECT    3    1
+CONECT    4    1
+END

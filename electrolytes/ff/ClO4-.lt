@@ -1,0 +1,47 @@
+ClO4- inherits OPLSCM1A {
+  write("Data Atoms") {
+$atom:cl1_clo4 $mol @atom:Cl1_clo4 0.827600000000000 -0.000 0.000 -0.000
+$atom:o1_clo4 $mol @atom:O1_clo4 -0.456900000000000 -0.000 -1.166 -0.824
+$atom:o2_clo4 $mol @atom:O2_clo4 -0.456900000000000 0.000 1.166 -0.824
+$atom:o3_clo4 $mol @atom:O3_clo4 -0.456900000000000 -1.166 0.000 0.824
+$atom:o4_clo4 $mol @atom:O4_clo4 -0.456900000000000 1.166 0.000 0.824
+  }
+write_once("Data Masses") {
+    @atom:Cl1_clo4  35.45
+    @atom:O1_clo4  15.99
+    @atom:O2_clo4  15.99
+    @atom:O3_clo4  15.99
+    @atom:O4_clo4  15.99
+  }
+  write("Data Bonds") {
+    $bond:clo1_clo4 @bond:ClO1_clo4 $atom:cl1_clo4 $atom:o1_clo4
+    $bond:clo2_clo4 @bond:ClO2_clo4 $atom:cl1_clo4 $atom:o2_clo4
+    $bond:clo3_clo4 @bond:ClO3_clo4 $atom:cl1_clo4 $atom:o3_clo4
+    $bond:clo4_clo4 @bond:ClO4_clo4 $atom:cl1_clo4 $atom:o4_clo4
+  }
+  write("Data Angles") {
+    $angle:oclo1_clo4 @angle:OClO1_clo4 $atom:o1_clo4 $atom:cl1_clo4 $atom:o2_clo4
+    $angle:oclo2_clo4 @angle:OClO2_clo4 $atom:o2_clo4 $atom:cl1_clo4 $atom:o3_clo4
+    $angle:oclo3_clo4 @angle:OClO3_clo4 $atom:o3_clo4 $atom:cl1_clo4 $atom:o4_clo4
+    $angle:oclo4_clo4 @angle:OClO4_clo4 $atom:o1_clo4 $atom:cl1_clo4 $atom:o3_clo4
+    $angle:oclo5_clo4 @angle:OClO5_clo4 $atom:o1_clo4 $atom:cl1_clo4 $atom:o4_clo4
+    $angle:oclo6_clo4 @angle:OClO6_clo4 $atom:o2_clo4 $atom:cl1_clo4 $atom:o4_clo4
+  }
+  write_once("In Settings") {
+    bond_coeff   @bond:ClO1_clo4         757.6    1.506
+    bond_coeff   @bond:ClO2_clo4         757.6    1.506
+    bond_coeff   @bond:ClO3_clo4         757.6    1.506
+    bond_coeff   @bond:ClO4_clo4         757.6    1.506
+    angle_coeff  @angle:OClO1_clo4      207.9    109.5       
+    angle_coeff  @angle:OClO2_clo4      207.9    109.5       
+    angle_coeff  @angle:OClO3_clo4      207.9    109.5       
+    angle_coeff  @angle:OClO4_clo4      207.9    109.5       
+    angle_coeff  @angle:OClO5_clo4      207.9    109.5       
+    angle_coeff  @angle:OClO6_clo4      207.9    109.5       
+    pair_coeff  @atom:Cl1_clo4  @atom:Cl1_clo4 0.118    3.5   
+    pair_coeff  @atom:O1_clo4  @atom:O1_clo4   0.21 2.9
+    pair_coeff  @atom:O2_clo4  @atom:O2_clo4   0.21 2.9
+    pair_coeff  @atom:O3_clo4  @atom:O3_clo4   0.21 2.9
+    pair_coeff  @atom:O4_clo4  @atom:O4_clo4   0.21 2.9
+  }
+} # end of "ClO4-" type definition
