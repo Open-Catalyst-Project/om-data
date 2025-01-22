@@ -124,7 +124,8 @@ def extract_solvation_shells(
 
                 if not extracted_shells:
                     # raise a warning and continue to the next radii/species
-                    logging.warning(f"No acceptable shells found for {system_name}, {species}, radius={radius}")
+                    logging.warning(f"No acceptable shells found for {system_name}, {species}, radius={radius}. Leaving an empty directory so we know we tried.")
+                    os.makedirs(save_path, exist_ok=True)
                     continue
 
                 grouped_shells = group_shells(extracted_shells, spec_type)
