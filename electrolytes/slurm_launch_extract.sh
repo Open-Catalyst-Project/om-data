@@ -14,5 +14,6 @@
 
 idx=$((${SLURM_ARRAY_TASK_ID}+0))
 
-echo $SCHRODINGER/run solvation_shell_extract.py --input_dir '/checkpoint/levineds/elytes_09_29_2024/'$idx --save_dir '/checkpoint/levineds/elytes_09_29_2024/results' --system_name $idx --seed $((${idx}+123)) --top_n 10 --max_shell_size 300 --radii 7
-$SCHRODINGER/run solvation_shell_extract.py --input_dir '/checkpoint/levineds/elytes_09_29_2024/'$idx --save_dir '/checkpoint/levineds/elytes_09_29_2024/results' --system_name $idx --seed $((${idx}+123)) --top_n 10 --max_shell_size 300 --radii 7
+echo $SCHRODINGER/run solvation_shell_extract.py --input_dir '/checkpoint/levineds/elytes_09_29_2024/'$idx --save_dir '/checkpoint/levineds/elytes_09_29_2024/results2' --system_name $idx --seed $((${idx}+123)) --top_n 10 --max_shell_size 350 --radii 7
+$SCHRODINGER/run solvation_shell_extract.py --input_dir '/checkpoint/levineds/elytes_09_29_2024/'$idx --save_dir '/checkpoint/levineds/elytes_09_29_2024/results2' --system_name $idx --seed $((${idx}+123)) --top_n 10 --max_shell_size 350 --radii 7
+echo done
