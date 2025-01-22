@@ -4,7 +4,8 @@ Settings used were as follows"
 Initial generation of metal-organics: MAX_N_ATOMS = 250, random_seed = 46139, lanthanides were excluded, no ligands were excluded, 1m were generated
 "Small" metal-organics: MAX_N_ATOMS = 120, random_seed = 98745, lanthandies were excluded, no ligands were excluded, 1m were generated
 Lanthanides: MAX_N_ATOMS = 120, random_seed = 46139, non-lanthanides were excluded, ligands with heavy main-group elements were excluded, 255k were generated
-Hydrides: MAX_N_ATOMS = 120, random_seed = 34231, no metals were exluced, no ligands were excluded, hydride was added as a ligand and given additional weight of XX, 91000 were generated
+Hydrides: MAX_N_ATOMS = 120, random_seed = 34231, no metals were exluced, no ligands were excluded, hydride was added as a ligand and forced to be included, 91000 were generated
+ML-MD: MAX_N_ATOMS = 120, random_seed = 569, no metals were exluced, no ligands were excluded, hydride was added as a ligand, 91000 were generated
 """
 
 import argparse
@@ -164,8 +165,9 @@ def sample(
         "parameters": {
             "metal_ox": ox,
             "metal_spin": spin,
-            "assemble_method": "GFN2-xTB",
-            "full_method": "GFN2-xTB",
+            "assemble_method": "GFN-FF",
+            "full_method": "GFN-FF",
+            "relax": False, # Turn off the final relaxation
             "n_conformers": 3,  # Will return relaxed 3 lowest-energy XTB conformers per symmetry if distinct enough.
             "n_symmetries": 10,
             "full_graph_sanity_cutoff": 2.0,  # Increasing to loop in more structures where ligand may be falling off
