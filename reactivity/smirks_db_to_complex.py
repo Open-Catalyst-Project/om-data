@@ -153,7 +153,7 @@ for name, rxn in rxn_list.items():
         for st in collapse(rxn):
             st.generate3dConformation(require_stereo=False)
     except Exception:
-        print('SDGR 3D generation failed. Probably no Canvas license')
+        print('SDGR graph to 3D generation failed. Probably no Canvas license. Proceeding with RDKit 3D coords')
     try:
         r, p = build_complexes(*rxn)
     except Exception as e:
