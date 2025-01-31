@@ -21,6 +21,7 @@ import molbuilder as mb
 import os
 import csv 
 import numpy as np
+import pulp
 from pulp import LpProblem, LpVariable, lpSum, LpMinimize
 
 Avog = 6.023*10**23
@@ -32,7 +33,7 @@ def write_elyte_entry(clas, name, temperature, cat, an, solv, salt_conc, stoich_
     if clas == 'MS':
         newelectrolyte['units'] = 'number'
     else:
-        newelectrolyte['units'] = 'volume'
+        newelectrolyte['units'] = 'mass'
     newelectrolyte['temperature'] = temperature
     for j in range(max_comp):
         if j < len(cat):
@@ -111,7 +112,7 @@ def solve_single_equation(coefficients):
     prob = LpProblem("Integer_Solution_Problem", LpMinimize)
     x = [LpVariable(f"x{i}", 1, 5, cat='Integer') for i in range(len(coefficients))]
     prob += lpSum(coeff * var for coeff, var in zip(coefficients, x)) == 0
-    prob.solve()
+    prob.solve(pulp.PULP_CBC_CMD(msg=False))
     return [int(v.varValue) for v in prob.variables()[1:]]
 
 lanthanides = [
@@ -160,26 +161,33 @@ cations_file = 'cations.csv'
 anions_file = 'anions.csv'
 solvents_file = 'solvent.csv'
 
-elytes= load_csv('elytes.csv')
+elytes= load_csv('rpmd_elytes.csv')
 
-Nrandom = 700#700#800
+Nrandom = 20
 fac = 0.05
 for i in range(Nrandom):
     cations = load_csv(cations_file)
     anions = load_csv(anions_file)
     solvents = load_csv(solvents_file)
-    max_comp = 4
+
+    cat_rpmd = list(cations['in_rpmd'])
+    an_rpmd = list(anions['in_rpmd'])
+    solv_rpmd = list(solvents['in_rpmd'])
+    
+    max_comp = 2
     #Randomly select which class we want to create
-    classes = ['protic','aprotic','IL','MS','aq']
-    clas = np.random.choice(classes,p=[0.4,0.4,0.1,0.05,0.05])
-    clas = 'IL'    
+    classes = ['protic','aprotic','aq']
+    clas = np.random.choice(classes,p=[0.3,0.3,0.4])
+    minT = 0
+    maxT = 0
     #(1) Aqueous electrolytes
     if clas == 'aq':
         aq_idx = list(cations['in_aq'])
+        aq_idx = list(np.logical_and(aq_idx,cat_rpmd))
         cations = cations.iloc[aq_idx]
         cat, catcharges = choose_species(cations,max_comp,[])#,cations=True)
-         
         aq_idx = list(anions['in_aq'])
+        aq_idx = list(np.logical_and(aq_idx,an_rpmd))
         anions = anions.iloc[aq_idx]
         an, ancharges = choose_species(anions,max_comp,cat)
         
@@ -202,17 +210,20 @@ for i in range(Nrandom):
     #(2) Protic solvents
     elif clas == 'protic':
         protic_idx = list(cations['in_protic'])
+        protic_idx = list(np.logical_and(protic_idx,cat_rpmd))
         cations = cations.iloc[protic_idx]
         cat, catcharges = choose_species(cations,max_comp,[])#,cations=True)
         
         protic_idx = list(anions['in_protic'])
+        protic_idx = list(np.logical_and(protic_idx,an_rpmd))
         anions = anions.iloc[protic_idx]
-        an, ancharges = choose_species(anions,max_comp,an)
+        an, ancharges = choose_species(anions,max_comp,cat)
         
         charges = list(catcharges)+list(ancharges)
         stoich = solve_single_equation(charges)
 
         protic_idx = list(solvents['protic'])
+        protic_idx = list(np.logical_and(protic_idx,solv_rpmd))
         solvents = solvents.iloc[protic_idx]
         solv, solvcharges, minT, maxT= choose_species(solvents,max_comp,cat+an,solvent=True)
         stoich_solv = np.random.randint(1, 4, size=len(solv))
@@ -231,10 +242,16 @@ for i in range(Nrandom):
     #(3) Polar aprotic solvents
     elif clas == 'aprotic':
         aprotic_idx = list(cations['in_aprotic'])
-        cations = cations.iloc[aprotic_idx]
-        cat, catcharges = choose_species(cations,max_comp,[])#,cations=True)
+        aprotic_idx = list(np.logical_and(aprotic_idx,cat_rpmd))
         
+        cations = cations.iloc[aprotic_idx]
+        
+        if len(cations) <= max_comp:
+            cat, catcharges = choose_species(cations,len(cations),[])#,cations=True)
+        else: 
+            cat, catcharges = choose_species(cations,max_comp,[])#,cations=True)
         aprotic_idx = list(anions['in_aprotic'])
+        aprotic_idx = list(np.logical_and(aprotic_idx,an_rpmd))
         anions = anions.iloc[aprotic_idx]
         an, ancharges = choose_species(anions,max_comp,cat)
 
@@ -242,6 +259,7 @@ for i in range(Nrandom):
         stoich = solve_single_equation(charges)
 
         aprotic_idx = list(solvents['polar_aprotic'])
+        aprotic_idx = list(np.logical_and(aprotic_idx,solv_rpmd))
         solvents = solvents.iloc[aprotic_idx]
         solv, solvcharges, minT, maxT= choose_species(solvents,max_comp,cat+an,solvent=True)
         stoich_solv = np.random.randint(1, 4, size=len(solv))
@@ -257,48 +275,15 @@ for i in range(Nrandom):
         maxT = (1-fac)*np.sum(np.array(maxT)*solv_molfrac)
         
         soltorsolv = len(cat+an)*['A']+len(solv)*['B']
-    #(4) Ionic liquids
-    elif clas == 'IL': 
-        IL_idx = list(cations['in_IL'])
-        cations_il = cations.iloc[IL_idx]
-        cat, catcharges = choose_species(cations_il,max_comp,[])#,cations=True)
-        
-        IL_idx = list(anions['in_IL'])
-        anions_il = anions.iloc[IL_idx]
-        an, ancharges = choose_species(anions_il,max_comp,cat)
-
-        charges = list(catcharges)+list(ancharges)
-        stoich = solve_single_equation(charges)
-
-        IL_idx = list(cations['IL_comp'])
-        cations = cations.iloc[IL_idx]
-        solv, solvcharges = choose_species(cations,max_comp,cat+an)#,cations=True) 
-        
-        IL_idx = list(anions['IL_comp'])
-        anions = anions.iloc[IL_idx]
-        solv1, solvcharges1 = choose_species(anions,max_comp,cat+an+solv) 
-        solv += solv1
-        solvcharges += solvcharges1
-
-        minT = 300
-        maxT = 400
-        stoich_solv = solve_single_equation(solvcharges)
-        
-        #formulas = remove_duplicates([cat,an,solv])
-        #cat = formulas[0]
-        #an = formulas[1]
-        #solv = formulas[2]
-        
-        salt_molfrac = np.array(stoich)/sum(stoich)
-        solv_molfrac = np.array(stoich_solv)/sum(stoich_solv)
-        soltorsolv = len(cat+an)*['A']+len(solv)*['A']
     #(4) Molten salt
     elif clas == 'MS':
         MS_idx = list(cations['MS_comp'])
         cations_ms = cations.iloc[MS_idx]
+        MS_idx = list(np.logical_and(MS_idx,cat_rpmd))
         cat, catcharges = choose_species(cations_ms,max_comp,[])#,cations=True)
         
         MS_idx = list(anions['MS_comp'])
+        MS_idx = list(np.logical_and(MS_idx,an_rpmd))
         anions_ms = anions.iloc[MS_idx]
         an, ancharges = choose_species(anions_ms,max_comp,cat)
 
@@ -317,7 +302,7 @@ for i in range(Nrandom):
         #an = formulas[1]
         #solv = formulas[2]
 
-    species = cat+an+solv
+    #species = cat+an+solv
     if clas == 'MS':
         for temperature  in [minT, maxT]:
             salt_conc = salt_molfrac/min(salt_molfrac)
@@ -360,4 +345,4 @@ for i in range(Nrandom):
                     name += '-highconc'
                 newelectrolyte = write_elyte_entry(clas, name, temperature, cat, an, solv, salt_conc, stoich_solv)
                 elytes = pd.concat([elytes,pd.DataFrame([newelectrolyte])],ignore_index=True)
-elytes.to_csv('elytes.csv', index=False)
+elytes.to_csv('rpmd_elytes.csv', index=False)

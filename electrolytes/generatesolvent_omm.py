@@ -17,7 +17,7 @@ import numpy as np
 row_idx = int(sys.argv[1]) 
 
 # Load the CSV file containing systems to simulate
-with open("elytes.csv", "r") as f:
+with open("rpmd_elytes.csv", "r") as f:
     systems = list(csv.reader(f))
 
 # If solvent exists. We have may have pure molten salt or ionic liquid

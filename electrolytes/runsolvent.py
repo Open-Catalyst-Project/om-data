@@ -109,7 +109,7 @@ def main(row_idx: int, job_dir: str, rpmd: bool, nbeads: int):
     temp = float(systems[row_idx][4])
 
     dt = 0.001  # ps
-    t_final = 1000 # ps, which is 500 ns
+    t_final = 500*1000 # ps, which is 500 ns
     frames = 1000
     runtime = int(t_final / dt)
 

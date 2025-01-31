@@ -108,7 +108,6 @@ def main(row_idx: int, job_dir: str, rpmd: bool, nbeads: int):
 
     dt = 0.001  # ps
     t_final = 500*1000 # ps, which is 500 ns
-    #t_final = 500*1000 # ps, which is 500 ns
     frames = 1000
     runtime = int(t_final / dt)
 
@@ -235,4 +234,9 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+    import time
+    start = time.time()
     main(args.row_idx, args.job_dir, args.rpmd, args.nbeads)
+    end = time.time()
+    print(end - start,"seconds")
+

@@ -1,13 +1,12 @@
-REMARK   1 CREATED WITH OPENMM 8.1.1, 2024-09-18
-HETATM    1  C1  UNL     1      -0.008  -0.154   0.002  1.00  0.00           C  
-HETATM    2 CL1  UNL     1      -1.405   0.945  -0.013  1.00  0.00          Cl  
-HETATM    3 CL2  UNL     1       1.494   0.797  -0.014  1.00  0.00          Cl  
-HETATM    4  H1  UNL     1      -0.040  -0.779   0.918  1.00  0.00           H  
-HETATM    5  H2  UNL     1      -0.041  -0.808  -0.893  1.00  0.00           H  
-TER       6      UNL     1
-CONECT    1    2    3    4    5
-CONECT    2    1
-CONECT    3    1
-CONECT    4    1
-CONECT    5    1
+REMARK LIGPARGEN GENERATED PDB FILE
+ATOM      1  C00 UNK     1       1.000   1.000   0.000
+ATOM      2  Cl0 UNK     1      -0.767   1.000   0.000
+ATOM      3  Cl1 UNK     1       1.637   1.000  -1.649
+ATOM      4  H03 UNK     1       1.355   0.106   0.518
+ATOM      5  H04 UNK     1       1.355   1.894   0.518
+TER 
+CONECT    1    2 
+CONECT    1    3 
+CONECT    1    4 
+CONECT    1    5 
 END

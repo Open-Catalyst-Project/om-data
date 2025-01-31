@@ -6,7 +6,7 @@ import csv
 
 row_idx  = int(sys.argv[1]) 
 # Load the CSV file containing systems to simulate
-with open("../elytes.csv", "r") as f:
+with open("../rpmd_elytes.csv", "r") as f:
     systems = list(csv.reader(f))
 Temp = float(systems[row_idx][4])
 
