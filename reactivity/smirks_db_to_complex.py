@@ -1,4 +1,8 @@
+import os
+import argparse
 from typing import List, Tuple
+import csv
+import math
 
 from more_itertools import collapse
 from rdkit import Chem
@@ -19,10 +23,12 @@ from schrodinger.application.jaguar.packages.autots_modules.renumber import (
     build_reaction_complex,
 )
 from schrodinger.application.jaguar.packages.reaction_mapping import (
-    build_reaction_complex as get_renumbered_complex,
+    build_reaction_complex as get_renumbered_complex, get_net_matter
 )
 from schrodinger.application.jaguar.packages.reaction_mapping import flatten_st_list
+from schrodinger.application.jaguar.packages.shared import get_smiles
 from schrodinger.rdkit import rdkit_adapter
+from schrodinger.adapter import to_structure, Hydrogens
 from schrodinger.structure import Structure, StructureWriter
 
 """
@@ -112,6 +118,37 @@ def minimal_form_reaction_complex(
 
     return reactant_out, product_out
 
+def get_rxn_list(smirks_list):
+    rxn_list = []
+    for rxn_smirks in smirks_list:
+        rxn = AllChem.ReactionFromSmarts(rxn_smirks)
+        try:
+            r_mols = [Chem.MolFromSmiles(Chem.MolToSmiles(mol)) for mol in rxn.GetReactants()]
+            reactants = [to_structure(mol) for mol in r_mols]
+        except ValueError:
+            print('R', rxn_smirks)
+            continue
+        try:
+            p_mols = [Chem.MolFromSmiles(Chem.MolToSmiles(mol)) for mol in rxn.GetProducts()]
+            products = [to_structure(mol) for mol in p_mols]
+        except ValueError:
+            print('P', rxn_smirks)
+            continue
+        rxn_st = []
+
+        # *MechDBs sometimes include molecules with no mapped atoms which
+        # seem to be spectators. We exclude these molecules from the reaction
+        # complexes
+        for st_list in (reactants, products):
+            rxn_st.append(
+                [
+                    st
+                    for st in st_list
+                    if any("i_rdkit_molAtomMapNumber" in at.property for at in st.atom)
+                ]
+            )
+        rxn_list.append(rxn_st)
+    return rxn_list
 
 # nh3I = Chem.MolFromSmiles('[NH3+]I.[Cl-]')
 # nh3 = Chem.MolFromSmiles('N')
@@ -120,39 +157,49 @@ def minimal_form_reaction_complex(
 # nh3 = rdkit_adapter.from_rdkit(nh3)
 # I = rdkit_adapter.from_rdkit(I)
 # rxn_list = {'name':([nh3I],[nh3,I])}
+#rxn_smirks = "[Li:11][CH2:10]CCC[CH:20]=[CH:21][C:22](=[O:23])OC(C)(C)C.CCCCI>>[Li+:11].CCCCI.CC(C)(C)O[C:22](=[CH:21][CH:20]1[CH2:10]CCC1)[O-:23] 10"
 
-rxn_smirks = "[Li:11][CH2:10]CCC[CH:20]=[CH:21][C:22](=[O:23])OC(C)(C)C.CCCCI>>[Li+:11].CCCCI.CC(C)(C)O[C:22](=[CH:21][CH:20]1[CH2:10]CCC1)[O-:23] 10"
-rxn = AllChem.ReactionFromSmarts(rxn_smirks)
-reactants = [rdkit_adapter.from_rdkit(mol) for mol in rxn.GetReactants()]
-products = [rdkit_adapter.from_rdkit(mol) for mol in rxn.GetProducts()]
-rxn_st = []
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output_path", default=".")
+    parser.add_argument("--batch_idx", default=0, type=int)
+    parser.add_argument("--n_batch", default=1, type=int)
+    return parser.parse_args()
 
-# *MechDBs sometimes include molecules with no mapped atoms which
-# seem to be spectators. We exclude these molecules from the reaction
-# complexes
-for st_list in (reactants, products):
-    rxn_st.append(
-        [
-            st
-            for st in st_list
-            if any("i_rdkit_molAtomMapNumber" in at.property for at in st.atom)
-        ]
-    )
+def main(n_batch, batch_idx, output_path):
+    with open('rmechdb.csv','r') as fh:
+        csvreader = csv.reader(fh)
+        smirks_list = [row[0] for row in csvreader]
+    batch_size = math.ceil(len(smirks_list) / n_batch)
+    smirks_list = smirks_list[batch_idx * batch_size: (batch_idx+1)*batch_size]
 
-rxn_list = {"name": rxn_st}
+    rxn_list = get_rxn_list(smirks_list)
 
+    for idx, rxn in enumerate(rxn_list, start=batch_idx*batch_size):
+        net_matter = get_net_matter(flatten_st_list(rxn[0]), flatten_st_list(rxn[1]))
+        if any(f for f in net_matter):
+            print('Reaction does not conserve mattter, will not do')
+            print(smirks_list[idx-batch_idx*batch_size])
+            print(net_matter)
+            continue
+        output_name = os.path.join(output_path, f"rmechdb_{idx}.sdf")
+        if os.path.exists(output_name):
+            continue
+        for st in collapse(rxn):
+            st.generate3dConformation(require_stereo=False)
+        try:
+            r, p = build_complexes(*rxn)
+        except Exception as e:
+            print(e)
+            print(f'problem with reaction {i}')
+            continue
+        else:
+            # Stick the total charge in the comment line of the .xyz
+            r.title = f"charge={r.formal_charge}"
+            p.title = f"charge={p.formal_charge}"
+            with StructureWriter(output_name) as writer:
+                writer.extend([r, p])
 
-for name, rxn in rxn_list.items():
-    for st in collapse(rxn):
-        st.generate3dConformation(require_stereo=False)
-    try:
-        r, p = build_complexes(*rxn)
-    except Exception as e:
-        print(e)
-        continue
-    else:
-        # Stick the total charge in the comment line of the .xyz
-        r.title = f"charge={r.formal_charge}"
-        p.title = f"charge={p.formal_charge}"
-        with StructureWriter(f"{name}.xyz") as writer:
-            writer.extend([r, p])
+if __name__ == '__main__':
+    args = parse_args()
+    main(args.n_batch, args.batch_idx, args.output_path)
