@@ -123,14 +123,8 @@ def minimal_form_reaction_complex(
 
 rxn_smirks = "[Li:11][CH2:10]CCC[CH:20]=[CH:21][C:22](=[O:23])OC(C)(C)C.CCCCI>>[Li+:11].CCCCI.CC(C)(C)O[C:22](=[CH:21][CH:20]1[CH2:10]CCC1)[O-:23] 10"
 rxn = AllChem.ReactionFromSmarts(rxn_smirks)
-# Add 3D to RDKit
-r_mols = [Chem.AddHs(mol) for mol in rxn.GetReactants()]
-p_mols = [Chem.AddHs(mol) for mol in rxn.GetProducts()]
-for mol in collapse((r_mols, p_mols)):
-    AllChem.EmbedMolecule(mol)
-
-reactants = [rdkit_adapter.from_rdkit(mol) for mol in r_mols]
-products = [rdkit_adapter.from_rdkit(mol) for mol in p_mols]
+reactants = [rdkit_adapter.from_rdkit(mol) for mol in rxn.GetReactants()]
+products = [rdkit_adapter.from_rdkit(mol) for mol in rxn.GetProducts()]
 rxn_st = []
 
 # *MechDBs sometimes include molecules with no mapped atoms which
@@ -149,11 +143,8 @@ rxn_list = {"name": rxn_st}
 
 
 for name, rxn in rxn_list.items():
-    try:
-        for st in collapse(rxn):
-            st.generate3dConformation(require_stereo=False)
-    except Exception:
-        print('SDGR graph to 3D generation failed. Probably no Canvas license. Proceeding with RDKit 3D coords')
+    for st in collapse(rxn):
+        st.generate3dConformation(require_stereo=False)
     try:
         r, p = build_complexes(*rxn)
     except Exception as e:
