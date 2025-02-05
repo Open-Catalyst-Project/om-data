@@ -1,34 +1,27 @@
-import os
 import argparse
-from typing import List, Tuple
 import csv
 import math
+import os
+from typing import List, Tuple
 
 from more_itertools import collapse
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from schrodinger.adapter import to_structure
 from schrodinger.application.jaguar.autots_input import AutoTSInput
 from schrodinger.application.jaguar.file_logger import FileLogger
-from schrodinger.application.jaguar.packages.autots_modules.active_bonds import (
-    mark_active_bonds,
-)
+from schrodinger.application.jaguar.packages.autots_modules.active_bonds import \
+    mark_active_bonds
 from schrodinger.application.jaguar.packages.autots_modules.complex_formation import (
-    _add_atom_transfer_dummies,
-    _remove_atom_transfer_dummies,
-    minimize_path_distance,
-    reaction_center,
-    translate_close,
-)
-from schrodinger.application.jaguar.packages.autots_modules.renumber import (
-    build_reaction_complex,
-)
+    _add_atom_transfer_dummies, _remove_atom_transfer_dummies,
+    minimize_path_distance, reaction_center, translate_close)
+from schrodinger.application.jaguar.packages.autots_modules.renumber import \
+    build_reaction_complex
+from schrodinger.application.jaguar.packages.reaction_mapping import \
+    build_reaction_complex as get_renumbered_complex
 from schrodinger.application.jaguar.packages.reaction_mapping import (
-    build_reaction_complex as get_renumbered_complex, get_net_matter
-)
-from schrodinger.application.jaguar.packages.reaction_mapping import flatten_st_list
-from schrodinger.application.jaguar.packages.shared import get_smiles
-from schrodinger.rdkit import rdkit_adapter
-from schrodinger.adapter import to_structure, Hydrogens
+    flatten_st_list, get_net_matter)
+from schrodinger.infra import fast3d
 from schrodinger.structure import Structure, StructureWriter
 
 """
@@ -121,16 +114,14 @@ def minimal_form_reaction_complex(
 def get_rxn_list(smirks_list):
     rxn_list = []
     for rxn_smirks in smirks_list:
-        rxn = AllChem.ReactionFromSmarts(rxn_smirks)
+        rxn = AllChem.ReactionFromSmarts(rxn_smirks, useSmiles=True)
         try:
-            r_mols = [Chem.MolFromSmiles(Chem.MolToSmiles(mol)) for mol in rxn.GetReactants()]
-            reactants = [to_structure(mol) for mol in r_mols]
+            reactants = [to_structure(mol) for mol in rxn.GetReactants()]
         except ValueError:
             print('R', rxn_smirks)
             continue
         try:
-            p_mols = [Chem.MolFromSmiles(Chem.MolToSmiles(mol)) for mol in rxn.GetProducts()]
-            products = [to_structure(mol) for mol in p_mols]
+            products = [to_structure(mol) for mol in rxn.GetProducts()]
         except ValueError:
             print('P', rxn_smirks)
             continue
@@ -172,6 +163,7 @@ def main(n_batch, batch_idx, output_path):
         smirks_list = [row[0] for row in csvreader]
     batch_size = math.ceil(len(smirks_list) / n_batch)
     smirks_list = smirks_list[batch_idx * batch_size: (batch_idx+1)*batch_size]
+    fast3d_volumizer = fast3d.Volumizer()
 
     rxn_list = get_rxn_list(smirks_list)
 
@@ -186,12 +178,12 @@ def main(n_batch, batch_idx, output_path):
         if os.path.exists(output_name):
             continue
         for st in collapse(rxn):
-            st.generate3dConformation(require_stereo=False)
+            fast3d_volumizer.run(st, False, True)
         try:
             r, p = build_complexes(*rxn)
         except Exception as e:
             print(e)
-            print(f'problem with reaction {i}')
+            print(f'problem with reaction {idx}')
             continue
         else:
             # Stick the total charge in the comment line of the .xyz
