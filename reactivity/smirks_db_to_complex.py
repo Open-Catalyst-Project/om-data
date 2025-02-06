@@ -192,10 +192,11 @@ def parse_args():
     parser.add_argument("--output_path", default=".")
     parser.add_argument("--batch_idx", default=0, type=int)
     parser.add_argument("--n_batch", default=1, type=int)
+    parser.add_argument("--db_name", type=str)
     return parser.parse_args()
 
-def main(n_batch, batch_idx, output_path):
-    with open('rmechdb.csv','r') as fh:
+def main(n_batch, batch_idx, output_path, db_name):
+    with open(f'{db_name}.csv','r') as fh:
         csvreader = csv.reader(fh)
         smirks_list = [row[0] for row in csvreader]
     batch_size = math.ceil(len(smirks_list) / n_batch)
@@ -211,7 +212,7 @@ def main(n_batch, batch_idx, output_path):
             print(smirks_list[idx-batch_idx*batch_size])
             print(net_matter)
             continue
-        output_name = os.path.join(output_path, f"rmechdb_{idx}.sdf")
+        output_name = os.path.join(output_path, f"{db_name}_{idx}.sdf")
         if os.path.exists(output_name):
             continue
         for st in collapse(rxn):
@@ -231,4 +232,4 @@ def main(n_batch, batch_idx, output_path):
 
 if __name__ == '__main__':
     args = parse_args()
-    main(args.n_batch, args.batch_idx, args.output_path)
+    main(args.n_batch, args.batch_idx, args.output_path, args.db_name)
