@@ -2,6 +2,7 @@ import argparse
 import csv
 import math
 import os
+import numpy as np
 from typing import List, Tuple
 
 from more_itertools import collapse
@@ -17,12 +18,15 @@ from schrodinger.application.jaguar.packages.autots_modules.complex_formation im
     minimize_path_distance, reaction_center, translate_close)
 from schrodinger.application.jaguar.packages.autots_modules.renumber import \
     build_reaction_complex
+from schrodinger.application.jaguar.packages.autots_modules.autots_stereochemistry import \
+    ChiralityMismatchError
 from schrodinger.application.jaguar.packages.reaction_mapping import \
     build_reaction_complex as get_renumbered_complex
 from schrodinger.application.jaguar.packages.reaction_mapping import (
     flatten_st_list, get_net_matter)
 from schrodinger.infra import fast3d
 from schrodinger.structure import Structure, StructureWriter
+from schrodinger.structutils import transform
 
 """
 Convert Reaction SMIRKS (from RMechDB/PMechDB) to 3D fully mapped complexes.
@@ -45,6 +49,11 @@ class local_rinp(AutoTSInput):
     def getProducts(self):
         return self.products
 
+def invert_structures(products):
+    for st in products:
+        refl_mat = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 1, 0],
+                                   [0, 0, 0, 1]])
+        transform.transform_structure(st, refl_mat)
 
 def build_complexes(
     reactants: List[Structure], products: List[Structure]
@@ -57,16 +66,44 @@ def build_complexes(
     able to use it. Hence, I've also written a minimal version that will
     at least work if not as well as the Schrodinger one.
     """
+
     rinp = local_rinp(reactants, products)
     rinp.values.debug = False
     reactants, products = mark_active_bonds(
-        reactants, products, max_n_active_bonds=10, water_wire=False
+        reactants, products, max_n_active_bonds=6, water_wire=False
     )
 
     try:
         with FileLogger("logger", True):
             reactant_complex, product_complex = build_reaction_complex(
                 reactants, products, rinp
+            )
+    except ChiralityMismatchError as e:
+        print('Bad stereoguess, inverting everything in hopes that fixes it (i.e. no diasteromers)...')
+        invert_structures(products)
+        try:
+            with FileLogger("logger", True):
+                reactant_complex, product_complex = build_reaction_complex(
+                    reactants, products, rinp
+                )
+        except ChiralityMismatchError as e:
+            print(e)
+            print('There is still a chirality problem so there must be '
+                'multiple stereocenters and only some are set wrong. We '
+                'could go through and fix it but that\'s more effort than '
+                'it\'s worth. This will not end well if we are going to '
+                'do an interpolation with chirality changes so skip this.')
+            raise
+        except Exception as e:
+            print(e)
+            print(
+                "getting renumbered complexes but can't do assembly. This is probably a license issue"
+            )
+            reactants = flatten_st_list(reactants)
+            products = flatten_st_list(products)
+            reactant_complex, product_complex = get_renumbered_complex(reactants, products)
+            reactant_complex, product_complex = minimal_form_reaction_complex(
+                reactant_complex, product_complex, rinp
             )
     except Exception as e:
         print(e)
