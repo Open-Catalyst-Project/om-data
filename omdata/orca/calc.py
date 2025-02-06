@@ -237,7 +237,7 @@ def write_orca_inputs(
         orcablocks += f" {get_symm_break_block(atoms, charge)}"
 
     if scf_MaxIter:
-        orcablocks += f" %scf MaxIter {scf_MaxIter} end"
+        orcablocks = orcablocks.replace("maxiter 300", f"maxiter {scf_MaxIter}")
 
     calc = ORCA(
         charge=charge,
