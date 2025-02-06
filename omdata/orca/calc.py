@@ -4,6 +4,7 @@ from shutil import which
 from ase import Atoms
 from ase.calculators.orca import ORCA, OrcaProfile
 from sella import Sella
+import re
 
 # ECP sizes taken from Table 6.5 in the Orca 5.0.3 manual
 ECP_SIZE = {
@@ -237,7 +238,10 @@ def write_orca_inputs(
         orcablocks += f" {get_symm_break_block(atoms, charge)}"
 
     if scf_MaxIter:
-        orcablocks = orcablocks.replace("maxiter 300", f"maxiter {scf_MaxIter}")
+        if "maxiter" in orcablocks:
+            orcablocks = re.sub(r"maxiter \d+", f"maxiter {scf_MaxIter}", orcablocks)
+        else:
+            orcablocks += f" %scf MaxIter {scf_MaxIter} end"
 
     calc = ORCA(
         charge=charge,
