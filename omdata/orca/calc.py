@@ -4,6 +4,7 @@ from shutil import which
 from ase import Atoms
 from ase.calculators.orca import ORCA, OrcaProfile
 from sella import Sella
+import re
 
 # ECP sizes taken from Table 6.5 in the Orca 5.0.3 manual
 ECP_SIZE = {
@@ -215,6 +216,7 @@ def write_orca_inputs(
     orcasimpleinput: str = ORCA_ASE_SIMPLE_INPUT,
     orcablocks: str = " ".join(ORCA_BLOCKS),
     vertical: Enum = Vertical.Default,
+    scf_MaxIter: int = None,
 ):
     """
     One-off method to be used if you wanted to write inputs for an arbitrary
@@ -234,6 +236,12 @@ def write_orca_inputs(
     if vertical in {Vertical.MetalOrganics, Vertical.Oss} and mult == 1:
         orcasimpleinput += " UKS"
         orcablocks += f" {get_symm_break_block(atoms, charge)}"
+
+    if scf_MaxIter:
+        if "maxiter" in orcablocks:
+            orcablocks = re.sub(r"maxiter \d+", f"maxiter {scf_MaxIter}", orcablocks)
+        else:
+            orcablocks += f" %scf MaxIter {scf_MaxIter} end"
 
     calc = ORCA(
         charge=charge,
