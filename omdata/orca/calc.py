@@ -215,6 +215,7 @@ def write_orca_inputs(
     orcasimpleinput: str = ORCA_ASE_SIMPLE_INPUT,
     orcablocks: str = " ".join(ORCA_BLOCKS),
     vertical: Enum = Vertical.Default,
+    scf_MaxIter: int = None,
 ):
     """
     One-off method to be used if you wanted to write inputs for an arbitrary
@@ -234,6 +235,9 @@ def write_orca_inputs(
     if vertical in {Vertical.MetalOrganics, Vertical.Oss} and mult == 1:
         orcasimpleinput += " UKS"
         orcablocks += f" {get_symm_break_block(atoms, charge)}"
+
+    if scf_MaxIter:
+        orcablocks += f" %scf MaxIter {scf_MaxIter} end"
 
     calc = ORCA(
         charge=charge,
