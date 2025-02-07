@@ -222,6 +222,7 @@ def main(n_batch, batch_idx, output_path, db_name):
         except Exception as e:
             print(e)
             print(f'problem with reaction {idx}')
+            print(smirks_list[idx-batch_idx*batch_size])
             continue
         else:
             # Stick the total charge in the comment line of the .xyz
