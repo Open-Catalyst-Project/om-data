@@ -1,19 +1,25 @@
 import argparse
+import glob
 import multiprocessing as mp
 import os
-import glob
 import random
-from collections import defaultdict
 from functools import partial
+from typing import List
 
-from schrodinger.structure import StructureReader, StructureWriter
+from schrodinger.structure import Structure, StructureReader
 from schrodinger.structutils.transform import get_centroid, translate_structure
 from tqdm import tqdm
 
 mae_dir = "/checkpoint/levineds/elytes_09_29_2024/results2"
 
 
-def dilate_distance(st, scale_factor):
+def dilate_distance(st: Structure, scale_factor: float) -> None:
+    """
+    Dilate the distances between molecules by a scale factor.
+
+    :param st: The structure to dilate
+    :param scale_factor: The factor to change the molecule separation by
+    """
     system_centroid = get_centroid(st)
     for mol in st.molecule:
         mol_centroid = get_centroid(st, atom_list=mol.getAtomList())
@@ -23,7 +29,16 @@ def dilate_distance(st, scale_factor):
         translate_structure(st, *translate_vec[:3], atom_index_list=mol.getAtomList())
 
 
-def construct_outname(output_path, job, sf_str, spin):
+def construct_outname(output_path: str, job: List[str], sf_str: str, spin: str) -> str:
+    """
+    Create output name for scaled mae file
+
+    :param output_path: Path to output directory
+    :param job: Job parameters as a list of strings
+    :param sf_str: Scale factor as a string
+    :param spin: The desired spin state
+    :return: the assembled output file name
+    """
     job_num, species, radius, rest = job
     radius = radius.replace("radius_", "")
     *rest, charge = rest.split("_")
@@ -32,26 +47,31 @@ def construct_outname(output_path, job, sf_str, spin):
     return new_name
 
 
-def get_spin_states_dict(data):
-    spin_states = defaultdict(list)
-    for job in data:
-        job_num, species, radius, *rest, charge, spin = os.path.splitext(
-            os.path.basename(job)
-        )[0].split("_")
-        spin_states[
-            (job_num, species, f"radius_{radius}", "_".join(rest + [charge]))
-        ].append(spin)
-    return spin_states
+def main_loop(mae_dir: str, output_path: str, job: str):
+    """
+    Main loop for scaling separations between molecules
 
+    :param mae_dir: Location of mae files
+    :param output_path: Location to store scaled files
+    :param job: Name of a file that contains the structure to scale
+    """
+    job_num, species, radius, *rest, charge, spin = os.path.splitext(
+        os.path.basename(job)
+    )[0].split("_")
 
-def main_loop(mae_dir, output_path, job):
-    job_num, species, radius, *rest, charge, spin = os.path.splitext(os.path.basename(job))[0].split('_')
-    
-    mae_name = os.path.join(mae_dir, job_num, species, f"radius_{radius}", "_".join(rest + [charge, spin])+'.mae')
+    mae_name = os.path.join(
+        mae_dir,
+        job_num,
+        species,
+        f"radius_{radius}",
+        "_".join(rest + [charge, spin]) + ".mae",
+    )
     if not os.path.exists(mae_name):
-        glob_str = os.path.join(mae_dir, job_num, species, f"radius_{radius}", "_".join(rest + [charge]))
+        glob_str = os.path.join(
+            mae_dir, job_num, species, f"radius_{radius}", "_".join(rest + [charge])
+        )
         try:
-            mae_name = glob.glob(glob_str + '_*.mae')[0]
+            mae_name = glob.glob(glob_str + "_*.mae")[0]
         except IndexError:
             print(job, flush=True)
             return
@@ -64,7 +84,10 @@ def main_loop(mae_dir, output_path, job):
         dilate_distance(st_copy, scale)
         sf_str = str(round(scale, 2))
         st_copy.title = sf_str
-        new_basename = '_'.join([job_num, species, radius] + rest + [sf_str, charge, spin]) + '.mae'
+        new_basename = (
+            "_".join([job_num, species, radius] + rest + [sf_str, charge, spin])
+            + ".mae"
+        )
         new_name = os.path.join(output_path, new_basename)
         st_copy.write(new_name)
         break
