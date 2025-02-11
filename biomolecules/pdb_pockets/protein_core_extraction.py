@@ -13,7 +13,6 @@ from schrodinger.structutils import analyze, build
 import biolip_extraction as blp_ext
 from cleanup import unpair_spin_for_metals, SPIN_PROP
 
-SCHRO = "/private/home/levineds/desmond/mybuild/"
 MAX_ATOMS = 350
 
 def get_buried_residues(st):
@@ -160,6 +159,17 @@ def prepwizard_core(core, pdb_id):
     sys.stdout.flush()
     return prepped_core
 
+def write_structures(cores, output_path):
+    for core in cores:
+        unpair_spin_for_metals(core)
+        fname = os.path.join(output_path, f"{core.title}_{core.formal_charge}_{core.property[SPIN_PROP]}.maegz")
+        core.write(fname)
+
+def cleanup(pdb_id):
+    for ext in {'.pdb', '.cif'}:
+        if os.path.exists(f'{pdb_id}{ext}'):
+            os.remove(f'{pdb_id}{ext}')
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -169,7 +179,6 @@ def parse_args():
     parser.add_argument("--n_core_res", type=int, default=1)
     parser.add_argument("--seed", type=int, default=4621)
     return parser.parse_args()
-
 
 def main():
     """
@@ -191,13 +200,8 @@ def main():
         except Exception:
             raise
             continue
-        for idx, core in enumerate(cores):
-            unpair_spin_for_metals(core)
-            fname = os.path.join(args.output_path, f"{core.title}_{core.formal_charge}_{core.property[SPIN_PROP]}.maegz")
-            core.write(fname)
-        for ext in {'.pdb', '.cif'}:
-            if os.path.exists(f'{pdb_id}{ext}'):
-                os.remove(f'{pdb_id}{ext}')
+        write_structures(cores, args.output_path)
+        cleanup(pdb_id)
 
 
 if __name__ == "__main__":
