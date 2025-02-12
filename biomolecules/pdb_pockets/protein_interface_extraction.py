@@ -4,6 +4,7 @@ import os
 import random
 
 import dill
+from schrodinger.structure import Residue, Structure
 from schrodinger.structutils import analyze, build
 
 import biolip_extraction as blp_ext
@@ -12,7 +13,18 @@ import protein_core_extraction as prot_core
 MAX_ATOMS = 350
 
 
-def convert_res_idx_to_res(st, res_idxs, dill_info):
+def convert_res_idx_to_res(
+    st: Structure, res_idx: List[Tuple[int, int]], dill_info
+) -> List[Residue]:
+    """
+    Convert the indexes of residues derived from DIPS-Plus into
+    Schrodinger Residue objects.
+
+    :param st: the structure containing the protein
+    :param res_idx: the list of residue identifiers from pos_idx
+    :param dill_info: the DIPS-Plus database file for this protein
+    :return: the extracted list of residues as Residue objects
+    """
     res_list = []
     for res_idx, col in res_idxs:
         res_info = dill_info[1 + col].loc[res_idx]
@@ -21,8 +33,20 @@ def convert_res_idx_to_res(st, res_idxs, dill_info):
     return res_list
 
 
-def sample_interface_residues(st, dill_info, n_iface_res):
-    interface_res = list({(i, col) for col in (0, 1) for i in dill_info[3][:,col]})
+def sample_interface_residues(
+    st: Structure, dill_info, n_iface_res: int
+) -> List[Residue]:
+    """
+    Sample the DIPS-Plus database for this entry for a number of
+    interface residues.
+
+    :param st: Structure to obtain residues in
+    :param dill_info: the DIPS-Plus database file for this protein
+    :param n_iface_res: number of interface residues to sample from
+                        the database
+    :return: sampled residues from the protein
+    """
+    interface_res = list({(i, col) for col in (0, 1) for i in dill_info[3][:, col]})
     if interface_res:
         res_list = random.sample(interface_res, min(len(interface_res), n_iface_res))
     else:
@@ -31,10 +55,21 @@ def sample_interface_residues(st, dill_info, n_iface_res):
     return res_list
 
 
-def get_interface_neighborhood(st, dill_info, pdb_id, n_iface_res, done_list):
-    center_res_list = sample_interface_residues(
-        st, dill_info, n_iface_res
-    )
+def get_interface_neighborhood(
+    st: Structure, dill_info, pdb_id: str, n_iface_res: int, done_list: List[str]
+) -> List[Structure]:
+    """
+    Extract random interfaces from proteins according to the DIPS-Plus database
+
+    :param st: Structure of protein of interest
+    :param dill_info: the DIPS-Plus database file for this protein
+    :param pdb_id: PDB identifier for this protein
+    :param n_iface_res: number of interface residues to sample from
+                        the database
+    :param done_list: list of already extracted interfaces
+    :return: List of interfaces (as neighborhoods of amino acids)
+    """
+    center_res_list = sample_interface_residues(st, dill_info, n_iface_res)
     interfaces = []
     heavy_atom_sidechain = (
         "((not atom.ptype N,CA,C,O and not atom.ele H) or (res. gly and atom.ptype CA))"
@@ -79,8 +114,8 @@ def get_interface_neighborhood(st, dill_info, pdb_id, n_iface_res, done_list):
         for res in res_list + gap_res:
             iface_ats_with_gaps.extend(res.getAtomIndices())
         # Try to label ligands
-        for at in analyze.evaluate_asl(st_copy, 'ligand'):
-            st_copy.atom[at].chain = 'l'
+        for at in analyze.evaluate_asl(st_copy, "ligand"):
+            st_copy.atom[at].chain = "l"
         interface = st_copy.extract(iface_ats_with_gaps)
 
         # Exclude simple dimers of amino acids as this kind of thing is covered by SPICE
