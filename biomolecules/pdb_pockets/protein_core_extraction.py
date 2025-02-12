@@ -131,7 +131,7 @@ def get_core_neighborhood(st, pdb_id, n_core_res, done_list):
     return cores
 
 
-def prepwizard_core(core, pdb_id):
+def prepwizard_core(core, pdb_id, epik_states=0):
     maename = f"{pdb_id}.maegz"
     outname = f"{pdb_id}_prepped.maegz"
     # Remove any dummy atoms, PrepWizard doesn't like them
@@ -140,7 +140,7 @@ def prepwizard_core(core, pdb_id):
     core.write(maename)
     # Run PrepWizard
     try:
-        blp_ext.run_prepwizard(maename, outname, fill_sidechain=False, do_epik=False)
+        blp_ext.run_prepwizard(maename, outname, fill_sidechain=False, epik_states=epik_states)
     except subprocess.TimeoutExpired:
         raise RuntimeError("PrepWizard took longer than 2 hours, skipping")
     if not os.path.exists(outname):

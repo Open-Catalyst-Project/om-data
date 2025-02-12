@@ -417,7 +417,7 @@ def get_prepped_protein(
     return new_st_list, outname
 
 
-def run_prepwizard(fname: str, outname: str, fill_sidechain: bool, do_epik: bool=True) -> None:
+def run_prepwizard(fname: str, outname: str, fill_sidechain: bool, epik_states: int=10) -> None:
     """
     Run Schrodinger's PrepWizard
 
@@ -437,11 +437,12 @@ def run_prepwizard(fname: str, outname: str, fill_sidechain: bool, do_epik: bool
         outname,
         "-keepfarwat",
         "-noimpref",
+        "-samplewater",
         "-disulfides",
         "-NOJOBID",
     ]
-    if do_epik:
-        args.extend(["-max_states", "10"])
+    if epik_states:
+        args.extend(["-max_states", str(epik_states)])
     else:
         args.append("-noepik")
 
@@ -717,7 +718,7 @@ def cap_termini(st: Structure, ligand_env: Structure, remove_lig_caps: bool=True
     :param ligand_env: extracted protein receptor (i.e. ligand environment)
     :param remove_lig_caps: remove any caps that may appear on ligands
     """
-    if remove_lig_caps:
+    if remove_lig_caps and 'l' in {ch.name for ch in ligand_env.chain}:
         orig_lig = ligand_env.chain["l"].extractStructure()
     capterm = CapTermini(ligand_env, verbose=False, frag_min_atoms=3)
     for res in capterm.cappedResidues():
@@ -731,7 +732,7 @@ def cap_termini(st: Structure, ligand_env: Structure, remove_lig_caps: bool=True
             ligand_env.adjust(val, *reversed(new_res.getDihedralAtoms("Phi")))
         except:
             pass
-    if remove_lig_caps:
+    if remove_lig_caps and 'l' in {ch.name for ch in ligand_env.chain}:
         remove_ligand_ace_cap(ligand_env, orig_lig)
         remove_ligand_nma_cap(ligand_env, orig_lig)
 
