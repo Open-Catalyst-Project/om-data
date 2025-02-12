@@ -2,6 +2,7 @@ import argparse
 import glob
 import os
 import random
+from typing import List, Tuple
 
 import dill
 from schrodinger.structure import Residue, Structure
@@ -14,14 +15,14 @@ MAX_ATOMS = 350
 
 
 def convert_res_idx_to_res(
-    st: Structure, res_idx: List[Tuple[int, int]], dill_info
+    st: Structure, res_idxs: List[Tuple[int, int]], dill_info
 ) -> List[Residue]:
     """
     Convert the indexes of residues derived from DIPS-Plus into
     Schrodinger Residue objects.
 
     :param st: the structure containing the protein
-    :param res_idx: the list of residue identifiers from pos_idx
+    :param res_idxs: the list of residue identifiers from pos_idx
     :param dill_info: the DIPS-Plus database file for this protein
     :return: the extracted list of residues as Residue objects
     """
