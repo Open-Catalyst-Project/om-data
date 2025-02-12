@@ -21,16 +21,6 @@ def convert_res_idx_to_res(st, res_idxs, dill_info):
     return res_list
 
 
-def get_other_chains(res_list, chains):
-    other_chains = []
-    for res in res_list:
-        if res.chain == chains[0]:
-            other_chains.append(chains[1])
-        else:
-            other_chains.append(chains[0])
-    return other_chains
-
-
 def sample_interface_residues(st, dill_info, n_iface_res):
     interface_res = list({(i, col) for col in (0, 1) for i in dill_info[3][:,col]})
     if interface_res:
@@ -38,20 +28,18 @@ def sample_interface_residues(st, dill_info, n_iface_res):
     else:
         res_list = []
     res_list = convert_res_idx_to_res(st, res_list, dill_info)
-    chains = [dill_info[i].loc[0]["chain"] for i in (1, 2)]
-    other_chains = get_other_chains(res_list, chains)
-    return res_list, other_chains
+    return res_list
 
 
 def get_interface_neighborhood(st, dill_info, pdb_id, n_iface_res, done_list):
-    center_res_list, other_chains = sample_interface_residues(
+    center_res_list = sample_interface_residues(
         st, dill_info, n_iface_res
     )
     interfaces = []
     heavy_atom_sidechain = (
         "((not atom.ptype N,CA,C,O and not atom.ele H) or (res. gly and atom.ptype CA))"
     )
-    for center_res, ochain in zip(center_res_list, other_chains):
+    for center_res in center_res_list:
         st_copy = st.copy()
         side_chain = analyze.evaluate_asl(
             st_copy, center_res.getAsl() + f"and {heavy_atom_sidechain}"
@@ -62,7 +50,7 @@ def get_interface_neighborhood(st, dill_info, pdb_id, n_iface_res, done_list):
             continue
         interchain_ats = analyze.evaluate_asl(
             st_copy,
-            f'fillres( chain {ochain} and (within 6 atom.num {",".join([str(i) for i in side_chain])}) and ({heavy_atom_sidechain} or water)) and not metals',
+            f'fillres( not chain {center_res.chain} and (within 6 atom.num {",".join([str(i) for i in side_chain])}) and ({heavy_atom_sidechain} or water)) and not metals',
         )
         intrachain_ats = analyze.evaluate_asl(
             st_copy,
@@ -90,18 +78,21 @@ def get_interface_neighborhood(st, dill_info, pdb_id, n_iface_res, done_list):
         iface_ats_with_gaps = []
         for res in res_list + gap_res:
             iface_ats_with_gaps.extend(res.getAtomIndices())
+        # Try to label ligands
+        for at in analyze.evaluate_asl(st_copy, 'ligand'):
+            st_copy.atom[at].chain = 'l'
         interface = st_copy.extract(iface_ats_with_gaps)
 
         # Exclude simple dimers of amino acids as this kind of thing is covered by SPICE
         if len(interface.residue) < 3 or interface.atom_total > MAX_ATOMS:
             continue
         try:
-            blp_ext.cap_termini(st_copy, interface, remove_lig_caps=False)
+            blp_ext.cap_termini(st_copy, interface, remove_lig_caps=True)
         except Exception as e:
             print("Error: Cannot cap termini")
             print(e)
             raise
-        interface = prot_core.prepwizard_core(interface, pdb_id)
+        interface = prot_core.prepwizard_core(interface, pdb_id, epik_states=1)
         interface = build.reorder_protein_atoms_by_sequence(interface)
         interface.title = save_name
         interfaces.append(interface)
