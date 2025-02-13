@@ -109,7 +109,7 @@ def get_interface_neighborhood(
                 for atom in res.atom:
                     print(atom.pdbname, atom.index)
             st_copy.write(f"{pdb_id}_problem.maegz")
-            raise
+            continue
 
         iface_ats_with_gaps = []
         for res in res_list + gap_res:
@@ -127,7 +127,7 @@ def get_interface_neighborhood(
         except Exception as e:
             print("Error: Cannot cap termini")
             print(e)
-            raise
+            continue
         interface = prot_core.prepwizard_core(interface, pdb_id, epik_states=1)
         interface = build.reorder_protein_atoms_by_sequence(interface)
         interface.title = save_name

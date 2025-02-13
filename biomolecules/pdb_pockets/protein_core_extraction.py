@@ -174,7 +174,7 @@ def get_core_neighborhood(
         except Exception as e:
             print("Error: Cannot cap termini")
             print(e)
-            raise
+            continue
         core = prepwizard_core(core, pdb_id)
         core = build.reorder_protein_atoms_by_sequence(core)
         core.title = f"{pdb_id}_core{center_res.chain}{center_res.resnum}{center_res.inscode.strip()}"
