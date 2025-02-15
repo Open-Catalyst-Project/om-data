@@ -108,6 +108,11 @@ class AFIRPushConstraint():
         else:
             return 0
 
+def find_min_distance(atoms):
+    distances=atoms.get_all_distances()
+    np.fill_diagonal(distances, np.inf)
+    return np.min(distances)
+
 def run_afir(mol1, mol2, calc, logfile):
     breaking_cutoff=1.5 # When a bond is breaking, what the distance should be
     forming_cutoff=1.2 # When a bond is forming, what the distance should be (Angstroms)
@@ -170,6 +175,11 @@ def run_afir(mol1, mol2, calc, logfile):
                               debug=False,
                              )
         if tmpopt.successful:
+            min_distance=np.min([find_min_distance(atoms) for atoms in tmpopt.trajectory])
+            if min_distance < 0.8:
+                with open(logfile, 'a') as file1:
+                    file1.write(f"Min distance {min_distance} < 0.8. Stopping optimization.\n")
+                break
             failure_number = 10 # Reset failures tracking.
             save_trajectory += tmpopt.trajectory
             traj_list.append(tmpopt.trajectory)
