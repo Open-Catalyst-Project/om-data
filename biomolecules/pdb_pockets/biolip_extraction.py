@@ -549,6 +549,7 @@ def make_gaps_gly(st: Structure, row: pd.Series, gap_res: List[str]) -> None:
             build.mutate(st, res.getAlphaCarbon(), "GLY")
         except:
             raise MutateError
+    return build.reorder_protein_atoms_by_sequence(st)
 
 
 def get_lig_atom_list(st: Structure, row: pd.Series) -> List[int]:
@@ -591,7 +592,7 @@ def get_atom_lists(st: Structure, row: pd.Series) -> Tuple[List[int], List[int]]
         }
     gap_res, res_list = get_single_gaps(st, row["receptor_chain"], res_list, coord_res)
 
-    make_gaps_gly(st, row, gap_res)
+    st = make_gaps_gly(st, row, gap_res)
 
     # Mutating residues can change the atom numbering so let's retreive
     # all the atom indices in a separate loop

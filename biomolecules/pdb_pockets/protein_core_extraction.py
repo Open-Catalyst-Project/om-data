@@ -146,7 +146,7 @@ def get_core_neighborhood(
         res_list = list({st_copy.atom[at].getResidue() for at in core_ats})
         gap_res = get_single_gap_residues(st_copy, res_list)
         try:
-            blp_ext.make_gaps_gly(st_copy, None, gap_res)
+            st_copy = blp_ext.make_gaps_gly(st_copy, None, gap_res)
         except:
             print("problem found")
             print(

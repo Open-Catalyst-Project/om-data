@@ -80,6 +80,8 @@ def get_interface_neighborhood(
         side_chain = analyze.evaluate_asl(
             st_copy, center_res.getAsl() + f"and {heavy_atom_sidechain}"
         )
+        if not side_chain:
+            continue
 
         save_name = f"{pdb_id}_iface{center_res.chain}{center_res.resnum}{center_res.inscode.strip()}"
         if save_name in done_list:
@@ -96,7 +98,7 @@ def get_interface_neighborhood(
         res_list = list({st_copy.atom[at].getResidue() for at in iface_ats})
         gap_res = prot_core.get_single_gap_residues(st_copy, res_list)
         try:
-            blp_ext.make_gaps_gly(st_copy, None, gap_res)
+            st_copy = blp_ext.make_gaps_gly(st_copy, None, gap_res)
         except:
             print("problem found")
             print(
@@ -167,7 +169,6 @@ def main():
                 st, dill_info, pdb_id, args.n_iface_res, done_list
             )
         except Exception:
-            raise
             continue
         prot_core.write_structures(interfaces, args.output_path)
         prot_core.cleanup(pdb_id)
