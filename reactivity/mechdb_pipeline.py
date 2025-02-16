@@ -192,17 +192,11 @@ def run_afir(mol1, mol2, calc, logfile):
                 fconst += force_increment
                 nstep += 1
         else:
-            if len(tmpopt.trajectory) > 0: # Save trajectory
-                with open(logfile,'a') as file1:
-                    file1.write('FAILED At Fconst: {}, Step: {}\n'.format(fconst,nstep))
-                save_trajectory += tmpopt.trajectory
-                opt_mol.ase_atoms = tmpopt.trajectory[-1]
-            failure_number = failure_number - 1
-            if failure_number == 0:
-                keep_going = False
-                failed = True
             with open(logfile,'a') as file1:
                 file1.write('FAILED At Fconst: {}, Step: {}\n'.format(fconst,nstep))
+            if len(tmpopt.trajectory) > 0: # Save trajectory
+                save_trajectory += tmpopt.trajectory
+            keep_going = False
 
     return save_trajectory, traj_list
 
@@ -281,8 +275,7 @@ def filter_unique_structures(atoms_list, rmsd_cutoff):
             
     return unique_structures
 
-def mechdb_pipeline(args):
-    input_path, file_name, output_path = args
+def mechdb_pipeline(input_path, file_name, output_path):
     input_file = os.path.join(input_path, file_name)
     reaction_name = file_name.split(".")[0]
     os.makedirs(os.path.join(output_path, reaction_name), exist_ok=False)
@@ -399,6 +392,7 @@ def mechdb_pipeline(args):
                default_dtype="float64", 
                device='cpu'
               )
+
     save_trajectory, traj_list=run_afir(reactant_gff_calc.mol,product_gff_calc.mol,macemp0calc, logfile)
 
     starting_cutoff = 0.15
@@ -423,21 +417,23 @@ def main(args):
     os.makedirs(args.output_path)
     if not os.path.exists(args.mechdb_sdfs_path):
         raise ValueError(f"Path to MechDB SDFs not found at {args.mechdb_sdfs_path}")
-    
-    mp_args = []
-    print(f"Processing {len(os.listdir(args.mechdb_sdfs_path))} reactions")
-    for file in os.listdir(args.mechdb_sdfs_path):
-        if file.endswith(".sdf"):
-            mp_args.append((args.mechdb_sdfs_path, file, args.output_path))
-    
-    print(f"Starting pool with {len(mp_args)} reactions")
-    pool = mp.Pool(10)
-    list(tqdm(pool.imap(mechdb_pipeline, mp_args), total=len(mp_args)))
+
+    for i in range(args.start_index, args.end_index):
+        file_name = f"rmechdb_{i}.sdf"
+        if not os.path.exists(os.path.join(args.mechdb_sdfs_path, file_name)):
+            file_name = f"pmechdb_{i}.sdf"
+        if not os.path.exists(os.path.join(args.mechdb_sdfs_path, file_name)):
+            print(f"File {i} not found")
+            continue
+        mechdb_pipeline(args.mechdb_sdfs_path, file_name, args.output_path)
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--mechdb_sdfs_path", default=".")
     parser.add_argument("--output_path", default=".")
+    parser.add_argument("--start_index", type=int)
+    parser.add_argument("--end_index", type=int)
     return parser.parse_args()
 
 if __name__ == "__main__":
