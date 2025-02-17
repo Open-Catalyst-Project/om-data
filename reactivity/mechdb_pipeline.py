@@ -149,7 +149,7 @@ def run_afir(mol1, mol2, calc, logfile):
         file1.write('Started at: {}\n'.format(str(start)))
 
     
-    while keep_going:
+    while keep_going and fconst < 4.0:
     
         with open(logfile,'a') as file1:
             file1.write('Running Fconst = {}\n'.format(fconst))
@@ -331,7 +331,11 @@ def mechdb_pipeline(input_path, file_name, output_path):
         with open(logfile, 'a') as file1:
             file1.write(f"Reactant UFF relaxation RMSD = {reactant_uff_calc.rmsd}\n")
             file1.write(f"Reactant post-UFF min distance = {min_non_hh_distance(reactant_uff_calc.mol)}\n")
-        reactant = reactant_uff_calc.mol
+        if reactant_uff_calc.rmsd < 100:
+            reactant = reactant_uff_calc.mol
+        else:
+            with open(logfile, 'a') as file1:
+                file1.write("Reactant UFF relaxation went crazy. Using initial structure for GFN-FF relaxation\n")
 
         product_uff_calc = CalcExecutor(
             product,
@@ -343,7 +347,11 @@ def mechdb_pipeline(input_path, file_name, output_path):
         with open(logfile, 'a') as file1:
             file1.write(f"Product UFF relaxation RMSD = {product_uff_calc.rmsd}\n")
             file1.write(f"Product post-UFF min distance = {min_non_hh_distance(product_uff_calc.mol)}\n")
-        product = product_uff_calc.mol
+        if product_uff_calc.rmsd < 100:
+            product = product_uff_calc.mol
+        else:
+            with open(logfile, 'a') as file1:
+                file1.write("Product UFF relaxation went crazy. Using initial structure for GFN-FF relaxation\n")
 
         
     reactant_gff_calc = CalcExecutor(
@@ -395,10 +403,10 @@ def mechdb_pipeline(input_path, file_name, output_path):
 
     save_trajectory, traj_list=run_afir(reactant_gff_calc.mol,product_gff_calc.mol,macemp0calc, logfile)
 
-    starting_cutoff = 0.15
+    starting_cutoff = 0.12
     unique_structs = filter_unique_structures(save_trajectory,starting_cutoff)
 
-    while len(unique_structs) < 10 and starting_cutoff > 0.03:
+    while len(unique_structs) < 10 and starting_cutoff > 0.04:
         starting_cutoff -= 0.01
         unique_structs = filter_unique_structures(save_trajectory,starting_cutoff)
 
