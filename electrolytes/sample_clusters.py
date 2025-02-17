@@ -10,26 +10,34 @@ import shutil
 import multiprocessing as mp
 from tqdm import tqdm
 from schrodinger.structure import StructureReader
+from collections import defaultdict
 
 TOTAL_PER_SYSTEM = 50
 RADIUS_LIST = [7]
-MAX_METALS = 2
-# random.seed(4353) # for %a
-random.seed(1269) # fo 7A
+MAX_ATOMS = 2
+# radius 5 seed 4353
+# radius 7 seed 353
+random.seed(353)
 
 def filter_heavy_atoms(species_glob):
     species_list = []
+    grouped_dict = defaultdict(list)
     for species in species_glob:
-        st = StructureReader.read(species)
-        st.title = species
-        if sum(1 for at in st.atom if at.atomic_number > 20) < MAX_METALS:
-            species_list.append(st)
+        if 'group' not in species:
+            grouped_dict[species].append(species)
+        else:
+            group = os.path.basename(species).split('_')[1]
+            grouped_dict[group].append(species)
+    for group_list in grouped_dict.values():
+        st = StructureReader.read(group_list[0])
+        if sum(1 for at in st.atom if at.atomic_number > 20) < MAX_ATOMS:
+            species_list.extend(group_list)
     return species_list
         
 
 def sample_clusters(res_dir):
     def sample_to_dict(species_sample):
-        return {st: f'{res_dir}_{os.path.basename(species)}_{radius}_{os.path.basename(st.title)}' for st in species_sample}
+        return {f: f'{res_dir}_{os.path.basename(species)}_{radius}_{os.path.basename(f)}' for f in species_sample}
 
     systems_to_keep = {}
     species_list = glob.glob(os.path.join(res_dir, '*'))
@@ -55,9 +63,10 @@ def sample_clusters(res_dir):
 
 
 def save_samples(path, systems_to_keep):
-    save_dir = 'sampled_electrolytes2/7A'
+    save_dir = 'sampled_electrolytes2'
     os.makedirs(os.path.join(path, save_dir), exist_ok=True)
-    for st, name in systems_to_keep.items():
+    for fname, name in systems_to_keep.items():
+        st = StructureReader.read(fname)
         st.write(os.path.join(os.path.dirname(name), save_dir, os.path.basename(name).replace('.mae', '.xyz')))
 
 def parse_args():
