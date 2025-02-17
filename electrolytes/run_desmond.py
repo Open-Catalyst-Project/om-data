@@ -29,13 +29,15 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_path", default=".")
     parser.add_argument("--job_idx", type=int)
+    parser.add_argument("--csv", type=str, required=True)
+    parser.add_argument("--runtime", type=int, required=True, help='Time to run final MD (in ns)')
     return parser.parse_args()
 
 def main():
     args = parse_args()
     job_dj = queue.JobDJ()
 
-    with open("elytes.csv", "r") as f:
+    with open(args.csv, "r") as f:
         systems = list(csv.reader(f))
     if args.job_idx is not None:
         job_range = [args.job_idx]
@@ -71,7 +73,9 @@ def main():
 
             with chdir(job_dir):
                 density = compute_density(job_dir)
-        command, directory = generate_system(job_idx, systems, job_dir, density)
+        # For classical MD, time = 250 (ns)
+        # For ML-MD system prep, time = 1 (ns)
+        command, directory = generate_system(job_idx, systems, job_dir, density, time=args.runtime)
         job_dj.addJob(queue.JobControlJob(command, directory))
         job_dj.run()
 
