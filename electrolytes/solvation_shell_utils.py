@@ -8,7 +8,7 @@ from collections import Counter
 import numpy as np
 from schrodinger.comparison.atom_mapper import ConnectivityAtomMapper
 from schrodinger.comparison import are_conformers
-from schrodinger.structure import Structure
+from schrodinger.structure import Residue, Structure
 from schrodinger.structutils import analyze, rmsd
 from schrodinger.application.jaguar.utils import group_with_comparison
 from schrodinger.application.matsci import clusterstruct
@@ -174,7 +174,15 @@ def get_structure_spin(st: Structure) -> int:
     unpaired_count = sum(ION_SPIN.get(get_species_from_res(res), 0) for res in st.residue)
     return unpaired_count + 1
 
-def get_species_from_res(res):
+def get_species_from_res(res:Residue)->str:
+    """
+    Get a species name from the Residue object.
+
+    The species name is the stoichiometry string plus any charge.
+
+    :param res: Residue to get name of
+    :return: species name
+    """
     stoich = get_stoichiometry_string([at.element for at in res.atom])
     charge = sum(at.formal_charge for at in res.atom)
     if stoich == 'C9H18NO' and 'r_ffio_custom_charge' in res.atom[1].property:
@@ -276,16 +284,20 @@ def filter_by_rmsd(shells: List[Structure], n: int = 20) -> List[Structure]:
     """
 
     seed_point = random.randint(0, len(shells) - 1)
-    final_shell_idxs = {seed_point}
-    min_rmsds = np.array([rmsd_wrapper(shells[seed_point], shell) for shell in shells])
-    for _ in range(n - 1):
-        best = np.argmax(min_rmsds)
-        min_rmsds = np.minimum(
-            min_rmsds,
-            np.array([rmsd_wrapper(shells[best], shell) for shell in shells]),
-        )
-        final_shell_idxs.add(best)
-    return [shells[i] for i in final_shell_idxs]
+    if len(shells) > n:
+        final_shell_idxs = {seed_point}
+        min_rmsds = np.array([rmsd_wrapper(shells[seed_point], shell) for shell in shells])
+        for _ in range(n - 1):
+            best = np.argmax(min_rmsds)
+            min_rmsds = np.minimum(
+                min_rmsds,
+                np.array([rmsd_wrapper(shells[best], shell) for shell in shells]),
+            )
+            final_shell_idxs.add(best)
+        selected_shells = [shells[i] for i in final_shell_idxs]
+    else:
+        selected_shells = list(shells)
+    return selected_shells
 
 
 def rmsd_wrapper(st1: Structure, st2: Structure) -> float:
