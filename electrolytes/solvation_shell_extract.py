@@ -213,7 +213,6 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--last_frame_only",
-        type=bool,
         action='store_true',
         help="Only use the last frame of the MD",
     )
