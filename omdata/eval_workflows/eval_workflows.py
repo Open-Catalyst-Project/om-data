@@ -32,7 +32,7 @@ def ase_freq_job(
     orcasimpleinput: list[str] | None = None,
     orcablocks: list[str] | None = None,
     nprocs: int | Literal["max"] = "max",
-    copy_files: SourceDirectory | dict[SourceDirectory, Filenames] | None = None,
+    copy_files: None,
     additional_fields: dict[str, Any] | None = None,
 ):
     """
