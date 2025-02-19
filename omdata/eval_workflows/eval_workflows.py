@@ -5,13 +5,6 @@ from quacc.recipes.orca.core import ase_relax_job
 from quacc.schemas.calc import CalcSchema
 from quacc.recipes.orca._base import prep_calculator
 
-from __future__ import annotations
-
-from importlib.util import find_spec
-from typing import TYPE_CHECKING
-
-from monty.dev import requires
-
 from quacc import job
 from quacc.runners.ase import Runner
 from quacc.schemas.ase import Summarize, VibSummarize
