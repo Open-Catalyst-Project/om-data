@@ -29,11 +29,11 @@ def ase_freq_job(
     spin_multiplicity: int = 1,
     xc=ORCA_FUNCTIONAL,
     basis=ORCA_BASIS,
-    orcasimpleinput: list[str] | None = None,
-    orcablocks: list[str] | None = None,
-    nprocs: int | Literal["max"] = "max",
-    copy_files: None,
-    additional_fields: dict[str, Any] | None = None,
+    orcasimpleinput=None,
+    orcablocks=None,
+    nprocs="max",
+    copy_files=None,
+    additional_fields=None,
 ):
     """
     Carry out a vibrational frequency analysis via ASE utilities.
@@ -107,14 +107,14 @@ def double_ase_opt_freq_orca(
     new_spin_multiplicity: int,
     xc=ORCA_FUNCTIONAL,
     basis=ORCA_BASIS,
-    orcasimpleinput: Optional[List[str]] = None,
-    orcablocks: Optional[List[str]] = None,
-    nprocs: Union[int, Literal["max"]] = "max",
+    orcasimpleinput=None,
+    orcablocks=None,
+    nprocs="max",
     outputdir=os.getcwd(),
     dump_json=True,
     vertical=Vertical.Default,
-    copy_files: Optional[Union[str, Path, dict[str, str]]] = None,
-    additional_fields: Optional[dict] = None,
+    copy_files=None,
+    additional_fields=None,
 ):
     """
     Args:
