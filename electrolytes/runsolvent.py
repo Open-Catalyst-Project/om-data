@@ -120,7 +120,10 @@ def main(row_idx: int, job_dir: str, rpmd: bool, nbeads: int):
     os.chdir(os.path.join(job_dir, str(row_idx)))
 
     if not os.path.exists("solvent_init.pdb"):
-        print("Solvent does not exist. Not an error, but check if system is a pure moltent salt/ionic liquid.")
+        if systems[row_idx][3] != 'volume':
+            print("System specification is not volume-based (i.e. molarity), no need to generate solvent")
+        else:
+            print("Solvent does not exist. Not an error, but check if system is a pure molten salt/ionic liquid.")
         sys.exit()
     pdb = app.PDBFile("solvent_init.pdb")
     modeller = app.Modeller(pdb.topology, pdb.positions)

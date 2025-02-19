@@ -62,4 +62,4 @@ if units == 'volume':
     mb.run_system_builder([],[],solv,Nmols,'solvent',str(row_idx),boxsize=boxsize,mdengine='openmm')
     lmm.prep_openmm_md("solvent",[],[],solv,Nmols,str(row_idx))
 else:
-    print("Solvent does not exist. Not an error, but check if system is a pure moltent salt/ionic liquid.")
+    print("System specification is not volume-based (i.e. molarity), no need to generate solvent")
