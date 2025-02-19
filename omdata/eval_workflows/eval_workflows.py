@@ -2,7 +2,6 @@ from typing import Optional, Union, List, Literal
 from pathlib import Path
 from ase.atoms import Atoms
 from quacc.recipes.orca.core import ase_relax_job
-from quacc.schemas.calc import CalcSchema
 from quacc.recipes.orca._base import prep_calculator
 
 from quacc import job
@@ -35,7 +34,7 @@ def ase_freq_job(
     nprocs: int | Literal["max"] = "max",
     copy_files: SourceDirectory | dict[SourceDirectory, Filenames] | None = None,
     additional_fields: dict[str, Any] | None = None,
-) -> RunSchema:
+):
     """
     Carry out a vibrational frequency analysis via ASE utilities.
 
@@ -116,7 +115,7 @@ def double_ase_opt_freq_orca(
     vertical=Vertical.Default,
     copy_files: Optional[Union[str, Path, dict[str, str]]] = None,
     additional_fields: Optional[dict] = None,
-) -> List[CalcSchema]:
+):
     """
     Args:
         atoms (Atoms): ASE Atoms object
