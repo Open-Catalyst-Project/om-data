@@ -3,7 +3,7 @@ from pathlib import Path
 from ase.atoms import Atoms
 from quacc.recipes.orca.core import ase_relax_job
 from quacc.recipes.orca._base import prep_calculator
-
+import os
 from quacc import job
 from quacc.runners.ase import Runner
 from quacc.schemas.ase import Summarize, VibSummarize
