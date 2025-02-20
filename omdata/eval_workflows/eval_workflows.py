@@ -134,10 +134,6 @@ def double_ase_opt_freq_orca(
     Returns:
         List[CalcSchema]: List containing results for both charge states
     """
-    from quacc import SETTINGS
-
-    SETTINGS.RESULTS_DIR = outputdir
-
     if orcasimpleinput is None:
         orcasimpleinput = ORCA_SIMPLE_INPUT.copy()
     if orcablocks is None:
@@ -150,8 +146,6 @@ def double_ase_opt_freq_orca(
     orcasimpleinput.extend(["NONBO", "NONPA"])
 
     nprocs = psutil.cpu_count(logical=False) if nprocs == "max" else nprocs
-    default_inputs = [xc, basis, "engrad"]
-    default_blocks = [f"%pal nprocs {nprocs} end"]
 
     results = []
     
