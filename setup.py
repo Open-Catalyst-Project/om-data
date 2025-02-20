@@ -14,8 +14,8 @@ setup(
     packages=find_packages(),
     install_requires=[
         "ase>=3.24.0",
-        "quacc[sella]>=0.7.6",
-        "sella==2.3.3",
+        "quacc>=0.12.1",
+        "sella>=2.3.5",
         "numpy<2"
     ],
     include_package_data=True,
