@@ -30,6 +30,8 @@ def ase_freq_job(
     spin_multiplicity: int = 1,
     xc=ORCA_FUNCTIONAL,
     basis=ORCA_BASIS,
+    temperature=298.15,
+    pressure=1.0,
     orcasimpleinput=None,
     orcablocks=None,
     nprocs="max",
@@ -51,6 +53,10 @@ def ase_freq_job(
         Exchange-correlation functional
     basis
         Basis set
+    temperature
+        Temperature in K
+    pressure
+        Pressure in bar
     orcasimpleinput
         List of `orcasimpleinput` swaps for the calculator. To remove entries
         from the defaults, put a `#` in front of the name. Refer to the
@@ -71,32 +77,28 @@ def ase_freq_job(
     RunSchema
         Dictionary of results
     """
-    nprocs = (psutil.cpu_count(logical=False) if nprocs == "max" else nprocs) or 1
-    default_inputs = [xc, basis, "normalprint"]
+    nprocs = psutil.cpu_count(logical=False) if nprocs == "max" else nprocs
+    default_inputs = [xc, basis, "engrad"]
     default_blocks = [f"%pal nprocs {nprocs} end"]
 
     vib_kwargs = vib_kwargs or {}
-
-    calc_defaults = {"method": method}
-    calc_flags = recursive_dict_merge(calc_defaults, calc_kwargs)
 
     calc = prep_calculator(
         charge=charge,
         spin_multiplicity=spin_multiplicity,
         default_inputs=default_inputs,
         default_blocks=default_blocks,
-        input_swaps=input_swaps,
-        block_swaps=block_swaps,
-        **calc_kwargs,
+        input_swaps=orcasimpleinput,
+        block_swaps=orcablocks,
     )
 
-    vib = Runner(atoms, calc).run_vib(vib_kwargs=vib_kwargs)
+    vib = Runner(atoms, calc, copy_files=copy_files).run_vib(vib_kwargs=vib_kwargs)
     return VibSummarize(
         vib,
-        additional_fields={"name": "TBLite Frequency and Thermo"}
+        additional_fields={"name": "ORCA ASE Frequency and Thermo"}
         | (additional_fields or {}),
     ).vib_and_thermo(
-        "ideal_gas", energy=energy, temperature=temperature, pressure=pressure
+        "ideal_gas", energy=0.0, temperature=temperature, pressure=pressure
     )
 
 
@@ -116,6 +118,8 @@ def double_ase_opt_freq_orca(
     dump_json=True,
     vertical=Vertical.Default,
     copy_files=None,
+    temperature=298.15,
+    pressure=1.0,
     additional_fields=None,
 ):
     """
@@ -151,6 +155,22 @@ def double_ase_opt_freq_orca(
     nprocs = psutil.cpu_count(logical=False) if nprocs == "max" else nprocs
 
     results = []
+
+    freq0 = ase_freq_job(
+        atoms=atoms,
+        charge=initial_charge,
+        spin_multiplicity=initial_spin_multiplicity,
+        xc=xc,
+        basis=basis,
+        temperature=temperature,
+        pressure=pressure,
+        orcasimpleinput=orcasimpleinput,
+        orcablocks=orcablocks,
+        nprocs=nprocs,
+        copy_files=copy_files,
+        additional_fields={"name": f"ORCA Freq Initial Charge {initial_charge} Spin {initial_spin_multiplicity}"} | (additional_fields or {}),
+    )
+    results.append(freq0)
     
     # First optimization at initial charge
     opt1 = ase_relax_job(
@@ -174,6 +194,8 @@ def double_ase_opt_freq_orca(
         spin_multiplicity=initial_spin_multiplicity,
         xc=xc,
         basis=basis,
+        temperature=temperature,
+        pressure=pressure,
         orcasimpleinput=orcasimpleinput,
         orcablocks=orcablocks,
         nprocs=nprocs,
@@ -205,6 +227,8 @@ def double_ase_opt_freq_orca(
         spin_multiplicity=new_spin_multiplicity,
         xc=xc,
         basis=basis,
+        temperature=temperature,
+        pressure=pressure,
         orcasimpleinput=orcasimpleinput,
         orcablocks=orcablocks,
         nprocs=nprocs,
