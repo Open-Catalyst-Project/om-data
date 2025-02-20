@@ -32,6 +32,7 @@ def ase_freq_job(
     basis=ORCA_BASIS,
     temperature=298.15,
     pressure=1.0,
+    vib_kwargs=None,
     orcasimpleinput=None,
     orcablocks=None,
     nprocs="max",
