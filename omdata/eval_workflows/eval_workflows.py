@@ -110,6 +110,7 @@ def double_ase_opt_freq_orca(
     orcasimpleinput=None,
     orcablocks=None,
     nprocs="max",
+    opt_params=None,
     outputdir=os.getcwd(),
     dump_json=True,
     vertical=Vertical.Default,
@@ -128,6 +129,7 @@ def double_ase_opt_freq_orca(
         orcasimpleinput (List[str], optional): Additional ORCA simple input parameters
         orcablocks (List[str], optional): Additional ORCA block parameters
         nprocs (Union[int, "max"]): Number of processors to use
+        opt_params: Dictionary of optimizer parameters
         copy_files: Files to copy to working directory
         additional_fields (dict, optional): Additional fields to include in output
         
