@@ -142,15 +142,21 @@ def double_ase_opt_freq_orca(
         List[CalcSchema]: List containing results for both charge states
     """
     if orcasimpleinput is None:
-        orcasimpleinput = ORCA_SIMPLE_INPUT.copy()
+        orcasimpleinput1 = ORCA_SIMPLE_INPUT.copy()
+        orcasimpleinput2 = ORCA_SIMPLE_INPUT.copy()
     if orcablocks is None:
-        orcablocks = ORCA_BLOCKS.copy()
+        orcablocks1 = ORCA_BLOCKS.copy()
+        orcablocks2 = ORCA_BLOCKS.copy()
     if opt_params is None:
         opt_params = OPT_PARAMETERS.copy()
-    if vertical == Vertical.MetalOrganics and spin_multiplicity == 1:
-        orcasimpleinput.append("UKS")
-        orcablocks.append(get_symm_break_block(atoms, charge))
-    orcasimpleinput.extend(["NONBO", "NONPA"])
+    if vertical == Vertical.MetalOrganics and initial_spin_multiplicity == 1:
+        orcasimpleinput1.append("UKS")
+        orcablocks1.append(get_symm_break_block(atoms, initial_charge))
+    if vertical == Vertical.MetalOrganics and new_spin_multiplicity == 1:
+        orcasimpleinput2.append("UKS")
+        orcablocks2.append(get_symm_break_block(atoms, new_charge))
+    orcasimpleinput1.extend(["NONBO", "NONPA"])
+    orcasimpleinput2.extend(["NONBO", "NONPA"])
 
     nprocs = psutil.cpu_count(logical=False) if nprocs == "max" else nprocs
 
@@ -163,8 +169,8 @@ def double_ase_opt_freq_orca(
         spin_multiplicity=initial_spin_multiplicity,
         xc=xc,
         basis=basis,
-        orcasimpleinput=orcasimpleinput,
-        orcablocks=orcablocks,
+        orcasimpleinput=orcasimpleinput1,
+        orcablocks=orcablocks1,
         nprocs=nprocs,
         copy_files=copy_files,
         additional_fields={"name": f"ORCA Opt Initial Charge {initial_charge} Spin {initial_spin_multiplicity}"} | (additional_fields or {}),
@@ -180,8 +186,8 @@ def double_ase_opt_freq_orca(
         basis=basis,
         temperature=temperature,
         pressure=pressure,
-        orcasimpleinput=orcasimpleinput,
-        orcablocks=orcablocks,
+        orcasimpleinput=orcasimpleinput1,
+        orcablocks=orcablocks1,
         nprocs=nprocs,
         copy_files=copy_files,
         additional_fields={"name": f"ORCA Freq Initial Charge {initial_charge} Spin {initial_spin_multiplicity}"} | (additional_fields or {}),
@@ -195,8 +201,8 @@ def double_ase_opt_freq_orca(
         spin_multiplicity=new_spin_multiplicity,
         xc=xc,
         basis=basis,
-        orcasimpleinput=orcasimpleinput,
-        orcablocks=orcablocks,
+        orcasimpleinput=orcasimpleinput2,
+        orcablocks=orcablocks2,
         nprocs=nprocs,
         copy_files=copy_files,
         additional_fields={"name": f"ORCA Opt New Charge {new_charge} Spin {new_spin_multiplicity}"} | (additional_fields or {}),
@@ -212,14 +218,14 @@ def double_ase_opt_freq_orca(
         basis=basis,
         temperature=temperature,
         pressure=pressure,
-        orcasimpleinput=orcasimpleinput,
-        orcablocks=orcablocks,
+        orcasimpleinput=orcasimpleinput2,
+        orcablocks=orcablocks2,
         nprocs=nprocs,
         copy_files=copy_files,
         additional_fields={"name": f"ORCA Freq New Charge {new_charge} Spin {new_spin_multiplicity}"} | (additional_fields or {}),
     )
     results.append(freq2)
-    
+
     dumpfn(results, json_name)
     
     return results
