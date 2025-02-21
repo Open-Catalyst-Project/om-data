@@ -36,6 +36,8 @@ def main(args):
 
     reactant = convert_io_molecule(args.reactant_xyz_path)
     product = convert_io_molecule(args.product_xyz_path)
+    reactant.create_mol_graph()
+    product.create_mol_graph()
 
     nprocs = psutil.cpu_count(logical=False)
 
