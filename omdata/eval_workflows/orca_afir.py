@@ -34,13 +34,8 @@ def main(args):
     if not os.path.exists(args.product_xyz_path):
         raise ValueError(f"Product path not found at {args.product_xyz_path}")
 
-    reactant_atoms = read(args.reactant_xyz_path)
-    product_atoms = read(args.product_xyz_path)
-
-    reactant_atoms.info['charge'] = args.charge
-    reactant_atoms.info['spin_multiplicity'] = args.spin_multiplicity
-    product_atoms.info['charge'] = args.charge
-    product_atoms.info['spin_multiplicity'] = args.spin_multiplicity
+    reactant = convert_io_molecule(args.reactant_xyz_path)
+    product = convert_io_molecule(args.product_xyz_path)
 
     nprocs = psutil.cpu_count(logical=False)
 
@@ -53,7 +48,7 @@ def main(args):
 
     logfile = os.path.join(args.output_path, "afir.log")
 
-    save_trajectory, traj_list=run_afir(reactant_atoms,product_atoms,orca_calc, logfile)
+    save_trajectory, traj_list=run_afir(reactant,product,orca_calc, logfile)
 
     # Save the trajectory
     with open(os.path.join(args.output_path, "flat_trajectory.xyz"), "w") as f:
