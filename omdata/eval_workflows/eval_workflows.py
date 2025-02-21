@@ -9,6 +9,7 @@ from quacc import job
 from quacc.runners.ase import Runner
 from quacc.schemas.ase import Summarize, VibSummarize
 from quacc.utils.dicts import recursive_dict_merge
+from monty.serialization import dumpfn
 
 from omdata.orca.calc import (
     OPT_PARAMETERS,
@@ -20,8 +21,6 @@ from omdata.orca.calc import (
     Vertical,
     get_symm_break_block,
 )
-
-import json
 
 @job
 def ase_freq_job(
@@ -116,7 +115,7 @@ def double_ase_opt_freq_orca(
     nprocs="max",
     opt_params=None,
     outputdir=os.getcwd(),
-    dump_json=True,
+    json_name="test.json",
     vertical=Vertical.Default,
     copy_files=None,
     temperature=298.15,
@@ -220,10 +219,8 @@ def double_ase_opt_freq_orca(
         additional_fields={"name": f"ORCA Freq New Charge {new_charge} Spin {new_spin_multiplicity}"} | (additional_fields or {}),
     )
     results.append(freq2)
-
-    if dump_json:
-        with open("test.json", 'w') as f:
-            json.dump(results, f, indent=2)
+    
+    dumpfn(results, json_name)
     
     return results
 
