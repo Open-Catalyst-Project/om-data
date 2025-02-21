@@ -157,22 +157,6 @@ def double_ase_opt_freq_orca(
 
     results = []
 
-    freq0 = ase_freq_job(
-        atoms=atoms,
-        charge=initial_charge,
-        spin_multiplicity=initial_spin_multiplicity,
-        xc=xc,
-        basis=basis,
-        temperature=temperature,
-        pressure=pressure,
-        orcasimpleinput=orcasimpleinput,
-        orcablocks=orcablocks,
-        nprocs=nprocs,
-        copy_files=copy_files,
-        additional_fields={"name": f"ORCA Freq Initial Charge {initial_charge} Spin {initial_spin_multiplicity}"} | (additional_fields or {}),
-    )
-    results.append(freq0)
-    
     # First optimization at initial charge
     opt1 = ase_relax_job(
         atoms=atoms,
@@ -188,7 +172,7 @@ def double_ase_opt_freq_orca(
     )
     results.append(opt1)
     
-    # Frequency calculation at initial charge
+    # Frequency calculation on optimized geometry at initial charge
     freq1 = ase_freq_job(
         atoms=opt1["atoms"],
         charge=initial_charge,
@@ -206,7 +190,6 @@ def double_ase_opt_freq_orca(
     results.append(freq1)
     
     # Second optimization at new charge/spin
-    new_charge = initial_charge + charge_change
     opt2 = ase_relax_job(
         atoms=opt1["atoms"],  # Start from optimized geometry
         charge=new_charge,
@@ -221,7 +204,7 @@ def double_ase_opt_freq_orca(
     )
     results.append(opt2)
     
-    # Frequency calculation at new charge/spin
+    # Frequency calculation on optimized geometry at new charge/spin
     freq2 = ase_freq_job(
         atoms=opt2["atoms"],
         charge=new_charge,
