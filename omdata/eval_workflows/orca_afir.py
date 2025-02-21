@@ -42,8 +42,8 @@ def main(args):
     nprocs = psutil.cpu_count(logical=False)
 
     orca_calc = prep_calculator(
-        charge=args.charge,
-        spin_multiplicity=args.spin_multiplicity,
+        charge=int(args.charge),
+        spin_multiplicity=int(args.spin_multiplicity),
         default_inputs=['B97-3c def2-SVP EnGrad'],
         default_blocks=['%pal nprocs {} end'.format(nprocs)]
     )
