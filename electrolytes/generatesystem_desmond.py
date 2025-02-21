@@ -41,7 +41,7 @@ def get_nmols(charges, natoms, tol=1):
     sorted_variables = sorted(prob.variables()[1:], key=lambda v: int(v.name[1:]))
     return [int(v.varValue) for v in sorted_variables]
 
-def generate_system(row_idx, systems, job_dir, rho=None):
+def generate_system(row_idx, systems, job_dir, rho=None, time=1):
 
     comments = systems[0]
     # Extract indices of columns specifying the cation, anion,and solvent
@@ -191,6 +191,6 @@ def generate_system(row_idx, systems, job_dir, rho=None):
         Nmols[:len(cat+an)] = get_nmols(charges, Nmols[:len(cat+an)], tol=1)
         print("New number of cation/anion molecules: ",Nmols[:len(cat+an)])
 
-    mb.prep_desmond_md('elyte',job_dir, temperature)
+    mb.prep_desmond_md('elyte',job_dir, temperature, time)
     command, directory = mb.run_system_builder(cat,an, solv,Nmols,'elyte',job_dir,mdengine="desmond")
     return command, directory
