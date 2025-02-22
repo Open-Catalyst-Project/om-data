@@ -149,6 +149,7 @@ def double_ase_opt_freq_orca(
         orcablocks2 = ORCA_BLOCKS.copy()
     if opt_params is None:
         opt_params = OPT_PARAMETERS.copy()
+        opt_params["fmax"] = 0.01
     if vertical == Vertical.MetalOrganics and initial_spin_multiplicity == 1:
         orcasimpleinput1.append("UKS")
         orcablocks1.append(get_symm_break_block(atoms, initial_charge))
