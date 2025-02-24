@@ -5,7 +5,7 @@ Initial generation of metal-organics: MAX_N_ATOMS = 250, random_seed = 46139, la
 "Small" metal-organics: MAX_N_ATOMS = 120, random_seed = 98745, lanthandies were excluded, no ligands were excluded, 1m were generated
 Lanthanides: MAX_N_ATOMS = 120, random_seed = 46139, non-lanthanides were excluded, ligands with heavy main-group elements were excluded, 255k were generated
 Hydrides: MAX_N_ATOMS = 120, random_seed = 34231, no metals were exluced, no ligands were excluded, hydride was added as a ligand and forced to be included, 91000 were generated
-ML-MD: MAX_N_ATOMS = 120, random_seed = 569, no metals were exluced, no ligands were excluded, hydride was added as a ligand, 91000 were generated
+ML-MD: MAX_N_ATOMS = 120, random_seed = 569, no metals were exluced, no ligands were excluded, hydride was added as a ligand, 1M were generated
 """
 
 import argparse
@@ -19,7 +19,7 @@ from tqdm import tqdm
 
 MAX_N_ATOMS = 120
 # Set seed
-random_seed = 98745
+random_seed = 569
 np.random.seed(random_seed)
 
 
@@ -279,7 +279,7 @@ def create_sample(
              the UIDS of the chemistries sampled up to this point by the sampler routine.
     """
     if history_uids is None:
-        history_uids = []
+        history_uids = set()
     total = 0
     out_rows = []
     with tqdm(total=nsamples) as pbar:
@@ -289,7 +289,7 @@ def create_sample(
             )
             if uid not in history_uids:
                 total += 1
-                history_uids.append(uid)
+                history_uids.add(uid)
                 out_rows.append(sample_row)
                 pbar.update(1)
     dfout = pd.DataFrame(out_rows)
@@ -316,7 +316,12 @@ def parse_args():
         help="Path to file storing previously used samples to avoid duplication",
     )
     parser.add_argument(
-        "--do_hydride",
+        "--include_hydride",
+        action='store_true',
+        help="Include hydride as a possible ligand",
+    )
+    parser.add_argument(
+        "--force_hydride",
         action='store_true',
         help="Ensure at least one of the ligands is a hydride",
     )
@@ -336,16 +341,16 @@ def main():
     ligands_df = pd.read_pickle("ligand_sample_dataframe.pkl")
     if args.history is not None:
         with open(args.history, "r") as fh:
-            history = eval(fh.read())
+            history = set(eval(fh.read()))
     else:
         history = None
 
     gen_metal_df = select_metals(metal_df)
-    ligands_df = select_ligands(ligands_df, add_hydride=args.do_hydride)
+    ligands_df = select_ligands(ligands_df, add_hydride=args.include_hydride)
     sdf, history = create_sample(
         metal_df=gen_metal_df,
         ligands_df=ligands_df,
-        do_hydride=args.do_hydride,
+        do_hydride=args.force_hydride,
         rough_opt=args.rough_opt,
         test=False,
         history_uids=history,
