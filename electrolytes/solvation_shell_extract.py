@@ -37,6 +37,7 @@ def extract_solvation_shells(
     radii: List[float],
     skip_solvent_centered_shells: bool,
     max_frames: int,
+    last_frame_only: bool,
     shells_per_frame: int,
     max_shell_size: int,
     top_n: int,
@@ -52,6 +53,7 @@ def extract_solvation_shells(
         radii: List of shell radii to extract around solutes and solvents.
         skip_solvent_centered_shells: Skip extracting solvent-centered shells.
         max_frames: Maximum number of frames to read from the trajectory.
+        last_frame_only: Only use the last frame for extraction
         shells_per_frame: Number of solutes or solvents per MD simulation frame from which to extract candidate shells.
         max_shell_size: Maximum size (in atoms) of saved shells.
         top_n: Number of snapshots to extract per topology.
@@ -81,6 +83,8 @@ def extract_solvation_shells(
 
     spec_dicts = {"solute": solutes, "solvent": solvents}
 
+    if last_frame_only:
+        structures = structures[-1:]
     if max_frames > 0:
         structures = random.sample(structures, max_frames)
     # assign partial charges to atoms
@@ -152,15 +156,17 @@ def extract_solvation_shells(
                 # Save the final shells
                 logging.info("Saving final shells")
                 os.makedirs(save_path, exist_ok=True)
-                for i, (group_idx, st) in enumerate(final_shells):
+                cur_group_idx = None
+                for group_idx, st in final_shells:
+                    if group_idx == cur_group_idx:
+                        counter += 1
+                    else:
+                        counter = 0
                     charge = get_structure_charge(st)
                     spin = get_structure_spin(st)
-                    if spec_type == "solute":
-                        fname = os.path.join(
-                            save_path, f"group_{group_idx}_shell_{i}_{charge}_{spin}.mae"
-                        )
-                    elif spec_type == "solvent":
-                        fname = os.path.join(save_path, f"shell_{i}_{charge}_{spin}.mae")
+                    fname = os.path.join(
+                        save_path, f"group_{group_idx}_shell_{counter}_{charge}_{spin}.mae"
+                    )
 
                     st.write(fname)
 
@@ -206,6 +212,12 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--last_frame_only",
+        action='store_true',
+        help="Only use the last frame of the MD",
+    )
+
+    parser.add_argument(
         "--shells_per_frame",
         type=int,
         default=-1,
@@ -237,6 +249,7 @@ if __name__ == "__main__":
         args.radii,
         args.skip_solvent_centered_shells,
         args.max_frames,
+        args.last_frame_only,
         args.shells_per_frame,
         args.max_shell_size,
         args.top_n,
