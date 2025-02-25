@@ -5,16 +5,10 @@ import numpy as np
 import pandas as pd
 
 
-def get_system_list(archive_name):
-    with open(
-        f"/private/home/levineds/job_accounting/metal_organics/archives_{archive_name}.txt"
-    ) as fh:
-        data = fh.readlines()
-    system_list = list({system.split("/")[-3] for system in data})
-    return system_list
-
-
 def get_steps_list(archive_name, offset=-3):
+    """
+    Get a list of individual optimization steps, i.e. (system_id_geometry_charge_spin, step<n>)
+    """
     with open(
         f"/private/home/levineds/job_accounting/metal_organics/archives_{archive_name}.txt"
     ) as fh:
@@ -24,6 +18,9 @@ def get_steps_list(archive_name, offset=-3):
 
 
 def group_list(overall_system_list):
+    """
+    Group list of steps by the system_id (all steps and geometries with the same id have the same metal-ligands pairs)
+    """
     grouped_sys_list = defaultdict(list)
     for sys in overall_system_list:
         grouped_sys_list[int(sys[0].split("_")[0])].append(sys)
@@ -31,6 +28,9 @@ def group_list(overall_system_list):
 
 
 def update_metal_lig_dict(df, metal_lig_dict, grouped_sys_list, df_name):
+    """
+    Update a given dict with the metal-ligand combos of the systems in the `grouped_sys_list`
+    """
     for key, sys_list in grouped_sys_list.items():
         metal = df.iloc[key]["metal"]
         ligands = df.iloc[key]["ligands"]
@@ -40,6 +40,9 @@ def update_metal_lig_dict(df, metal_lig_dict, grouped_sys_list, df_name):
 
 
 def get_metal_ligs_in_df(df):
+    """
+    Get all the metal-ligand combos as a dict from a given dataframe
+    """
     metal_lig_dict = defaultdict(lambda: {"count": 0, "systems": []})
     for idx, row in df.iterrows():
         metal = row["metal"]
@@ -48,57 +51,76 @@ def get_metal_ligs_in_df(df):
             metal_lig_dict[(metal, lig)]["systems"].append(idx)
     return metal_lig_dict
 
+def get_best_version(options):
+    """
+    Pick a "best" version of the data for duplicated datapoints
+    """
+    hierarchy = ('070324', '072324', 'temp_ls', '062424', '060424', '060124', 'incomplete_060424', 'failed_060424')
+    return min(options, key=lambda x: hierarchy.index(x))
+
+def dedup(dup_dict):
+    """
+    Make a list of systems to discard that are either"
+    1) singlets computed with the wrong flag
+    2) duplicates of another datapoint (where we keep one that we like the best)
+    """
+    discard = []
+    for key, val in dup_dict.items():
+        if key[0].split('_')[-1] == '1':
+            if '060124' in val:
+                val.remove('060124')
+                discard.append(f'outputs_060124/{"/".join(key)}')
+        keeper = get_best_version(val)
+        discard.extend([f'outputs_{version}/{"/".join(key)}' for version in val if version != keeper])
+    return discard
 
 def main():
     metal_lig_dict = defaultdict(lambda: {"count": 0, "systems": []})
 
-    system_list2 = defaultdict(list)
-    large_system_list = set()
+    large_system_list = defaultdict(list)
+    large_steps_list = set()
     duplicates = []
-    for i in (
-        "060124",
-        "060424",
-        "062424",
-        "070324",
-        "072324",
-        "incomplete_060424",
-        "failed_060424",
-        "temp_ls",
-    ):
-        lst = get_system_list(i)
+    for i in ("060124", "060424", "062424", "070324", "072324", "incomplete_060424", "failed_060424", "temp_ls"):
         steps = get_steps_list(i)
-        duplicates.extend(large_system_list.intersection(steps))
-        large_system_list.update(steps)
-        for sys in lst:
-            system_list2[sys].append(i)
-    grouped_large_list = group_list(large_system_list)
+        duplicates.extend(large_steps_list.intersection(steps))
+        large_steps_list.update(steps)
+        for step in steps:
+            large_system_list[step].append(i)
+    grouped_large_list = group_list(large_steps_list)
     df_large = pd.read_pickle(
         "/large_experiments/opencatalyst/foundation_models/data/omol/metal_organics/MO_1m.pkl"
     )
     update_metal_lig_dict(df_large, metal_lig_dict, grouped_large_list, "large")
 
-    small_system_list = set()
+    dups = {k:v for k,v in large_system_list.items() if len(v) > 1}
+    discard = dedup(dups)
+    with open('discard_list.txt', 'w') as fh:
+        fh.write(str(discard)) ## IDK, how do you want to disk a list
+    print(len(discard))
+    print(len(duplicates))
+
+    small_steps_list = set()
     for i in ("061824",):
-        small_system_list.update(get_steps_list(i))
-    grouped_small_list = group_list(small_system_list)
+        small_steps_list.update(get_steps_list(i))
+    grouped_small_list = group_list(small_steps_list)
     df_small = pd.read_pickle(
         "/large_experiments/opencatalyst/foundation_models/data/omol/metal_organics/MO_1m_small.pkl"
     )
     update_metal_lig_dict(df_small, metal_lig_dict, grouped_small_list, "small")
 
-    hydride_system_list = set()
+    hydride_steps_list = set()
     for i in ("hydrides",):
-        hydride_system_list.update(get_steps_list(i, offset=-2))
-    grouped_hydride_list = group_list(hydride_system_list)
+        hydride_steps_list.update(get_steps_list(i, offset=-2))
+    grouped_hydride_list = group_list(hydride_steps_list)
     df_H = pd.read_pickle(
         "/large_experiments/opencatalyst/foundation_models/data/omol/metal_organics/hydride_18200.pkl"
     )
     update_metal_lig_dict(df_H, metal_lig_dict, grouped_hydride_list, "hydride")
 
-    ln_system_list = set()
+    ln_steps_list = set()
     for i in ("082524",):
-        ln_system_list.update(get_steps_list(i))
-    grouped_ln_list = group_list(ln_system_list)
+        ln_steps_list.update(get_steps_list(i))
+    grouped_ln_list = group_list(ln_steps_list)
     df_ln = pd.read_pickle(
         "/large_experiments/opencatalyst/foundation_models/data/omol/metal_organics/MO_Ln_255k.pkl"
     )
