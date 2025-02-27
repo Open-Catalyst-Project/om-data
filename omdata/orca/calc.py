@@ -4,6 +4,103 @@ from shutil import which
 from ase import Atoms
 from ase.calculators.orca import ORCA, OrcaProfile
 from sella import Sella
+import re
+
+# ECP sizes taken from Table 6.5 in the Orca 5.0.3 manual
+ECP_SIZE = {
+    **{i: 28 for i in range(37, 55)},
+    **{i: 46 for i in range(55, 58)},
+    **{i: 28 for i in range(58, 72)},
+    **{i: 60 for i in range(72, 87)},
+}
+BASIS_DICT = {
+    "H": 9,
+    "He": 9,
+    "Li": 17,
+    "Be": 22,
+    "B": 37,
+    "C": 37,
+    "N": 37,
+    "O": 40,
+    "F": 40,
+    "Ne": 40,
+    "Na": 35,
+    "Mg": 35,
+    "Al": 43,
+    "Si": 43,
+    "P": 43,
+    "S": 46,
+    "Cl": 46,
+    "Ar": 46,
+    "K": 36,
+    "Ca": 36,
+    "Sc": 48,
+    "Ti": 48,
+    "V": 48,
+    "Cr": 48,
+    "Mn": 48,
+    "Fe": 48,
+    "Co": 48,
+    "Ni": 48,
+    "Cu": 48,
+    "Zn": 51,
+    "Ga": 54,
+    "Ge": 54,
+    "As": 54,
+    "Se": 57,
+    "Br": 57,
+    "Kr": 57,
+    "Rb": 33,
+    "Sr": 33,
+    "Y": 40,
+    "Zr": 40,
+    "Nb": 40,
+    "Mo": 40,
+    "Tc": 40,
+    "Ru": 40,
+    "Rh": 40,
+    "Pd": 40,
+    "Ag": 40,
+    "Cd": 40,
+    "In": 56,
+    "Sn": 56,
+    "Sb": 56,
+    "Te": 59,
+    "I": 59,
+    "Xe": 59,
+    "Cs": 32,
+    "Ba": 40,
+    "La": 43,
+    "Ce": 105,
+    "Pr": 105,
+    "Nd": 98,
+    "Pm": 98,
+    "Sm": 98,
+    "Eu": 93,
+    "Gd": 98,
+    "Tb": 98,
+    "Dy": 98,
+    "Ho": 98,
+    "Er": 101,
+    "Tm": 101,
+    "Yb": 96,
+    "Lu": 96,
+    "Hf": 43,
+    "Ta": 43,
+    "W": 43,
+    "Re": 43,
+    "Os": 43,
+    "Ir": 43,
+    "Pt": 43,
+    "Au": 43,
+    "Hg": 46,
+    "Tl": 56,
+    "Pb": 56,
+    "Bi": 56,
+    "Po": 59,
+    "At": 59,
+    "Rn": 59,
+}
 
 # ECP sizes taken from Table 6.5 in the Orca 5.0.3 manual
 ECP_SIZE = {
@@ -138,6 +235,7 @@ OPT_PARAMETERS = {
 class Vertical(Enum):
     Default = "default"
     MetalOrganics = "metal-organics"
+    Oss = "open-shell-singlet"
 
 
 def get_symm_break_block(atoms: Atoms, charge: int) -> str:
@@ -210,9 +308,11 @@ def write_orca_inputs(
     output_directory,
     charge: int = 0,
     mult: int = 1,
+    nbo: bool = True,
     orcasimpleinput: str = ORCA_ASE_SIMPLE_INPUT,
     orcablocks: str = " ".join(ORCA_BLOCKS),
     vertical: Enum = Vertical.Default,
+    scf_MaxIter: int = None,
 ):
     """
     One-off method to be used if you wanted to write inputs for an arbitrary
@@ -224,10 +324,20 @@ def write_orca_inputs(
     # Include estimate of memory needs
     mem_est = get_mem_estimate(atoms, vertical, mult)
     orcablocks += f" %maxcore {mem_est}"
+    if not nbo:
+        orcasimpleinput += " NONBO NONPA"
+    else:
+        orcablocks += f" {NBO_FLAGS}"
 
-    if vertical == Vertical.MetalOrganics and mult == 1:
+    if vertical in {Vertical.MetalOrganics, Vertical.Oss} and mult == 1:
         orcasimpleinput += " UKS"
         orcablocks += f" {get_symm_break_block(atoms, charge)}"
+
+    if scf_MaxIter:
+        if "maxiter" in orcablocks:
+            orcablocks = re.sub(r"maxiter \d+", f"maxiter {scf_MaxIter}", orcablocks)
+        else:
+            orcablocks += f" %scf MaxIter {scf_MaxIter} end"
 
     calc = ORCA(
         charge=charge,

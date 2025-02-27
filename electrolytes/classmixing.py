@@ -34,6 +34,7 @@ def write_elyte_entry(clas, name, temperature, cat, an, solv, salt_conc, stoich_
         newelectrolyte['units'] = 'number'
     else:
         newelectrolyte['units'] = 'mass'
+        #newelectrolyte['units'] = 'volume'
     newelectrolyte['temperature'] = temperature
     for j in range(max_comp):
         if j < len(cat):
@@ -113,6 +114,7 @@ def solve_single_equation(coefficients):
     x = [LpVariable(f"x{i}", 1, 5, cat='Integer') for i in range(len(coefficients))]
     prob += lpSum(coeff * var for coeff, var in zip(coefficients, x)) == 0
     prob.solve(pulp.PULP_CBC_CMD(msg=False))
+    #prob.solve()
     return [int(v.varValue) for v in prob.variables()[1:]]
 
 lanthanides = [
@@ -162,8 +164,10 @@ anions_file = 'anions.csv'
 solvents_file = 'solvent.csv'
 
 elytes= load_csv('rpmd_elytes.csv')
+#elytes= load_csv('elytes.csv')
 
 Nrandom = 20
+#Nrandom = 700#700#800
 fac = 0.05
 for i in range(Nrandom):
     cations = load_csv(cations_file)

@@ -11,7 +11,7 @@
 #SBATCH --mem=12g
 #SBATCH --time=72:00:00
 
-#SBATCH --array=0-509
+#SBATCH --array=0-3999
 
 export OMP_NUM_THREADS=1
-/private/home/levineds/miniconda3/envs/gpsts/bin/python mprun.py /checkpoint/levineds/arch_Ln/MO_Ln_255k.pkl --n_workers 40 --batch_size 500 --batch_idx $((SLURM_ARRAY_TASK_ID+0)) --outpath /checkpoint/levineds/arch_Ln/inputs/
+/private/home/levineds/miniconda3/envs/gpsts/bin/python mprun.py /checkpoint/levineds/ml_md/metal_organics/metal_organics_MS_1M.pkl --n_workers 40 --batch_size 250 --batch_idx $((SLURM_ARRAY_TASK_ID+0)) --outpath /checkpoint/levineds/ml_md/metal_organics/inputs/

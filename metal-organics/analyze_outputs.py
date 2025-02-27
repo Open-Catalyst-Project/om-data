@@ -24,7 +24,7 @@ def main():
     }
     for fname in tqdm(path.glob("*.pkl"), total=len(list(path.glob("*.pkl")))):
         name = xyz_path / os.path.splitext(os.path.basename(fname))[0]
-        if name in xyz_names:
+        if str(name) in xyz_names:
             continue
         df = pd.read_pickle(fname)
         for i, row in df.iterrows():

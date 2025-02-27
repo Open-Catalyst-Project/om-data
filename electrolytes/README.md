@@ -82,3 +82,41 @@ This workflow for running OpenMM-RPMD uses Packmol to generate a system configur
 The input to the workflow is the `ff` directory, which contains the PDB and LT files of all electrolyte components, and elytes.csv, which specifies the molar/molal concentrations of the salt and ratios for solvent mixtures. 
 
 The workflow can be used to prepare concentrations that are volumetric vs. by-weight, we often need the density of the pure solvent to determine how many moles of salt we need to put in the simulation box. Thus, there is an intermediate step of generating the pure solvent system and running a short simulation to get density data. In the system list `rpmd_elytes.csv`, we don't have concentrations based on volume (yet!)
+
+### OpenMM
+
+Run your MD simulations in this directory. Systems are already prepped in the tar file. So first, un-tar the files
+```console
+tar -xvf electrolytes.tar.gz
+```
+This should result in 3418 directories labeled in numerical order, each of which containing a set of initial input files to run the MD simulation. The number labeling each directory represents the index in the CSV file `elytes.csv`. To run an MD simulation for one system, we can go to one of the directories (let's say `0`) and do the following: 
+
+```console
+cd 0;
+cp ../runsystem.py ./
+python runsystem.py 0
+```
+
+If one wants to run simulations all simulations one-by-one, we can also write the following bash script
+```bash
+#!/bin/bash 
+
+num_lines=$(wc -l < elytes.csv)
+num_lines=$((num_lines-1))
+
+for ((i = 0; i < num_lines; i++)); do
+    cd $i
+    cp ../runsystem.py ./
+    python runsystem.py $i
+    cd ..
+done
+```
+which is provided in `runsimulations.sh.` Right now, the simulations are configured to perform an NPT run at 1 bar and whichever temperature relevant for the system for 500 ns
+
+## How it works
+
+The workflow uses Packmol to generate a system configuration and Moltemplate to generate force field files. However, the format generated is only compatible with LAMMPS. Thus, the next step is to convert the LAMMPS files to OpenMM-compatible files. 
+
+The input to the workflow is the `ff` directory, which contains the PDB and LT files of all electrolyte components, and elytes.csv, which specifies the molar/molal concentrations of the salt and ratios for solvent mixtures. 
+
+Because concentrations can be volumetric vs. by-weight, we often need the density of the pure solvent to determine how many moles of salt we need to put in the simulation box. Thus, there is an intermediate step of generating the pure solvent system and running a short simulation to get density data. 

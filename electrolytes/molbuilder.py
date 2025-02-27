@@ -64,12 +64,10 @@ def compute_density_desmond(directory):
     if my_file.is_file():
         subprocess.run(f"$SCHRODINGER/run python3 computedensity.py {directory}",shell=True)
 
-def prep_desmond_md(filename, job_dir, temperature):
+def prep_desmond_md(filename, job_dir, temperature, time=1):
     with open(os.path.join(job_dir, f"{filename}_multisim.msj"),"w") as msj:
-        time = 1000 #by default the runtime is 1 ns, unless we're running the elyte sim
+        time *= 1000 #by default the runtime is 1 ns, unless we're running the elyte sim
         frames = 100
-        if filename == 'elyte':
-            time = 250*1000 #we set elyte MD time to 250 ns
         interval = time/frames
         multisim = f"""task {{ task = "desmond:auto"  }}
 
@@ -167,6 +165,10 @@ simulate {{
 
    dir = "."
    compress = ""
+}}
+
+trim {{
+   save = [-1]
 }}
 """
         msj.write(multisim)

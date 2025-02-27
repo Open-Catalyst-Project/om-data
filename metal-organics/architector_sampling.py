@@ -4,7 +4,8 @@ Settings used were as follows"
 Initial generation of metal-organics: MAX_N_ATOMS = 250, random_seed = 46139, lanthanides were excluded, no ligands were excluded, 1m were generated
 "Small" metal-organics: MAX_N_ATOMS = 120, random_seed = 98745, lanthandies were excluded, no ligands were excluded, 1m were generated
 Lanthanides: MAX_N_ATOMS = 120, random_seed = 46139, non-lanthanides were excluded, ligands with heavy main-group elements were excluded, 255k were generated
-Hydrides: MAX_N_ATOMS = 120, random_seed = 34231, no metals were exluced, no ligands were excluded, hydride was added as a ligand and given additional weight of XX, 91000 were generated
+Hydrides: MAX_N_ATOMS = 120, random_seed = 34231, no metals were exluced, no ligands were excluded, hydride was added as a ligand and forced to be included, 91000 were generated
+ML-MD: MAX_N_ATOMS = 120, random_seed = 569, no metals were exluced, no ligands were excluded, hydride was added as a ligand, 1M were generated
 """
 
 import argparse
@@ -18,7 +19,7 @@ from tqdm import tqdm
 
 MAX_N_ATOMS = 120
 # Set seed
-random_seed = 98745
+random_seed = 569
 np.random.seed(random_seed)
 
 
@@ -89,6 +90,8 @@ def select_ligands(
     Removing the heavy main-group elements are one option to promote more "normal" complexes
 
     :param ligand_df: DataFrame of ligands to select from
+    :param heavy_maingroup: If True, ligands may include heavy main-group atoms (e.g. Te, Se, As, Sb, Ge)
+    :param add_hydride: If True, the hydride ligand is added to the ligand dataframe
     :return: selected ligands
     """
 
@@ -122,8 +125,9 @@ def select_ligands(
 def sample(
     metal_df: pd.DataFrame,
     ligands_df: pd.DataFrame,
+    rough_opt: bool = False,
     test: bool = False,
-    hydride_weighting: bool = False,
+    add_hydride: bool = False,
     maxCN: int = 12,
 ) -> tuple[dict, str]:
     """
@@ -135,8 +139,9 @@ def sample(
 
     :param metal_df: Metals dataframe to sample from
     :param ligands_df: Ligands dataframe to sample from
+    :param rough_opt: If True, do only a rough optimization
     :param test: Whether to generate test dataframe (faster for Architector)
-    :param hydride_weighting: If True, upweight hydride ligands significantly
+    :param add_hydride: If True, force the first ligand to be a hydride
     :param maxCN: Maximum coordination number to sample
     :return: A row with as much metadata as needed to backtrace how this chemistry was
              sampled and unique identifier for the chemistry sampled
@@ -169,7 +174,11 @@ def sample(
             "full_graph_sanity_cutoff": 2.0,  # Increasing to loop in more structures where ligand may be falling off
         },
     }
-    if test:
+    if rough_opt:
+        architector_input["parameters"].update(
+            {"assemble_method": "GFN-FF", "full_method": "GFN-FF", "relax": False}
+        )
+    elif test:
         architector_input["parameters"].update(
             {"assemble_method": "UFF", "full_method": "UFF", "n_conformers": 1}
         )
@@ -181,20 +190,22 @@ def sample(
     lig_natoms = []
     finished = False
     while not finished:
-        tdf = ligands_df[
-            ((ligands_df.charge + complex_charge) > -3)
-            & ((ligands_df.charge + complex_charge) < 5)  # Filter 1 -> Charge > -3
-            & (ligands_df.natoms + natoms_total < MAX_N_ATOMS)  # Filter 2 -> Charge < 5
-            & (  # Filter 3 -> Max number of atoms (set at 250 now.)
-                coordsites_left - ligands_df.denticity >= 0
-            )  # Can fit at the metal surface with remaining coordination sites.
-        ]
+        if add_hydride:
+            tdf = ligands_df.iloc[-1:]
+            add_hydride = False
+        else:
+            tdf = ligands_df[
+                ((ligands_df.charge + complex_charge) > -3)
+                & ((ligands_df.charge + complex_charge) < 5)  # Filter 1 -> Charge > -3
+                & (ligands_df.natoms + natoms_total < MAX_N_ATOMS)  # Filter 2 -> Charge < 5
+                & (  # Filter 3 -> Max number of atoms (set at 250 now.)
+                    coordsites_left - ligands_df.denticity >= 0
+                )  # Can fit at the metal surface with remaining coordination sites.
+            ]
         # Check that there's any ligands that match the constraints
         if tdf.shape[0] > 0:
             # Sample from the ligands
             weights = list(tdf.denticity)
-            if hydride_weighting:
-                weights[-1] = 100
             add_row = tdf.sample(1, weights=weights).iloc[0]
             # Weighting by denticity makes this equal likelihood PER coordination site.
             lig_dict = {"smiles": add_row["smiles"], "coordList": add_row["coordList"]}
@@ -245,6 +256,8 @@ def create_sample(
     metal_df: pd.DataFrame,
     ligands_df: pd.DataFrame,
     history_uids: Optional[list] = None,
+    do_hydride: bool = False,
+    rough_opt: bool = False,
     nsamples: int = 100,
     test: bool = False,
     maxCN: int = 12,
@@ -257,23 +270,26 @@ def create_sample(
     :param metal_df: Metals dataframe to sample from
     :param ligands_df: Ligands dataframe to sample from
     :param history_uids: List of chemistries already sampled to avoid, by default None
+    :param do_hydride: If True, ensure at least one of the ligands is a hydride
+    :param rough_opt: If True, do only a rough optimization
     :param nsamples: Number of samples to create in this pass, by default 100
     :param test: Use faster parameters for architector
+    :param maxCN: Maximum coordination number
     :return: Sample chemistries with architector_input to pass to generation script and
              the UIDS of the chemistries sampled up to this point by the sampler routine.
     """
     if history_uids is None:
-        history_uids = []
+        history_uids = set()
     total = 0
     out_rows = []
     with tqdm(total=nsamples) as pbar:
         while total < nsamples:
             sample_row, uid = sample(
-                metal_df=metal_df, ligands_df=ligands_df, test=test, maxCN=maxCN
+                metal_df=metal_df, ligands_df=ligands_df, test=test, maxCN=maxCN, add_hydride=do_hydride
             )
             if uid not in history_uids:
                 total += 1
-                history_uids.append(uid)
+                history_uids.add(uid)
                 out_rows.append(sample_row)
                 pbar.update(1)
     dfout = pd.DataFrame(out_rows)
@@ -299,6 +315,21 @@ def parse_args():
         type=str,
         help="Path to file storing previously used samples to avoid duplication",
     )
+    parser.add_argument(
+        "--include_hydride",
+        action='store_true',
+        help="Include hydride as a possible ligand",
+    )
+    parser.add_argument(
+        "--force_hydride",
+        action='store_true',
+        help="Ensure at least one of the ligands is a hydride",
+    )
+    parser.add_argument(
+        "--rough_opt",
+        action='store_true',
+        help="Do only a rough optimization",
+    )
 
     return parser.parse_args()
 
@@ -310,15 +341,17 @@ def main():
     ligands_df = pd.read_pickle("ligand_sample_dataframe.pkl")
     if args.history is not None:
         with open(args.history, "r") as fh:
-            history = eval(fh.read())
+            history = set(eval(fh.read()))
     else:
         history = None
 
     gen_metal_df = select_metals(metal_df)
-    ligands_df = select_ligands(ligands_df)
+    ligands_df = select_ligands(ligands_df, add_hydride=args.include_hydride)
     sdf, history = create_sample(
         metal_df=gen_metal_df,
         ligands_df=ligands_df,
+        do_hydride=args.force_hydride,
+        rough_opt=args.rough_opt,
         test=False,
         history_uids=history,
         nsamples=args.n_samples,
