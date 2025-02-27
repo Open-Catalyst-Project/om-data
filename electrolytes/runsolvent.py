@@ -104,12 +104,15 @@ def main(row_idx: int, job_dir: str, rpmd: bool, nbeads: int):
     :param job_dir: Directory where job files are stored and run
     """
     # Read the temperature from the CSV file
-    with open("elytes.csv", "r") as f:
+    csv_name = 'elytes.csv'
+    if rpmd:
+        csv_name = 'rpmd_' + csv_name
+    with open(csv_name, "r") as f:
         systems = list(csv.reader(f))
     temp = float(systems[row_idx][4])
 
     dt = 0.001  # ps
-    t_final = 1000 # ps, which is 500 ns
+    t_final = 1*1000 # ps, which is 1 ns
     frames = 1000
     runtime = int(t_final / dt)
 
@@ -117,7 +120,10 @@ def main(row_idx: int, job_dir: str, rpmd: bool, nbeads: int):
     os.chdir(os.path.join(job_dir, str(row_idx)))
 
     if not os.path.exists("solvent_init.pdb"):
-        print("Solvent does not exist. Not an error, but check if system is a pure moltent salt/ionic liquid.")
+        if systems[row_idx][3] != 'volume':
+            print("System specification is not volume-based (i.e. molarity), no need to generate solvent")
+        else:
+            print("Solvent does not exist. Not an error, but check if system is a pure molten salt/ionic liquid.")
         sys.exit()
     pdb = app.PDBFile("solvent_init.pdb")
     modeller = app.Modeller(pdb.topology, pdb.positions)

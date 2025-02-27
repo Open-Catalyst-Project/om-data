@@ -69,6 +69,19 @@ $SCHRODINGER/utilities/multisim -o final_config.cms -mode umbrella elyte-out.cms
 cd -
 ```
 
+### OpenMM-RPMD
+
+There is a Bash script that runs the workflow `runsim_omm_rpmd.sh` as follows 
+```
+./runsim_omm_rpmd.sh
+```
+This script will loop through the systems listed in `rpmd_elytes.csv`. For each system, we prepare its initial configuration and packing using moltemplate and packmol. Afterwards, we run an energy minimization step, followed by running the MD simulation. The default setting is to run 500 ns with 32 beads per atom. 
+
+This workflow for running OpenMM-RPMD uses Packmol to generate a system configuration and Moltemplate to generate force field files. However, the format generated is only compatible with LAMMPS. Thus, the next step is to convert the LAMMPS files to OpenMM-compatible files. 
+
+The input to the workflow is the `ff` directory, which contains the PDB and LT files of all electrolyte components, and elytes.csv, which specifies the molar/molal concentrations of the salt and ratios for solvent mixtures. 
+
+The workflow can be used to prepare concentrations that are volumetric vs. by-weight, we often need the density of the pure solvent to determine how many moles of salt we need to put in the simulation box. Thus, there is an intermediate step of generating the pure solvent system and running a short simulation to get density data. In the system list `rpmd_elytes.csv`, we don't have concentrations based on volume (yet!)
 
 ### OpenMM
 

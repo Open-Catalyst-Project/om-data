@@ -17,7 +17,7 @@ import numpy as np
 row_idx = int(sys.argv[1]) 
 
 # Load the CSV file containing systems to simulate
-with open("elytes.csv", "r") as f:
+with open("rpmd_elytes.csv", "r") as f:
     systems = list(csv.reader(f))
 
 # If solvent exists. We have may have pure molten salt or ionic liquid
@@ -62,4 +62,4 @@ if units == 'volume':
     mb.run_system_builder([],[],solv,Nmols,'solvent',str(row_idx),boxsize=boxsize,mdengine='openmm')
     lmm.prep_openmm_md("solvent",[],[],solv,Nmols,str(row_idx))
 else:
-    print("Solvent does not exist. Not an error, but check if system is a pure moltent salt/ionic liquid.")
+    print("System specification is not volume-based (i.e. molarity), no need to generate solvent")

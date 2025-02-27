@@ -102,13 +102,15 @@ def main(row_idx: int, job_dir: str, rpmd: bool, nbeads: int):
     :param job_dir: Directory where job files are stored and run
     """
     # Read the temperature from the CSV file
-    with open("elytes.csv", "r") as f:
+    csv_name = 'elytes.csv'
+    if rpmd:
+        csv_name = 'rpmd_' + csv_name
+    with open(csv_name, "r") as f:
         systems = list(csv.reader(f))
     temp = float(systems[row_idx][4])
 
     dt = 0.001  # ps
-    t_final = 500*1000 # ps, which is 500 ns
-    #t_final = 500*1000 # ps, which is 500 ns
+    t_final = 250*1000 # ps, which is 250 ns
     frames = 1000
     runtime = int(t_final / dt)
 
@@ -235,4 +237,9 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+    import time
+    start = time.time()
     main(args.row_idx, args.job_dir, args.rpmd, args.nbeads)
+    end = time.time()
+    print(end - start,"seconds")
+
