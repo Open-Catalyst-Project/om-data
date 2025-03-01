@@ -317,16 +317,9 @@ def filter_unique_structures(atoms_list):
 
         avg_force = max(avg_force, deltaE)
 
-        if avg_force > 0.6:
-            rmsd_cutoff = rmsd_cutoff_dict[0.6]
-        elif avg_force > 0.4:
-            rmsd_cutoff = rmsd_cutoff_dict[0.4]
-        elif avg_force > 0.3:
-            rmsd_cutoff = rmsd_cutoff_dict[0.3]
-        elif avg_force > 0.18:
-            rmsd_cutoff = rmsd_cutoff_dict[0.18]
-        else:
-            rmsd_cutoff = rmsd_cutoff_dict[0.0]
+        for cutoff, rmsd_cutoff in rmsd_cutoff_dict.items():
+            if avg_force > cutoff:
+                break
         
         # Compare against all previously accepted structures
         for ref_atoms in unique_structures:
