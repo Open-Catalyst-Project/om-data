@@ -152,12 +152,7 @@ def mechdb_pipeline(input_path, file_name, output_path):
 
     save_trajectory, traj_list=run_afir(reactant_gff_calc.mol,product_gff_calc.mol,macemp0calc, logfile)
 
-    starting_cutoff = 0.12
-    unique_structs = filter_unique_structures(save_trajectory,starting_cutoff)
-
-    while len(unique_structs) < 10 and starting_cutoff > 0.04:
-        starting_cutoff -= 0.01
-        unique_structs = filter_unique_structures(save_trajectory,starting_cutoff)
+    unique_structs = filter_unique_structures(save_trajectory)
 
     with open(logfile, 'a') as file1:
         file1.write(f"Found {len(unique_structs)} unique structures\n")
