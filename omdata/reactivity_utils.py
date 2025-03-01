@@ -298,6 +298,7 @@ def filter_unique_structures(atoms_list):
             max_energy = atoms.get_potential_energy()
             max_energy_structure = atoms
 
+    # Note that this dict must be ordered from largest to smallest keys
     rmsd_cutoff_dict = {0.6: 0.03, 0.4: 0.04, 0.3: 0.07, 0.18: 0.1, 0.0: 0.14}
 
     unique_structures = [max_energy_structure]  # Start with highest energy
