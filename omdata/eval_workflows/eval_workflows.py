@@ -1,7 +1,6 @@
 from typing import Optional, Union, List, Literal
 from pathlib import Path
 from ase.atoms import Atoms
-from quacc.recipes.orca.core import ase_relax_job
 from quacc.recipes.orca._base import prep_calculator
 import os
 import psutil
@@ -23,50 +22,36 @@ from omdata.orca.calc import (
 )
 
 @job
-def ase_freq_job(
+def ase_calc_freq_job(
+    calc,
     atoms: Atoms,
     charge: int = 0,
     spin_multiplicity: int = 1,
-    xc=ORCA_FUNCTIONAL,
-    basis=ORCA_BASIS,
     temperature=298.15,
     pressure=1.0,
     vib_kwargs=None,
-    orcasimpleinput=None,
-    orcablocks=None,
-    nprocs="max",
     copy_files=None,
     additional_fields=None,
 ):
     """
-    Carry out a vibrational frequency analysis via ASE utilities.
+    Carry out a vibrational frequency calculation + analysis via ASE utilities.
 
     Parameters
     ----------
+    calc
+        Calculator object
     atoms
         Atoms object
     charge
         Charge of the system.
     spin_multiplicity
         Multiplicity of the system.
-    xc
-        Exchange-correlation functional
-    basis
-        Basis set
     temperature
         Temperature in K
     pressure
         Pressure in bar
-    orcasimpleinput
-        List of `orcasimpleinput` swaps for the calculator. To remove entries
-        from the defaults, put a `#` in front of the name. Refer to the
-        [ase.calculators.orca.ORCA][] calculator for details on `orcasimpleinput`.
-    orcablocks
-        List of `orcablocks` swaps for the calculator. To remove entries
-        from the defaults, put a `#` in front of the name. Refer to the
-        [ase.calculators.orca.ORCA][] calculator for details on `orcablocks`.
-    nprocs
-        Number of processors to use. Defaults to the number of physical cores.
+    vib_kwargs
+        Dictionary of vibrational frequency analysis parameters
     copy_files
         Files to copy (and decompress) from source to the runtime directory.
     additional_fields
@@ -77,32 +62,154 @@ def ase_freq_job(
     RunSchema
         Dictionary of results
     """
-    nprocs = psutil.cpu_count(logical=False) if nprocs == "max" else nprocs
-    default_inputs = [xc, basis, "engrad"]
-    default_blocks = [f"%pal nprocs {nprocs} end"]
 
     vib_kwargs = vib_kwargs or {}
-
-    calc = prep_calculator(
-        charge=charge,
-        spin_multiplicity=spin_multiplicity,
-        default_inputs=default_inputs,
-        default_blocks=default_blocks,
-        input_swaps=orcasimpleinput,
-        block_swaps=orcablocks,
-    )
 
     vib = Runner(atoms, calc, copy_files=copy_files).run_vib(vib_kwargs=vib_kwargs)
     return VibSummarize(
         vib,
-        additional_fields={"name": "ORCA ASE Frequency and Thermo"}
+        charge_and_multiplicity=(charge, spin_multiplicity),
+        additional_fields={"name": "ASE Frequency and Thermo"}
         | (additional_fields or {}),
     ).vib_and_thermo(
         "ideal_gas", energy=0.0, temperature=temperature, pressure=pressure
     )
 
+@job
+def ase_calc_relax_job(
+    calc,
+    atoms: Atoms,
+    charge: int = 0,
+    spin_multiplicity: int = 1,
+    opt_defaults=None,
+    opt_params=None,
+    additional_fields=None,
+    copy_files=None,
+):
+    """
+    Carry out a relaxation calculation via ASE utilities.
 
-def double_ase_opt_freq_orca(
+    Parameters
+    ----------
+    atoms
+        Atoms object
+    charge
+        Charge of the system.
+    spin_multiplicity
+        Multiplicity of the system.
+    opt_defaults
+        Default arguments for the ASE optimizer.
+    opt_params
+        Dictionary of custom kwargs for [quacc.runners.ase.Runner.run_opt][]
+    additional_fields
+        Any additional fields to supply to the summarizer.
+    copy_files
+        Files to copy (and decompress) from source to the runtime directory.
+
+    Returns
+    -------
+    OptSchema
+        Dictionary of results
+    """
+
+    opt_flags = recursive_dict_merge(opt_defaults, opt_params)
+    dyn = Runner(atoms, calc, copy_files=copy_files).run_opt(**opt_flags)
+    return Summarize(
+        charge_and_multiplicity=(charge, spin_multiplicity),
+        additional_fields={"name": "ASE Relax"}
+        | (additional_fields or {}),
+    ).opt(dyn)
+
+
+def ase_calc_double_opt_freq(
+    calc1,
+    calc2,
+    atoms: Atoms,
+    initial_charge: int,
+    initial_spin_multiplicity: int,
+    new_charge: int,
+    new_spin_multiplicity: int,
+    opt_params=None,
+    outputdir=os.getcwd(),
+    json_name="test.json",
+    copy_files=None,
+    temperature=298.15,
+    pressure=1.0,
+    additional_fields=None,
+):
+    """
+    Args:
+        atoms (Atoms): ASE Atoms object
+        initial_charge (int): Initial charge state
+        initial_spin_multiplicity (int): Initial spin multiplicity
+        new_charge (int): New charge state
+        new_spin_multiplicity (int): New spin multiplicity
+        opt_params: Dictionary of optimizer parameters
+        copy_files: Files to copy to working directory
+        additional_fields (dict, optional): Additional fields to include in output
+        
+    Returns:
+        List[CalcSchema]: List containing results for both charge states
+    """
+    results = []
+
+    # First optimization at initial charge
+    opt1 = ase_calc_relax_job(
+        calc=calc1,
+        atoms=atoms,
+        charge=initial_charge,
+        spin_multiplicity=initial_spin_multiplicity,
+        opt_params=opt_params,
+        copy_files=copy_files,
+        additional_fields={"name": f"Opt Initial Charge {initial_charge} Spin {initial_spin_multiplicity}"} | (additional_fields or {}),
+    )
+    results.append(opt1)
+    
+    # Frequency calculation on optimized geometry at initial charge
+    freq1 = ase_calc_freq_job(
+        calc=calc1,
+        atoms=opt1["atoms"],
+        charge=initial_charge,
+        spin_multiplicity=initial_spin_multiplicity,
+        temperature=temperature,
+        pressure=pressure,
+        copy_files=copy_files,
+        additional_fields={"name": f"Freq Initial Charge {initial_charge} Spin {initial_spin_multiplicity}"} | (additional_fields or {}),
+    )
+    results.append(freq1)
+    
+    # Second optimization at new charge/spin
+    opt2 = ase_calc_relax_job(
+        calc=calc2,
+        atoms=opt1["atoms"],  # Start from optimized geometry
+        charge=new_charge,
+        spin_multiplicity=new_spin_multiplicity,
+        opt_params=opt_params,
+        copy_files=copy_files,
+        additional_fields={"name": f"Opt New Charge {new_charge} Spin {new_spin_multiplicity}"} | (additional_fields or {}),
+    )
+    results.append(opt2)
+    
+    # Frequency calculation on optimized geometry at new charge/spin
+    freq2 = ase_calc_freq_job(
+        calc=calc2,
+        atoms=opt2["atoms"],
+        charge=new_charge,
+        spin_multiplicity=new_spin_multiplicity,
+        temperature=temperature,
+        pressure=pressure,
+        copy_files=copy_files,
+        additional_fields={"name": f"Freq New Charge {new_charge} Spin {new_spin_multiplicity}"} | (additional_fields or {}),
+    )
+    results.append(freq2)
+
+    dumpfn(results, json_name)
+    
+    return results
+
+
+
+def orca_double_opt_freq(
     atoms: Atoms,
     initial_charge: int,
     initial_spin_multiplicity: int,
@@ -135,7 +242,12 @@ def double_ase_opt_freq_orca(
         orcablocks (List[str], optional): Additional ORCA block parameters
         nprocs (Union[int, "max"]): Number of processors to use
         opt_params: Dictionary of optimizer parameters
+        outputdir: Directory to save output
+        json_name: Name of the JSON file to save
+        vertical: Vertical calculation type
         copy_files: Files to copy to working directory
+        temperature: Temperature in K
+        pressure: Pressure in atm
         additional_fields (dict, optional): Additional fields to include in output
         
     Returns:
@@ -161,76 +273,39 @@ def double_ase_opt_freq_orca(
 
     nprocs = psutil.cpu_count(logical=False) if nprocs == "max" else nprocs
 
-    results = []
+    default_inputs = [xc, basis, "engrad"]
+    default_blocks = [f"%pal nprocs {nprocs} end"]
 
-    # First optimization at initial charge
-    opt1 = ase_relax_job(
-        atoms=atoms,
+    calc1 = prep_calculator(
         charge=initial_charge,
         spin_multiplicity=initial_spin_multiplicity,
-        xc=xc,
-        basis=basis,
-        orcasimpleinput=orcasimpleinput1,
-        orcablocks=orcablocks1,
-        opt_params=opt_params,
-        nprocs=nprocs,
-        copy_files=copy_files,
-        additional_fields={"name": f"ORCA Opt Initial Charge {initial_charge} Spin {initial_spin_multiplicity}"} | (additional_fields or {}),
+        default_inputs=default_inputs,
+        default_blocks=default_blocks,
+        input_swaps=orcasimpleinput1,
+        block_swaps=orcablocks1,
     )
-    results.append(opt1)
-    
-    # Frequency calculation on optimized geometry at initial charge
-    freq1 = ase_freq_job(
-        atoms=opt1["atoms"],
-        charge=initial_charge,
-        spin_multiplicity=initial_spin_multiplicity,
-        xc=xc,
-        basis=basis,
-        temperature=temperature,
-        pressure=pressure,
-        orcasimpleinput=orcasimpleinput1,
-        orcablocks=orcablocks1,
-        nprocs=nprocs,
-        copy_files=copy_files,
-        additional_fields={"name": f"ORCA Freq Initial Charge {initial_charge} Spin {initial_spin_multiplicity}"} | (additional_fields or {}),
-    )
-    results.append(freq1)
-    
-    # Second optimization at new charge/spin
-    opt2 = ase_relax_job(
-        atoms=opt1["atoms"],  # Start from optimized geometry
+
+    calc2 = prep_calculator(
         charge=new_charge,
         spin_multiplicity=new_spin_multiplicity,
-        xc=xc,
-        basis=basis,
-        orcasimpleinput=orcasimpleinput2,
-        orcablocks=orcablocks2,
-        opt_params=opt_params,
-        nprocs=nprocs,
-        copy_files=copy_files,
-        additional_fields={"name": f"ORCA Opt New Charge {new_charge} Spin {new_spin_multiplicity}"} | (additional_fields or {}),
+        default_inputs=default_inputs,
+        default_blocks=default_blocks,
+        input_swaps=orcasimpleinput2,
+        block_swaps=orcablocks2,
     )
-    results.append(opt2)
-    
-    # Frequency calculation on optimized geometry at new charge/spin
-    freq2 = ase_freq_job(
-        atoms=opt2["atoms"],
-        charge=new_charge,
-        spin_multiplicity=new_spin_multiplicity,
-        xc=xc,
-        basis=basis,
-        temperature=temperature,
-        pressure=pressure,
-        orcasimpleinput=orcasimpleinput2,
-        orcablocks=orcablocks2,
-        nprocs=nprocs,
-        copy_files=copy_files,
-        additional_fields={"name": f"ORCA Freq New Charge {new_charge} Spin {new_spin_multiplicity}"} | (additional_fields or {}),
-    )
-    results.append(freq2)
 
-    dumpfn(results, json_name)
-    
-    return results
-
-
+    return ase_calc_double_opt_freq(calc1,
+                                    calc2,
+                                    atoms,
+                                    initial_charge,
+                                    initial_spin_multiplicity,
+                                    new_charge,
+                                    new_spin_multiplicity,
+                                    opt_params,
+                                    outputdir,
+                                    json_name,
+                                    copy_files,
+                                    temperature,
+                                    pressure,
+                                    additional_fields
+                                    )
