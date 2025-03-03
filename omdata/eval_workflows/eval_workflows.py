@@ -223,7 +223,7 @@ def ase_calc_ts_freq_fb_qirc_freq(
     temperature=298.15,
     pressure=1.0,
     additional_fields=None,
-)
+):
     results = []
 
     ts_opt = ase_calc_relax_job(
