@@ -8,10 +8,12 @@ from quacc import job
 from quacc.runners.ase import Runner
 from quacc.schemas.ase import Summarize, VibSummarize
 from quacc.utils.dicts import recursive_dict_merge
+from quacc.atoms.core import perturb
 from monty.serialization import dumpfn
 
 from omdata.orca.calc import (
-    OPT_PARAMETERS,
+    EVAL_OPT_PARAMETERS,
+    EVAL_TS_PARAMETERS,
     ORCA_BASIS,
     ORCA_BLOCKS,
     NBO_FLAGS,
@@ -75,6 +77,7 @@ def ase_calc_freq_job(
         "ideal_gas", energy=0.0, temperature=temperature, pressure=pressure
     )
 
+
 @job
 def ase_calc_relax_job(
     calc,
@@ -129,7 +132,7 @@ def ase_calc_double_opt_freq(
     initial_spin_multiplicity: int,
     new_charge: int,
     new_spin_multiplicity: int,
-    opt_params=None,
+    opt_params=EVAL_OPT_PARAMETERS,
     outputdir=os.getcwd(),
     json_name="test.json",
     copy_files=None,
@@ -208,6 +211,94 @@ def ase_calc_double_opt_freq(
     return results
 
 
+def ase_calc_ts_freq_fb_qirc_freq(
+    calc,
+    atoms: Atoms,
+    charge: int,
+    spin_multiplicity: int,
+    perturb_magnitude=0.6,
+    outputdir=os.getcwd(),
+    json_name="test.json",
+    copy_files=None,
+    temperature=298.15,
+    pressure=1.0,
+    additional_fields=None,
+)
+    results = []
+
+    ts_opt = ase_calc_relax_job(
+        calc=calc,
+        atoms=atoms,
+        charge=charge,
+        spin_multiplicity=spin_multiplicity,
+        opt_params=EVAL_TS_PARAMETERS,
+        copy_files=copy_files,
+        additional_fields={"name": f"TS Opt"} | (additional_fields or {}),
+    )
+    results.append(ts_opt)
+
+    ts_freq = ase_calc_freq_job(
+        calc=calc,
+        atoms=ts_opt["atoms"],
+        charge=charge,
+        spin_multiplicity=spin_multiplicity,
+        temperature=temperature,
+        pressure=pressure,
+        copy_files=copy_files,
+        additional_fields={"name": f"TS Freq"} | (additional_fields or {}),
+    )
+    results.append(ts_freq)
+
+    forward_qirc_opt = ase_calc_relax_job(
+        calc=calc,
+        atoms=perturb(ts_opt["atoms"], ts_opt["results"]["imag_vib_freqs"][0], perturb_magnitude),
+        charge=charge,
+        spin_multiplicity=spin_multiplicity,
+        opt_params=EVAL_OPT_PARAMETERS,
+        copy_files=copy_files,
+        additional_fields={"name": f"Forward QIRC Opt"} | (additional_fields or {}),
+    )
+    results.append(forward_qirc_opt)
+
+    forward_qirc_freq = ase_calc_freq_job(
+        calc=calc,
+        atoms=forward_qirc_opt["atoms"],
+        charge=charge,
+        spin_multiplicity=spin_multiplicity,
+        temperature=temperature,
+        pressure=pressure,
+        copy_files=copy_files,
+        additional_fields={"name": f"Forward QIRC Freq"} | (additional_fields or {}),
+    )
+    results.append(forward_qirc_freq)
+
+    backward_qirc_opt = ase_calc_relax_job(
+        calc=calc,
+        atoms=perturb(ts_opt["atoms"], ts_opt["results"]["imag_vib_freqs"][0], perturb_magnitude * -1),
+        charge=charge,
+        spin_multiplicity=spin_multiplicity,
+        opt_params=EVAL_OPT_PARAMETERS,
+        copy_files=copy_files,
+        additional_fields={"name": f"Backward QIRC Opt"} | (additional_fields or {}),
+    )
+    results.append(backward_qirc_opt)
+
+    backward_qirc_freq = ase_calc_freq_job(
+        calc=calc,
+        atoms=backward_qirc_opt["atoms"],
+        charge=charge,
+        spin_multiplicity=spin_multiplicity,
+        temperature=temperature,
+        pressure=pressure,
+        copy_files=copy_files,
+        additional_fields={"name": f"Backward QIRC Freq"} | (additional_fields or {}),
+    )
+    results.append(backward_qirc_freq)
+
+    dumpfn(results, json_name)
+
+    return results
+
 
 def orca_double_opt_freq(
     atoms: Atoms,
@@ -220,7 +311,7 @@ def orca_double_opt_freq(
     orcasimpleinput=None,
     orcablocks=None,
     nprocs="max",
-    opt_params=None,
+    opt_params=EVAL_OPT_PARAMETERS,
     outputdir=os.getcwd(),
     json_name="test.json",
     vertical=Vertical.Default,
@@ -259,9 +350,6 @@ def orca_double_opt_freq(
     if orcablocks is None:
         orcablocks1 = ORCA_BLOCKS.copy()
         orcablocks2 = ORCA_BLOCKS.copy()
-    if opt_params is None:
-        opt_params = OPT_PARAMETERS.copy()
-        opt_params["fmax"] = 0.01
     if vertical == Vertical.MetalOrganics and initial_spin_multiplicity == 1:
         orcasimpleinput1.append("UKS")
         orcablocks1.append(get_symm_break_block(atoms, initial_charge))

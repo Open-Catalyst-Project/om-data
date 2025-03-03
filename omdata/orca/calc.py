@@ -134,6 +134,26 @@ OPT_PARAMETERS = {
         "internal": True,
     },
 }
+EVAL_OPT_PARAMETERS = {
+    "optimizer": Sella,
+    "store_intermediate_results": True,
+    "fmax": 0.01,
+    "max_steps": 100,
+    "optimizer_kwargs": {
+        "order": 0,
+        "internal": True,
+    },
+}
+EVAL_TS_PARAMETERS = {
+    "optimizer": Sella,
+    "store_intermediate_results": True,
+    "fmax": 0.01,
+    "max_steps": 200,
+    "optimizer_kwargs": {
+        "order": 1,
+        "internal": True,
+    },
+}
 
 
 class Vertical(Enum):
