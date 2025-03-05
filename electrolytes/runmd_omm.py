@@ -15,6 +15,7 @@ import string
 import numpy as np
 import sys  # Add this import if not already present
 import time  # Add this import at the top
+import glob
 
 # Add this class before TestSimulation class
 class RPMDPDBReporter(object):
@@ -193,7 +194,8 @@ class TestSimulation:
                  rpmd: bool = False,
                  num_replicas: int = 32,
                  t_final: float = 50.0,
-                 n_frames: int = 1000):
+                 n_frames: int = 1000,
+                 dt: float = 0.001):
         """Initialize the test simulation.
         
         Args:
@@ -208,6 +210,7 @@ class TestSimulation:
             num_replicas: Number of ring polymer beads for RPMD
             t_final: Final simulation time in picoseconds (default: 50.0 ps)
             n_frames: Number of frames to output (default: 1000)
+            dt: Timestep in picoseconds (default: 0.001 ps)
         """
         self.pdb_file = pdb_file
         self.xml_file = xml_file
@@ -220,11 +223,33 @@ class TestSimulation:
         self.num_replicas = num_replicas
         self.t_final = t_final
         self.n_frames = n_frames
-        self.dt = 0.001  # ps, same as rpmdsystem.py
+        self.dt = dt
         self.prod_steps = int(self.t_final / self.dt)  # Override prod_steps based on t_final
         
         # Create output directory
         os.makedirs(output_dir, exist_ok=True)
+        
+        # Checkpoint file path
+        self.checkpoint_file = os.path.join(output_dir, "md.chk")
+        
+    def _get_restart_count(self):
+        """Get the restart count based on existing PDB files."""
+        if self.rpmd:
+            pattern = os.path.join(self.output_dir, "rpmd_*_bead_1.pdb")
+            files = sorted(glob.glob(pattern))
+            if files:
+                # Extract the highest number from rpmd_X_bead_1.pdb files
+                numbers = [int(f.split('_')[-3]) for f in files]
+                return max(numbers) + 1
+            return 0
+        else:
+            pattern = os.path.join(self.output_dir, "trajectory_*.pdb")
+            files = sorted(glob.glob(pattern))
+            if files:
+                # Extract the highest number from trajectory_X.pdb files
+                numbers = [int(f.split('_')[-1].replace('.pdb', '')) for f in files]
+                return max(numbers) + 1
+            return 0
     
     def setup_system(self) -> Tuple[Simulation, bool]:
         """Set up the OpenMM simulation system.
@@ -235,33 +260,24 @@ class TestSimulation:
         print("\nLoading PDB file...")
         pdb = PDBFile(self.pdb_file)
         
-        # Print first few lines of PDB file
-        print("\nFirst few lines of PDB file:")
-        with open(self.pdb_file, 'r') as f:
-            first_lines = []
-            for line in f:
-                if line.startswith('CRYST1'):
-                    first_lines.append(line.strip())
-                if len(first_lines) < 5:
-                    print(line.strip())
-        
         # Get box vectors from the first CRYST1 record
         box_vectors = None
         use_pbc = False
-        for line in first_lines:
-            if line.startswith('CRYST1'):
-                # Parse the first CRYST1 record we find
-                fields = line.split()
-                if len(fields) >= 7:
-                    a, b, c = float(fields[1]), float(fields[2]), float(fields[3])
-                    alpha, beta, gamma = float(fields[4]), float(fields[5]), float(fields[6])
-                    # Convert to nanometers for OpenMM
-                    a, b, c = a/10, b/10, c/10  # Convert Angstroms to nm
-                    box_vectors = (Vec3(a, 0, 0), Vec3(0, b, 0), Vec3(0, 0, c))
-                    use_pbc = True
-                    print(f"\nUsing box vectors from first CRYST1 record:")
-                    print(f"Box dimensions: {a:.3f} x {b:.3f} x {c:.3f} nm")
-                break
+        with open(self.pdb_file, 'r') as f:
+            for line in f:
+                if line.startswith('CRYST1'):
+                    # Parse the first CRYST1 record we find
+                    fields = line.split()
+                    if len(fields) >= 7:
+                        a, b, c = float(fields[1]), float(fields[2]), float(fields[3])
+                        alpha, beta, gamma = float(fields[4]), float(fields[5]), float(fields[6])
+                        # Convert to nanometers for OpenMM
+                        a, b, c = a/10, b/10, c/10  # Convert Angstroms to nm
+                        box_vectors = (Vec3(a, 0, 0), Vec3(0, b, 0), Vec3(0, 0, c))
+                        use_pbc = True
+                        print(f"\nUsing box vectors from first CRYST1 record:")
+                        print(f"Box dimensions: {a:.3f} x {b:.3f} x {c:.3f} nm")
+                    break
         
         if not use_pbc:
             print("No valid CRYST1 record found - using NoCutoff method")
@@ -302,28 +318,28 @@ class TestSimulation:
             switchDistance=0.9*rdist
         )
         
-        # Print and set force groups
-        print("\nForce groups:")
-        for i, force in enumerate(system.getForces()):
-            force_type = force.__class__.__name__
-            print(f"Force {i}: {force_type}")
-            
-            if force_type == "NonbondedForce":
-                # Split NonbondedForce:
-                # Direct space (short-range) -> group 1 (6 beads)
-                # Reciprocal space (long-range) -> group 2 (1 bead)
-                force.setReciprocalSpaceForceGroup(2)  # PME reciprocal space
-                force.setForceGroup(1)                 # Direct space
-                print(f"  -> Direct space set to group 1 (contracted to 6 beads)")
-                print(f"  -> Reciprocal space set to group 2 (contracted to 1 bead)")
-            else:
-                # All other forces (bonded) use full number of beads
-                force.setForceGroup(0)
-                print(f"  -> Set to group 0 (using all {self.num_replicas} beads)")
-        
         if self.rpmd:
             print(f"\nSetting up RPMD simulation with {self.num_replicas} beads...")
             
+             # Print and set force groups
+            print("\nForce groups:")
+            for i, force in enumerate(system.getForces()):
+                force_type = force.__class__.__name__
+                print(f"Force {i}: {force_type}")
+                
+                if force_type == "NonbondedForce":
+                    # Split NonbondedForce:
+                    # Direct space (short-range) -> group 1 (6 beads)
+                    # Reciprocal space (long-range) -> group 2 (1 bead)
+                    force.setReciprocalSpaceForceGroup(2)  # PME reciprocal space
+                    force.setForceGroup(1)                 # Direct space
+                    print(f"  -> Direct space set to group 1 (contracted to 3 beads)")
+                    print(f"  -> Reciprocal space set to group 2 (contracted to 1 bead)")
+                else:
+                    # All other forces (bonded) use full number of beads
+                    force.setForceGroup(0)
+                    print(f"  -> Set to group 0 (using all {self.num_replicas} beads)")
+                    
             # First minimize with a temporary context
             temp_integrator = LangevinMiddleIntegrator(
             self.temperature,
@@ -334,17 +350,9 @@ class TestSimulation:
             temp_context.setPositions(modeller.positions)
             
             # Aggressive energy minimization
-            print("\nPerforming aggressive energy minimization...")
-            print("Initial minimization stage...")
-            LocalEnergyMinimizer.minimize(temp_context, 100.0*kilojoules_per_mole/nanometer, 5000)
-            
-            print("Fine-tuning stage...")
-            LocalEnergyMinimizer.minimize(temp_context, 10.0*kilojoules_per_mole/nanometer, 5000)
-            
-            print("Final polishing stage...")
-            LocalEnergyMinimizer.minimize(temp_context, 1.0*kilojoules_per_mole/nanometer, 5000)
-            
-            # Get minimized positions
+            print("\nPerforming energy minimization...")
+            LocalEnergyMinimizer.minimize(temp_context, 1.0*kilojoules_per_mole/nanometer, 15000)
+                        # Get minimized positions
             state = temp_context.getState(getPositions=True, getEnergy=True)
             minimized_positions = state.getPositions()
             print(f"Final potential energy: {state.getPotentialEnergy()}")
@@ -368,9 +376,16 @@ class TestSimulation:
             # Create RPMD simulation
             simulation = Simulation(modeller.topology, system, rpmd_integrator)
             
-            # Set minimized positions for all beads
-            for copy in range(self.num_replicas):
-                rpmd_integrator.setPositions(copy, minimized_positions)
+            # Check for checkpoint file
+            is_restart = os.path.exists(self.checkpoint_file)
+            if is_restart:
+                print(f"\nFound checkpoint file: {self.checkpoint_file}")
+                print("Loading simulation state from checkpoint...")
+                simulation.loadCheckpoint(self.checkpoint_file)
+            else:
+                # Set minimized positions for all beads
+                for copy in range(self.num_replicas):
+                    rpmd_integrator.setPositions(copy, minimized_positions)
             
         else:
             # Regular MD setup
@@ -384,23 +399,22 @@ class TestSimulation:
             
             simulation = Simulation(modeller.topology, system, integrator)
             
-            # Set positions and minimize
-            simulation.context.setPositions(modeller.positions)
-            
-            print("\nPerforming aggressive energy minimization...")
-            print("Initial minimization stage...")
-            simulation.minimizeEnergy(maxIterations=5000, tolerance=100.0*kilojoule/mole/nanometer)
-            
-            print("Fine-tuning stage...")
-            simulation.minimizeEnergy(maxIterations=5000, tolerance=10.0*kilojoule/mole/nanometer)
-            
-            print("Final polishing stage...")
-            simulation.minimizeEnergy(maxIterations=5000, tolerance=1.0*kilojoule/mole/nanometer)
-            
-            state = simulation.context.getState(getEnergy=True)
-            print(f"Final potential energy: {state.getPotentialEnergy()}")
+            # Check for checkpoint file
+            is_restart = os.path.exists(self.checkpoint_file)
+            if is_restart:
+                print(f"\nFound checkpoint file: {self.checkpoint_file}")
+                print("Loading simulation state from checkpoint...")
+                simulation.loadCheckpoint(self.checkpoint_file)
+            else:
+                # Set positions and minimize
+                simulation.context.setPositions(modeller.positions)
+                
+                print("\nPerforming energy minimization...")
+                simulation.minimizeEnergy(maxIterations=15000, tolerance=1.0*kilojoule/mole/nanometer)
+                state = simulation.context.getState(getEnergy=True)
+                print(f"Final potential energy: {state.getPotentialEnergy()}")
 
-        return simulation, False
+        return simulation, is_restart
     
     def run(self) -> None:
         try:
@@ -415,11 +429,14 @@ class TestSimulation:
             print(f"Total steps: {self.prod_steps}")
             print(f"Output frequency: every {report_interval} steps")
             
+            # Get restart count for PDB file naming
+            restart_count = self._get_restart_count()
+            
             if self.rpmd:
                 # RPMD-specific trajectory reporter
                 simulation.reporters.append(
                     RPMDPDBReporter(
-                        os.path.join(self.output_dir, "rpmd"),
+                        os.path.join(self.output_dir, f"rpmd_{restart_count}"),
                         report_interval,
                         enforcePeriodicBox=True,
                         nbeads=self.num_replicas
@@ -429,7 +446,7 @@ class TestSimulation:
                 # Regular trajectory reporter
                 simulation.reporters.append(
                     PDBReporter(
-                        os.path.join(self.output_dir, "trajectory.pdb"),
+                        os.path.join(self.output_dir, f"trajectory_{restart_count}.pdb"),
                         report_interval,
                         enforcePeriodicBox=True
                     )
@@ -459,7 +476,16 @@ class TestSimulation:
                     volume=True,
                     density=True,
                     speed=True,
-                    separator=","
+                    separator=",",
+                    append=is_restart
+                )
+            )
+            
+            # Add checkpoint reporter
+            simulation.reporters.append(
+                CheckpointReporter(
+                    self.checkpoint_file,
+                    report_interval
                 )
             )
             
@@ -470,15 +496,80 @@ class TestSimulation:
             print(f"\nError during simulation: {str(e)}")
             raise
 
+def run_simulation(pdb_file: str,
+                  xml_file: str,
+                  output_dir: Optional[str] = None,  # Make output_dir optional
+                  temperature: float = 300.0,
+                  pressure: float = 1.0,
+                  equil_steps: int = 5000,
+                  prod_steps: int = 10000,
+                  rpmd: bool = False,
+                  num_replicas: int = 32,
+                  t_final: float = 50.0,
+                  n_frames: int = 1000,
+                  dt: float = 0.001) -> int:
+    """Run a molecular dynamics simulation with OpenMM.
+    
+    Args:
+        pdb_file: Path to input PDB file
+        xml_file: Path to force field XML file
+        output_dir: Directory for simulation outputs (if None, uses ./sim_output)
+        temperature: Temperature in Kelvin
+        pressure: Pressure in bar
+        equil_steps: Number of equilibration steps
+        prod_steps: Number of production steps
+        rpmd: Whether to run RPMD simulation
+        num_replicas: Number of ring polymer beads for RPMD
+        t_final: Final simulation time in picoseconds
+        n_frames: Number of frames to output
+        dt: Timestep in picoseconds
+        
+    Returns:
+        int: 0 for success, 1 for failure
+    """
+    try:
+        # Use default output directory if none specified
+        if output_dir is None:
+            output_dir = "./sim_output"
+            
+        simulation = TestSimulation(
+            pdb_file,
+            xml_file,
+            output_dir,
+            temperature,
+            pressure,
+            equil_steps,
+            prod_steps,
+            rpmd=rpmd,
+            num_replicas=num_replicas,
+            t_final=t_final,
+            n_frames=n_frames,
+            dt=dt
+        )
+        simulation.run()
+        return 0
+        
+    except Exception as e:
+        print(f"\nError during simulation: {str(e)}")
+        print("\nDebug information:")
+        print(f"PDB file exists: {os.path.exists(pdb_file)}")
+        print(f"XML file exists: {os.path.exists(xml_file)}")
+        if os.path.exists(xml_file):
+            print("\nFirst few lines of XML file:")
+            with open(xml_file, 'r') as f:
+                print(''.join(f.readlines()[:10]))
+        return 1
+
 def main():
     parser = argparse.ArgumentParser(description='Run test MD simulation with OpenMM')
     parser.add_argument('--pdb', required=True, help='Path to PDB file')
     parser.add_argument('--xml', required=True, help='Path to XML force field file')
-    parser.add_argument('--output-dir', default='./sim_output', help='Output directory')
+    parser.add_argument('--output-dir', help='Output directory (default: ./sim_output)')  # Make optional
     parser.add_argument('--temperature', type=float, default=300.0, help='Temperature in Kelvin')
     parser.add_argument('--pressure', type=float, default=1.0, help='Pressure in bar')
     parser.add_argument('--eq-steps', type=int, default=5000, help='Number of equilibration steps')
     parser.add_argument('--prod-steps', type=int, default=10000, help='Number of production steps')
+    parser.add_argument('--dt', type=float, default=0.001, help='Timestep in picoseconds (default: 0.001 ps)')
     
     # Add RPMD-related arguments
     parser.add_argument('--rpmd', action='store_true', 
@@ -493,34 +584,20 @@ def main():
     
     args = parser.parse_args()
     
-    try:
-        simulation = TestSimulation(
-            args.pdb,
-            args.xml,
-            args.output_dir,
-            args.temperature,
-            args.pressure,
-            args.eq_steps,
-            args.prod_steps,
-            rpmd=args.rpmd,
-            num_replicas=args.num_replicas,
-            t_final=args.t_final,
-            n_frames=args.n_frames
-        )
-        simulation.run()
-        
-    except Exception as e:
-        print(f"\nError during simulation: {str(e)}")
-        print("\nDebug information:")
-        print(f"PDB file exists: {os.path.exists(args.pdb)}")
-        print(f"XML file exists: {os.path.exists(args.xml)}")
-        if os.path.exists(args.xml):
-            print("\nFirst few lines of XML file:")
-            with open(args.xml, 'r') as f:
-                print(''.join(f.readlines()[:10]))
-        return 1
-    
-    return 0
+    return run_simulation(
+        args.pdb,
+        args.xml,
+        args.output_dir,  # This will be None if not specified
+        args.temperature,
+        args.pressure,
+        args.eq_steps,
+        args.prod_steps,
+        rpmd=args.rpmd,
+        num_replicas=args.num_replicas,
+        t_final=args.t_final,
+        n_frames=args.n_frames,
+        dt=args.dt
+    )
 
 if __name__ == "__main__":
     main() 

@@ -11,9 +11,7 @@ The script supports:
 
 from abc import ABC, abstractmethod
 import numpy as np
-import sys
 import pandas as pd
-import packmol
 from typing import List, Tuple, Dict, Optional
 from pulp import LpProblem, LpVariable, lpSum, LpMinimize
 import molbuilder as mb
@@ -21,20 +19,12 @@ import argparse
 import textwrap
 from pathlib import Path
 import xml.etree.ElementTree as ET
-import contextlib
 import subprocess
 import os
-import shutil
-import mdtraj as md
-from openmm.app import PDBFile
-from openmm.vec3 import Vec3
-import copy
-from pdbfixer import PDBFixer
 import string
 import re
 import MDAnalysis as mda
 from molbuilder import calculate_mw
-import tempfile
 import json
 
 class SystemBuilder(ABC):
@@ -174,7 +164,7 @@ class SystemBuilder(ABC):
             molecule_bonds.append(bonds)
 
         # Generate unique residue names for all species
-        molres = generate_molres(len(all_species))
+        molres = self.generate_molres(len(all_species))
         
         # Pack molecules with specified density
         prefix = 'solvent' if isinstance(self, SolventSystem) else 'system'
@@ -227,8 +217,9 @@ class SystemBuilder(ABC):
         # Convert molecule numbers to integers
         self.n_molecules = np.round(self.n_molecules).astype(int)
 
-        # Write packmol input file
-        with open('pack.inp', 'w') as f:
+        # Write packmol input file in the output directory
+        packmol_input = os.path.join(self.output_dir, 'pack.inp')
+        with open(packmol_input, 'w') as f:
             f.write(f'tolerance 2.0\n')
             f.write(f'filetype pdb\n')
             f.write(f'output {self.output_pdb}\n\n')
@@ -240,15 +231,20 @@ class SystemBuilder(ABC):
                 f.write(f'  inside box 0. 0. 0. {self.box_size} {self.box_size} {self.box_size}\n')
                 f.write('end structure\n\n')
                 
-        # Run packmol
-        subprocess.run(['packmol < pack.inp'], shell=True, check=True)
+        # Run packmol with input file from output directory
+        try:
+            subprocess.run([f'packmol < {packmol_input}'], shell=True, check=True)
+        finally:
+            # Clean up temporary file
+            if os.path.exists(packmol_input):
+                os.remove(packmol_input)
         
         # Load the PACKMOL-generated structure instead of individual files
         print("\nLoading packed structure:")
         u = mda.Universe(self.output_pdb)
         
         # Update residue names and chain IDs
-        molres = generate_molres(len(self.n_molecules))  # Get list of residue names
+        molres = self.generate_molres(len(self.n_molecules))  # Get list of residue names
         
         # Create mapping of molecule counts to residue names
         residue_mapping = []
@@ -368,14 +364,14 @@ class SystemBuilder(ABC):
                 content = f.read()
             
             # Replace residue name with the correct one (AAA, BBB, etc.)
-            res_name = generate_molres(len(all_species))[i]
+            res_name = self.generate_molres(len(all_species))[i]
             content = re.sub(r'<Residue name="[A-Z]{3}">', f'<Residue name="{res_name}">', content)
             xml_contents.append(content)
             
         # Combine force fields with appropriate name based on system type
         output_name = "solvent.xml" if isinstance(self, SolventSystem) else "system.xml"
         output_xml = os.path.join(self.output_dir, output_name)
-        combine_xml_forcefields(xml_contents, output_xml)
+        self.combine_xml_forcefields(xml_contents, output_xml)
 
     def _write_metadata(self) -> None:
         """Write metadata about the system to a JSON file.
@@ -384,6 +380,116 @@ class SystemBuilder(ABC):
         system-specific metadata.
         """
         pass
+
+    @staticmethod
+    def combine_xml_forcefields(xml_contents, output_file):
+        """Combine multiple OpenMM XML force field files.
+        
+        Args:
+            xml_contents (list): List of XML content strings to combine
+            output_file (str): Path to output combined XML file
+        """
+        # Parse the first XML file to get the base structure
+        root = ET.fromstring(xml_contents[0])
+        
+        # For each additional XML file
+        for content in xml_contents[1:]:
+            other = ET.fromstring(content)
+            
+            # Merge AtomTypes
+            atom_types = root.find('AtomTypes')
+            if atom_types is not None and other.find('AtomTypes') is not None:
+                for atom in other.find('AtomTypes'):
+                    # Check if this atom type already exists
+                    if not any(a.get('name') == atom.get('name') for a in atom_types):
+                        atom_types.append(atom)
+            
+            # Merge Residues
+            residues = root.find('Residues')
+            if residues is not None and other.find('Residues') is not None:
+                for residue in other.find('Residues'):
+                    residues.append(residue)
+            
+            # Helper function to merge a force field section
+            def merge_force_field(tag_name):
+                force = root.find(tag_name)
+                other_force = other.find(tag_name)
+                if other_force is not None:
+                    if force is None:
+                        # Create force field if it doesn't exist
+                        force = ET.SubElement(root, tag_name)
+                        # Copy all attributes from the other force field
+                        for attr, value in other_force.attrib.items():
+                            force.set(attr, value)
+                    # Copy all child elements
+                    for element in other_force:
+                        force.append(element)
+            
+            # Merge standard force fields
+            standard_forces = [
+                'HarmonicBondForce',
+                'HarmonicAngleForce',
+                'PeriodicTorsionForce',
+                'NonbondedForce',
+                'CustomTorsionForce',
+                'CustomBondForce',
+                'CustomAngleForce',
+                'CustomNonbondedForce'
+            ]
+            
+            for force_name in standard_forces:
+                merge_force_field(force_name)
+            
+            # Check for and merge any other force fields that might be present
+            for child in other:
+                if child.tag not in ['AtomTypes', 'Residues'] + standard_forces:
+                    # If this is a new type of force field, check if it exists in root
+                    existing = root.find(child.tag)
+                    if existing is None:
+                        # If it doesn't exist, create it and copy all attributes and elements
+                        new_force = ET.SubElement(root, child.tag)
+                        # Copy attributes
+                        for attr, value in child.attrib.items():
+                            new_force.set(attr, value)
+                        # Copy child elements
+                        for element in child:
+                            new_force.append(element)
+                    else:
+                        # If it exists, copy attributes if they don't exist
+                        for attr, value in child.attrib.items():
+                            if attr not in existing.attrib:
+                                existing.set(attr, value)
+                        # And append all elements
+                        for element in child:
+                            existing.append(element)
+        
+        # Write the combined force field
+        tree = ET.ElementTree(root)
+        tree.write(output_file, encoding='utf-8', xml_declaration=True)
+
+    @staticmethod
+    def generate_molres(length):
+        """Generate systematic residue names (AAA, BBB, etc.) for the given number of molecules.
+        
+        Args:
+            length (int): Number of residue names to generate
+            
+        Returns:
+            list: List of 3-letter residue names
+        """
+        molres = []
+        alphabet = string.ascii_uppercase
+        num_alphabet = len(alphabet)
+        
+        for i in range(length):
+            if i < num_alphabet:
+                letter = alphabet[i]
+                molres.append(letter * 3)
+            else:
+                number = i - num_alphabet + 1
+                molres.append(str(number) * 3)
+        
+        return molres
 
 class SolventSystem(SystemBuilder):
     """Class for generating pure solvent systems."""
@@ -509,7 +615,7 @@ class SolventSystem(SystemBuilder):
             charge_mappings[species] = atom_charge_map
         
         # Create mapping between residue names and species
-        residue_to_species = dict(zip(generate_molres(len(self.solvents)), self.solvents))
+        residue_to_species = dict(zip(self.generate_molres(len(self.solvents)), self.solvents))
         
         # Now read through the system PDB and assign charges
         partial_charges = []
@@ -527,7 +633,7 @@ class SolventSystem(SystemBuilder):
         metadata = {
             "system_type": "pure_solvent",
             "species": self.solvents,
-            "residue_names": generate_molres(len(self.solvents)),
+            "residue_names": self.generate_molres(len(self.solvents)),
             "solute_or_solvent": ["solvent"] * len(self.solvents),  # All species are solvents
             "composition": [int(n) for n in self.n_molecules],  # Convert np.int64 to int
             "molar_ratios": [float(r) for r in self.solvent_ratios],  # Convert np.float64 to float
@@ -618,7 +724,7 @@ class ElectrolyteSystem(SystemBuilder):
         
         # Create mapping between residue names and species
         all_species = self.cations + self.anions + self.solvents
-        residue_to_species = dict(zip(generate_molres(len(all_species)), all_species))
+        residue_to_species = dict(zip(self.generate_molres(len(all_species)), all_species))
         
         # Now read through the system PDB and assign charges
         partial_charges = []
@@ -645,7 +751,7 @@ class ElectrolyteSystem(SystemBuilder):
             "cations": self.cations,
             "anions": self.anions,
             "solvents": self.solvents,
-            "residue_names": generate_molres(len(self.cations + self.anions + self.solvents)),
+            "residue_names": self.generate_molres(len(self.cations + self.anions + self.solvents)),
             "solute_or_solvent": solute_or_solvent,
             "composition": [int(n) for n in self.n_molecules],  # Convert np.int64 to int
             "concentration_units": self.units,
@@ -941,8 +1047,18 @@ def generate_electrolyte_system(cations: List[str], anions: List[str],
     # Generate the system
     system.generate_system()
 
-def process_csv_row(row):
-    """Process a single row from the CSV file."""
+def process_csv_row(row, row_idx, density=None, output_dir=None):
+    """Process a single row from the CSV file.
+    
+    Args:
+        row: Row from CSV file
+        row_idx: Index of the row being processed
+        density: Optional system density in g/mL (defaults to 0.5 if None)
+        output_dir: Optional output directory (defaults to str(row_idx))
+    """
+    # Use row index as output directory if not specified
+    output_dir = output_dir if output_dir is not None else str(row_idx)
+    
     # Extract cations and their concentrations
     cations = []
     salt_concentrations = []
@@ -994,219 +1110,207 @@ def process_csv_row(row):
         'solvent': solvent_ratios
     }
     
-    # Create the system
+    # Create the system with configurable density and output directory
     system = ElectrolyteSystem(
         cations=cations,
         anions=anions,
         solvents=solvents,
         concentrations=concentrations,
         units=row['units'],
-        output_dir='output',
+        output_dir=output_dir,  # Use the output_dir parameter
         target_atoms=5000,
-        density=1.0
+        density=density
     )
 
-    # Generate the system using the correct method name
     system.generate_system()
 
 def handle_csv_mode(args):
     """Handle CSV mode by processing specified row."""
     df = pd.read_csv(args.file)
     row = df.iloc[args.row]
-    process_csv_row(row)
+    process_csv_row(row, args.row, density=args.density, output_dir=args.output)
 
-def main():
-    """Main function to parse command line arguments and generate systems."""
-    parser = argparse.ArgumentParser(
-        description='Generate molecular systems (pure solvents or electrolytes)',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=textwrap.dedent('''
-            Examples:
-                # Generate from CSV file:
-                python system_generator.py csv --file rpmd_elytes.csv --row 0
-                
-                # Generate pure solvent system:
-                python system_generator.py solvent --solvents H2O CH3OH --ratios 0.7 0.3 --output solvent_test
-                
-                # Generate electrolyte system:
-                python system_generator.py electrolyte \\
-                    --cations "Li+" "Na+" \\
-                    --anions "Cl-" \\
-                    --solvents H2O \\
-                    --salt-conc 0.5 0.3 \\
-                    --solvent-ratios 1.0 \\
-                    --units mass \\
-                    --output electrolyte_test
-            '''))
-
-    subparsers = parser.add_subparsers(dest='mode', required=True,
-                                      help='Operation mode')
-
-    # CSV subcommand
-    csv_parser = subparsers.add_parser('csv', help='Generate system from CSV file')
-    csv_parser.add_argument('--file', type=str, default='rpmd_elytes.csv',
-                           help='CSV file containing system specifications')
-    csv_parser.add_argument('--row', type=int, required=True,
-                           help='Row index in CSV file')
-
-    # Solvent subcommand
-    solvent_parser = subparsers.add_parser('solvent', help='Generate pure solvent system')
-    solvent_parser.add_argument('--solvents', nargs='+', required=True,
-                               help='List of solvent species')
-    solvent_parser.add_argument('--ratios', nargs='+', type=float, required=True,
-                               help='Molar ratios of solvents')
-    solvent_parser.add_argument('--output', type=str, required=True,
-                               help='Output file prefix')
-    solvent_parser.add_argument('--target-atoms', type=int, default=5000,
-                               help='Target number of atoms (default: 5000)')
-    solvent_parser.add_argument('--density', type=float, default=None,
-                               help='System density in g/mL (default: 0.5)')
-
-    # Electrolyte subcommand
-    elyte_parser = subparsers.add_parser('electrolyte', help='Generate electrolyte system')
-    elyte_parser.add_argument('--cations', nargs='+', required=True,
-                             help='List of cation species')
-    elyte_parser.add_argument('--anions', nargs='+', required=True,
-                             help='List of anion species')
-    elyte_parser.add_argument('--solvents', nargs='+', required=True,
-                             help='List of solvent species')
-    elyte_parser.add_argument('--salt-conc', nargs='+', type=float, required=True,
-                             help='Salt concentrations')
-    elyte_parser.add_argument('--solvent-ratios', nargs='+', type=float, required=True,
-                             help='Molar ratios of solvents')
-    elyte_parser.add_argument('--units', choices=['mass', 'volume', 'number'], required=True,
-                             help='Units for salt concentration')
-    elyte_parser.add_argument('--output', type=str, required=True,
-                             help='Output file prefix')
-    elyte_parser.add_argument('--target-atoms', type=int, default=5000,
-                             help='Target number of atoms (default: 5000)')
-    elyte_parser.add_argument('--density', type=float, default=None,
-                               help='System density in g/mL (default: 0.5)')
-
-    args = parser.parse_args()
+def main(mode=None, **kwargs):
+    """Main function to generate molecular systems.
     
+    Args:
+        mode: 'csv', 'solvent', or 'electrolyte'
+        **kwargs: Arguments specific to each mode:
+            CSV mode:
+                file: str - Path to CSV file
+                row: int - Row index to process
+                density: float - System density in g/mL (optional)
+            
+            Solvent mode:
+                solvents: List[str] - List of solvent species
+                ratios: List[float] - Molar ratios of solvents
+                output: str - Output directory
+                target_atoms: int - Target number of atoms (default: 5000)
+                density: float - System density in g/mL (optional)
+            
+            Electrolyte mode:
+                cations: List[str] - List of cation species
+                anions: List[str] - List of anion species
+                solvents: List[str] - List of solvent species
+                salt_conc: List[float] - Salt concentrations
+                solvent_ratios: List[float] - Molar ratios of solvents
+                units: str - Concentration units ('mass', 'volume', or 'number')
+                output: str - Output directory
+                target_atoms: int - Target number of atoms (default: 5000)
+                density: float - System density in g/mL (optional)
+    """
+    # If no arguments provided, use command line
+    if mode is None:
+        parser = argparse.ArgumentParser(
+            description='Generate molecular systems (pure solvents or electrolytes)',
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            epilog=textwrap.dedent('''
+                Examples:
+                    # Generate from CSV file:
+                    python system_generator.py csv --file rpmd_elytes.csv --row 0
+                    
+                    # Generate pure solvent system:
+                    python system_generator.py solvent --solvents H2O CH3OH --ratios 0.7 0.3 --output solvent_test
+                    
+                    # Generate electrolyte system:
+                    python system_generator.py electrolyte \\
+                        --cations "Li+" "Na+" \\
+                        --anions "Cl-" \\
+                        --solvents H2O \\
+                        --salt-conc 0.5 0.3 \\
+                        --solvent-ratios 1.0 \\
+                        --units mass \\
+                        --output electrolyte_test
+                '''))
+
+        subparsers = parser.add_subparsers(dest='mode', required=True,
+                                          help='Operation mode')
+
+        # CSV subcommand
+        csv_parser = subparsers.add_parser('csv', help='Generate system from CSV file')
+        csv_parser.add_argument('--file', type=str, default='rpmd_elytes.csv',
+                               help='CSV file containing system specifications')
+        csv_parser.add_argument('--row', type=int, required=True,
+                               help='Row index in CSV file')
+        csv_parser.add_argument('--density', type=float, default=None,
+                               help='System density in g/mL (default: 0.5)')
+        csv_parser.add_argument('--output', type=str, default=None,
+                               help='Output directory (default: row number)')
+
+        # Solvent subcommand
+        solvent_parser = subparsers.add_parser('solvent', help='Generate pure solvent system')
+        solvent_parser.add_argument('--solvents', nargs='+', required=True,
+                                   help='List of solvent species')
+        solvent_parser.add_argument('--ratios', nargs='+', type=float, required=True,
+                                   help='Molar ratios of solvents')
+        solvent_parser.add_argument('--output', type=str, required=True,
+                                   help='Output file prefix')
+        solvent_parser.add_argument('--target-atoms', type=int, default=5000,
+                                   help='Target number of atoms (default: 5000)')
+        solvent_parser.add_argument('--density', type=float, default=None,
+                                   help='System density in g/mL (default: 0.5)')
+
+        # Electrolyte subcommand
+        elyte_parser = subparsers.add_parser('electrolyte', help='Generate electrolyte system')
+        elyte_parser.add_argument('--cations', nargs='+', required=True,
+                                 help='List of cation species')
+        elyte_parser.add_argument('--anions', nargs='+', required=True,
+                                 help='List of anion species')
+        elyte_parser.add_argument('--solvents', nargs='+', required=True,
+                                 help='List of solvent species')
+        elyte_parser.add_argument('--salt-conc', nargs='+', type=float, required=True,
+                                 help='Salt concentrations')
+        elyte_parser.add_argument('--solvent-ratios', nargs='+', type=float, required=True,
+                                 help='Molar ratios of solvents')
+        elyte_parser.add_argument('--units', choices=['mass', 'volume', 'number'], required=True,
+                                 help='Units for salt concentration')
+        elyte_parser.add_argument('--output', type=str, required=True,
+                                 help='Output file prefix')
+        elyte_parser.add_argument('--target-atoms', type=int, default=5000,
+                                 help='Target number of atoms (default: 5000)')
+        elyte_parser.add_argument('--density', type=float, default=None,
+                                   help='System density in g/mL (default: 0.5)')
+
+        args = parser.parse_args()
+        
+        # Process arguments based on mode
+        if args.mode == 'csv':
+            handle_csv_mode(args)
+        elif args.mode == 'solvent':
+            if len(args.solvents) != len(args.ratios):
+                parser.error("Number of solvents must match number of ratios")
+            generate_solvent_system(args.solvents, args.ratios, args.output, 
+                                  args.target_atoms, args.density)
+        elif args.mode == 'electrolyte':
+            if len(args.solvents) != len(args.solvent_ratios):
+                parser.error("Number of solvents must match number of solvent ratios")
+            generate_electrolyte_system(args.cations, args.anions, args.solvents,
+                                      args.salt_conc, args.solvent_ratios,
+                                      args.units, args.output, args.target_atoms, args.density)
+        
+        return args
+    else:
+        # Create args namespace from kwargs
+        class Args:
+            pass
+        args = Args()
+        args.mode = mode
+        
+        if mode == 'csv':
+            args.file = kwargs.get('file')
+            args.row = kwargs.get('row')
+            args.density = kwargs.get('density')
+            args.output = kwargs.get('output')  # Will be None if not specified
+            if args.file is None or args.row is None:
+                raise ValueError("CSV mode requires 'file' and 'row' arguments")
+            
+        elif mode == 'solvent':
+            args.solvents = kwargs.get('solvents')
+            args.ratios = kwargs.get('ratios')
+            args.output = kwargs.get('output')
+            args.target_atoms = kwargs.get('target_atoms', 5000)
+            args.density = kwargs.get('density')
+            if not all([args.solvents, args.ratios, args.output]):
+                raise ValueError("Solvent mode requires 'solvents', 'ratios', and 'output' arguments")
+            
+        elif mode == 'electrolyte':
+            args.cations = kwargs.get('cations')
+            args.anions = kwargs.get('anions')
+            args.solvents = kwargs.get('solvents')
+            args.salt_conc = kwargs.get('salt_conc')
+            args.solvent_ratios = kwargs.get('solvent_ratios')
+            args.units = kwargs.get('units')
+            args.output = kwargs.get('output')
+            args.target_atoms = kwargs.get('target_atoms', 5000)
+            args.density = kwargs.get('density')
+            if not all([args.cations, args.anions, args.solvents, args.salt_conc, 
+                       args.solvent_ratios, args.units, args.output]):
+                raise ValueError("Electrolyte mode requires 'cations', 'anions', 'solvents', "
+                               "'salt_conc', 'solvent_ratios', 'units', and 'output' arguments")
+        else:
+            raise ValueError(f"Unknown mode: {mode}")
+
     # Process arguments based on mode
     if args.mode == 'csv':
         handle_csv_mode(args)
     elif args.mode == 'solvent':
         if len(args.solvents) != len(args.ratios):
-            parser.error("Number of solvents must match number of ratios")
-        generate_solvent_system(args.solvents, args.ratios, args.output, args.target_atoms, args.density)
+            raise ValueError("Number of solvents must match number of ratios")
+        generate_solvent_system(args.solvents, args.ratios, args.output, 
+                              args.target_atoms, args.density)
     elif args.mode == 'electrolyte':
         if len(args.solvents) != len(args.solvent_ratios):
-            parser.error("Number of solvents must match number of solvent ratios")
+            raise ValueError("Number of solvents must match number of solvent ratios")
         generate_electrolyte_system(args.cations, args.anions, args.solvents,
                                   args.salt_conc, args.solvent_ratios,
                                   args.units, args.output, args.target_atoms, args.density)
-
-def combine_xml_forcefields(xml_contents, output_file):
-    """Combine multiple OpenMM XML force field files.
     
-    Args:
-        xml_contents (list): List of XML content strings to combine
-        output_file (str): Path to output combined XML file
-    """
-    # Parse the first XML file to get the base structure
-    root = ET.fromstring(xml_contents[0])
-    
-    # For each additional XML file
-    for content in xml_contents[1:]:
-        other = ET.fromstring(content)
-        
-        # Merge AtomTypes
-        atom_types = root.find('AtomTypes')
-        if atom_types is not None and other.find('AtomTypes') is not None:
-            for atom in other.find('AtomTypes'):
-                # Check if this atom type already exists
-                if not any(a.get('name') == atom.get('name') for a in atom_types):
-                    atom_types.append(atom)
-        
-        # Merge Residues
-        residues = root.find('Residues')
-        if residues is not None and other.find('Residues') is not None:
-            for residue in other.find('Residues'):
-                residues.append(residue)
-        
-        # Helper function to merge a force field section
-        def merge_force_field(tag_name):
-            force = root.find(tag_name)
-            other_force = other.find(tag_name)
-            if other_force is not None:
-                if force is None:
-                    # Create force field if it doesn't exist
-                    force = ET.SubElement(root, tag_name)
-                    # Copy all attributes from the other force field
-                    for attr, value in other_force.attrib.items():
-                        force.set(attr, value)
-                # Copy all child elements
-                for element in other_force:
-                    force.append(element)
-        
-        # Merge standard force fields
-        standard_forces = [
-            'HarmonicBondForce',
-            'HarmonicAngleForce',
-            'PeriodicTorsionForce',
-            'NonbondedForce',
-            'CustomTorsionForce',
-            'CustomBondForce',
-            'CustomAngleForce',
-            'CustomNonbondedForce'
-        ]
-        
-        for force_name in standard_forces:
-            merge_force_field(force_name)
-        
-        # Check for and merge any other force fields that might be present
-        for child in other:
-            if child.tag not in ['AtomTypes', 'Residues'] + standard_forces:
-                # If this is a new type of force field, check if it exists in root
-                existing = root.find(child.tag)
-                if existing is None:
-                    # If it doesn't exist, create it and copy all attributes and elements
-                    new_force = ET.SubElement(root, child.tag)
-                    # Copy attributes
-                    for attr, value in child.attrib.items():
-                        new_force.set(attr, value)
-                    # Copy child elements
-                    for element in child:
-                        new_force.append(element)
-                else:
-                    # If it exists, copy attributes if they don't exist
-                    for attr, value in child.attrib.items():
-                        if attr not in existing.attrib:
-                            existing.set(attr, value)
-                    # And append all elements
-                    for element in child:
-                        existing.append(element)
-    
-    # Write the combined force field
-    tree = ET.ElementTree(root)
-    tree.write(output_file, encoding='utf-8', xml_declaration=True)
-
-def generate_molres(length):
-    """Generate systematic residue names (AAA, BBB, etc.) for the given number of molecules.
-    
-    Args:
-        length (int): Number of residue names to generate
-        
-    Returns:
-        list: List of 3-letter residue names
-    """
-    molres = []
-    alphabet = string.ascii_uppercase
-    num_alphabet = len(alphabet)
-    
-    for i in range(length):
-        if i < num_alphabet:
-            letter = alphabet[i]
-            molres.append(letter * 3)
-        else:
-            number = i - num_alphabet + 1
-            molres.append(str(number) * 3)
-    
-    return molres
+    return args
 
 if __name__ == "__main__":
     main()
+else:
+    # This allows the module to be called directly
+    def __call__(*args):
+        return main(list(args))
 
