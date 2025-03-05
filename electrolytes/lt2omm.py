@@ -233,8 +233,9 @@ def parse_lt_file(lt_content):
                 parts = line.split()
                 improper_type = parts[1].replace('@improper:', '')
                 k = float(parts[2])
-                n = float(parts[3])
-                d = float(parts[4])
+                d = float(parts[3])
+                n = float(parts[4])
+
                 
                 # Convert energy to kJ/mol and determine phase based on d
                 k_kj = k * kcal2kj
@@ -566,7 +567,7 @@ def write_xml_forcefield(params, output_file, pdb_structure):
             bond_entry.set('type1', bond['atom1'])
             bond_entry.set('type2', bond['atom2'])
             # Convert k from kcal/mol/Å² to kJ/mol/nm²
-            k_kj = float(params['bond_coeffs'][bond['type']]['k']) * kcal2kj * 100  # *100 for Å² to nm²
+            k_kj = 2*float(params['bond_coeffs'][bond['type']]['k']) * kcal2kj * 100  # *100 for Å² to nm²
             bond_entry.set('k', f"{k_kj:.1f}")
             # Convert length from Å to nm
             length_nm = float(params['bond_coeffs'][bond['type']]['length']) * ang2nm
@@ -584,8 +585,8 @@ def write_xml_forcefield(params, output_file, pdb_structure):
             angle_entry.set('type1', angle['atom1'])
             angle_entry.set('type2', angle['atom2']) 
             angle_entry.set('type3', angle['atom3'])
-            # Convert k from kcal/mol/deg² to kJ/mol/rad²
-            k_kj = float(params['angle_coeffs'][angle['type']]['k']) * kcal2kj * (180/math.pi)**2
+            # Convert k from kcal/mol/rad² to kJ/mol/rad²
+            k_kj = 2*float(params['angle_coeffs'][angle['type']]['k']) * kcal2kj 
             angle_entry.set('k', f"{k_kj:.1f}")
             # Convert angle from degrees to radians
             theta_rad = float(params['angle_coeffs'][angle['type']]['angle']) * degree2radian
@@ -622,8 +623,12 @@ def write_xml_forcefield(params, output_file, pdb_structure):
                     for i, term in enumerate(coeff['terms'], start=1):
                         if abs(term['k']) > 1e-6:  # Only write non-zero terms
                             proper.set(f'k{i}', f"{term['k']:.6f}")
-                            proper.set(f'periodicity{i}', f"{term['periodicity']}")
-                            proper.set(f'phase{i}', f"{term['phase']}")
+                            if term['periodicity'] < 0:
+                                proper.set(f'periodicity{i}', f"{-term['periodicity']}")
+                                proper.set(f'phase{i}', f"{-term['phase']}")
+                            else:
+                                proper.set(f'periodicity{i}', f"{term['periodicity']}")
+                                proper.set(f'phase{i}', f"{term['phase']}")
         
         # Write impropers
         for improper in params['impropers']:
@@ -651,6 +656,8 @@ def write_xml_forcefield(params, output_file, pdb_structure):
 
                 # Add NonbondedForce section
     nb_force = ET.SubElement(root, 'NonbondedForce')
+    nb_force.set('coulomb14scale', '0.5')
+    nb_force.set('lj14scale', '0.5')
     for atom in params['atoms']:
         atom_type = ET.SubElement(nb_force, 'Atom')
         atom_type.set('type', atom['type'])
@@ -692,13 +699,22 @@ def process_lt_folder(input_folder, output_folder):
             
             if params.get('atoms'):
                 xml_output = os.path.join(output_folder, f"{molecule_name}.xml")
-                write_xml_forcefield(params, xml_output)
-                
                 pdb_path = lt_path.replace('.lt', '.pdb')
+                
                 if os.path.exists(pdb_path):
+                    # Parse PDB structure first
+                    pdb_structure = parse_pdb_structure(pdb_path)
+                    if not pdb_structure:
+                        print(f"Warning: Failed to parse PDB file: {pdb_path}, skipping...")
+                        continue
+                        
+                    write_xml_forcefield(params, xml_output, pdb_structure)
+                    
                     pdb_output = os.path.join(output_folder, f"{molecule_name}.pdb")
                     shutil.copy2(pdb_path, pdb_output)
                     print(f"Copied PDB file: {pdb_output}")
+                else:
+                    print(f"Warning: PDB file not found: {pdb_path}, skipping...")
             else:
                 print(f"Warning: No atoms found in {lt_path}, skipping...")
                 
