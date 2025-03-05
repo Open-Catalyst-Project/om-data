@@ -16,7 +16,7 @@ result = runmd_omm.run_simulation(
     output_dir=f"{row_number}",
     t_final=500.0,
     n_frames=100,
-  #  rpmd=True,
-  #  num_replicas=32,
-    dt=0.002
+    rpmd=True,
+    num_replicas=32,
+    dt=0.001
 )

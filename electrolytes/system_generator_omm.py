@@ -130,9 +130,9 @@ class SystemBuilder(ABC):
         molecule_bonds = []  # Store bonds for each molecule type
         for species in all_species:
             pdb_paths = [
-                os.path.join('output_xml', f'{species}.pdb'),
-                os.path.join('./output_xml', f'{species}.pdb'),
-                os.path.join('..', 'output_xml', f'{species}.pdb'),
+                os.path.join('ff', f'{species}.pdb'),
+                os.path.join('./ff', f'{species}.pdb'),
+                os.path.join('..', 'ff', f'{species}.pdb'),
                 f'{species}.pdb'
             ]
             
@@ -333,9 +333,9 @@ class SystemBuilder(ABC):
         # Define possible XML file locations
         xml_paths = [
             self.output_dir,  # First check output directory
-            './output_xml',       # Then check ./output
+            './ff',       # Then check ./output
             '.',             # Then check current directory
-            '../output_xml',     # Then check parent's output directory
+            '../ff',     # Then check parent's output directory
             '..'             # Finally check parent directory
         ]
         
@@ -374,12 +374,87 @@ class SystemBuilder(ABC):
         self.combine_xml_forcefields(xml_contents, output_xml)
 
     def _write_metadata(self) -> None:
-        """Write metadata about the system to a JSON file.
+        """Write metadata about the system with only required fields."""
+        # First build charge mappings from XML files
+        charge_mappings = {}
+        all_species = self.cations + self.anions + self.solvents
         
-        This method should be implemented by subclasses to write
-        system-specific metadata.
-        """
-        pass
+        for species in all_species:
+            xml_path = None
+            # Look for XML file in same locations as PDB files
+            xml_paths = [
+                os.path.join('ff', f'{species}.xml'),
+                os.path.join('./ff', f'{species}.xml'),
+                os.path.join('..', 'ff', f'{species}.xml'),
+                f'{species}.xml'
+            ]
+            for path in xml_paths:
+                if os.path.exists(path):
+                    xml_path = path
+                    break
+            
+            if xml_path is None:
+                raise FileNotFoundError(f"XML file not found for {species}")
+            
+            tree = ET.parse(xml_path)
+            root = tree.getroot()
+            
+            # First build a mapping of atom types to charges from NonbondedForce
+            charge_map = {}
+            nonbonded = root.find(".//NonbondedForce")
+            if nonbonded is not None:
+                for atom in nonbonded.findall('Atom'):
+                    type_name = atom.get('type')
+                    charge = float(atom.get('charge', 0.0))
+                    charge_map[type_name] = charge
+            
+            # Create mapping of atom names to charges for this residue
+            atom_charge_map = {}
+            residue = root.find(".//Residue")
+            if residue is not None:
+                for atom in residue.findall('Atom'):
+                    type_name = atom.get('type')
+                    atom_name = atom.get('name')
+                    charge = charge_map.get(type_name, 0.0)
+                    atom_charge_map[atom_name] = charge
+            
+            charge_mappings[species] = atom_charge_map
+        
+        # Create mapping between residue names and species
+        residue_names = self.generate_molres(len(all_species))
+        residue_to_species = dict(zip(residue_names, all_species))
+        
+        # Get partial charges from PDB
+        partial_charges = []
+        with open(self.output_pdb, 'r') as f:
+            for line in f:
+                if line.startswith('ATOM') or line.startswith('HETATM'):
+                    resname = line[17:20].strip()  # Residue name (e.g., "AAA")
+                    atom_name = line[12:16].strip()  # Atom name
+                    
+                    species = residue_to_species[resname]
+                    charge = charge_mappings[species].get(atom_name, 0.0)
+                    partial_charges.append(charge)
+        
+        # Create solute/solvent list
+        solute_or_solvent = (
+            ["solute"] * len(self.cations) +  # Cations are solutes
+            ["solute"] * len(self.anions) +   # Anions are solutes
+            ["solvent"] * len(self.solvents)  # Rest are solvents
+        )
+        
+        # Create metadata with only required fields
+        metadata = {
+            "residue": residue_names,
+            "species": all_species,
+            "solute_or_solvent": solute_or_solvent,
+            "partial_charges": partial_charges
+        }
+        
+        # Write to JSON file
+        json_path = os.path.join(self.output_dir, "metadata.json")
+        with open(json_path, "w") as f:
+            json.dump(metadata, f, indent=4)
 
     @staticmethod
     def combine_xml_forcefields(xml_contents, output_file):
@@ -515,7 +590,7 @@ class SolventSystem(SystemBuilder):
         # Set up PDB file paths
         self.pdb_files = []
         for solvent in solvents:
-            pdb_path = os.path.join('output_xml', f'{solvent}.pdb')  # Changed from 'ff' to 'output'
+            pdb_path = os.path.join('ff', f'{solvent}.pdb')  # Changed from 'ff' to 'output'
             if not os.path.exists(pdb_path):
                 raise FileNotFoundError(f"PDB file not found: {pdb_path}")
             self.pdb_files.append(pdb_path)
@@ -576,9 +651,9 @@ class SolventSystem(SystemBuilder):
             xml_path = None
             # Look for XML file in same locations as PDB files
             xml_paths = [
-                os.path.join('output_xml', f'{species}.xml'),
-                os.path.join('./output_xml', f'{species}.xml'),
-                os.path.join('..', 'output_xml', f'{species}.xml'),
+                os.path.join('ff', f'{species}.xml'),
+                os.path.join('./ff', f'{species}.xml'),
+                os.path.join('..', 'ff', f'{species}.xml'),
                 f'{species}.xml'
             ]
             for path in xml_paths:
@@ -684,9 +759,9 @@ class ElectrolyteSystem(SystemBuilder):
             xml_path = None
             # Look for XML file in same locations as PDB files
             xml_paths = [
-                os.path.join('output_xml', f'{species}.xml'),
-                os.path.join('./output_xml', f'{species}.xml'),
-                os.path.join('..', 'output_xml', f'{species}.xml'),
+                os.path.join('ff', f'{species}.xml'),
+                os.path.join('./ff', f'{species}.xml'),
+                os.path.join('..', 'ff', f'{species}.xml'),
                 f'{species}.xml'
             ]
             for path in xml_paths:
