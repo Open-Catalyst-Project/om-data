@@ -986,8 +986,8 @@ class ElectrolyteSystem(SystemBuilder):
 def generate_solvent_system(solvents: List[str], ratios: List[float], output: str, 
                           target_atoms: int = 5000, density: float = None) -> None:
     """Generate a pure solvent system.
-    
-    Args:
+        
+        Args:
         solvents: List of solvent species names
         ratios: List of molar ratios for each solvent
         output: Output file prefix
@@ -1314,3 +1314,4 @@ else:
     def __call__(*args):
         return main(list(args))
 
+    

@@ -17,6 +17,7 @@ from pulp import LpProblem, LpVariable, lpSum, LpMinimize
 from abc import ABC, abstractmethod
 from typing import List, Tuple, Dict, Any
 import csv
+import argparse
 
 class SpeciesSelector:
     """Utility class for selecting chemical species."""
@@ -56,25 +57,24 @@ class SpeciesSelector:
     
     def choose_species(self, species: pd.DataFrame, max_comp: int, existing_species: List[str], 
                       solvent: bool = False) -> Tuple:
-        """Randomly selects species from the given DataFrame.
-
-        Args:
-            species: DataFrame containing species information.
-            max_comp: Maximum number of components to select.
-            existing_species: List of existing species to avoid duplicates.
-            solvent: Boolean indicating if the selection is for solvents.
-
-        Returns:
-            Tuple: Selected species formulas and their corresponding charges (and temperatures if solvent).
-        """
+        """Randomly selects species from the given DataFrame."""
+        if len(species) == 0:
+            # Return empty lists if no species available
+            return ([], [], [], []) if solvent else ([], [])
+        
+        # Don't try to select more components than available species
+        max_comp = min(max_comp, len(species))
+        
         formulas = self.lanthanides
         while self.contains_lanthanide(formulas) or self.check_for_duplicates(existing_species, formulas):
-            indices = np.random.choice(len(species), size=np.random.randint(1, max_comp), replace=False)
+            # Choose a number of components between 1 and max_comp
+            n_components = np.random.randint(1, max_comp + 1)
+            indices = np.random.choice(len(species), size=n_components, replace=False)
             formulas = np.array(species["formula"])[indices].tolist()
             
             if not self.contains_lanthanide(formulas) and not self.check_for_duplicates(existing_species, formulas):
                 break
-                
+        
         if solvent:
             return (np.array(species["formula"])[indices].tolist(),
                    np.array(species["charge"])[indices].tolist(),
@@ -108,17 +108,24 @@ class Electrolyte(ABC):
     
     Avog = 6.023e23
     
-    def __init__(self, species_selector: SpeciesSelector, charge_solver: ChargeSolver, is_rpmd: bool = False):
+    def __init__(self, species_selector: SpeciesSelector, charge_solver: ChargeSolver, 
+                 is_rpmd: bool = False, max_cations: int = 4, max_anions: int = 4, 
+                 max_solvents: int = 4):
         """Initializes the Electrolyte with species selector and charge solver.
 
         Args:
             species_selector: Instance of SpeciesSelector for selecting species.
             charge_solver: Instance of ChargeSolver for solving charge equations.
             is_rpmd: Boolean indicating if the electrolyte is for RPMD simulations.
+            max_cations: Maximum number of cation species (default: 4)
+            max_anions: Maximum number of anion species (default: 4)
+            max_solvents: Maximum number of solvent species (default: 4)
         """
         self.species_selector = species_selector
         self.charge_solver = charge_solver
-        self.max_comp = 2 if is_rpmd else 4  # RPMD uses max 2 components
+        self.max_cations = max_cations
+        self.max_anions = max_anions
+        self.max_solvents = max_solvents
         self.fac = 0.05
         self.cations = []
         self.anions = []
@@ -165,11 +172,11 @@ class Electrolyte(ABC):
     
     def _generate_main_species(self, cations_df: pd.DataFrame, anions_df: pd.DataFrame) -> None:
         """Generate cations and anions and solve charge balance."""
-        # Generate species
+        # Generate species with separate max components for each
         self.cations, self.cat_charges = self.species_selector.choose_species(
-            cations_df, self.max_comp, [])
+            cations_df, self.max_cations, [])
         self.anions, self.an_charges = self.species_selector.choose_species(
-            anions_df, self.max_comp, self.cations)
+            anions_df, self.max_anions, self.cations)
         
         # Solve charge balance
         charges = self.cat_charges + self.an_charges
@@ -205,47 +212,43 @@ class Electrolyte(ABC):
         pass
     
     def to_dict(self, name: str) -> Dict[str, Any]:
-        """Convert electrolyte data to dictionary format for CSV.
-
-        Args:
-            name: Name of the electrolyte.
-
-        Returns:
-            Dict[str, Any]: Dictionary representation of the electrolyte data.
-        """
+        """Convert electrolyte data to dictionary format for CSV."""
+        # Extract concentration from name suffix
+        is_low_conc = '-lowconc' in name
+        distance = 2.25 if is_low_conc else 1.75
+        
+        # Calculate actual concentrations
+        conc = 0.62035049089/distance**3  # number per nm3
         salt_molfrac = np.array(self.stoich)/sum(self.stoich) if len(self.stoich) > 0 else []
+        salt_conc = salt_molfrac * conc / self.Avog * 1e24 if len(salt_molfrac) > 0 else []
         
         entry = {
             'category': 'random',
             'comment/name': name,
             'DOI': '',
-            'units': 'number' if isinstance(self, MoltenSaltElectrolyte) else 'mass' if self.is_rpmd else 'volume',
+            'units': 'number' if isinstance(self, MoltenSaltElectrolyte) else 'mass',
             'temperature': self.min_temp
         }
         
-        # Add species information
-        for j in range(self.max_comp):
-            if j < len(self.cations):
-                entry[f'cation{j+1}'] = self.cations[j]
-                entry[f'cation{j+1}_conc'] = salt_molfrac[j] if len(salt_molfrac) > j else ''
-            else:
-                entry[f'cation{j+1}'] = ''
-                entry[f'cation{j+1}_conc'] = ''
+        # Create entries for each type up to their maximum
+        for i in range(max(self.max_cations, self.max_anions, self.max_solvents)):
+            # Cations
+            if i < self.max_cations:
+                entry[f'cation{i+1}'] = self.cations[i] if i < len(self.cations) else ''
+                entry[f'cation{i+1}_conc'] = salt_conc[i] if i < len(salt_conc) else ''
                 
-            if j < len(self.anions):
-                entry[f'anion{j+1}'] = self.anions[j]
-                entry[f'anion{j+1}_conc'] = salt_molfrac[j+len(self.cations)] if len(salt_molfrac) > j+len(self.cations) else ''
-            else:
-                entry[f'anion{j+1}'] = ''
-                entry[f'anion{j+1}_conc'] = ''
+            # Anions
+            if i < self.max_anions:
+                entry[f'anion{i+1}'] = self.anions[i] if i < len(self.anions) else ''
+                entry[f'anion{i+1}_conc'] = salt_conc[i+len(self.cations)] if i+len(self.cations) < len(salt_conc) else ''
                 
-            if j < len(self.solvents):
-                entry[f'solvent{j+1}'] = self.solvents[j]
-                entry[f'solvent{j+1}_ratio'] = self.stoich_solv[j] if len(self.stoich_solv) > 0 else ''
-            else:
-                entry[f'solvent{j+1}'] = ''
-                entry[f'solvent{j+1}_ratio'] = ''
-                
+            # Solvents
+            if i < self.max_solvents:
+                entry[f'solvent{i+1}'] = self.solvents[i] if i < len(self.solvents) else ''
+                entry[f'solvent{i+1}_ratio'] = (self.stoich_solv[i]/min(self.stoich_solv) 
+                                              if i < len(self.stoich_solv) and len(self.stoich_solv) > 0 
+                                              else '')
+        
         return entry
 
 class AqueousElectrolyte(Electrolyte):
@@ -307,8 +310,8 @@ class ProticElectrolyte(Electrolyte):
             solvents_df: DataFrame containing solvent species.
         """
         self.solvents, _, min_temps, max_temps = self.species_selector.choose_species(
-            solvents_df, self.max_comp, self.cations + self.anions, solvent=True)
-        self.stoich_solv = np.random.randint(1, 4, size=len(self.solvents))
+            solvents_df, self.max_solvents, self.cations + self.anions, solvent=True)
+        self.stoich_solv = np.random.randint(1, self.max_solvents + 1, size=len(self.solvents))
         
         # Calculate temperature range
         solv_molfrac = np.array(self.stoich_solv)/sum(self.stoich_solv)
@@ -346,8 +349,8 @@ class AproticElectrolyte(Electrolyte):
             solvents_df: DataFrame containing solvent species.
         """
         self.solvents, _, min_temps, max_temps = self.species_selector.choose_species(
-            solvents_df, self.max_comp, self.cations + self.anions, solvent=True)
-        self.stoich_solv = np.random.randint(1, 4, size=len(self.solvents))
+            solvents_df, self.max_solvents, self.cations + self.anions, solvent=True)
+        self.stoich_solv = np.random.randint(1, self.max_solvents + 1, size=len(self.solvents))
         
         # Calculate temperature range
         solv_molfrac = np.array(self.stoich_solv)/sum(self.stoich_solv)
@@ -389,9 +392,9 @@ class IonicLiquidElectrolyte(Electrolyte):
         il_solv_anions = self.original_anions_df[self.original_anions_df['IL_comp']].copy()
         
         solv1, solv_charges1 = self.species_selector.choose_species(
-            il_solv_cations, self.max_comp, self.cations + self.anions)
+            il_solv_cations, self.max_cations, self.cations + self.anions)
         solv2, solv_charges2 = self.species_selector.choose_species(
-            il_solv_anions, self.max_comp, self.cations + self.anions + solv1)
+            il_solv_anions, self.max_cations, self.cations + self.anions + solv1)
         
         self.solvents = solv1 + solv2
         self.stoich_solv = self.charge_solver.solve_single_equation(solv_charges1 + solv_charges2)
@@ -437,16 +440,20 @@ class MoltenSaltElectrolyte(Electrolyte):
 class RandomElectrolyte(Electrolyte):
     """Class for completely random electrolytes without type constraints."""
     
-    def __init__(self, species_selector: SpeciesSelector, charge_solver: ChargeSolver, is_rpmd: bool = False):
+    def __init__(self, species_selector: SpeciesSelector, charge_solver: ChargeSolver, 
+                 is_rpmd: bool = False, max_cations: int = 4, max_anions: int = 4, 
+                 max_solvents: int = 4):
         """Initializes the RandomElectrolyte with species selector and charge solver.
 
         Args:
             species_selector: Instance of SpeciesSelector for selecting species.
             charge_solver: Instance of ChargeSolver for solving charge equations.
             is_rpmd: Boolean indicating if the electrolyte is for RPMD simulations.
+            max_cations: Maximum number of cation species (default: 4)
+            max_anions: Maximum number of anion species (default: 4)
+            max_solvents: Maximum number of solvent species (default: 4)
         """
-        super().__init__(species_selector, charge_solver, is_rpmd)
-        self.max_comp = 3  # Random electrolytes use max 3 components
+        super().__init__(species_selector, charge_solver, is_rpmd, max_cations, max_anions, max_solvents)
     
     def _filter_species(self, cations_df: pd.DataFrame, anions_df: pd.DataFrame,
                        solvents_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -474,8 +481,8 @@ class RandomElectrolyte(Electrolyte):
             solvents_df: DataFrame containing solvent species.
         """
         self.solvents, _, min_temps, max_temps = self.species_selector.choose_species(
-            solvents_df, self.max_comp, self.cations + self.anions, solvent=True)
-        self.stoich_solv = np.random.randint(1, 3, size=len(self.solvents))  # 1-2 range for random
+            solvents_df, self.max_solvents, self.cations + self.anions, solvent=True)
+        self.stoich_solv = np.random.randint(1, self.max_solvents + 1, size=len(self.solvents))
         
         # Calculate temperature range
         solv_molfrac = np.array(self.stoich_solv)/sum(self.stoich_solv)
@@ -488,7 +495,7 @@ class RandomElectrolyte(Electrolyte):
         pass
     
     def to_dict(self, name: str) -> Dict[str, Any]:
-        """Override to_dict to use 'volume' units.
+        """Convert to dictionary using parent class implementation.
 
         Args:
             name: Name of the electrolyte.
@@ -496,24 +503,29 @@ class RandomElectrolyte(Electrolyte):
         Returns:
             Dict[str, Any]: Dictionary representation of the electrolyte data.
         """
-        entry = super().to_dict(name)
-        entry['units'] = 'volume'  # Random electrolytes use volume units
-        return entry
+        return super().to_dict(name)  # Use parent class implementation with mass units
 
 class ElectrolyteFactory:
     """Factory class for creating different types of electrolytes."""
     
-    def __init__(self, is_rpmd: bool = False, random_only: bool = False):
+    def __init__(self, is_rpmd: bool = False, random_only: bool = False,
+                 max_cations: int = 4, max_anions: int = 4, max_solvents: int = 4):
         """Initializes the ElectrolyteFactory with species selector and charge solver.
 
         Args:
             is_rpmd: Boolean indicating if the factory is for RPMD simulations.
             random_only: Boolean indicating if only random electrolytes should be created.
+            max_cations: Maximum number of cation species (default: 4)
+            max_anions: Maximum number of anion species (default: 4)
+            max_solvents: Maximum number of solvent species (default: 4)
         """
         self.species_selector = SpeciesSelector()
         self.charge_solver = ChargeSolver()
         self.is_rpmd = is_rpmd
         self.random_only = random_only
+        self.max_cations = max_cations
+        self.max_anions = max_anions
+        self.max_solvents = max_solvents
         
         if random_only:
             self.class_probabilities = {'random': 1.0}
@@ -562,25 +574,37 @@ class ElectrolyteFactory:
             p=list(self.class_probabilities.values())
         )
         
-        # Create and generate the electrolyte
-        electrolyte = self.class_mapping[elyte_class](self.species_selector, self.charge_solver, self.is_rpmd)
+        # Create and generate the electrolyte with specified max components
+        electrolyte = self.class_mapping[elyte_class](
+            self.species_selector, 
+            self.charge_solver, 
+            self.is_rpmd,
+            max_cations=self.max_cations,
+            max_anions=self.max_anions,
+            max_solvents=self.max_solvents
+        )
         electrolyte.generate(cations_df, anions_df, solvents_df)
         return electrolyte, elyte_class
 
 def generate_electrolytes(is_rpmd: bool = False, 
-                       input_files: Dict[str, str] = None,
-                       output_file: str = None,
-                       n_random: int = None,
-                       random_only: bool = False) -> pd.DataFrame:
+                         input_files: Dict[str, str] = None,
+                         output_file: str = None,
+                         n_random: int = None,
+                         random_only: bool = False,
+                         max_cations: int = 4,
+                         max_anions: int = 4,
+                         max_solvents: int = 4) -> pd.DataFrame:
     """Generate electrolytes with given parameters.
 
     Args:
         is_rpmd: Whether to generate electrolytes for RPMD simulations.
-        input_files: Dictionary with paths to input files. Should contain keys:
-                    'cations', 'anions', 'solvents'.
-        output_file: Path to output file. If None, uses default based on is_rpmd.
-        n_random: Number of random electrolytes to generate. If None, uses default based on is_rpmd.
-        random_only: Whether to generate only random electrolytes without type constraints.
+        input_files: Dictionary with paths to input files.
+        output_file: Path to output file.
+        n_random: Number of random electrolytes to generate.
+        random_only: Whether to generate only random electrolytes.
+        max_cations: Maximum number of cation species (default: 4)
+        max_anions: Maximum number of anion species (default: 4)
+        max_solvents: Maximum number of solvent species (default: 4)
 
     Returns:
         pd.DataFrame: Generated electrolytes dataframe.
@@ -614,8 +638,14 @@ def generate_electrolytes(is_rpmd: bool = False,
                             [f'{t}{i}_{"conc" if t != "solvent" else "ratio"}' 
                              for t in ['cation', 'anion', 'solvent'] for i in range(1, 5)])
     
-    # Initialize factory
-    factory = ElectrolyteFactory(is_rpmd=is_rpmd, random_only=random_only)
+    # Initialize factory with max component parameters
+    factory = ElectrolyteFactory(
+        is_rpmd=is_rpmd,
+        random_only=random_only,
+        max_cations=max_cations,
+        max_anions=max_anions,
+        max_solvents=max_solvents
+    )
     
     # Generate electrolytes
     for i in range(n_random):
@@ -679,8 +709,6 @@ def generate_electrolytes(is_rpmd: bool = False,
 
 def main():
     """Main function to parse command line arguments and generate electrolytes."""
-    # Parse command line arguments
-    import argparse
     parser = argparse.ArgumentParser(description='Generate random electrolytes')
     parser.add_argument('--rpmd', action='store_true', help='Generate electrolytes for RPMD simulations')
     parser.add_argument('--random-only', action='store_true', help='Generate only random electrolytes without type constraints')
@@ -689,6 +717,9 @@ def main():
     parser.add_argument('--solvents', type=str, help='Path to solvents CSV file', default='solvent.csv')
     parser.add_argument('--output', type=str, help='Path to output CSV file')
     parser.add_argument('--n-random', type=int, help='Number of random electrolytes to generate')
+    parser.add_argument('--max-cations', type=int, default=4, help='Maximum number of cation species')
+    parser.add_argument('--max-anions', type=int, default=4, help='Maximum number of anion species')
+    parser.add_argument('--max-solvents', type=int, default=4, help='Maximum number of solvent species')
     args = parser.parse_args()
     
     # Prepare input files dictionary
@@ -704,7 +735,10 @@ def main():
         input_files=input_files,
         output_file=args.output,
         n_random=args.n_random,
-        random_only=args.random_only
+        random_only=args.random_only,
+        max_cations=args.max_cations,
+        max_anions=args.max_anions,
+        max_solvents=args.max_solvents
     )
 
 if __name__ == "__main__":

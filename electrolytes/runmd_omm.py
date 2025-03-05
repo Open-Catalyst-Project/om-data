@@ -224,7 +224,6 @@ class TestSimulation:
         self.t_final = t_final
         self.n_frames = n_frames
         self.dt = dt
-        self.prod_steps = int(self.t_final / self.dt)  # Override prod_steps based on t_final
         
         # Create output directory
         os.makedirs(output_dir, exist_ok=True)
@@ -432,6 +431,14 @@ class TestSimulation:
             # Get restart count for PDB file naming
             restart_count = self._get_restart_count()
             
+            # Calculate remaining steps
+            current_step = simulation.currentStep
+            remaining_steps = self.prod_steps - current_step
+            
+            if remaining_steps <= 0:
+                print("\nSimulation has already completed the requested steps.")
+                return
+            
             if self.rpmd:
                 # RPMD-specific trajectory reporter
                 simulation.reporters.append(
@@ -490,25 +497,20 @@ class TestSimulation:
             )
             
             print("\nStarting production...")
-            simulation.step(self.prod_steps)
+            simulation.step(remaining_steps)  # Only run the remaining steps
+            
+            # Save final state
+            if self.checkpoint_file:
+                simulation.saveState(self.checkpoint_file)
             
         except Exception as e:
             print(f"\nError during simulation: {str(e)}")
             raise
 
-def run_simulation(pdb_file: str,
-                  xml_file: str,
-                  output_dir: Optional[str] = None,  # Make output_dir optional
-                  temperature: float = 300.0,
-                  pressure: float = 1.0,
-                  equil_steps: int = 5000,
-                  prod_steps: int = 10000,
-                  rpmd: bool = False,
-                  num_replicas: int = 32,
-                  t_final: float = 50.0,
-                  n_frames: int = 1000,
-                  dt: float = 0.001) -> int:
-    """Run a molecular dynamics simulation with OpenMM.
+def run_simulation(pdb_file, xml_file, output_dir=None, temperature=300.0, pressure=1.0,
+                  equil_steps=5000, prod_steps=10000, rpmd=False, num_replicas=32,
+                  t_final=None, n_frames=None, dt=0.001):
+    """Run molecular dynamics simulation with OpenMM.
     
     Args:
         pdb_file: Path to input PDB file
@@ -520,32 +522,41 @@ def run_simulation(pdb_file: str,
         prod_steps: Number of production steps
         rpmd: Whether to run RPMD simulation
         num_replicas: Number of ring polymer beads for RPMD
-        t_final: Final simulation time in picoseconds
-        n_frames: Number of frames to output
+        t_final: Final simulation time in picoseconds (if None, uses prod_steps * dt)
+        n_frames: Number of frames to output (if None, uses prod_steps)
         dt: Timestep in picoseconds
         
     Returns:
         int: 0 for success, 1 for failure
     """
     try:
-        # Use default output directory if none specified
         if output_dir is None:
             output_dir = "./sim_output"
             
+        # Calculate production steps based on t_final if provided
+        if t_final is not None:
+            prod_steps = int(t_final / dt)
+            
+        if n_frames is None:
+            n_frames = prod_steps
+        
+        # Create TestSimulation instance
         simulation = TestSimulation(
-            pdb_file,
-            xml_file,
-            output_dir,
-            temperature,
-            pressure,
-            equil_steps,
-            prod_steps,
+            pdb_file=pdb_file,
+            xml_file=xml_file,
+            output_dir=output_dir,
+            temperature=temperature,
+            pressure=pressure,
+            equil_steps=equil_steps,
+            prod_steps=prod_steps,
             rpmd=rpmd,
             num_replicas=num_replicas,
             t_final=t_final,
             n_frames=n_frames,
             dt=dt
         )
+
+        # Run simulation
         simulation.run()
         return 0
         
