@@ -708,7 +708,7 @@ class SolventSystem(SystemBuilder):
         metadata = {
             "system_type": "pure_solvent",
             "species": self.solvents,
-            "residue_names": self.generate_molres(len(self.solvents)),
+            "residue": self.generate_molres(len(self.solvents)),
             "solute_or_solvent": ["solvent"] * len(self.solvents),  # All species are solvents
             "composition": [int(n) for n in self.n_molecules],  # Convert np.int64 to int
             "molar_ratios": [float(r) for r in self.solvent_ratios],  # Convert np.float64 to float
@@ -826,7 +826,8 @@ class ElectrolyteSystem(SystemBuilder):
             "cations": self.cations,
             "anions": self.anions,
             "solvents": self.solvents,
-            "residue_names": self.generate_molres(len(self.cations + self.anions + self.solvents)),
+            "species": self.cations + self.anions + self.solvents,
+            "residue": self.generate_molres(len(self.cations + self.anions + self.solvents)),
             "solute_or_solvent": solute_or_solvent,
             "composition": [int(n) for n in self.n_molecules],  # Convert np.int64 to int
             "concentration_units": self.units,
