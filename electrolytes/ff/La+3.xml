@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="La3" class="La3" element="La" mass="138.906" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="LA0" type="La3" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="La3" charge="3.0" sigma="0.305580" epsilon="0.621331" />
+  </NonbondedForce>
+</ForceField>

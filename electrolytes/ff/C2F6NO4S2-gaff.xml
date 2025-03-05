@@ -1,0 +1,112 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="C1_c2f6no4s2" class="C1_c2f6no4s2" element="C" mass="12.011" />
+    <Type name="F1_c2f6no4s2" class="F1_c2f6no4s2" element="F" mass="18.998" />
+    <Type name="F2_c2f6no4s2" class="F2_c2f6no4s2" element="F" mass="18.998" />
+    <Type name="F3_c2f6no4s2" class="F3_c2f6no4s2" element="F" mass="18.998" />
+    <Type name="S1_c2f6no4s2" class="S1_c2f6no4s2" element="S" mass="32.06" />
+    <Type name="O1_c2f6no4s2" class="O1_c2f6no4s2" element="O" mass="15.999" />
+    <Type name="O2_c2f6no4s2" class="O2_c2f6no4s2" element="O" mass="15.999" />
+    <Type name="N1_c2f6no4s2" class="N1_c2f6no4s2" element="N" mass="14.0" />
+    <Type name="S2_c2f6no4s2" class="S2_c2f6no4s2" element="S" mass="32.06" />
+    <Type name="O3_c2f6no4s2" class="O3_c2f6no4s2" element="O" mass="15.999" />
+    <Type name="O4_c2f6no4s2" class="O4_c2f6no4s2" element="O" mass="15.999" />
+    <Type name="C2_c2f6no4s2" class="C2_c2f6no4s2" element="C" mass="12.011" />
+    <Type name="F4_c2f6no4s2" class="F4_c2f6no4s2" element="F" mass="18.998" />
+    <Type name="F5_c2f6no4s2" class="F5_c2f6no4s2" element="F" mass="18.998" />
+    <Type name="F6_c2f6no4s2" class="F6_c2f6no4s2" element="F" mass="18.998" />
+  </AtomTypes>
+  <NonbondedForce>
+    <Atom type="C1_c2f6no4s2" charge="0.35" sigma="0.350000" epsilon="0.276144" />
+    <Atom type="F1_c2f6no4s2" charge="-0.16" sigma="0.295000" epsilon="0.221752" />
+    <Atom type="F2_c2f6no4s2" charge="-0.16" sigma="0.295000" epsilon="0.221752" />
+    <Atom type="F3_c2f6no4s2" charge="-0.16" sigma="0.295000" epsilon="0.221752" />
+    <Atom type="S1_c2f6no4s2" charge="1.02" sigma="0.355000" epsilon="1.046000" />
+    <Atom type="O1_c2f6no4s2" charge="-0.53" sigma="0.296000" epsilon="0.878640" />
+    <Atom type="O2_c2f6no4s2" charge="-0.53" sigma="0.296000" epsilon="0.878640" />
+    <Atom type="N1_c2f6no4s2" charge="-0.66" sigma="0.325000" epsilon="0.711280" />
+    <Atom type="S2_c2f6no4s2" charge="1.02" sigma="0.355000" epsilon="1.046000" />
+    <Atom type="O3_c2f6no4s2" charge="-0.53" sigma="0.296000" epsilon="0.878640" />
+    <Atom type="O4_c2f6no4s2" charge="-0.53" sigma="0.296000" epsilon="0.878640" />
+    <Atom type="C2_c2f6no4s2" charge="0.35" sigma="0.350000" epsilon="0.276144" />
+    <Atom type="F4_c2f6no4s2" charge="-0.16" sigma="0.295000" epsilon="0.221752" />
+    <Atom type="F5_c2f6no4s2" charge="-0.16" sigma="0.295000" epsilon="0.221752" />
+    <Atom type="F6_c2f6no4s2" charge="-0.16" sigma="0.295000" epsilon="0.221752" />
+  </NonbondedForce>
+  <HarmonicBondForce>
+    <Bond type1="N1_c2f6no4s2" type2="S1_c2f6no4s2" k="156849.8" length="0.157000" />
+    <Bond type1="N1_c2f6no4s2" type2="S2_c2f6no4s2" k="156849.8" length="0.157000" />
+    <Bond type1="S1_c2f6no4s2" type2="O1_c2f6no4s2" k="266550.1" length="0.143700" />
+    <Bond type1="S1_c2f6no4s2" type2="O2_c2f6no4s2" k="266550.1" length="0.143700" />
+    <Bond type1="S2_c2f6no4s2" type2="O3_c2f6no4s2" k="266550.1" length="0.143700" />
+    <Bond type1="S2_c2f6no4s2" type2="O4_c2f6no4s2" k="266550.1" length="0.143700" />
+    <Bond type1="S1_c2f6no4s2" type2="C1_c2f6no4s2" k="97499.8" length="0.181800" />
+    <Bond type1="S2_c2f6no4s2" type2="C2_c2f6no4s2" k="97499.8" length="0.181800" />
+    <Bond type1="C1_c2f6no4s2" type2="F1_c2f6no4s2" k="184899.3" length="0.132300" />
+    <Bond type1="C1_c2f6no4s2" type2="F2_c2f6no4s2" k="184899.3" length="0.132300" />
+    <Bond type1="C1_c2f6no4s2" type2="F3_c2f6no4s2" k="184899.3" length="0.132300" />
+    <Bond type1="C2_c2f6no4s2" type2="F4_c2f6no4s2" k="184899.3" length="0.132300" />
+    <Bond type1="C2_c2f6no4s2" type2="F5_c2f6no4s2" k="184899.3" length="0.132300" />
+    <Bond type1="C2_c2f6no4s2" type2="F6_c2f6no4s2" k="184899.3" length="0.132300" />
+  </HarmonicBondForce>
+  <HarmonicAngleForce>
+    <Angle type1="N1_c2f6no4s2" type2="S1_c2f6no4s2" type3="O1_c2f6no4s2" k="1295097.8" angle="1.982695" />
+    <Angle type1="N1_c2f6no4s2" type2="S1_c2f6no4s2" type3="O2_c2f6no4s2" k="1295097.8" angle="1.982695" />
+    <Angle type1="N1_c2f6no4s2" type2="S2_c2f6no4s2" type3="O3_c2f6no4s2" k="1295097.8" angle="1.982695" />
+    <Angle type1="N1_c2f6no4s2" type2="S2_c2f6no4s2" type3="O4_c2f6no4s2" k="1295097.8" angle="1.982695" />
+    <Angle type1="N1_c2f6no4s2" type2="S1_c2f6no4s2" type3="C1_c2f6no4s2" k="1254029.4" angle="1.806417" />
+    <Angle type1="N1_c2f6no4s2" type2="S2_c2f6no4s2" type3="C2_c2f6no4s2" k="1254029.4" angle="1.806417" />
+    <Angle type1="S1_c2f6no4s2" type2="C1_c2f6no4s2" type3="F1_c2f6no4s2" k="1139065.3" angle="1.949534" />
+    <Angle type1="S1_c2f6no4s2" type2="C1_c2f6no4s2" type3="F2_c2f6no4s2" k="1139065.3" angle="1.949534" />
+    <Angle type1="S1_c2f6no4s2" type2="C1_c2f6no4s2" type3="F3_c2f6no4s2" k="1139065.3" angle="1.949534" />
+    <Angle type1="S2_c2f6no4s2" type2="C2_c2f6no4s2" type3="F4_c2f6no4s2" k="1139065.3" angle="1.949534" />
+    <Angle type1="S2_c2f6no4s2" type2="C2_c2f6no4s2" type3="F5_c2f6no4s2" k="1139065.3" angle="1.949534" />
+    <Angle type1="S2_c2f6no4s2" type2="C2_c2f6no4s2" type3="F6_c2f6no4s2" k="1139065.3" angle="1.949534" />
+    <Angle type1="S1_c2f6no4s2" type2="N1_c2f6no4s2" type3="S2_c2f6no4s2" k="1101430.6" angle="2.192134" />
+    <Angle type1="C1_c2f6no4s2" type2="S1_c2f6no4s2" type3="O1_c2f6no4s2" k="1428055.2" angle="1.790709" />
+    <Angle type1="C1_c2f6no4s2" type2="S1_c2f6no4s2" type3="O2_c2f6no4s2" k="1428055.2" angle="1.790709" />
+    <Angle type1="C2_c2f6no4s2" type2="S2_c2f6no4s2" type3="O3_c2f6no4s2" k="1428055.2" angle="1.790709" />
+    <Angle type1="C2_c2f6no4s2" type2="S2_c2f6no4s2" type3="O4_c2f6no4s2" k="1428055.2" angle="1.790709" />
+    <Angle type1="O1_c2f6no4s2" type2="S1_c2f6no4s2" type3="O2_c2f6no4s2" k="1590543.3" angle="2.068216" />
+    <Angle type1="O4_c2f6no4s2" type2="S2_c2f6no4s2" type3="O3_c2f6no4s2" k="1590543.3" angle="2.068216" />
+    <Angle type1="S1_c2f6no4s2" type2="C1_c2f6no4s2" type3="F1_c2f6no4s2" k="1139065.3" angle="1.949534" />
+    <Angle type1="S1_c2f6no4s2" type2="C1_c2f6no4s2" type3="F2_c2f6no4s2" k="1139065.3" angle="1.949534" />
+    <Angle type1="S1_c2f6no4s2" type2="C1_c2f6no4s2" type3="F3_c2f6no4s2" k="1139065.3" angle="1.949534" />
+    <Angle type1="S2_c2f6no4s2" type2="C2_c2f6no4s2" type3="F4_c2f6no4s2" k="1139065.3" angle="1.949534" />
+    <Angle type1="S2_c2f6no4s2" type2="C2_c2f6no4s2" type3="F5_c2f6no4s2" k="1139065.3" angle="1.949534" />
+    <Angle type1="S2_c2f6no4s2" type2="C2_c2f6no4s2" type3="F6_c2f6no4s2" k="1139065.3" angle="1.949534" />
+    <Angle type1="F1_c2f6no4s2" type2="C1_c2f6no4s2" type3="F2_c2f6no4s2" k="1281912.0" angle="1.869248" />
+    <Angle type1="F2_c2f6no4s2" type2="C1_c2f6no4s2" type3="F3_c2f6no4s2" k="1281912.0" angle="1.869248" />
+    <Angle type1="F3_c2f6no4s2" type2="C1_c2f6no4s2" type3="F1_c2f6no4s2" k="1281912.0" angle="1.869248" />
+    <Angle type1="F4_c2f6no4s2" type2="C2_c2f6no4s2" type3="F5_c2f6no4s2" k="1281912.0" angle="1.869248" />
+    <Angle type1="F5_c2f6no4s2" type2="C2_c2f6no4s2" type3="F6_c2f6no4s2" k="1281912.0" angle="1.869248" />
+    <Angle type1="F6_c2f6no4s2" type2="C2_c2f6no4s2" type3="F4_c2f6no4s2" k="1281912.0" angle="1.869248" />
+  </HarmonicAngleForce>
+  <PeriodicTorsionForce>
+    <Proper type1="S2_c2f6no4s2" type2="N1_c2f6no4s2" type3="S1_c2f6no4s2" type4="C1_c2f6no4s2" k1="65.546544" periodicity1="1" phase1="0.0" k2="-20.836320" periodicity2="2" phase2="0.0" k3="-6.393152" periodicity3="3" phase3="0.0" />
+    <Proper type1="S1_c2f6no4s2" type2="N1_c2f6no4s2" type3="S2_c2f6no4s2" type4="C2_c2f6no4s2" k1="65.546544" periodicity1="1" phase1="0.0" k2="-20.836320" periodicity2="2" phase2="0.0" k3="-6.393152" periodicity3="3" phase3="0.0" />
+    <Improper type1="N1_c2f6no4s2" type2="S1_c2f6no4s2" type3="C1_c2f6no4s2" type4="F1_c2f6no4s2" k1="2.644288" periodicity1="1" phase1="0.000000" />
+    <Improper type1="N1_c2f6no4s2" type2="S1_c2f6no4s2" type3="C1_c2f6no4s2" type4="F2_c2f6no4s2" k1="2.644288" periodicity1="1" phase1="0.000000" />
+    <Improper type1="N1_c2f6no4s2" type2="S1_c2f6no4s2" type3="C1_c2f6no4s2" type4="F3_c2f6no4s2" k1="2.644288" periodicity1="1" phase1="0.000000" />
+    <Improper type1="N1_c2f6no4s2" type2="S2_c2f6no4s2" type3="C2_c2f6no4s2" type4="F4_c2f6no4s2" k1="2.644288" periodicity1="1" phase1="0.000000" />
+    <Improper type1="N1_c2f6no4s2" type2="S2_c2f6no4s2" type3="C2_c2f6no4s2" type4="F5_c2f6no4s2" k1="2.644288" periodicity1="1" phase1="0.000000" />
+    <Improper type1="N1_c2f6no4s2" type2="S2_c2f6no4s2" type3="C2_c2f6no4s2" type4="F6_c2f6no4s2" k1="2.644288" periodicity1="1" phase1="0.000000" />
+    <Improper type1="S1_c2f6no4s2" type2="N1_c2f6no4s2" type3="S2_c2f6no4s2" type4="O3_c2f6no4s2" k1="-0.033472" periodicity1="1" phase1="0.000000" />
+    <Improper type1="S1_c2f6no4s2" type2="N1_c2f6no4s2" type3="S2_c2f6no4s2" type4="O4_c2f6no4s2" k1="-0.033472" periodicity1="1" phase1="0.000000" />
+    <Improper type1="S2_c2f6no4s2" type2="N1_c2f6no4s2" type3="S1_c2f6no4s2" type4="O1_c2f6no4s2" k1="-0.033472" periodicity1="1" phase1="0.000000" />
+    <Improper type1="S2_c2f6no4s2" type2="N1_c2f6no4s2" type3="S1_c2f6no4s2" type4="O2_c2f6no4s2" k1="-0.033472" periodicity1="1" phase1="0.000000" />
+    <Improper type1="O1_c2f6no4s2" type2="S1_c2f6no4s2" type3="C1_c2f6no4s2" type4="F1_c2f6no4s2" k1="2.903696" periodicity1="1" phase1="0.000000" />
+    <Improper type1="O1_c2f6no4s2" type2="S1_c2f6no4s2" type3="C1_c2f6no4s2" type4="F2_c2f6no4s2" k1="2.903696" periodicity1="1" phase1="0.000000" />
+    <Improper type1="O1_c2f6no4s2" type2="S1_c2f6no4s2" type3="C1_c2f6no4s2" type4="F3_c2f6no4s2" k1="2.903696" periodicity1="1" phase1="0.000000" />
+    <Improper type1="O2_c2f6no4s2" type2="S1_c2f6no4s2" type3="C1_c2f6no4s2" type4="F1_c2f6no4s2" k1="2.903696" periodicity1="1" phase1="0.000000" />
+    <Improper type1="O2_c2f6no4s2" type2="S1_c2f6no4s2" type3="C1_c2f6no4s2" type4="F2_c2f6no4s2" k1="2.903696" periodicity1="1" phase1="0.000000" />
+    <Improper type1="O2_c2f6no4s2" type2="S1_c2f6no4s2" type3="C1_c2f6no4s2" type4="F3_c2f6no4s2" k1="2.903696" periodicity1="1" phase1="0.000000" />
+    <Improper type1="O3_c2f6no4s2" type2="S2_c2f6no4s2" type3="C2_c2f6no4s2" type4="F4_c2f6no4s2" k1="2.903696" periodicity1="1" phase1="0.000000" />
+    <Improper type1="O3_c2f6no4s2" type2="S2_c2f6no4s2" type3="C2_c2f6no4s2" type4="F5_c2f6no4s2" k1="2.903696" periodicity1="1" phase1="0.000000" />
+    <Improper type1="O3_c2f6no4s2" type2="S2_c2f6no4s2" type3="C2_c2f6no4s2" type4="F6_c2f6no4s2" k1="2.903696" periodicity1="1" phase1="0.000000" />
+    <Improper type1="O4_c2f6no4s2" type2="S2_c2f6no4s2" type3="C2_c2f6no4s2" type4="F4_c2f6no4s2" k1="2.903696" periodicity1="1" phase1="0.000000" />
+    <Improper type1="O4_c2f6no4s2" type2="S2_c2f6no4s2" type3="C2_c2f6no4s2" type4="F5_c2f6no4s2" k1="2.903696" periodicity1="1" phase1="0.000000" />
+    <Improper type1="O4_c2f6no4s2" type2="S2_c2f6no4s2" type3="C2_c2f6no4s2" type4="F6_c2f6no4s2" k1="2.903696" periodicity1="1" phase1="0.000000" />
+  </PeriodicTorsionForce>
+</ForceField>

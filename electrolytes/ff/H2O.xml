@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="O_h2o" class="O_h2o" element="O" mass="15.9994" />
+    <Type name="H1_h2o" class="H1_h2o" element="H" mass="1.008" />
+    <Type name="H2_h2o" class="H2_h2o" element="H" mass="1.008" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="HOH">
+      <Atom name="OW0" type="O_h2o" />
+      <Atom name="HW1" type="H1_h2o" />
+      <Atom name="HW2" type="H2_h2o" />
+      <Bond atomName1="OW0" atomName2="HW1" />
+      <Bond atomName1="OW0" atomName2="HW2" />
+    </Residue>
+  </Residues>
+  <HarmonicBondForce>
+    <Bond type1="O_h2o" type2="H1_h2o" k="462750.4" length="0.101181" />
+    <Bond type1="O_h2o" type2="H2_h2o" k="462750.4" length="0.101181" />
+  </HarmonicBondForce>
+  <HarmonicAngleForce>
+    <Angle type1="H1_h2o" type2="O_h2o" type3="H2_h2o" k="836.8" angle="1.887547" />
+  </HarmonicAngleForce>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="O_h2o" charge="-0.848448690103" sigma="0.317796" epsilon="0.652144" />
+    <Atom type="H1_h2o" charge="0.4242243450515" sigma="0.100000" epsilon="0.000000" />
+    <Atom type="H2_h2o" charge="0.4242243450515" sigma="0.100000" epsilon="0.000000" />
+  </NonbondedForce>
+</ForceField>
