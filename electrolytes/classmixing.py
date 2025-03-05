@@ -1,363 +1,711 @@
 """classmixing.py
 Author: Muhammad R. Hasyim
 
-Script to a list of random electrolytes based on their classifications. In particular, there are
-five classes to choose from:
+Script to generate a list of random electrolytes based on their classifications using an object-oriented approach.
+Classifications:
 (1) 40% Salt in protic solvents
 (2) 45% Salt in polar aprotic solvents
 (3) 10% Salt in ionic liquids
 (4) 5% Molten salt 
 (5) 5% Aqueous electrolytes
-
-satisfying charge neutrality. Solvents can be mixtures, with components chosen randomly as well. 
-For each cation, anion, and solvent we can have up to four components. 
-
-The resulting random electrolytes are appended as new entry to the elytes.csv file, which contain the list of all electrolytes we want to simulate. 
 """
+
 import re
 import pandas as pd
-import sys
-import molbuilder as mb
-import os
-import csv 
 import numpy as np
 from pulp import LpProblem, LpVariable, lpSum, LpMinimize
+from abc import ABC, abstractmethod
+from typing import List, Tuple, Dict, Any
+import csv
 
-Avog = 6.023*10**23
-def write_elyte_entry(clas, name, temperature, cat, an, solv, salt_conc, stoich_solv):
-    newelectrolyte = dict()
-    newelectrolyte['category'] = 'random'
-    newelectrolyte['comment/name'] = name 
-    newelectrolyte['DOI'] = ''
-    if clas == 'MS':
-        newelectrolyte['units'] = 'number'
-    else:
-        newelectrolyte['units'] = 'volume'
-    newelectrolyte['temperature'] = temperature
-    for j in range(max_comp):
-        if j < len(cat):
-            newelectrolyte[f'cation{j+1}'] = cat[j]
-            newelectrolyte[f'cation{j+1}_conc'] = salt_conc[j]
+class SpeciesSelector:
+    """Utility class for selecting chemical species."""
+    
+    def __init__(self):
+        """Initializes the SpeciesSelector with a list of lanthanides."""
+        self.lanthanides = [
+            "La", "Ce", "Pr", "Nd", "Pm", "Sm",
+            "Eu", "Gd", "Tb", "Dy", "Ho", "Er",
+            "Tm", "Yb", "Lu"
+        ]
+        
+    def contains_lanthanide(self, strings: List[str]) -> bool:
+        """Checks if any of the given strings contain a lanthanide.
+
+        Args:
+            strings: A list of chemical species formulas.
+
+        Returns:
+            bool: True if any string contains a lanthanide, False otherwise.
+        """
+        return any(lanthanide in string for string in strings for lanthanide in self.lanthanides)
+    
+    def check_for_duplicates(self, existing_species: List[str], selected_species: List[str]) -> bool:
+        """Checks for duplicates between existing and selected species.
+
+        Args:
+            existing_species: A list of existing species formulas.
+            selected_species: A list of selected species formulas.
+
+        Returns:
+            bool: True if there are duplicates, False otherwise.
+        """
+        existing_cleaned = [re.split(r'[+-]', formula)[0] for formula in existing_species]
+        selected_cleaned = [re.split(r'[+-]', formula)[0] for formula in selected_species]
+        return any(selected in existing_cleaned for selected in selected_cleaned)
+    
+    def choose_species(self, species: pd.DataFrame, max_comp: int, existing_species: List[str], 
+                      solvent: bool = False) -> Tuple:
+        """Randomly selects species from the given DataFrame.
+
+        Args:
+            species: DataFrame containing species information.
+            max_comp: Maximum number of components to select.
+            existing_species: List of existing species to avoid duplicates.
+            solvent: Boolean indicating if the selection is for solvents.
+
+        Returns:
+            Tuple: Selected species formulas and their corresponding charges (and temperatures if solvent).
+        """
+        formulas = self.lanthanides
+        while self.contains_lanthanide(formulas) or self.check_for_duplicates(existing_species, formulas):
+            indices = np.random.choice(len(species), size=np.random.randint(1, max_comp), replace=False)
+            formulas = np.array(species["formula"])[indices].tolist()
+            
+            if not self.contains_lanthanide(formulas) and not self.check_for_duplicates(existing_species, formulas):
+                break
+                
+        if solvent:
+            return (np.array(species["formula"])[indices].tolist(),
+                   np.array(species["charge"])[indices].tolist(),
+                   np.array(species["min_temperature"])[indices].tolist(),
+                   np.array(species["max_temperature"])[indices].tolist())
         else:
-            newelectrolyte[f'cation{j+1}'] = ''
-            newelectrolyte[f'cation{j+1}_conc'] = ''
-        if j < len(an):
-            newelectrolyte[f'anion{j+1}'] = an[j]
-            newelectrolyte[f'anion{j+1}_conc'] = salt_conc[j+len(cat)]
-        else:
-            newelectrolyte[f'anion{j+1}'] = ''
-            newelectrolyte[f'anion{j+1}_conc'] = ''
-        if j < len(solv):
-            newelectrolyte[f'solvent{j+1}'] = solv[j]
-            newelectrolyte[f'solvent{j+1}_ratio'] = stoich_solv[j]
-        else:
-            newelectrolyte[f'solvent{j+1}'] = ''
-            newelectrolyte[f'solvent{j+1}_ratio'] = ''
-    return newelectrolyte
+            return (np.array(species["formula"])[indices].tolist(),
+                   np.array(species["charge"])[indices].tolist())
 
-# Remove species that are duplicate, regardless of charge
-def remove_dup_species(formulas, ids):
-    # Use a dictionary to keep track of unique formulas and corresponding ids
-    unique_formulas_with_ids = {}
+class ChargeSolver:
+    """Utility class for solving charge equations."""
+    
+    @staticmethod
+    def solve_single_equation(coefficients: List[float]) -> List[int]:
+        """Solves a single charge balance equation.
 
-    for formula, id in zip(formulas, ids):
-        cleaned_formula = re.split(r'[+-]', formula)[0]
-        if cleaned_formula not in unique_formulas_with_ids:
-            unique_formulas_with_ids[cleaned_formula] = (formula, id)
+        Args:
+            coefficients: List of coefficients representing the charges.
 
-    # Extract the original formulas and corresponding ids
-    cleaned_formulas = [item[0] for item in unique_formulas_with_ids.values()]
-    corresponding_ids = [item[1] for item in unique_formulas_with_ids.values()]
+        Returns:
+            List[int]: List of integer solutions for the coefficients.
+        """
+        prob = LpProblem("Integer_Solution_Problem", LpMinimize)
+        x = [LpVariable(f"x{i}", 1, 5, cat='Integer') for i in range(len(coefficients))]
+        prob += lpSum(coeff * var for coeff, var in zip(coefficients, x)) == 0
+        prob.solve()
+        return [int(v.varValue) for v in prob.variables()[1:]]
 
-    return cleaned_formulas, corresponding_ids
+class Electrolyte(ABC):
+    """Base class for all electrolyte types."""
+    
+    Avog = 6.023e23
+    
+    def __init__(self, species_selector: SpeciesSelector, charge_solver: ChargeSolver, is_rpmd: bool = False):
+        """Initializes the Electrolyte with species selector and charge solver.
 
-# Remove species that are duplicate, regardless of charge
-def remove_duplicates(lists_of_formulas):
-    # Initialize lists to collect all formulas and their respective ids
-    all_formulas = []
-    all_ids = []
+        Args:
+            species_selector: Instance of SpeciesSelector for selecting species.
+            charge_solver: Instance of ChargeSolver for solving charge equations.
+            is_rpmd: Boolean indicating if the electrolyte is for RPMD simulations.
+        """
+        self.species_selector = species_selector
+        self.charge_solver = charge_solver
+        self.max_comp = 2 if is_rpmd else 4  # RPMD uses max 2 components
+        self.fac = 0.05
+        self.cations = []
+        self.anions = []
+        self.solvents = []
+        self.cat_charges = []
+        self.an_charges = []
+        self.stoich = []
+        self.stoich_solv = []
+        self.min_temp = 0
+        self.max_temp = 0
+        self.is_rpmd = is_rpmd
+    
+    def generate(self, cations_df: pd.DataFrame, anions_df: pd.DataFrame, 
+                solvents_df: pd.DataFrame) -> None:
+        """Template method for generating electrolytes.
 
-    # Remove duplicates within each list and collect all formulas with their original list ids
-    for i, formulas in enumerate(lists_of_formulas):
-        cleaned_formulas, _ = remove_dup_species(formulas, list(range(len(formulas))))
-        all_formulas.extend(cleaned_formulas)
-        all_ids.extend([i] * len(cleaned_formulas))  # Use the list index as the id
-
-    # Remove duplicates across lists
-    unique_formulas_with_ids = {}
-
-    for formula, id in zip(all_formulas, all_ids):
-        cleaned_formula = re.split(r'[+-]', formula)[0]
-        if cleaned_formula not in unique_formulas_with_ids:
-            unique_formulas_with_ids[cleaned_formula] = (formula, id)
-
-    # Extract the original formulas and corresponding ids
-    unique_formulas = [item[0] for item in unique_formulas_with_ids.values()]
-    corresponding_ids = [item[1] for item in unique_formulas_with_ids.values()]
-
-    # Create a dictionary to store the unique items for each original list
-    cleaned_lists = {i: [] for i in range(len(lists_of_formulas))}
-
-    # Distribute the unique items back into their respective original lists
-    for formula, id in zip(unique_formulas, corresponding_ids):
-        cleaned_lists[id].append(formula)
-
-    # Convert the dictionary back to a list of lists
-    result_lists = [cleaned_lists[i] for i in range(len(lists_of_formulas))]
-
-    return result_lists
-
-def solve_single_equation(coefficients):
-    prob = LpProblem("Integer_Solution_Problem", LpMinimize)
-    x = [LpVariable(f"x{i}", 1, 5, cat='Integer') for i in range(len(coefficients))]
-    prob += lpSum(coeff * var for coeff, var in zip(coefficients, x)) == 0
-    prob.solve()
-    return [int(v.varValue) for v in prob.variables()[1:]]
-
-lanthanides = [
-    "La", "Ce", "Pr", "Nd", "Pm", "Sm",
-    "Eu", "Gd", "Tb", "Dy", "Ho", "Er",
-    "Tm", "Yb", "Lu"
-]
-#Function to randomly choose cations, anions, and solvents
-def contains_lanthanide(strings):
-    for string in strings:
-        for lanthanide in lanthanides:
-            if lanthanide in string:
-                return True
-    return False
-
-# Function to check if selected species exist in the existing list
-def check_for_duplicates(existing_species, selected_species):
-    existing_cleaned = [re.split(r'[+-]', formula)[0] for formula in existing_species]
-    selected_cleaned = [re.split(r'[+-]', formula)[0] for formula in selected_species]
-
-    # Check if any selected species are already in the existing list
-    for selected in selected_cleaned:
-        if selected in existing_cleaned:
-            return True
-    return False
-
-def choose_species(species,max_comp,existing_species,solvent=False,cations=False):
-    formulas = lanthanides
-    while contains_lanthanide(formulas) or check_for_duplicates(existing_species, formulas):
-        # Keep randomly choosing until there are no duplicates
-        indices = np.random.choice(len(species), size=np.random.randint(1, max_comp), replace=False)
-        formulas = np.array(species["formula"])[indices].tolist()
-
-        # Check for duplicates, loop continues until no duplicates are found
-        if not contains_lanthanide(formulas) and not check_for_duplicates(existing_species, formulas):
-            break
-    if solvent:
-        return np.array(species["formula"])[indices].tolist(), np.array(species["charge"])[indices].tolist(), np.array(species["min_temperature"])[indices].tolist(), np.array(species["max_temperature"])[indices].tolist()
-    else:
-        return np.array(species["formula"])[indices].tolist(), np.array(species["charge"])[indices].tolist()
-def load_csv(filename):
-    return pd.read_csv(filename)
-
-#Load the CSV file
-cations_file = 'cations.csv'
-anions_file = 'anions.csv'
-solvents_file = 'solvent.csv'
-
-elytes= load_csv('elytes.csv')
-
-Nrandom = 700#700#800
-fac = 0.05
-for i in range(Nrandom):
-    cations = load_csv(cations_file)
-    anions = load_csv(anions_file)
-    solvents = load_csv(solvents_file)
-    max_comp = 4
-    #Randomly select which class we want to create
-    classes = ['protic','aprotic','IL','MS','aq']
-    clas = np.random.choice(classes,p=[0.4,0.4,0.1,0.05,0.05])
-    clas = 'IL'    
-    #(1) Aqueous electrolytes
-    if clas == 'aq':
-        aq_idx = list(cations['in_aq'])
-        cations = cations.iloc[aq_idx]
-        cat, catcharges = choose_species(cations,max_comp,[])#,cations=True)
-         
-        aq_idx = list(anions['in_aq'])
-        anions = anions.iloc[aq_idx]
-        an, ancharges = choose_species(anions,max_comp,cat)
+        Args:
+            cations_df: DataFrame containing cation species.
+            anions_df: DataFrame containing anion species.
+            solvents_df: DataFrame containing solvent species.
+        """
+        # Store original dataframes for special cases (like IL)
+        self.original_cations_df = cations_df
+        self.original_anions_df = anions_df
         
-        charges = catcharges + ancharges
-        stoich = solve_single_equation(charges)
+        # Apply RPMD filtering if needed
+        if self.is_rpmd:
+            cations_df = cations_df[cations_df['in_rpmd']].copy()
+            anions_df = anions_df[anions_df['in_rpmd']].copy()
+            solvents_df = solvents_df[solvents_df['in_rpmd']].copy()
         
-        solv = ['H2O']
-        stoich_solv = [1]
+        # 1. Filter compatible species
+        filtered_cations, filtered_anions, filtered_solvents = self._filter_species(
+            cations_df, anions_df, solvents_df)
         
-        #formulas = remove_duplicates([cat,an,solv])
-        #cat = formulas[0]
-        #an = formulas[1]
-        #solv = formulas[2]
+        # 2. Generate main species
+        self._generate_main_species(filtered_cations, filtered_anions)
         
-        salt_molfrac = np.array(stoich)/sum(stoich)
-        solv_molfrac = np.array(stoich_solv)/sum(stoich_solv)
-        minT = (1+fac)*273
-        maxT = (1-fac)*373
-        soltorsolv = len(cat+an)*['A']+len(solv)*['B']
-    #(2) Protic solvents
-    elif clas == 'protic':
-        protic_idx = list(cations['in_protic'])
-        cations = cations.iloc[protic_idx]
-        cat, catcharges = choose_species(cations,max_comp,[])#,cations=True)
+        # 3. Generate solvents (if any)
+        self._generate_solvents(filtered_solvents)
         
-        protic_idx = list(anions['in_protic'])
-        anions = anions.iloc[protic_idx]
-        an, ancharges = choose_species(anions,max_comp,an)
+        # 4. Set temperature range
+        self._set_temperature_range()
+    
+    def _generate_main_species(self, cations_df: pd.DataFrame, anions_df: pd.DataFrame) -> None:
+        """Generate cations and anions and solve charge balance."""
+        # Generate species
+        self.cations, self.cat_charges = self.species_selector.choose_species(
+            cations_df, self.max_comp, [])
+        self.anions, self.an_charges = self.species_selector.choose_species(
+            anions_df, self.max_comp, self.cations)
         
-        charges = list(catcharges)+list(ancharges)
-        stoich = solve_single_equation(charges)
+        # Solve charge balance
+        charges = self.cat_charges + self.an_charges
+        self.stoich = self.charge_solver.solve_single_equation(charges)
+    
+    @abstractmethod
+    def _filter_species(self, cations_df: pd.DataFrame, anions_df: pd.DataFrame, 
+                       solvents_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Filter species based on electrolyte type.
 
-        protic_idx = list(solvents['protic'])
-        solvents = solvents.iloc[protic_idx]
-        solv, solvcharges, minT, maxT= choose_species(solvents,max_comp,cat+an,solvent=True)
-        stoich_solv = np.random.randint(1, 4, size=len(solv))
-        
-        #formulas = remove_duplicates([cat,an,solv])
-        #cat = formulas[0]
-        #an = formulas[1]
-        #solv = formulas[2]
-        
-        salt_molfrac = np.array(stoich)/sum(stoich)
-        solv_molfrac = np.array(stoich_solv)/sum(stoich_solv)
-        minT = (1+fac)*np.sum(np.array(minT)*solv_molfrac)
-        maxT = (1-fac)*np.sum(np.array(maxT)*solv_molfrac)
+        Args:
+            cations_df: DataFrame containing cation species.
+            anions_df: DataFrame containing anion species.
+            solvents_df: DataFrame containing solvent species.
 
-        soltorsolv = len(cat+an)*['A']+len(solv)*['B']
-    #(3) Polar aprotic solvents
-    elif clas == 'aprotic':
-        aprotic_idx = list(cations['in_aprotic'])
-        cations = cations.iloc[aprotic_idx]
-        cat, catcharges = choose_species(cations,max_comp,[])#,cations=True)
-        
-        aprotic_idx = list(anions['in_aprotic'])
-        anions = anions.iloc[aprotic_idx]
-        an, ancharges = choose_species(anions,max_comp,cat)
+        Returns:
+            Tuple: Filtered DataFrames for cations, anions, and solvents.
+        """
+        pass
+    
+    @abstractmethod
+    def _generate_solvents(self, solvents_df: pd.DataFrame) -> None:
+        """Generate solvents for the electrolyte.
 
-        charges = list(catcharges)+list(ancharges)
-        stoich = solve_single_equation(charges)
+        Args:
+            solvents_df: DataFrame containing solvent species.
+        """
+        pass
+    
+    @abstractmethod
+    def _set_temperature_range(self) -> None:
+        """Set the temperature range for the electrolyte."""
+        pass
+    
+    def to_dict(self, name: str) -> Dict[str, Any]:
+        """Convert electrolyte data to dictionary format for CSV.
 
-        aprotic_idx = list(solvents['polar_aprotic'])
-        solvents = solvents.iloc[aprotic_idx]
-        solv, solvcharges, minT, maxT= choose_species(solvents,max_comp,cat+an,solvent=True)
-        stoich_solv = np.random.randint(1, 4, size=len(solv))
-        
-        #formulas = remove_duplicates([cat,an,solv])
-        #cat = formulas[0]
-        #an = formulas[1]
-        #solv = formulas[2]
-        
-        salt_molfrac = np.array(stoich)/sum(stoich)
-        solv_molfrac = np.array(stoich_solv)/sum(stoich_solv)
-        minT = (1+fac)*np.sum(np.array(minT)*solv_molfrac)
-        maxT = (1-fac)*np.sum(np.array(maxT)*solv_molfrac)
-        
-        soltorsolv = len(cat+an)*['A']+len(solv)*['B']
-    #(4) Ionic liquids
-    elif clas == 'IL': 
-        IL_idx = list(cations['in_IL'])
-        cations_il = cations.iloc[IL_idx]
-        cat, catcharges = choose_species(cations_il,max_comp,[])#,cations=True)
-        
-        IL_idx = list(anions['in_IL'])
-        anions_il = anions.iloc[IL_idx]
-        an, ancharges = choose_species(anions_il,max_comp,cat)
+        Args:
+            name: Name of the electrolyte.
 
-        charges = list(catcharges)+list(ancharges)
-        stoich = solve_single_equation(charges)
-
-        IL_idx = list(cations['IL_comp'])
-        cations = cations.iloc[IL_idx]
-        solv, solvcharges = choose_species(cations,max_comp,cat+an)#,cations=True) 
+        Returns:
+            Dict[str, Any]: Dictionary representation of the electrolyte data.
+        """
+        salt_molfrac = np.array(self.stoich)/sum(self.stoich) if len(self.stoich) > 0 else []
         
-        IL_idx = list(anions['IL_comp'])
-        anions = anions.iloc[IL_idx]
-        solv1, solvcharges1 = choose_species(anions,max_comp,cat+an+solv) 
-        solv += solv1
-        solvcharges += solvcharges1
-
-        minT = 300
-        maxT = 400
-        stoich_solv = solve_single_equation(solvcharges)
+        entry = {
+            'category': 'random',
+            'comment/name': name,
+            'DOI': '',
+            'units': 'number' if isinstance(self, MoltenSaltElectrolyte) else 'mass' if self.is_rpmd else 'volume',
+            'temperature': self.min_temp
+        }
         
-        #formulas = remove_duplicates([cat,an,solv])
-        #cat = formulas[0]
-        #an = formulas[1]
-        #solv = formulas[2]
-        
-        salt_molfrac = np.array(stoich)/sum(stoich)
-        solv_molfrac = np.array(stoich_solv)/sum(stoich_solv)
-        soltorsolv = len(cat+an)*['A']+len(solv)*['A']
-    #(4) Molten salt
-    elif clas == 'MS':
-        MS_idx = list(cations['MS_comp'])
-        cations_ms = cations.iloc[MS_idx]
-        cat, catcharges = choose_species(cations_ms,max_comp,[])#,cations=True)
-        
-        MS_idx = list(anions['MS_comp'])
-        anions_ms = anions.iloc[MS_idx]
-        an, ancharges = choose_species(anions_ms,max_comp,cat)
-
-        charges = list(catcharges)+list(ancharges)
-        stoich = solve_single_equation(charges)
-        
-        minT = 1000
-        maxT = 1300
-        stoich_solv = []
-        solv = []
-        salt_molfrac = np.array(stoich)/sum(stoich)
-        solv_molfrac = []
-        
-        #formulas = remove_duplicates([cat,an,solv])
-        #cat = formulas[0]
-        #an = formulas[1]
-        #solv = formulas[2]
-
-    species = cat+an+solv
-    if clas == 'MS':
-        for temperature  in [minT, maxT]:
-            salt_conc = salt_molfrac/min(salt_molfrac)
-            name = f'{clas}-{i+1}'
-            if temperature == minT:
-                name += '-minT'
+        # Add species information
+        for j in range(self.max_comp):
+            if j < len(self.cations):
+                entry[f'cation{j+1}'] = self.cations[j]
+                entry[f'cation{j+1}_conc'] = salt_molfrac[j] if len(salt_molfrac) > j else ''
             else:
-                name += '-maxT'
-            newelectrolyte = write_elyte_entry(clas, name, temperature, cat, an, solv, salt_conc, stoich_solv)
-            elytes = pd.concat([elytes,pd.DataFrame([newelectrolyte])],ignore_index=True)
-    else:
-        distances = [2.25, 1.75] #nm 
-        boxsize = 5 #nm
-        minboxsize = 4 #nm
-        minmol = 1
-        for dis in distances:
-            #[np.random.choice(distances)]:
-            #for temperature  in [np.random.choice([minT, maxT])]:
-            for temperature  in [minT, maxT]:
-                conc = 0.62035049089/dis**3 # number per nm3, concentration
-                mols = salt_molfrac/min(salt_molfrac)*minmol 
-                salt_conc = salt_molfrac*conc/Avog*1e24 #number per nm3
-                totalmol = np.sum(mols) #total number 
-                boxsize = (totalmol/conc)**(1/3) #nm
-                newminmol = minmol
-                while minboxsize > boxsize:
-                    newminmol += 1
-                    mols = salt_molfrac/min(salt_molfrac)*newminmol 
-                    salt_conc = salt_molfrac*conc/Avog*1e24 #number per nm3
-                    totalmol = np.sum(mols) #total number 
-                    boxsize = (totalmol/conc)**(1/3) #nm
-                name = f'{clas}-{i+1}'
-                if temperature == minT:
-                    name += '-minT'
-                else:
-                    name += '-maxT'
-                if dis == 2.25:
-                    name += '-lowconc'
-                else:
-                    name += '-highconc'
-                newelectrolyte = write_elyte_entry(clas, name, temperature, cat, an, solv, salt_conc, stoich_solv)
-                elytes = pd.concat([elytes,pd.DataFrame([newelectrolyte])],ignore_index=True)
-elytes.to_csv('elytes.csv', index=False)
+                entry[f'cation{j+1}'] = ''
+                entry[f'cation{j+1}_conc'] = ''
+                
+            if j < len(self.anions):
+                entry[f'anion{j+1}'] = self.anions[j]
+                entry[f'anion{j+1}_conc'] = salt_molfrac[j+len(self.cations)] if len(salt_molfrac) > j+len(self.cations) else ''
+            else:
+                entry[f'anion{j+1}'] = ''
+                entry[f'anion{j+1}_conc'] = ''
+                
+            if j < len(self.solvents):
+                entry[f'solvent{j+1}'] = self.solvents[j]
+                entry[f'solvent{j+1}_ratio'] = self.stoich_solv[j] if len(self.stoich_solv) > 0 else ''
+            else:
+                entry[f'solvent{j+1}'] = ''
+                entry[f'solvent{j+1}_ratio'] = ''
+                
+        return entry
+
+class AqueousElectrolyte(Electrolyte):
+    """Class for aqueous electrolytes."""
+    
+    def _filter_species(self, cations_df: pd.DataFrame, anions_df: pd.DataFrame,
+                       solvents_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Filter species for aqueous electrolytes.
+
+        Args:
+            cations_df: DataFrame containing cation species.
+            anions_df: DataFrame containing anion species.
+            solvents_df: DataFrame containing solvent species.
+
+        Returns:
+            Tuple: Filtered DataFrames for cations, anions, and solvents.
+        """
+        return (cations_df[cations_df['in_aq']].copy(),
+                anions_df[anions_df['in_aq']].copy(),
+                pd.DataFrame())  # No need for solvents DataFrame
+    
+    def _generate_solvents(self, solvents_df: pd.DataFrame) -> None:
+        """Generate solvents for aqueous electrolytes.
+
+        Args:
+            solvents_df: DataFrame containing solvent species.
+        """
+        self.solvents = ['H2O']
+        self.stoich_solv = [1]
+    
+    def _set_temperature_range(self) -> None:
+        """Set the temperature range for aqueous electrolytes."""
+        self.min_temp = (1 + self.fac) * 273
+        self.max_temp = (1 - self.fac) * 373
+
+class ProticElectrolyte(Electrolyte):
+    """Class for protic electrolytes."""
+    
+    def _filter_species(self, cations_df: pd.DataFrame, anions_df: pd.DataFrame,
+                       solvents_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Filter species for protic electrolytes.
+
+        Args:
+            cations_df: DataFrame containing cation species.
+            anions_df: DataFrame containing anion species.
+            solvents_df: DataFrame containing solvent species.
+
+        Returns:
+            Tuple: Filtered DataFrames for cations, anions, and solvents.
+        """
+        return (cations_df[cations_df['in_protic']].copy(),
+                anions_df[anions_df['in_protic']].copy(),
+                solvents_df[solvents_df['protic']].copy())
+    
+    def _generate_solvents(self, solvents_df: pd.DataFrame) -> None:
+        """Generate solvents for protic electrolytes.
+
+        Args:
+            solvents_df: DataFrame containing solvent species.
+        """
+        self.solvents, _, min_temps, max_temps = self.species_selector.choose_species(
+            solvents_df, self.max_comp, self.cations + self.anions, solvent=True)
+        self.stoich_solv = np.random.randint(1, 4, size=len(self.solvents))
+        
+        # Calculate temperature range
+        solv_molfrac = np.array(self.stoich_solv)/sum(self.stoich_solv)
+        self.min_temp = (1 + self.fac) * np.sum(np.array(min_temps) * solv_molfrac)
+        self.max_temp = (1 - self.fac) * np.sum(np.array(max_temps) * solv_molfrac)
+    
+    def _set_temperature_range(self) -> None:
+        """Set the temperature range for protic electrolytes."""
+        # Temperature range is set in _generate_solvents for this class
+        pass
+
+class AproticElectrolyte(Electrolyte):
+    """Class for aprotic electrolytes."""
+    
+    def _filter_species(self, cations_df: pd.DataFrame, anions_df: pd.DataFrame,
+                       solvents_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Filter species for aprotic electrolytes.
+
+        Args:
+            cations_df: DataFrame containing cation species.
+            anions_df: DataFrame containing anion species.
+            solvents_df: DataFrame containing solvent species.
+
+        Returns:
+            Tuple: Filtered DataFrames for cations, anions, and solvents.
+        """
+        return (cations_df[cations_df['in_aprotic']].copy(),
+                anions_df[anions_df['in_aprotic']].copy(),
+                solvents_df[solvents_df['polar_aprotic']].copy())
+    
+    def _generate_solvents(self, solvents_df: pd.DataFrame) -> None:
+        """Generate solvents for aprotic electrolytes.
+
+        Args:
+            solvents_df: DataFrame containing solvent species.
+        """
+        self.solvents, _, min_temps, max_temps = self.species_selector.choose_species(
+            solvents_df, self.max_comp, self.cations + self.anions, solvent=True)
+        self.stoich_solv = np.random.randint(1, 4, size=len(self.solvents))
+        
+        # Calculate temperature range
+        solv_molfrac = np.array(self.stoich_solv)/sum(self.stoich_solv)
+        self.min_temp = (1 + self.fac) * np.sum(np.array(min_temps) * solv_molfrac)
+        self.max_temp = (1 - self.fac) * np.sum(np.array(max_temps) * solv_molfrac)
+    
+    def _set_temperature_range(self) -> None:
+        """Set the temperature range for aprotic electrolytes."""
+        # Temperature range is set in _generate_solvents for this class
+        pass
+
+class IonicLiquidElectrolyte(Electrolyte):
+    """Class for ionic liquid electrolytes."""
+    
+    def _filter_species(self, cations_df: pd.DataFrame, anions_df: pd.DataFrame,
+                       solvents_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Filter species for ionic liquid electrolytes.
+
+        Args:
+            cations_df: DataFrame containing cation species.
+            anions_df: DataFrame containing anion species.
+            solvents_df: DataFrame containing solvent species.
+
+        Returns:
+            Tuple: Filtered DataFrames for cations, anions, and solvents.
+        """
+        return (cations_df[cations_df['in_IL']].copy(),
+                anions_df[anions_df['in_IL']].copy(),
+                pd.DataFrame())  # We'll handle IL components separately
+    
+    def _generate_solvents(self, solvents_df: pd.DataFrame) -> None:
+        """Generate solvents for ionic liquid electrolytes.
+
+        Args:
+            solvents_df: DataFrame containing solvent species.
+        """
+        # Generate IL components as solvents using original dataframes
+        il_solv_cations = self.original_cations_df[self.original_cations_df['IL_comp']].copy()
+        il_solv_anions = self.original_anions_df[self.original_anions_df['IL_comp']].copy()
+        
+        solv1, solv_charges1 = self.species_selector.choose_species(
+            il_solv_cations, self.max_comp, self.cations + self.anions)
+        solv2, solv_charges2 = self.species_selector.choose_species(
+            il_solv_anions, self.max_comp, self.cations + self.anions + solv1)
+        
+        self.solvents = solv1 + solv2
+        self.stoich_solv = self.charge_solver.solve_single_equation(solv_charges1 + solv_charges2)
+    
+    def _set_temperature_range(self) -> None:
+        """Set the temperature range for ionic liquid electrolytes."""
+        self.min_temp = 300
+        self.max_temp = 400
+
+class MoltenSaltElectrolyte(Electrolyte):
+    """Class for molten salt electrolytes."""
+    
+    def _filter_species(self, cations_df: pd.DataFrame, anions_df: pd.DataFrame,
+                       solvents_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Filter species for molten salt electrolytes.
+
+        Args:
+            cations_df: DataFrame containing cation species.
+            anions_df: DataFrame containing anion species.
+            solvents_df: DataFrame containing solvent species.
+
+        Returns:
+            Tuple: Filtered DataFrames for cations, anions, and solvents.
+        """
+        return (cations_df[cations_df['MS_comp']].copy(),
+                anions_df[anions_df['MS_comp']].copy(),
+                pd.DataFrame())  # No solvents for molten salt
+    
+    def _generate_solvents(self, solvents_df: pd.DataFrame) -> None:
+        """Generate solvents for molten salt electrolytes.
+
+        Args:
+            solvents_df: DataFrame containing solvent species.
+        """
+        self.solvents = []
+        self.stoich_solv = []
+    
+    def _set_temperature_range(self) -> None:
+        """Set the temperature range for molten salt electrolytes."""
+        self.min_temp = 1000
+        self.max_temp = 1300
+
+class RandomElectrolyte(Electrolyte):
+    """Class for completely random electrolytes without type constraints."""
+    
+    def __init__(self, species_selector: SpeciesSelector, charge_solver: ChargeSolver, is_rpmd: bool = False):
+        """Initializes the RandomElectrolyte with species selector and charge solver.
+
+        Args:
+            species_selector: Instance of SpeciesSelector for selecting species.
+            charge_solver: Instance of ChargeSolver for solving charge equations.
+            is_rpmd: Boolean indicating if the electrolyte is for RPMD simulations.
+        """
+        super().__init__(species_selector, charge_solver, is_rpmd)
+        self.max_comp = 3  # Random electrolytes use max 3 components
+    
+    def _filter_species(self, cations_df: pd.DataFrame, anions_df: pd.DataFrame,
+                       solvents_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Filter species for random electrolytes (no filtering).
+
+        Args:
+            cations_df: DataFrame containing cation species.
+            anions_df: DataFrame containing anion species.
+            solvents_df: DataFrame containing solvent species.
+
+        Returns:
+            Tuple: Filtered DataFrames for cations, anions, and solvents (all available).
+        """
+        # No filtering for random electrolytes, use all available species
+        if self.is_rpmd:
+            return (cations_df[cations_df['in_rpmd']].copy(),
+                   anions_df[anions_df['in_rpmd']].copy(),
+                   solvents_df[solvents_df['in_rpmd']].copy())
+        return cations_df.copy(), anions_df.copy(), solvents_df.copy()
+    
+    def _generate_solvents(self, solvents_df: pd.DataFrame) -> None:
+        """Generate solvents for random electrolytes.
+
+        Args:
+            solvents_df: DataFrame containing solvent species.
+        """
+        self.solvents, _, min_temps, max_temps = self.species_selector.choose_species(
+            solvents_df, self.max_comp, self.cations + self.anions, solvent=True)
+        self.stoich_solv = np.random.randint(1, 3, size=len(self.solvents))  # 1-2 range for random
+        
+        # Calculate temperature range
+        solv_molfrac = np.array(self.stoich_solv)/sum(self.stoich_solv)
+        self.min_temp = (1 + self.fac) * np.sum(np.array(min_temps) * solv_molfrac)
+        self.max_temp = (1 - self.fac) * np.sum(np.array(max_temps) * solv_molfrac)
+    
+    def _set_temperature_range(self) -> None:
+        """Set the temperature range for random electrolytes."""
+        # Temperature range is set in _generate_solvents for this class
+        pass
+    
+    def to_dict(self, name: str) -> Dict[str, Any]:
+        """Override to_dict to use 'volume' units.
+
+        Args:
+            name: Name of the electrolyte.
+
+        Returns:
+            Dict[str, Any]: Dictionary representation of the electrolyte data.
+        """
+        entry = super().to_dict(name)
+        entry['units'] = 'volume'  # Random electrolytes use volume units
+        return entry
+
+class ElectrolyteFactory:
+    """Factory class for creating different types of electrolytes."""
+    
+    def __init__(self, is_rpmd: bool = False, random_only: bool = False):
+        """Initializes the ElectrolyteFactory with species selector and charge solver.
+
+        Args:
+            is_rpmd: Boolean indicating if the factory is for RPMD simulations.
+            random_only: Boolean indicating if only random electrolytes should be created.
+        """
+        self.species_selector = SpeciesSelector()
+        self.charge_solver = ChargeSolver()
+        self.is_rpmd = is_rpmd
+        self.random_only = random_only
+        
+        if random_only:
+            self.class_probabilities = {'random': 1.0}
+        elif is_rpmd:
+            # RPMD electrolytes are always aqueous or protic or aprotic.
+            # We want to make sure that we have a good mix of all three.
+            # But there's no point of simulating molten salt electrolytes and ionic liquids in RPMD.
+            self.class_probabilities = {
+                'protic': 0.3,
+                'aprotic': 0.3,
+                'aq': 0.4
+            }
+        else:
+            self.class_probabilities = {
+                'protic': 0.4,
+                'aprotic': 0.4,
+                'IL': 0.1,
+                'MS': 0.05,
+                'aq': 0.05
+            }
+            
+        self.class_mapping = {
+            'protic': ProticElectrolyte,
+            'aprotic': AproticElectrolyte,
+            'IL': IonicLiquidElectrolyte,
+            'MS': MoltenSaltElectrolyte,
+            'aq': AqueousElectrolyte,
+            'random': RandomElectrolyte
+        }
+    
+    def create_electrolyte(self, cations_df: pd.DataFrame, anions_df: pd.DataFrame, 
+                          solvents_df: pd.DataFrame) -> Tuple[Electrolyte, str]:
+        """Creates an electrolyte based on the selected class.
+
+        Args:
+            cations_df: DataFrame containing cation species.
+            anions_df: DataFrame containing anion species.
+            solvents_df: DataFrame containing solvent species.
+
+        Returns:
+            Tuple: The created electrolyte and its class name.
+        """
+        # Randomly select electrolyte class based on probabilities
+        elyte_class = np.random.choice(
+            list(self.class_probabilities.keys()),
+            p=list(self.class_probabilities.values())
+        )
+        
+        # Create and generate the electrolyte
+        electrolyte = self.class_mapping[elyte_class](self.species_selector, self.charge_solver, self.is_rpmd)
+        electrolyte.generate(cations_df, anions_df, solvents_df)
+        return electrolyte, elyte_class
+
+def generate_electrolytes(is_rpmd: bool = False, 
+                       input_files: Dict[str, str] = None,
+                       output_file: str = None,
+                       n_random: int = None,
+                       random_only: bool = False) -> pd.DataFrame:
+    """Generate electrolytes with given parameters.
+
+    Args:
+        is_rpmd: Whether to generate electrolytes for RPMD simulations.
+        input_files: Dictionary with paths to input files. Should contain keys:
+                    'cations', 'anions', 'solvents'.
+        output_file: Path to output file. If None, uses default based on is_rpmd.
+        n_random: Number of random electrolytes to generate. If None, uses default based on is_rpmd.
+        random_only: Whether to generate only random electrolytes without type constraints.
+
+    Returns:
+        pd.DataFrame: Generated electrolytes dataframe.
+    """
+    # Set default values
+    if input_files is None:
+        input_files = {
+            'cations': 'cations.csv',
+            'anions': 'anions.csv',
+            'solvents': 'solvent.csv'
+        }
+    
+    if output_file is None:
+        output_file = 'rpmd_elytes.csv' if is_rpmd else 'ml_elytes.csv'
+        
+    if n_random is None:
+        n_random = 20 if is_rpmd else (1000 if random_only else 3000)
+    
+    # Load data
+    cations_df = pd.read_csv(input_files['cations'])
+    anions_df = pd.read_csv(input_files['anions'])
+    solvents_df = pd.read_csv(input_files['solvents'])
+    
+    try:
+        elytes = pd.read_csv(output_file)
+    except FileNotFoundError:
+        # Create empty DataFrame with correct columns if file doesn't exist
+        elytes = pd.DataFrame(columns=['category', 'comment/name', 'DOI', 'units', 'temperature'] + 
+                            [f'{t}{i}' for t in ['cation', 'anion', 'solvent'] 
+                             for i in range(1, 5)] +
+                            [f'{t}{i}_{"conc" if t != "solvent" else "ratio"}' 
+                             for t in ['cation', 'anion', 'solvent'] for i in range(1, 5)])
+    
+    # Initialize factory
+    factory = ElectrolyteFactory(is_rpmd=is_rpmd, random_only=random_only)
+    
+    # Generate electrolytes
+    for i in range(n_random):
+        # Create electrolyte
+        electrolyte, elyte_class = factory.create_electrolyte(cations_df, anions_df, solvents_df)
+        
+        # Generate entries for different conditions
+        if elyte_class == 'MS':
+            # Only generate for minimum temperature for molten salt
+            name = f'{elyte_class}-{i+1}-minT'
+            entry = electrolyte.to_dict(name)
+            elytes = pd.concat([elytes, pd.DataFrame([entry])], ignore_index=True)
+        else:
+            # Generate for different distances and temperatures
+            distances = [2.25, 1.75] if is_rpmd else [2.225]  # nm
+            boxsize = 5  # nm
+            minboxsize = 4  # nm
+            minmol = 1
+            
+            for dis in distances:
+                for temperature in ([electrolyte.min_temp, electrolyte.max_temp] if is_rpmd 
+                                 else [electrolyte.min_temp]):
+                    conc = 0.62035049089/dis**3  # number per nm3
+                    
+                    # Calculate concentrations and box size
+                    salt_molfrac = np.array(electrolyte.stoich)/sum(electrolyte.stoich)
+                    mols = salt_molfrac/min(salt_molfrac)*minmol
+                    salt_conc = salt_molfrac*conc/Electrolyte.Avog*1e24  # number per nm3
+                    totalmol = np.sum(mols)
+                    boxsize = (totalmol/conc)**(1/3)  # nm
+                    
+                    # Adjust minimum molecules if needed
+                    newminmol = minmol
+                    while minboxsize > boxsize:
+                        newminmol += 1
+                        mols = salt_molfrac/min(salt_molfrac)*newminmol
+                        salt_conc = salt_molfrac*conc/Electrolyte.Avog*1e24
+                        totalmol = np.sum(mols)
+                        boxsize = (totalmol/conc)**(1/3)
+                    
+                    # Generate entry name
+                    name = f'{elyte_class}-{i+1}'
+                    if temperature == electrolyte.min_temp:
+                        name += '-minT'
+                    else:
+                        name += '-maxT'
+                    if dis == 2.25:
+                        name += '-lowconc'
+                    else:
+                        name += '-highconc'
+                    
+                    # Create and add entry
+                    entry = electrolyte.to_dict(name)
+                    elytes = pd.concat([elytes, pd.DataFrame([entry])], ignore_index=True)
+    
+    # Save results if output file is specified
+    if output_file:
+        elytes.to_csv(output_file, index=False)
+    
+    return elytes
+
+def main():
+    """Main function to parse command line arguments and generate electrolytes."""
+    # Parse command line arguments
+    import argparse
+    parser = argparse.ArgumentParser(description='Generate random electrolytes')
+    parser.add_argument('--rpmd', action='store_true', help='Generate electrolytes for RPMD simulations')
+    parser.add_argument('--random-only', action='store_true', help='Generate only random electrolytes without type constraints')
+    parser.add_argument('--cations', type=str, help='Path to cations CSV file', default='cations.csv')
+    parser.add_argument('--anions', type=str, help='Path to anions CSV file', default='anions.csv')
+    parser.add_argument('--solvents', type=str, help='Path to solvents CSV file', default='solvent.csv')
+    parser.add_argument('--output', type=str, help='Path to output CSV file')
+    parser.add_argument('--n-random', type=int, help='Number of random electrolytes to generate')
+    args = parser.parse_args()
+    
+    # Prepare input files dictionary
+    input_files = {
+        'cations': args.cations,
+        'anions': args.anions,
+        'solvents': args.solvents
+    }
+    
+    # Generate electrolytes
+    generate_electrolytes(
+        is_rpmd=args.rpmd,
+        input_files=input_files,
+        output_file=args.output,
+        n_random=args.n_random,
+        random_only=args.random_only
+    )
+
+if __name__ == "__main__":
+    main()
