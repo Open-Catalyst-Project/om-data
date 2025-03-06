@@ -593,7 +593,10 @@ def generate_electrolytes(is_rpmd: bool = False,
                          random_only: bool = False,
                          max_cations: int = 4,
                          max_anions: int = 4,
-                         max_solvents: int = 4) -> pd.DataFrame:
+                         max_solvents: int = 4,
+                         required_solvent: str = None,
+                         required_cation: str = None,
+                         required_anion: str = None) -> pd.DataFrame:
     """Generate electrolytes with given parameters.
 
     Args:
@@ -605,6 +608,9 @@ def generate_electrolytes(is_rpmd: bool = False,
         max_cations: Maximum number of cation species (default: 4)
         max_anions: Maximum number of anion species (default: 4)
         max_solvents: Maximum number of solvent species (default: 4)
+        required_solvent: Comma-separated string of required solvent species
+        required_cation: Comma-separated string of required cation species
+        required_anion: Comma-separated string of required anion species
 
     Returns:
         pd.DataFrame: Generated electrolytes dataframe.
@@ -647,11 +653,66 @@ def generate_electrolytes(is_rpmd: bool = False,
         max_solvents=max_solvents
     )
     
+    # Process required species if in random-only mode
+    required_species = {
+        'solvents': set(),
+        'cations': set(),
+        'anions': set()
+    }
+    
+    if random_only:
+        if required_solvent:
+            required_species['solvents'] = {s.strip() for s in required_solvent.split(',')}
+            # Verify all required solvents exist in the database
+            for solv in required_species['solvents']:
+                if solv not in solvents_df['formula'].values:
+                    raise ValueError(f"Required solvent {solv} not found in solvent database")
+        
+        if required_cation:
+            required_species['cations'] = {c.strip() for c in required_cation.split(',')}
+            for cat in required_species['cations']:
+                if cat not in cations_df['formula'].values:
+                    raise ValueError(f"Required cation {cat} not found in cation database")
+        
+        if required_anion:
+            required_species['anions'] = {a.strip() for a in required_anion.split(',')}
+            for an in required_species['anions']:
+                if an not in anions_df['formula'].values:
+                    raise ValueError(f"Required anion {an} not found in anion database")
+
+    # Track which required species have been included
+    included_species = {
+        'solvents': set(),
+        'cations': set(),
+        'anions': set()
+    }
+
     # Generate electrolytes
     for i in range(n_random):
         # Create electrolyte
         electrolyte, elyte_class = factory.create_electrolyte(cations_df, anions_df, solvents_df)
         
+        # If we're in random-only mode and this is one of the last chances to include required species
+        remaining_systems = n_random - i
+        remaining_solvents = required_species['solvents'] - included_species['solvents']
+        
+        if random_only and remaining_systems <= len(remaining_solvents):
+            # Force include a required solvent that hasn't been used yet
+            if remaining_solvents:
+                solvent_to_include = remaining_solvents.pop()
+                # Modify the electrolyte's solvents to include the required one
+                if len(electrolyte.solvents) > 0:
+                    electrolyte.solvents[0] = solvent_to_include
+                else:
+                    electrolyte.solvents = [solvent_to_include]
+                    electrolyte.stoich_solv = [1]
+
+        # Track which required species are included in this system
+        if random_only:
+            included_species['solvents'].update(set(electrolyte.solvents))
+            included_species['cations'].update(set(electrolyte.cations))
+            included_species['anions'].update(set(electrolyte.anions))
+
         # Generate entries for different conditions
         if elyte_class == 'MS':
             # Only generate for minimum temperature for molten salt
@@ -659,15 +720,20 @@ def generate_electrolytes(is_rpmd: bool = False,
             entry = electrolyte.to_dict(name)
             elytes = pd.concat([elytes, pd.DataFrame([entry])], ignore_index=True)
         else:
-            # Generate for different distances and temperatures
-            distances = [2.25, 1.75] if is_rpmd else [2.225]  # nm
+            # Set distances and temperatures based on mode
+            if is_rpmd:
+                distances = [2.25]  # Only low concentration (2.25 nm)
+                temperatures = [electrolyte.min_temp]  # Only minimum temperature
+            else:
+                distances = [2.225]  # Standard distance for non-RPMD
+                temperatures = [electrolyte.min_temp]  # Use minimum temperature
+            
             boxsize = 5  # nm
             minboxsize = 4  # nm
             minmol = 1
             
             for dis in distances:
-                for temperature in ([electrolyte.min_temp, electrolyte.max_temp] if is_rpmd 
-                                 else [electrolyte.min_temp]):
+                for temperature in temperatures:
                     conc = 0.62035049089/dis**3  # number per nm3
                     
                     # Calculate concentrations and box size
@@ -687,20 +753,29 @@ def generate_electrolytes(is_rpmd: bool = False,
                         boxsize = (totalmol/conc)**(1/3)
                     
                     # Generate entry name
-                    name = f'{elyte_class}-{i+1}'
-                    if temperature == electrolyte.min_temp:
-                        name += '-minT'
-                    else:
-                        name += '-maxT'
-                    if dis == 2.25:
-                        name += '-lowconc'
-                    else:
-                        name += '-highconc'
+                    name = f'{elyte_class}-{i+1}-minT'
+                    if is_rpmd:
+                        name += '-lowconc'  # Always low concentration for RPMD
                     
                     # Create and add entry
                     entry = electrolyte.to_dict(name)
                     elytes = pd.concat([elytes, pd.DataFrame([entry])], ignore_index=True)
     
+    # Verify all required species were included
+    if random_only:
+        missing_species = {
+            'solvents': required_species['solvents'] - included_species['solvents'],
+            'cations': required_species['cations'] - included_species['cations'],
+            'anions': required_species['anions'] - included_species['anions']
+        }
+        
+        if any(missing_species.values()):
+            missing_str = []
+            for species_type, missing in missing_species.items():
+                if missing:
+                    missing_str.append(f"{species_type}: {', '.join(missing)}")
+            raise RuntimeError(f"Failed to include all required species: {'; '.join(missing_str)}")
+
     # Save results if output file is specified
     if output_file:
         elytes.to_csv(output_file, index=False)
@@ -720,6 +795,9 @@ def main():
     parser.add_argument('--max-cations', type=int, default=4, help='Maximum number of cation species')
     parser.add_argument('--max-anions', type=int, default=4, help='Maximum number of anion species')
     parser.add_argument('--max-solvents', type=int, default=4, help='Maximum number of solvent species')
+    parser.add_argument('--required-solvent', type=str, help='Comma-separated list of required solvent species')
+    parser.add_argument('--required-cation', type=str, help='Comma-separated list of required cation species')
+    parser.add_argument('--required-anion', type=str, help='Comma-separated list of required anion species')
     args = parser.parse_args()
     
     # Prepare input files dictionary
@@ -729,7 +807,7 @@ def main():
         'solvents': args.solvents
     }
     
-    # Generate electrolytes
+    # Generate electrolytes with new required species parameters
     generate_electrolytes(
         is_rpmd=args.rpmd,
         input_files=input_files,
@@ -738,7 +816,10 @@ def main():
         random_only=args.random_only,
         max_cations=args.max_cations,
         max_anions=args.max_anions,
-        max_solvents=args.max_solvents
+        max_solvents=args.max_solvents,
+        required_solvent=args.required_solvent,
+        required_cation=args.required_cation,
+        required_anion=args.required_anion
     )
 
 if __name__ == "__main__":
