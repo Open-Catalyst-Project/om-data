@@ -6,7 +6,6 @@ import os
 from collections import defaultdict
 from typing import List, Tuple
 
-import numpy as np
 from more_itertools import collapse
 from rdkit import Chem
 from rdkit.Chem import AllChem, rdmolops
@@ -31,7 +30,6 @@ from schrodinger.application.jaguar.packages.reaction_mapping import (
     flatten_st_list, get_net_matter)
 from schrodinger.infra import fast3d
 from schrodinger.structure import Structure, StructureWriter
-from schrodinger.structutils import transform
 
 """
 Convert Reaction SMIRKS (from RMechDB/PMechDB) to 3D fully mapped complexes.
@@ -53,12 +51,6 @@ class local_rinp(AutoTSInput):
 
     def getProducts(self):
         return self.products
-
-
-def invert_structures(products):
-    for st in products:
-        refl_mat = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
-        transform.transform_structure(st, refl_mat)
 
 
 def build_complexes(
@@ -86,37 +78,10 @@ def build_complexes(
             )
     except ChiralityMismatchError as e:
         print(
-            "Bad stereoguess, inverting everything in hopes that fixes it (i.e. no diasteromers)..."
+            "Bad stereoguess, relying on enumeration of stereochemistry to fix..."
         )
-        invert_structures(products)
-        try:
-            with FileLogger("logger", True):
-                reactant_complex, product_complex = build_reaction_complex(
-                    reactants, products, rinp
-                )
-        except ChiralityMismatchError as e:
-            print(e)
-            print(
-                "There is still a chirality problem so there must be "
-                "multiple stereocenters and only some are set wrong. We "
-                "could go through and fix it but that's more effort than "
-                "it's worth. This will not end well if we are going to "
-                "do an interpolation with chirality changes so skip this."
-            )
-            raise
-        except Exception as e:
-            print(e)
-            print(
-                "getting renumbered complexes but can't do assembly. This is probably a license issue"
-            )
-            reactants = flatten_st_list(reactants)
-            products = flatten_st_list(products)
-            reactant_complex, product_complex = get_renumbered_complex(
-                reactants, products
-            )
-            reactant_complex, product_complex = minimal_form_reaction_complex(
-                reactant_complex, product_complex, rinp
-            )
+        print(e)
+        raise
     except Exception as e:
         print(e)
         print(
