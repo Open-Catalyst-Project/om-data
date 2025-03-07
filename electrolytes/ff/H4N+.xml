@@ -1,0 +1,48 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="type1_n_unk_8e601" class="type1_n_unk_8e601" element="N" mass="14.007" />
+    <Type name="type2_h_unk_8e601" class="type2_h_unk_8e601" element="H" mass="1.008" />
+    <Type name="type3_h_unk_8e601" class="type3_h_unk_8e601" element="H" mass="1.008" />
+    <Type name="type4_h_unk_8e601" class="type4_h_unk_8e601" element="H" mass="1.008" />
+    <Type name="type5_h_unk_8e601" class="type5_h_unk_8e601" element="H" mass="1.008" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="N00" type="type1_n_unk_8e601" />
+      <Atom name="H01" type="type2_h_unk_8e601" />
+      <Atom name="H02" type="type3_h_unk_8e601" />
+      <Atom name="H03" type="type4_h_unk_8e601" />
+      <Atom name="H04" type="type5_h_unk_8e601" />
+      <Bond atomName1="N00" atomName2="H01" />
+      <Bond atomName1="N00" atomName2="H02" />
+      <Bond atomName1="N00" atomName2="H03" />
+      <Bond atomName1="N00" atomName2="H04" />
+    </Residue>
+  </Residues>
+  <HarmonicBondForce>
+    <Bond type1="type2_h_unk_8e601" type2="type1_n_unk_8e601" k="363171.2" length="0.101000" />
+    <Bond type1="type3_h_unk_8e601" type2="type1_n_unk_8e601" k="363171.2" length="0.101000" />
+    <Bond type1="type4_h_unk_8e601" type2="type1_n_unk_8e601" k="363171.2" length="0.101000" />
+    <Bond type1="type5_h_unk_8e601" type2="type1_n_unk_8e601" k="363171.2" length="0.101000" />
+  </HarmonicBondForce>
+  <HarmonicAngleForce>
+    <Angle type1="type2_h_unk_8e601" type2="type1_n_unk_8e601" type3="type3_h_unk_8e601" k="364.8" angle="1.911136" />
+    <Angle type1="type2_h_unk_8e601" type2="type1_n_unk_8e601" type3="type4_h_unk_8e601" k="364.8" angle="1.911136" />
+    <Angle type1="type2_h_unk_8e601" type2="type1_n_unk_8e601" type3="type5_h_unk_8e601" k="364.8" angle="1.911136" />
+    <Angle type1="type3_h_unk_8e601" type2="type1_n_unk_8e601" type3="type4_h_unk_8e601" k="364.8" angle="1.911136" />
+    <Angle type1="type4_h_unk_8e601" type2="type1_n_unk_8e601" type3="type5_h_unk_8e601" k="364.8" angle="1.911136" />
+    <Angle type1="type3_h_unk_8e601" type2="type1_n_unk_8e601" type3="type5_h_unk_8e601" k="364.8" angle="1.911136" />
+  </HarmonicAngleForce>
+  <PeriodicTorsionForce>
+    <Improper type1="type1_n_unk_8e601" type2="type2_h_unk_8e601" type3="type3_h_unk_8e601" type4="type4_h_unk_8e601" k1="0.000000" periodicity1="2" phase1="3.141593" />
+    <Improper type1="type1_n_unk_8e601" type2="type2_h_unk_8e601" type3="type3_h_unk_8e601" type4="type5_h_unk_8e601" k1="0.000000" periodicity1="2" phase1="3.141593" />
+  </PeriodicTorsionForce>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="type1_n_unk_8e601" charge="-0.5176" sigma="0.325000" epsilon="0.711280" />
+    <Atom type="type2_h_unk_8e601" charge="0.3794" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type3_h_unk_8e601" charge="0.3794" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type4_h_unk_8e601" charge="0.3794" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type5_h_unk_8e601" charge="0.3794" sigma="0.250000" epsilon="0.125520" />
+  </NonbondedForce>
+</ForceField>

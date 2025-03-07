@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Hg2" class="Hg2" element="Hg" mass="200.59" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="HG0" type="Hg2" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Hg2" charge="2.0" sigma="0.280100" epsilon="0.276869" />
+  </NonbondedForce>
+</ForceField>

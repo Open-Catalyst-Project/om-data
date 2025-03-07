@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="C1_co3" class="C1_co3" element="C" mass="12.0" />
+    <Type name="Os1_co3" class="Os1_co3" element="O" mass="15.9994" />
+    <Type name="O2_co3" class="O2_co3" element="O" mass="15.9994" />
+    <Type name="O3_co3" class="O3_co3" element="O" mass="15.9994" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNL">
+      <Atom name="C1" type="C1_co3" />
+      <Atom name="O1" type="Os1_co3" />
+      <Atom name="O2" type="O2_co3" />
+      <Atom name="O3" type="O3_co3" />
+      <Bond atomName1="C1" atomName2="O1" />
+      <Bond atomName1="C1" atomName2="O2" />
+      <Bond atomName1="C1" atomName2="O3" />
+    </Residue>
+  </Residues>
+  <HarmonicBondForce>
+    <Bond type1="C1_co3" type2="Os1_co3" k="238320.6" length="0.143200" />
+    <Bond type1="C1_co3" type2="O2_co3" k="366602.1" length="0.131700" />
+    <Bond type1="C1_co3" type2="O3_co3" k="366602.1" length="0.131700" />
+  </HarmonicBondForce>
+  <HarmonicAngleForce>
+    <Angle type1="Os1_co3" type2="C1_co3" type3="O2_co3" k="960.6" angle="2.151119" />
+    <Angle type1="O2_co3" type2="C1_co3" type3="O3_co3" k="994.1" angle="2.273292" />
+    <Angle type1="O3_co3" type2="C1_co3" type3="Os1_co3" k="960.6" angle="2.151119" />
+  </HarmonicAngleForce>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="C1_co3" charge="0.401" sigma="0.339771" epsilon="0.451035" />
+    <Atom type="Os1_co3" charge="-0.8" sigma="0.315610" epsilon="0.303758" />
+    <Atom type="O2_co3" charge="-0.8" sigma="0.304812" epsilon="0.612119" />
+    <Atom type="O3_co3" charge="-0.8" sigma="0.304812" epsilon="0.612119" />
+  </NonbondedForce>
+</ForceField>

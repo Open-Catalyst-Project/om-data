@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="N1_f2no4s2" class="N1_f2no4s2" element="N" mass="14.0" />
+    <Type name="S1_f2no4s2" class="S1_f2no4s2" element="S" mass="32.06" />
+    <Type name="O1_f2no4s2" class="O1_f2no4s2" element="O" mass="15.999" />
+    <Type name="Os2_f2no4s2" class="Os2_f2no4s2" element="O" mass="15.999" />
+    <Type name="F1_f2no4s2" class="F1_f2no4s2" element="F" mass="18.998" />
+    <Type name="S2_f2no4s2" class="S2_f2no4s2" element="S" mass="32.06" />
+    <Type name="O3_f2no4s2" class="O3_f2no4s2" element="O" mass="15.999" />
+    <Type name="Os4_f2no4s2" class="Os4_f2no4s2" element="O" mass="15.999" />
+    <Type name="F2_f2no4s2" class="F2_f2no4s2" element="F" mass="18.998" />
+  </AtomTypes>
+  <NonbondedForce>
+    <Atom type="N1_f2no4s2" charge="-1.825" sigma="0.327352" epsilon="0.459403" />
+    <Atom type="S1_f2no4s2" charge="3.016" sigma="0.353241" epsilon="1.181562" />
+    <Atom type="O1_f2no4s2" charge="-1.031" sigma="0.304812" epsilon="0.612119" />
+    <Atom type="Os2_f2no4s2" charge="-1.034" sigma="0.315610" epsilon="0.303758" />
+    <Atom type="F1_f2no4s2" charge="-0.539" sigma="0.303422" epsilon="0.348109" />
+    <Atom type="S2_f2no4s2" charge="3.016" sigma="0.353241" epsilon="1.181562" />
+    <Atom type="O3_f2no4s2" charge="-1.031" sigma="0.304812" epsilon="0.612119" />
+    <Atom type="Os4_f2no4s2" charge="-1.034" sigma="0.315610" epsilon="0.303758" />
+    <Atom type="F2_f2no4s2" charge="-0.539" sigma="0.303422" epsilon="0.348109" />
+  </NonbondedForce>
+  <HarmonicBondForce>
+    <Bond type1="F1_f2no4s2" type2="S1_f2no4s2" k="167736.6" length="0.161200" />
+    <Bond type1="F2_f2no4s2" type2="S2_f2no4s2" k="167736.6" length="0.161200" />
+    <Bond type1="N1_f2no4s2" type2="S1_f2no4s2" k="199032.9" length="0.155400" />
+    <Bond type1="N1_f2no4s2" type2="S2_f2no4s2" k="199032.9" length="0.155400" />
+    <Bond type1="S1_f2no4s2" type2="O1_f2no4s2" k="285767.2" length="0.145300" />
+    <Bond type1="S1_f2no4s2" type2="Os2_f2no4s2" k="162255.5" length="0.162300" />
+    <Bond type1="S2_f2no4s2" type2="O3_f2no4s2" k="285767.2" length="0.145300" />
+    <Bond type1="S2_f2no4s2" type2="Os4_f2no4s2" k="162255.5" length="0.162300" />
+  </HarmonicBondForce>
+  <HarmonicAngleForce>
+    <Angle type1="F1_f2no4s2" type2="S1_f2no4s2" type3="N1_f2no4s2" k="1688063.7" angle="2.040291" />
+    <Angle type1="F1_f2no4s2" type2="S1_f2no4s2" type3="O1_f2no4s2" k="1788331.1" angle="1.859475" />
+    <Angle type1="F1_f2no4s2" type2="S1_f2no4s2" type3="Os2_f2no4s2" k="1788331.1" angle="1.859475" />
+    <Angle type1="F2_f2no4s2" type2="S2_f2no4s2" type3="N1_f2no4s2" k="1688063.7" angle="2.040291" />
+    <Angle type1="F2_f2no4s2" type2="S2_f2no4s2" type3="O3_f2no4s2" k="1788331.1" angle="1.859475" />
+    <Angle type1="F2_f2no4s2" type2="S2_f2no4s2" type3="Os4_f2no4s2" k="1788331.1" angle="1.859475" />
+    <Angle type1="N1_f2no4s2" type2="S1_f2no4s2" type3="O1_f2no4s2" k="1704546.0" angle="2.078688" />
+    <Angle type1="N1_f2no4s2" type2="S1_f2no4s2" type3="Os2_f2no4s2" k="1736137.1" angle="1.802053" />
+    <Angle type1="N1_f2no4s2" type2="S2_f2no4s2" type3="O3_f2no4s2" k="1704546.0" angle="2.078688" />
+    <Angle type1="N1_f2no4s2" type2="S2_f2no4s2" type3="Os4_f2no4s2" k="1736137.1" angle="1.802053" />
+    <Angle type1="O1_f2no4s2" type2="S1_f2no4s2" type3="Os2_f2no4s2" k="1738884.1" angle="1.894730" />
+    <Angle type1="O3_f2no4s2" type2="S2_f2no4s2" type3="Os4_f2no4s2" k="1738884.1" angle="1.894730" />
+    <Angle type1="S1_f2no4s2" type2="N1_f2no4s2" type3="S2_f2no4s2" k="965588.9" angle="2.080084" />
+  </HarmonicAngleForce>
+  <PeriodicTorsionForce>
+    <Proper type1="S1_f2no4s2" type2="N1_f2no4s2" type3="S2_f2no4s2" type4="F2_f2no4s2" k1="27.893333" periodicity1="2" phase1="180.0" />
+    <Proper type1="S1_f2no4s2" type2="N1_f2no4s2" type3="S2_f2no4s2" type4="O3_f2no4s2" k1="27.893333" periodicity1="2" phase1="180.0" />
+    <Proper type1="S1_f2no4s2" type2="N1_f2no4s2" type3="S2_f2no4s2" type4="Os4_f2no4s2" k1="27.893333" periodicity1="2" phase1="180.0" />
+    <Proper type1="S2_f2no4s2" type2="N1_f2no4s2" type3="S1_f2no4s2" type4="F1_f2no4s2" k1="27.893333" periodicity1="2" phase1="180.0" />
+    <Proper type1="S2_f2no4s2" type2="N1_f2no4s2" type3="S1_f2no4s2" type4="O1_f2no4s2" k1="27.893333" periodicity1="2" phase1="180.0" />
+    <Proper type1="S2_f2no4s2" type2="N1_f2no4s2" type3="S1_f2no4s2" type4="Os2_f2no4s2" k1="27.893333" periodicity1="2" phase1="180.0" />
+  </PeriodicTorsionForce>
+</ForceField>

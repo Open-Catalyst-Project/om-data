@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Zr4" class="Zr4" element="Zr" mass="91.224" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="ZR0" type="Zr4" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Zr4" charge="4.0" sigma="0.266380" epsilon="0.156719" />
+  </NonbondedForce>
+</ForceField>

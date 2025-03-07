@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Tl3" class="Tl3" element="Tl" mass="204.383" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="TL0" type="Tl3" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Tl3" charge="3.0" sigma="0.264520" epsilon="0.147991" />
+  </NonbondedForce>
+</ForceField>

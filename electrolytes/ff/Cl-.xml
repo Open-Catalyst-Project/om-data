@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Cl" class="Cl" element="Cl" mass="35.453" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="CL0" type="Cl" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Cl" charge="-1.0" sigma="0.385940" epsilon="2.237858" />
+  </NonbondedForce>
+</ForceField>

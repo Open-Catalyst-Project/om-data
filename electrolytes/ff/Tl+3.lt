@@ -1,13 +1,13 @@
 Tl+3 {
     # AtomID  MolID  AtomType  charge   X       Y         Z
     write("Data Atoms") {
-        $atom:Tl $mol @atom:Tl    3    0.00000  0.00000   0.000000
+        $atom:Tl3 $mol @atom:Tl3    +3    0.00000  0.00000   0.000000
     }
     write_once("Data Masses") {
-        @atom:Tl 204.4
+        @atom:Tl3 204.383
     }
     # The "In Settings" section stores force-field parameters for this molecule
     write_once("In Settings") {
-        pair_coeff @atom:Tl @atom:Tl  0.00132548 2.1577566953359018
+        pair_coeff @atom:Tl3 @atom:Tl3  0.03537062 2.6452
     }
 }

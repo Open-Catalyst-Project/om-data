@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Na" class="Na" element="Na" mass="22.99" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="NA0" type="Na" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Na" charge="1.0" sigma="0.258360" epsilon="0.106500" />
+  </NonbondedForce>
+</ForceField>

@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Pd2" class="Pd2" element="Pd" mass="106.42" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="PD0" type="Pd2" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Pd2" charge="2.0" sigma="0.208100" epsilon="0.002639" />
+  </NonbondedForce>
+</ForceField>

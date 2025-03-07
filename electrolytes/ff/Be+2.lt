@@ -1,13 +1,13 @@
 Be+2 {
     # AtomID  MolID  AtomType  charge   X       Y         Z
     write("Data Atoms") {
-        $atom:Be $mol @atom:Be    2    0.00000  0.00000   0.000000
+        $atom:Be2 $mol @atom:Be2    +2    0.00000  0.00000   0.000000
     }
     write_once("Data Masses") {
-        @atom:Be 9.01
+        @atom:Be2 9.012
     }
     # The "In Settings" section stores force-field parameters for this molecule
     write_once("In Settings") {
-        pair_coeff @atom:Be @atom:Be 0.00057544 2.07223041839
+        pair_coeff @atom:Be2 @atom:Be2  0.00045105 2.049
     }
 }

@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Cu" class="Cu" element="Cu" mass="63.546" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="CU0" type="Cu" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Cu" charge="1.0" sigma="0.215240" epsilon="0.005279" />
+  </NonbondedForce>
+</ForceField>

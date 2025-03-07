@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Br" class="Br" element="Br" mass="79.904" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="BR0" type="Br" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Br" charge="-1.0" sigma="0.416940" epsilon="2.784849" />
+  </NonbondedForce>
+</ForceField>

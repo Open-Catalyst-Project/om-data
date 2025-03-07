@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Ca2" class="Ca2" element="Ca" mass="40.078" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="CA0" type="Ca2" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Ca2" charge="2.0" sigma="0.285080" epsilon="0.331979" />
+  </NonbondedForce>
+</ForceField>

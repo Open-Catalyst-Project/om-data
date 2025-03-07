@@ -1,0 +1,303 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="type1_n_c9h18no" class="type1_n_c9h18no" element="N" mass="14.007" />
+    <Type name="type2_c_c9h18no" class="type2_c_c9h18no" element="C" mass="12.011" />
+    <Type name="type3_c_c9h18no" class="type3_c_c9h18no" element="C" mass="12.011" />
+    <Type name="type4_c_c9h18no" class="type4_c_c9h18no" element="C" mass="12.011" />
+    <Type name="type5_c_c9h18no" class="type5_c_c9h18no" element="C" mass="12.011" />
+    <Type name="type6_c_c9h18no" class="type6_c_c9h18no" element="C" mass="12.011" />
+    <Type name="type7_o_c9h18no" class="type7_o_c9h18no" element="O" mass="15.999" />
+    <Type name="type8_c_c9h18no" class="type8_c_c9h18no" element="C" mass="12.011" />
+    <Type name="type9_c_c9h18no" class="type9_c_c9h18no" element="C" mass="12.011" />
+    <Type name="type10_c_c9h18no" class="type10_c_c9h18no" element="C" mass="12.011" />
+    <Type name="type11_c_c9h18no" class="type11_c_c9h18no" element="C" mass="12.011" />
+    <Type name="type12_h_c9h18no" class="type12_h_c9h18no" element="H" mass="1.008" />
+    <Type name="type13_h_c9h18no" class="type13_h_c9h18no" element="H" mass="1.008" />
+    <Type name="type14_h_c9h18no" class="type14_h_c9h18no" element="H" mass="1.008" />
+    <Type name="type15_h_c9h18no" class="type15_h_c9h18no" element="H" mass="1.008" />
+    <Type name="type16_h_c9h18no" class="type16_h_c9h18no" element="H" mass="1.008" />
+    <Type name="type17_h_c9h18no" class="type17_h_c9h18no" element="H" mass="1.008" />
+    <Type name="type18_h_c9h18no" class="type18_h_c9h18no" element="H" mass="1.008" />
+    <Type name="type19_h_c9h18no" class="type19_h_c9h18no" element="H" mass="1.008" />
+    <Type name="type20_h_c9h18no" class="type20_h_c9h18no" element="H" mass="1.008" />
+    <Type name="type21_h_c9h18no" class="type21_h_c9h18no" element="H" mass="1.008" />
+    <Type name="type22_h_c9h18no" class="type22_h_c9h18no" element="H" mass="1.008" />
+    <Type name="type23_h_c9h18no" class="type23_h_c9h18no" element="H" mass="1.008" />
+    <Type name="type24_h_c9h18no" class="type24_h_c9h18no" element="H" mass="1.008" />
+    <Type name="type25_h_c9h18no" class="type25_h_c9h18no" element="H" mass="1.008" />
+    <Type name="type26_h_c9h18no" class="type26_h_c9h18no" element="H" mass="1.008" />
+    <Type name="type27_h_c9h18no" class="type27_h_c9h18no" element="H" mass="1.008" />
+    <Type name="type28_h_c9h18no" class="type28_h_c9h18no" element="H" mass="1.008" />
+    <Type name="type29_h_c9h18no" class="type29_h_c9h18no" element="H" mass="1.008" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="N00" type="type1_n_c9h18no" />
+      <Atom name="C01" type="type2_c_c9h18no" />
+      <Atom name="C02" type="type3_c_c9h18no" />
+      <Atom name="C03" type="type4_c_c9h18no" />
+      <Atom name="C04" type="type5_c_c9h18no" />
+      <Atom name="C05" type="type6_c_c9h18no" />
+      <Atom name="O06" type="type7_o_c9h18no" />
+      <Atom name="C07" type="type8_c_c9h18no" />
+      <Atom name="C08" type="type9_c_c9h18no" />
+      <Atom name="C09" type="type10_c_c9h18no" />
+      <Atom name="C0A" type="type11_c_c9h18no" />
+      <Atom name="H0B" type="type12_h_c9h18no" />
+      <Atom name="H0C" type="type13_h_c9h18no" />
+      <Atom name="H0D" type="type14_h_c9h18no" />
+      <Atom name="H0E" type="type15_h_c9h18no" />
+      <Atom name="H0F" type="type16_h_c9h18no" />
+      <Atom name="H0G" type="type17_h_c9h18no" />
+      <Atom name="H0H" type="type18_h_c9h18no" />
+      <Atom name="H0I" type="type19_h_c9h18no" />
+      <Atom name="H0J" type="type20_h_c9h18no" />
+      <Atom name="H0K" type="type21_h_c9h18no" />
+      <Atom name="H0M" type="type22_h_c9h18no" />
+      <Atom name="H0N" type="type23_h_c9h18no" />
+      <Atom name="H0O" type="type24_h_c9h18no" />
+      <Atom name="H0P" type="type25_h_c9h18no" />
+      <Atom name="H0Q" type="type26_h_c9h18no" />
+      <Atom name="H0R" type="type27_h_c9h18no" />
+      <Atom name="H0S" type="type28_h_c9h18no" />
+      <Atom name="H0T" type="type29_h_c9h18no" />
+      <Bond atomName1="C02" atomName2="C03" />
+      <Bond atomName1="C02" atomName2="H0F" />
+      <Bond atomName1="C03" atomName2="H0H" />
+      <Bond atomName1="C04" atomName2="H0I" />
+      <Bond atomName1="C0A" atomName2="H0D" />
+      <Bond atomName1="C07" atomName2="H0K" />
+      <Bond atomName1="C01" atomName2="C0A" />
+      <Bond atomName1="C08" atomName2="H0Q" />
+      <Bond atomName1="C09" atomName2="H0R" />
+      <Bond atomName1="C05" atomName2="C07" />
+      <Bond atomName1="C03" atomName2="C04" />
+      <Bond atomName1="C04" atomName2="C05" />
+      <Bond atomName1="C03" atomName2="H0G" />
+      <Bond atomName1="C02" atomName2="H0E" />
+      <Bond atomName1="N00" atomName2="C01" />
+      <Bond atomName1="C07" atomName2="H0N" />
+      <Bond atomName1="C0A" atomName2="H0C" />
+      <Bond atomName1="C01" atomName2="C09" />
+      <Bond atomName1="C08" atomName2="H0P" />
+      <Bond atomName1="C09" atomName2="H0T" />
+      <Bond atomName1="C01" atomName2="C02" />
+      <Bond atomName1="C04" atomName2="H0J" />
+      <Bond atomName1="N00" atomName2="O06" />
+      <Bond atomName1="C0A" atomName2="H0B" />
+      <Bond atomName1="C08" atomName2="H0O" />
+      <Bond atomName1="C07" atomName2="H0M" />
+      <Bond atomName1="C09" atomName2="H0S" />
+      <Bond atomName1="C05" atomName2="C08" />
+    </Residue>
+  </Residues>
+  <HarmonicBondForce>
+    <Bond type1="type2_c_c9h18no" type2="type1_n_c9h18no" k="282001.6" length="0.144900" />
+    <Bond type1="type3_c_c9h18no" type2="type2_c_c9h18no" k="224262.4" length="0.152900" />
+    <Bond type1="type4_c_c9h18no" type2="type3_c_c9h18no" k="224262.4" length="0.152900" />
+    <Bond type1="type5_c_c9h18no" type2="type4_c_c9h18no" k="224262.4" length="0.152900" />
+    <Bond type1="type6_c_c9h18no" type2="type5_c_c9h18no" k="224262.4" length="0.152900" />
+    <Bond type1="type7_o_c9h18no" type2="type1_n_c9h18no" k="418400.0" length="0.127000" />
+    <Bond type1="type8_c_c9h18no" type2="type6_c_c9h18no" k="224262.4" length="0.152900" />
+    <Bond type1="type9_c_c9h18no" type2="type6_c_c9h18no" k="224262.4" length="0.152900" />
+    <Bond type1="type10_c_c9h18no" type2="type2_c_c9h18no" k="224262.4" length="0.152900" />
+    <Bond type1="type11_c_c9h18no" type2="type2_c_c9h18no" k="224262.4" length="0.152900" />
+    <Bond type1="type12_h_c9h18no" type2="type11_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type13_h_c9h18no" type2="type11_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type14_h_c9h18no" type2="type11_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type15_h_c9h18no" type2="type3_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type16_h_c9h18no" type2="type3_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type17_h_c9h18no" type2="type4_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type18_h_c9h18no" type2="type4_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type19_h_c9h18no" type2="type5_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type20_h_c9h18no" type2="type5_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type21_h_c9h18no" type2="type8_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type22_h_c9h18no" type2="type8_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type23_h_c9h18no" type2="type8_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type24_h_c9h18no" type2="type9_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type25_h_c9h18no" type2="type9_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type26_h_c9h18no" type2="type9_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type27_h_c9h18no" type2="type10_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type28_h_c9h18no" type2="type10_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type29_h_c9h18no" type2="type10_c_c9h18no" k="284512.0" length="0.109000" />
+    <Bond type1="type6_c_c9h18no" type2="type1_n_c9h18no" k="282001.6" length="0.144900" />
+  </HarmonicBondForce>
+  <HarmonicAngleForce>
+    <Angle type1="type3_c_c9h18no" type2="type2_c_c9h18no" type3="type1_n_c9h18no" k="669.4" angle="1.914627" />
+    <Angle type1="type4_c_c9h18no" type2="type3_c_c9h18no" type3="type2_c_c9h18no" k="488.3" angle="1.966987" />
+    <Angle type1="type5_c_c9h18no" type2="type4_c_c9h18no" type3="type3_c_c9h18no" k="488.3" angle="1.966987" />
+    <Angle type1="type6_c_c9h18no" type2="type5_c_c9h18no" type3="type4_c_c9h18no" k="488.3" angle="1.966987" />
+    <Angle type1="type7_o_c9h18no" type2="type1_n_c9h18no" type3="type2_c_c9h18no" k="378.7" angle="2.071183" />
+    <Angle type1="type8_c_c9h18no" type2="type6_c_c9h18no" type3="type5_c_c9h18no" k="488.3" angle="1.966987" />
+    <Angle type1="type9_c_c9h18no" type2="type6_c_c9h18no" type3="type5_c_c9h18no" k="488.3" angle="1.966987" />
+    <Angle type1="type10_c_c9h18no" type2="type2_c_c9h18no" type3="type1_n_c9h18no" k="669.4" angle="1.914627" />
+    <Angle type1="type11_c_c9h18no" type2="type2_c_c9h18no" type3="type1_n_c9h18no" k="669.4" angle="1.914627" />
+    <Angle type1="type12_h_c9h18no" type2="type11_c_c9h18no" type3="type2_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type13_h_c9h18no" type2="type11_c_c9h18no" type3="type2_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type14_h_c9h18no" type2="type11_c_c9h18no" type3="type2_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type15_h_c9h18no" type2="type3_c_c9h18no" type3="type2_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type16_h_c9h18no" type2="type3_c_c9h18no" type3="type2_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type17_h_c9h18no" type2="type4_c_c9h18no" type3="type3_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type18_h_c9h18no" type2="type4_c_c9h18no" type3="type3_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type19_h_c9h18no" type2="type5_c_c9h18no" type3="type4_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type20_h_c9h18no" type2="type5_c_c9h18no" type3="type4_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type21_h_c9h18no" type2="type8_c_c9h18no" type3="type6_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type22_h_c9h18no" type2="type8_c_c9h18no" type3="type6_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type23_h_c9h18no" type2="type8_c_c9h18no" type3="type6_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type24_h_c9h18no" type2="type9_c_c9h18no" type3="type6_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type25_h_c9h18no" type2="type9_c_c9h18no" type3="type6_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type26_h_c9h18no" type2="type9_c_c9h18no" type3="type6_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type27_h_c9h18no" type2="type10_c_c9h18no" type3="type2_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type28_h_c9h18no" type2="type10_c_c9h18no" type3="type2_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type29_h_c9h18no" type2="type10_c_c9h18no" type3="type2_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type6_c_c9h18no" type2="type1_n_c9h18no" type3="type2_c_c9h18no" k="418.4" angle="2.059489" />
+    <Angle type1="type10_c_c9h18no" type2="type2_c_c9h18no" type3="type3_c_c9h18no" k="488.3" angle="1.966987" />
+    <Angle type1="type11_c_c9h18no" type2="type2_c_c9h18no" type3="type3_c_c9h18no" k="488.3" angle="1.966987" />
+    <Angle type1="type15_h_c9h18no" type2="type3_c_c9h18no" type3="type4_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type16_h_c9h18no" type2="type3_c_c9h18no" type3="type4_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type17_h_c9h18no" type2="type4_c_c9h18no" type3="type5_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type18_h_c9h18no" type2="type4_c_c9h18no" type3="type5_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type19_h_c9h18no" type2="type5_c_c9h18no" type3="type6_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type20_h_c9h18no" type2="type5_c_c9h18no" type3="type6_c_c9h18no" k="313.8" angle="1.932080" />
+    <Angle type1="type7_o_c9h18no" type2="type1_n_c9h18no" type3="type6_c_c9h18no" k="378.7" angle="2.071183" />
+    <Angle type1="type1_n_c9h18no" type2="type6_c_c9h18no" type3="type8_c_c9h18no" k="669.4" angle="1.914627" />
+    <Angle type1="type9_c_c9h18no" type2="type6_c_c9h18no" type3="type8_c_c9h18no" k="488.3" angle="1.966987" />
+    <Angle type1="type1_n_c9h18no" type2="type6_c_c9h18no" type3="type9_c_c9h18no" k="669.4" angle="1.914627" />
+    <Angle type1="type11_c_c9h18no" type2="type2_c_c9h18no" type3="type10_c_c9h18no" k="488.3" angle="1.966987" />
+    <Angle type1="type13_h_c9h18no" type2="type11_c_c9h18no" type3="type12_h_c9h18no" k="276.1" angle="1.881466" />
+    <Angle type1="type14_h_c9h18no" type2="type11_c_c9h18no" type3="type12_h_c9h18no" k="276.1" angle="1.881466" />
+    <Angle type1="type14_h_c9h18no" type2="type11_c_c9h18no" type3="type13_h_c9h18no" k="276.1" angle="1.881466" />
+    <Angle type1="type16_h_c9h18no" type2="type3_c_c9h18no" type3="type15_h_c9h18no" k="276.1" angle="1.881466" />
+    <Angle type1="type18_h_c9h18no" type2="type4_c_c9h18no" type3="type17_h_c9h18no" k="276.1" angle="1.881466" />
+    <Angle type1="type20_h_c9h18no" type2="type5_c_c9h18no" type3="type19_h_c9h18no" k="276.1" angle="1.881466" />
+    <Angle type1="type22_h_c9h18no" type2="type8_c_c9h18no" type3="type21_h_c9h18no" k="276.1" angle="1.881466" />
+    <Angle type1="type23_h_c9h18no" type2="type8_c_c9h18no" type3="type21_h_c9h18no" k="276.1" angle="1.881466" />
+    <Angle type1="type23_h_c9h18no" type2="type8_c_c9h18no" type3="type22_h_c9h18no" k="276.1" angle="1.881466" />
+    <Angle type1="type25_h_c9h18no" type2="type9_c_c9h18no" type3="type24_h_c9h18no" k="276.1" angle="1.881466" />
+    <Angle type1="type26_h_c9h18no" type2="type9_c_c9h18no" type3="type24_h_c9h18no" k="276.1" angle="1.881466" />
+    <Angle type1="type26_h_c9h18no" type2="type9_c_c9h18no" type3="type25_h_c9h18no" k="276.1" angle="1.881466" />
+    <Angle type1="type28_h_c9h18no" type2="type10_c_c9h18no" type3="type27_h_c9h18no" k="276.1" angle="1.881466" />
+    <Angle type1="type29_h_c9h18no" type2="type10_c_c9h18no" type3="type27_h_c9h18no" k="276.1" angle="1.881466" />
+    <Angle type1="type29_h_c9h18no" type2="type10_c_c9h18no" type3="type28_h_c9h18no" k="276.1" angle="1.881466" />
+    <Angle type1="type5_c_c9h18no" type2="type6_c_c9h18no" type3="type1_n_c9h18no" k="669.4" angle="1.914627" />
+  </HarmonicAngleForce>
+  <PeriodicTorsionForce>
+    <Proper type1="type4_c_c9h18no" type2="type3_c_c9h18no" type3="type2_c_c9h18no" type4="type1_n_c9h18no" k1="3.288624" periodicity1="1" phase1="0.0" k2="0.332628" periodicity2="2" phase2="3.141592653589793" k3="0.418400" periodicity3="3" phase3="0.0" />
+    <Proper type1="type5_c_c9h18no" type2="type4_c_c9h18no" type3="type3_c_c9h18no" type4="type2_c_c9h18no" k1="2.719600" periodicity1="1" phase1="0.0" k2="-0.418400" periodicity2="2" phase2="3.141592653589793" k3="0.418400" periodicity3="3" phase3="0.0" />
+    <Proper type1="type6_c_c9h18no" type2="type5_c_c9h18no" type3="type4_c_c9h18no" type4="type3_c_c9h18no" k1="2.719600" periodicity1="1" phase1="0.0" k2="-0.418400" periodicity2="2" phase2="3.141592653589793" k3="0.418400" periodicity3="3" phase3="0.0" />
+    <Proper type1="type7_o_c9h18no" type2="type1_n_c9h18no" type3="type2_c_c9h18no" type4="type3_c_c9h18no" k2="0.836800" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="type8_c_c9h18no" type2="type6_c_c9h18no" type3="type5_c_c9h18no" type4="type4_c_c9h18no" k1="2.719600" periodicity1="1" phase1="0.0" k2="-0.418400" periodicity2="2" phase2="3.141592653589793" k3="0.418400" periodicity3="3" phase3="0.0" />
+    <Proper type1="type9_c_c9h18no" type2="type6_c_c9h18no" type3="type5_c_c9h18no" type4="type4_c_c9h18no" k1="2.719600" periodicity1="1" phase1="0.0" k2="-0.418400" periodicity2="2" phase2="3.141592653589793" k3="0.418400" periodicity3="3" phase3="0.0" />
+    <Proper type1="type10_c_c9h18no" type2="type2_c_c9h18no" type3="type1_n_c9h18no" type4="type6_c_c9h18no" k1="9.943276" periodicity1="1" phase1="0.0" k2="-1.535528" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="type11_c_c9h18no" type2="type2_c_c9h18no" type3="type1_n_c9h18no" type4="type6_c_c9h18no" k1="9.943276" periodicity1="1" phase1="0.0" k2="-1.535528" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="type12_h_c9h18no" type2="type11_c_c9h18no" type3="type2_c_c9h18no" type4="type1_n_c9h18no" k3="0.970688" periodicity3="3" phase3="0.0" />
+    <Proper type1="type13_h_c9h18no" type2="type11_c_c9h18no" type3="type2_c_c9h18no" type4="type1_n_c9h18no" k3="0.970688" periodicity3="3" phase3="0.0" />
+    <Proper type1="type14_h_c9h18no" type2="type11_c_c9h18no" type3="type2_c_c9h18no" type4="type1_n_c9h18no" k3="0.970688" periodicity3="3" phase3="0.0" />
+    <Proper type1="type15_h_c9h18no" type2="type3_c_c9h18no" type3="type2_c_c9h18no" type4="type1_n_c9h18no" k3="0.970688" periodicity3="3" phase3="0.0" />
+    <Proper type1="type16_h_c9h18no" type2="type3_c_c9h18no" type3="type2_c_c9h18no" type4="type1_n_c9h18no" k3="0.970688" periodicity3="3" phase3="0.0" />
+    <Proper type1="type17_h_c9h18no" type2="type4_c_c9h18no" type3="type3_c_c9h18no" type4="type2_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type18_h_c9h18no" type2="type4_c_c9h18no" type3="type3_c_c9h18no" type4="type2_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type19_h_c9h18no" type2="type5_c_c9h18no" type3="type4_c_c9h18no" type4="type3_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type20_h_c9h18no" type2="type5_c_c9h18no" type3="type4_c_c9h18no" type4="type3_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type21_h_c9h18no" type2="type8_c_c9h18no" type3="type6_c_c9h18no" type4="type5_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type22_h_c9h18no" type2="type8_c_c9h18no" type3="type6_c_c9h18no" type4="type5_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type23_h_c9h18no" type2="type8_c_c9h18no" type3="type6_c_c9h18no" type4="type5_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type24_h_c9h18no" type2="type9_c_c9h18no" type3="type6_c_c9h18no" type4="type5_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type25_h_c9h18no" type2="type9_c_c9h18no" type3="type6_c_c9h18no" type4="type5_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type26_h_c9h18no" type2="type9_c_c9h18no" type3="type6_c_c9h18no" type4="type5_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type27_h_c9h18no" type2="type10_c_c9h18no" type3="type2_c_c9h18no" type4="type1_n_c9h18no" k3="0.970688" periodicity3="3" phase3="0.0" />
+    <Proper type1="type28_h_c9h18no" type2="type10_c_c9h18no" type3="type2_c_c9h18no" type4="type1_n_c9h18no" k3="0.970688" periodicity3="3" phase3="0.0" />
+    <Proper type1="type29_h_c9h18no" type2="type10_c_c9h18no" type3="type2_c_c9h18no" type4="type1_n_c9h18no" k3="0.970688" periodicity3="3" phase3="0.0" />
+    <Proper type1="type5_c_c9h18no" type2="type6_c_c9h18no" type3="type1_n_c9h18no" type4="type2_c_c9h18no" k1="9.943276" periodicity1="1" phase1="0.0" k2="-1.535528" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="type8_c_c9h18no" type2="type6_c_c9h18no" type3="type1_n_c9h18no" type4="type2_c_c9h18no" k1="9.943276" periodicity1="1" phase1="0.0" k2="-1.535528" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="type9_c_c9h18no" type2="type6_c_c9h18no" type3="type1_n_c9h18no" type4="type2_c_c9h18no" k1="9.943276" periodicity1="1" phase1="0.0" k2="-1.535528" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="type6_c_c9h18no" type2="type1_n_c9h18no" type3="type2_c_c9h18no" type4="type3_c_c9h18no" k1="9.943276" periodicity1="1" phase1="0.0" k2="-1.535528" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="type27_h_c9h18no" type2="type10_c_c9h18no" type3="type2_c_c9h18no" type4="type3_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type28_h_c9h18no" type2="type10_c_c9h18no" type3="type2_c_c9h18no" type4="type3_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type29_h_c9h18no" type2="type10_c_c9h18no" type3="type2_c_c9h18no" type4="type3_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type12_h_c9h18no" type2="type11_c_c9h18no" type3="type2_c_c9h18no" type4="type3_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type13_h_c9h18no" type2="type11_c_c9h18no" type3="type2_c_c9h18no" type4="type3_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type14_h_c9h18no" type2="type11_c_c9h18no" type3="type2_c_c9h18no" type4="type3_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type10_c_c9h18no" type2="type2_c_c9h18no" type3="type3_c_c9h18no" type4="type4_c_c9h18no" k1="2.719600" periodicity1="1" phase1="0.0" k2="-0.418400" periodicity2="2" phase2="3.141592653589793" k3="0.418400" periodicity3="3" phase3="0.0" />
+    <Proper type1="type11_c_c9h18no" type2="type2_c_c9h18no" type3="type3_c_c9h18no" type4="type4_c_c9h18no" k1="2.719600" periodicity1="1" phase1="0.0" k2="-0.418400" periodicity2="2" phase2="3.141592653589793" k3="0.418400" periodicity3="3" phase3="0.0" />
+    <Proper type1="type15_h_c9h18no" type2="type3_c_c9h18no" type3="type4_c_c9h18no" type4="type5_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type16_h_c9h18no" type2="type3_c_c9h18no" type3="type4_c_c9h18no" type4="type5_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type17_h_c9h18no" type2="type4_c_c9h18no" type3="type5_c_c9h18no" type4="type6_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type18_h_c9h18no" type2="type4_c_c9h18no" type3="type5_c_c9h18no" type4="type6_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type10_c_c9h18no" type2="type2_c_c9h18no" type3="type1_n_c9h18no" type4="type7_o_c9h18no" k2="0.836800" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="type11_c_c9h18no" type2="type2_c_c9h18no" type3="type1_n_c9h18no" type4="type7_o_c9h18no" k2="0.836800" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="type5_c_c9h18no" type2="type6_c_c9h18no" type3="type1_n_c9h18no" type4="type7_o_c9h18no" k2="0.836800" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="type8_c_c9h18no" type2="type6_c_c9h18no" type3="type1_n_c9h18no" type4="type7_o_c9h18no" k2="0.836800" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="type9_c_c9h18no" type2="type6_c_c9h18no" type3="type1_n_c9h18no" type4="type7_o_c9h18no" k2="0.836800" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="type19_h_c9h18no" type2="type5_c_c9h18no" type3="type6_c_c9h18no" type4="type8_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type20_h_c9h18no" type2="type5_c_c9h18no" type3="type6_c_c9h18no" type4="type8_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type24_h_c9h18no" type2="type9_c_c9h18no" type3="type6_c_c9h18no" type4="type8_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type25_h_c9h18no" type2="type9_c_c9h18no" type3="type6_c_c9h18no" type4="type8_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type26_h_c9h18no" type2="type9_c_c9h18no" type3="type6_c_c9h18no" type4="type8_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type19_h_c9h18no" type2="type5_c_c9h18no" type3="type6_c_c9h18no" type4="type9_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type20_h_c9h18no" type2="type5_c_c9h18no" type3="type6_c_c9h18no" type4="type9_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type21_h_c9h18no" type2="type8_c_c9h18no" type3="type6_c_c9h18no" type4="type9_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type22_h_c9h18no" type2="type8_c_c9h18no" type3="type6_c_c9h18no" type4="type9_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type23_h_c9h18no" type2="type8_c_c9h18no" type3="type6_c_c9h18no" type4="type9_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type15_h_c9h18no" type2="type3_c_c9h18no" type3="type2_c_c9h18no" type4="type10_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type16_h_c9h18no" type2="type3_c_c9h18no" type3="type2_c_c9h18no" type4="type10_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type12_h_c9h18no" type2="type11_c_c9h18no" type3="type2_c_c9h18no" type4="type10_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type13_h_c9h18no" type2="type11_c_c9h18no" type3="type2_c_c9h18no" type4="type10_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type14_h_c9h18no" type2="type11_c_c9h18no" type3="type2_c_c9h18no" type4="type10_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type15_h_c9h18no" type2="type3_c_c9h18no" type3="type2_c_c9h18no" type4="type11_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type16_h_c9h18no" type2="type3_c_c9h18no" type3="type2_c_c9h18no" type4="type11_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type27_h_c9h18no" type2="type10_c_c9h18no" type3="type2_c_c9h18no" type4="type11_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type28_h_c9h18no" type2="type10_c_c9h18no" type3="type2_c_c9h18no" type4="type11_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type29_h_c9h18no" type2="type10_c_c9h18no" type3="type2_c_c9h18no" type4="type11_c_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type17_h_c9h18no" type2="type4_c_c9h18no" type3="type3_c_c9h18no" type4="type15_h_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type18_h_c9h18no" type2="type4_c_c9h18no" type3="type3_c_c9h18no" type4="type15_h_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type17_h_c9h18no" type2="type4_c_c9h18no" type3="type3_c_c9h18no" type4="type16_h_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type18_h_c9h18no" type2="type4_c_c9h18no" type3="type3_c_c9h18no" type4="type16_h_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type19_h_c9h18no" type2="type5_c_c9h18no" type3="type4_c_c9h18no" type4="type17_h_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type20_h_c9h18no" type2="type5_c_c9h18no" type3="type4_c_c9h18no" type4="type17_h_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type19_h_c9h18no" type2="type5_c_c9h18no" type3="type4_c_c9h18no" type4="type18_h_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type20_h_c9h18no" type2="type5_c_c9h18no" type3="type4_c_c9h18no" type4="type18_h_c9h18no" k3="0.627600" periodicity3="3" phase3="0.0" />
+    <Proper type1="type1_n_c9h18no" type2="type6_c_c9h18no" type3="type5_c_c9h18no" type4="type19_h_c9h18no" k3="0.970688" periodicity3="3" phase3="0.0" />
+    <Proper type1="type1_n_c9h18no" type2="type6_c_c9h18no" type3="type5_c_c9h18no" type4="type20_h_c9h18no" k3="0.970688" periodicity3="3" phase3="0.0" />
+    <Proper type1="type1_n_c9h18no" type2="type6_c_c9h18no" type3="type8_c_c9h18no" type4="type21_h_c9h18no" k3="0.970688" periodicity3="3" phase3="0.0" />
+    <Proper type1="type1_n_c9h18no" type2="type6_c_c9h18no" type3="type8_c_c9h18no" type4="type22_h_c9h18no" k3="0.970688" periodicity3="3" phase3="0.0" />
+    <Proper type1="type1_n_c9h18no" type2="type6_c_c9h18no" type3="type8_c_c9h18no" type4="type23_h_c9h18no" k3="0.970688" periodicity3="3" phase3="0.0" />
+    <Proper type1="type1_n_c9h18no" type2="type6_c_c9h18no" type3="type9_c_c9h18no" type4="type24_h_c9h18no" k3="0.970688" periodicity3="3" phase3="0.0" />
+    <Proper type1="type1_n_c9h18no" type2="type6_c_c9h18no" type3="type9_c_c9h18no" type4="type25_h_c9h18no" k3="0.970688" periodicity3="3" phase3="0.0" />
+    <Proper type1="type1_n_c9h18no" type2="type6_c_c9h18no" type3="type9_c_c9h18no" type4="type26_h_c9h18no" k3="0.970688" periodicity3="3" phase3="0.0" />
+    <Proper type1="type4_c_c9h18no" type2="type5_c_c9h18no" type3="type6_c_c9h18no" type4="type1_n_c9h18no" k1="3.288624" periodicity1="1" phase1="0.0" k2="0.332628" periodicity2="2" phase2="3.141592653589793" k3="0.418400" periodicity3="3" phase3="0.0" />
+    <Improper type1="type2_c_c9h18no" type2="type1_n_c9h18no" type3="type6_c_c9h18no" type4="type7_o_c9h18no" k1="10.460000" periodicity1="2" phase1="3.141593" />
+  </PeriodicTorsionForce>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="type1_n_c9h18no" charge="0.479601" sigma="0.325000" epsilon="0.711280" />
+    <Atom type="type2_c_c9h18no" charge="-0.066023" sigma="0.350000" epsilon="0.276144" />
+    <Atom type="type3_c_c9h18no" charge="-0.210986" sigma="0.350000" epsilon="0.276144" />
+    <Atom type="type4_c_c9h18no" charge="-0.21176" sigma="0.350000" epsilon="0.276144" />
+    <Atom type="type5_c_c9h18no" charge="-0.214898" sigma="0.350000" epsilon="0.276144" />
+    <Atom type="type6_c_c9h18no" charge="-0.070437" sigma="0.350000" epsilon="0.276144" />
+    <Atom type="type7_o_c9h18no" charge="-0.182495" sigma="0.296000" epsilon="0.711280" />
+    <Atom type="type8_c_c9h18no" charge="-0.249935" sigma="0.350000" epsilon="0.276144" />
+    <Atom type="type9_c_c9h18no" charge="-0.245562" sigma="0.350000" epsilon="0.276144" />
+    <Atom type="type10_c_c9h18no" charge="-0.239685" sigma="0.350000" epsilon="0.276144" />
+    <Atom type="type11_c_c9h18no" charge="-0.270058" sigma="0.350000" epsilon="0.276144" />
+    <Atom type="type12_h_c9h18no" charge="0.141685" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type13_h_c9h18no" charge="0.141685" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type14_h_c9h18no" charge="0.141685" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type15_h_c9h18no" charge="0.157148" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type16_h_c9h18no" charge="0.157148" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type17_h_c9h18no" charge="0.137807" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type18_h_c9h18no" charge="0.137807" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type19_h_c9h18no" charge="0.157871" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type20_h_c9h18no" charge="0.157871" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type21_h_c9h18no" charge="0.142609" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type22_h_c9h18no" charge="0.142609" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type23_h_c9h18no" charge="0.142609" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type24_h_c9h18no" charge="0.142575" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type25_h_c9h18no" charge="0.142575" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type26_h_c9h18no" charge="0.142575" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type27_h_c9h18no" charge="0.145326" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type28_h_c9h18no" charge="0.145326" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type29_h_c9h18no" charge="0.005327" sigma="0.250000" epsilon="0.125520" />
+  </NonbondedForce>
+</ForceField>

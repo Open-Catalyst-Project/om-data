@@ -1,0 +1,88 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="type1_c_unk_4f576" class="type1_c_unk_4f576" element="C" mass="12.011" />
+    <Type name="type2_c_unk_4f576" class="type2_c_unk_4f576" element="C" mass="12.011" />
+    <Type name="type3_o_unk_4f576" class="type3_o_unk_4f576" element="O" mass="15.999" />
+    <Type name="type4_n_unk_4f576" class="type4_n_unk_4f576" element="N" mass="14.007" />
+    <Type name="type5_c_unk_4f576" class="type5_c_unk_4f576" element="C" mass="12.011" />
+    <Type name="type6_h_unk_4f576" class="type6_h_unk_4f576" element="H" mass="1.008" />
+    <Type name="type7_h_unk_4f576" class="type7_h_unk_4f576" element="H" mass="1.008" />
+    <Type name="type8_h_unk_4f576" class="type8_h_unk_4f576" element="H" mass="1.008" />
+    <Type name="type9_h_unk_4f576" class="type9_h_unk_4f576" element="H" mass="1.008" />
+    <Type name="type10_h_unk_4f576" class="type10_h_unk_4f576" element="H" mass="1.008" />
+    <Type name="type11_h_unk_4f576" class="type11_h_unk_4f576" element="H" mass="1.008" />
+    <Type name="type12_h_unk_4f576" class="type12_h_unk_4f576" element="H" mass="1.008" />
+  </AtomTypes>
+  <NonbondedForce>
+    <Atom type="type1_c_unk_4f576" charge="-0.2864" sigma="0.350000" epsilon="0.276144" />
+    <Atom type="type2_c_unk_4f576" charge="0.6204" sigma="0.355000" epsilon="0.292880" />
+    <Atom type="type3_o_unk_4f576" charge="-0.4416" sigma="0.296000" epsilon="0.878640" />
+    <Atom type="type4_n_unk_4f576" charge="-1.1472" sigma="0.325000" epsilon="0.711280" />
+    <Atom type="type5_c_unk_4f576" charge="0.1036" sigma="0.350000" epsilon="0.276144" />
+    <Atom type="type6_h_unk_4f576" charge="0.1173" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type7_h_unk_4f576" charge="0.1173" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type8_h_unk_4f576" charge="0.1173" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type9_h_unk_4f576" charge="0.5188" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type10_h_unk_4f576" charge="0.0935" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type11_h_unk_4f576" charge="0.0935" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type12_h_unk_4f576" charge="0.0935" sigma="0.250000" epsilon="0.125520" />
+  </NonbondedForce>
+  <HarmonicBondForce>
+    <Bond type1="type2_c_unk_4f576" type2="type1_c_unk_4f576" k="132632.8" length="0.152200" />
+    <Bond type1="type3_o_unk_4f576" type2="type2_c_unk_4f576" k="238488.0" length="0.122900" />
+    <Bond type1="type4_n_unk_4f576" type2="type2_c_unk_4f576" k="205016.0" length="0.133500" />
+    <Bond type1="type5_c_unk_4f576" type2="type4_n_unk_4f576" k="141000.8" length="0.144900" />
+    <Bond type1="type6_h_unk_4f576" type2="type1_c_unk_4f576" k="142256.0" length="0.109000" />
+    <Bond type1="type7_h_unk_4f576" type2="type1_c_unk_4f576" k="142256.0" length="0.109000" />
+    <Bond type1="type8_h_unk_4f576" type2="type1_c_unk_4f576" k="142256.0" length="0.109000" />
+    <Bond type1="type9_h_unk_4f576" type2="type4_n_unk_4f576" k="181585.6" length="0.101000" />
+    <Bond type1="type10_h_unk_4f576" type2="type5_c_unk_4f576" k="142256.0" length="0.109000" />
+    <Bond type1="type11_h_unk_4f576" type2="type5_c_unk_4f576" k="142256.0" length="0.109000" />
+    <Bond type1="type12_h_unk_4f576" type2="type5_c_unk_4f576" k="142256.0" length="0.109000" />
+  </HarmonicBondForce>
+  <HarmonicAngleForce>
+    <Angle type1="type1_c_unk_4f576" type2="type2_c_unk_4f576" type3="type3_o_unk_4f576" k="1098820.9" angle="2.101377" />
+    <Angle type1="type1_c_unk_4f576" type2="type2_c_unk_4f576" type3="type4_n_unk_4f576" k="961468.3" angle="2.035055" />
+    <Angle type1="type2_c_unk_4f576" type2="type4_n_unk_4f576" type3="type5_c_unk_4f576" k="686763.1" angle="2.127557" />
+    <Angle type1="type2_c_unk_4f576" type2="type1_c_unk_4f576" type3="type6_h_unk_4f576" k="480734.2" angle="1.911136" />
+    <Angle type1="type2_c_unk_4f576" type2="type1_c_unk_4f576" type3="type7_h_unk_4f576" k="480734.2" angle="1.911136" />
+    <Angle type1="type2_c_unk_4f576" type2="type1_c_unk_4f576" type3="type8_h_unk_4f576" k="480734.2" angle="1.911136" />
+    <Angle type1="type2_c_unk_4f576" type2="type4_n_unk_4f576" type3="type9_h_unk_4f576" k="480734.2" angle="2.090905" />
+    <Angle type1="type4_n_unk_4f576" type2="type5_c_unk_4f576" type3="type10_h_unk_4f576" k="480734.2" angle="1.911136" />
+    <Angle type1="type4_n_unk_4f576" type2="type5_c_unk_4f576" type3="type11_h_unk_4f576" k="480734.2" angle="1.911136" />
+    <Angle type1="type4_n_unk_4f576" type2="type5_c_unk_4f576" type3="type12_h_unk_4f576" k="480734.2" angle="1.911136" />
+    <Angle type1="type5_c_unk_4f576" type2="type4_n_unk_4f576" type3="type9_h_unk_4f576" k="521939.9" angle="2.066471" />
+    <Angle type1="type7_h_unk_4f576" type2="type1_c_unk_4f576" type3="type8_h_unk_4f576" k="453263.6" angle="1.881466" />
+    <Angle type1="type6_h_unk_4f576" type2="type1_c_unk_4f576" type3="type7_h_unk_4f576" k="453263.6" angle="1.881466" />
+    <Angle type1="type3_o_unk_4f576" type2="type2_c_unk_4f576" type3="type4_n_unk_4f576" k="1098820.9" angle="2.145011" />
+    <Angle type1="type6_h_unk_4f576" type2="type1_c_unk_4f576" type3="type8_h_unk_4f576" k="453263.6" angle="1.881466" />
+    <Angle type1="type10_h_unk_4f576" type2="type5_c_unk_4f576" type3="type11_h_unk_4f576" k="453263.6" angle="1.881466" />
+    <Angle type1="type10_h_unk_4f576" type2="type5_c_unk_4f576" type3="type12_h_unk_4f576" k="453263.6" angle="1.881466" />
+    <Angle type1="type11_h_unk_4f576" type2="type5_c_unk_4f576" type3="type12_h_unk_4f576" k="453263.6" angle="1.881466" />
+  </HarmonicAngleForce>
+  <PeriodicTorsionForce>
+    <Proper type1="type5_c_unk_4f576" type2="type4_n_unk_4f576" type3="type2_c_unk_4f576" type4="type1_c_unk_4f576" k1="4.811600" periodicity1="1" phase1="0.0" k2="12.738188" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="type6_h_unk_4f576" type2="type1_c_unk_4f576" type3="type2_c_unk_4f576" type4="type3_o_unk_4f576" />
+    <Proper type1="type10_h_unk_4f576" type2="type5_c_unk_4f576" type3="type4_n_unk_4f576" type4="type2_c_unk_4f576" />
+    <Proper type1="type11_h_unk_4f576" type2="type5_c_unk_4f576" type3="type4_n_unk_4f576" type4="type9_h_unk_4f576" />
+    <Proper type1="type10_h_unk_4f576" type2="type5_c_unk_4f576" type3="type4_n_unk_4f576" type4="type9_h_unk_4f576" />
+    <Proper type1="type7_h_unk_4f576" type2="type1_c_unk_4f576" type3="type2_c_unk_4f576" type4="type4_n_unk_4f576" />
+    <Proper type1="type8_h_unk_4f576" type2="type1_c_unk_4f576" type3="type2_c_unk_4f576" type4="type4_n_unk_4f576" />
+    <Proper type1="type9_h_unk_4f576" type2="type4_n_unk_4f576" type3="type2_c_unk_4f576" type4="type3_o_unk_4f576" k2="10.250800" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="type7_h_unk_4f576" type2="type1_c_unk_4f576" type3="type2_c_unk_4f576" type4="type3_o_unk_4f576" />
+    <Proper type1="type12_h_unk_4f576" type2="type5_c_unk_4f576" type3="type4_n_unk_4f576" type4="type9_h_unk_4f576" />
+    <Proper type1="type12_h_unk_4f576" type2="type5_c_unk_4f576" type3="type4_n_unk_4f576" type4="type2_c_unk_4f576" />
+    <Proper type1="type8_h_unk_4f576" type2="type1_c_unk_4f576" type3="type2_c_unk_4f576" type4="type3_o_unk_4f576" />
+    <Proper type1="type5_c_unk_4f576" type2="type4_n_unk_4f576" type3="type2_c_unk_4f576" type4="type3_o_unk_4f576" k2="12.738188" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="type11_h_unk_4f576" type2="type5_c_unk_4f576" type3="type4_n_unk_4f576" type4="type2_c_unk_4f576" />
+    <Proper type1="type6_h_unk_4f576" type2="type1_c_unk_4f576" type3="type2_c_unk_4f576" type4="type4_n_unk_4f576" />
+    <Proper type1="type9_h_unk_4f576" type2="type4_n_unk_4f576" type3="type2_c_unk_4f576" type4="type1_c_unk_4f576" k2="10.250800" periodicity2="2" phase2="3.141592653589793" />
+    <Improper type1="type2_c_unk_4f576" type2="type1_c_unk_4f576" type3="type3_o_unk_4f576" type4="type4_n_unk_4f576" k1="43.932000" periodicity1="-1" phase1="0.000000" />
+    <Improper type1="type1_c_unk_4f576" type2="type2_c_unk_4f576" type3="type6_h_unk_4f576" type4="type7_h_unk_4f576" k1="0.000000" periodicity1="-1" phase1="0.000000" />
+    <Improper type1="type1_c_unk_4f576" type2="type2_c_unk_4f576" type3="type6_h_unk_4f576" type4="type8_h_unk_4f576" k1="0.000000" periodicity1="-1" phase1="0.000000" />
+    <Improper type1="type4_n_unk_4f576" type2="type9_h_unk_4f576" type3="type2_c_unk_4f576" type4="type5_c_unk_4f576" k1="10.460000" periodicity1="-1" phase1="0.000000" />
+    <Improper type1="type5_c_unk_4f576" type2="type10_h_unk_4f576" type3="type11_h_unk_4f576" type4="type4_n_unk_4f576" k1="0.000000" periodicity1="-1" phase1="0.000000" />
+    <Improper type1="type5_c_unk_4f576" type2="type4_n_unk_4f576" type3="type10_h_unk_4f576" type4="type12_h_unk_4f576" k1="0.000000" periodicity1="-1" phase1="0.000000" />
+  </PeriodicTorsionForce>
+</ForceField>
