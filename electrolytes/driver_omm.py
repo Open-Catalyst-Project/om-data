@@ -23,7 +23,7 @@ result = runmd_omm.run_simulation(
     temperature=temperature,  # Use temperature from CSV
     t_final=250.0*1000, #time in ps
     n_frames=100,
-    dt=0.001  # Fixed timestep for all systems, in ps
+    dt=0.001,  # Fixed timestep for all systems, in ps
     rpmd=True,
     num_replicas=32,
 )
