@@ -1,9 +1,9 @@
 import os
 import runmd_omm
-import json
 import pandas as pd
+import sys
 
-row_number = 1
+row_number = int(sys.argv[1])
 
 # Read the CSV file to get the temperature
 df = pd.read_csv("rpmd_elytes.csv")
@@ -21,7 +21,9 @@ result = runmd_omm.run_simulation(
     xml_file=f"{row_number}/system.xml", 
     output_dir=f"{row_number}",
     temperature=temperature,  # Use temperature from CSV
-    t_final=500.0*100, #time in ps
-    n_frames=5000,
+    t_final=250.0*1000, #time in ps
+    n_frames=100,
     dt=0.001  # Fixed timestep for all systems, in ps
+    rpmd=True,
+    num_replicas=32,
 )
