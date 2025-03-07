@@ -4,26 +4,38 @@
     <Type name="O_h2o" class="O_h2o" element="O" mass="15.9994" />
     <Type name="H1_h2o" class="H1_h2o" element="H" mass="1.008" />
     <Type name="H2_h2o" class="H2_h2o" element="H" mass="1.008" />
+    <Type name="OM_h2o" class="OM_h2o" mass="0.0" />
   </AtomTypes>
   <Residues>
     <Residue name="HOH">
       <Atom name="OW0" type="O_h2o" />
       <Atom name="HW1" type="H1_h2o" />
       <Atom name="HW2" type="H2_h2o" />
+      <Atom name="OM" type="OM_h2o" />
       <Bond atomName1="OW0" atomName2="HW1" />
       <Bond atomName1="OW0" atomName2="HW2" />
+      <VirtualSite type="average3" siteName="OM" atomName1="OW0" atomName2="HW1" atomName3="HW2" weight1="0.74" weight2="0.13" weight3="0.13"/>
     </Residue>
   </Residues>
-  <HarmonicBondForce>
-    <Bond type1="O_h2o" type2="H1_h2o" k="462750.4" length="0.101181" />
-    <Bond type1="O_h2o" type2="H2_h2o" k="462750.4" length="0.101181" />
-  </HarmonicBondForce>
+  <!-- 
+    Using quartic expansion of Morse potential: D*(1-exp(-a*(r-r0)))^2
+    This form leads to stable OpenMM timestepping compared to the
+    standard Morse potential expression. 
+  -->
+  <CustomBondForce energy="D * (a^2 * (r - r0)^2 - a^3 * (r - r0)^3 + (5/4) * a^4 * (r - r0)^4)">
+    <GlobalParameter name="D" defaultValue="432.581"/>
+    <GlobalParameter name="a" defaultValue="28.7"/>
+    <PerBondParameter name="r0"/>
+    <Bond type1="O_h2o" type2="H1_h2o" r0="0.09419"/>
+    <Bond type1="O_h2o" type2="H2_h2o" r0="0.09419"/>
+  </CustomBondForce>
   <HarmonicAngleForce>
-    <Angle type1="H1_h2o" type2="O_h2o" type3="H2_h2o" k="836.8" angle="1.887547" />
+    <Angle type1="H1_h2o" type2="O_h2o" type3="H2_h2o" k="367.810" angle="1.8744836" />
   </HarmonicAngleForce>
   <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
-    <Atom type="O_h2o" charge="-0.848448690103" sigma="0.317796" epsilon="0.652144" />
-    <Atom type="H1_h2o" charge="0.4242243450515" sigma="0.100000" epsilon="0.000000" />
-    <Atom type="H2_h2o" charge="0.4242243450515" sigma="0.100000" epsilon="0.000000" />
+    <Atom type="OM_h2o" charge="-1.1128" sigma="0.10000" epsilon="0.00000" />
+    <Atom type="O_h2o" charge="0.0" sigma="0.31644" epsilon="0.774" />
+    <Atom type="H1_h2o" charge="0.5564" sigma="0.100000" epsilon="0.000000" />
+    <Atom type="H2_h2o" charge="0.5564" sigma="0.100000" epsilon="0.000000" />
   </NonbondedForce>
 </ForceField>

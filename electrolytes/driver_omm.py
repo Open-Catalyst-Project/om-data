@@ -1,22 +1,27 @@
 import os
 import runmd_omm
+import json
+import pandas as pd
 
-row_number = 0
+row_number = 1
 
-# Only generate system if not restarting (i.e. checkpoint file doesn't exist)
+# Read the CSV file to get the temperature
+df = pd.read_csv("rpmd_elytes.csv")
+temperature = df.iloc[row_number]['temperature']
+
+# Only generate system if not restarting
 checkpoint_file = os.path.join(f"{row_number}", "md.chk")
 if not os.path.exists(checkpoint_file):
     import system_generator_omm
     system_generator_omm.main("csv", file="rpmd_elytes.csv", density=1.0, row=row_number)
 
-# Run simulation, which can be restarted from a checkpoint file
+# Run simulation with temperature from CSV
 result = runmd_omm.run_simulation(
     pdb_file=f"{row_number}/system.pdb",
     xml_file=f"{row_number}/system.xml", 
     output_dir=f"{row_number}",
-    t_final=500.0,
-    n_frames=100,
-    rpmd=True,
-    num_replicas=32,
-    dt=0.001
+    temperature=temperature,  # Use temperature from CSV
+    t_final=500.0*100, #time in ps
+    n_frames=5000,
+    dt=0.001  # Fixed timestep for all systems, in ps
 )

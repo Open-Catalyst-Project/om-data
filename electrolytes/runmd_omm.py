@@ -350,7 +350,7 @@ class TestSimulation:
             
             # Aggressive energy minimization
             print("\nPerforming energy minimization...")
-            LocalEnergyMinimizer.minimize(temp_context, 1.0*kilojoules_per_mole/nanometer, 15000)
+            LocalEnergyMinimizer.minimize(temp_context, 0.01*kilojoules_per_mole/nanometer, 15000)
                         # Get minimized positions
             state = temp_context.getState(getPositions=True, getEnergy=True)
             minimized_positions = state.getPositions()
