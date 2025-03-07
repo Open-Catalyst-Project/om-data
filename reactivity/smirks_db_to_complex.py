@@ -223,7 +223,7 @@ def main(n_batch, batch_idx, output_path, db_name):
                     # these databases) then we don't include them.
                     print(f"reaction {idx} is a no-op")
                     print(smirks_list[idx])
-                    continue
+                    break
                 # Stick the total charge in the comment line of the .xyz
                 r.title = f"charge={r.formal_charge}"
                 p.title = f"charge={p.formal_charge}"
