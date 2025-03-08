@@ -176,7 +176,6 @@ def main(args):
             if metal_dict == {}:
                 for st, name in zip((orig_reactant_st, orig_product_st), ("R", "P")):
                     st.title = f"{charge} {spin_multiplicity}"
-                    # with StructureWriter(f"{output_dir}/{i}_{option}_{name}_0.xyz", format="xyz") as writer:
                     with StructureWriter(f"{output_dir}/{num_reactions}_{name}.xyz", format="xyz") as writer:
                         writer.extend([st])
                 num_reactions += 1
