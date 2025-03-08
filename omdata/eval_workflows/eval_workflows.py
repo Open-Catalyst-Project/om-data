@@ -251,7 +251,7 @@ def ase_calc_ts_freq_fb_qirc_freq(
 
     forward_qirc_opt = ase_calc_relax_job(
         calc=calc,
-        atoms=perturb(ts_opt["atoms"], ts_opt["results"]["imag_vib_freqs"][0], perturb_magnitude),
+        atoms=perturb(ts_opt["atoms"], ts_freq["results"]["imag_vib_freqs"][0], perturb_magnitude),
         charge=charge,
         spin_multiplicity=spin_multiplicity,
         opt_params=EVAL_OPT_PARAMETERS,
@@ -274,7 +274,7 @@ def ase_calc_ts_freq_fb_qirc_freq(
 
     backward_qirc_opt = ase_calc_relax_job(
         calc=calc,
-        atoms=perturb(ts_opt["atoms"], ts_opt["results"]["imag_vib_freqs"][0], perturb_magnitude * -1),
+        atoms=perturb(ts_opt["atoms"], ts_freq["results"]["imag_vib_freqs"][0], perturb_magnitude * -1),
         charge=charge,
         spin_multiplicity=spin_multiplicity,
         opt_params=EVAL_OPT_PARAMETERS,
