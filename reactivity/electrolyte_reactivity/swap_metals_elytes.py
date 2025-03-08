@@ -191,7 +191,8 @@ def main(args):
             if metal_dict == {}:
                 for st, name in zip((orig_reactant_st, orig_product_st), ("R", "P")):
                     st.title = f"{charge} {spin_multiplicity}"
-                    with StructureWriter(f"{output_dir}/{i}_{option}_{name}_0.xyz", format="xyz") as writer:
+                    # with StructureWriter(f"{output_dir}/{i}_{option}_{name}_0.xyz", format="xyz") as writer:
+                    with StructureWriter(f"{output_dir}/{num_reactions}_{name}.xyz", format="xyz") as writer:
                         writer.extend([st])
                 num_reactions += 1
                 if orig_reactant_st.atom_total not in reaction_histogram:
@@ -221,15 +222,16 @@ def main(args):
                             delete_m_lig_bonds(st, metal_ind)
                             dilate_distance(st, ratio, metal_ind)
                             st.title = f"{int(charge)+int(charge_change)} {int(spin_multiplicity) + int(swaps[el])}"
-                            filename = f"{output_dir}/{i}_{option}_{name}"
-                            for k, key in enumerate(metal_dict.keys()):
-                                if k == j:
-                                    assert st.atom[key].element == el
-                                    filename = f"{filename}_{el}{k}"
-                                else:
-                                    assert st.atom[key].element == metal_dict[key]
-                                    filename = f"{filename}_{st.atom[key].element}{k}"
-                            filename = f"{filename}_{charge_change}.xyz"
+                            # filename = f"{output_dir}/{i}_{option}_{name}"
+                            # for k, key in enumerate(metal_dict.keys()):
+                            #     if k == j:
+                            #         assert st.atom[key].element == el
+                            #         filename = f"{filename}_{el}{k}"
+                            #     else:
+                            #         assert st.atom[key].element == metal_dict[key]
+                            #         filename = f"{filename}_{st.atom[key].element}{k}"
+                            # filename = f"{filename}_{charge_change}.xyz"
+                            filename=f"{output_dir}/{num_reactions}_{name}.xyz"
                             with StructureWriter(filename, format="xyz") as writer:
                                 writer.extend([st])
                         if swapped_reactant_st.atom_total not in reaction_histogram:
