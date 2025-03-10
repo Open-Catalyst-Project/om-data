@@ -540,11 +540,11 @@ class ElectrolyteFactory:
             }
         else:
             self.class_probabilities = {
-                'protic': 0.4,
-                'aprotic': 0.4,
-                'IL': 0.1,
-                'MS': 0.05,
-                'aq': 0.05
+                'protic': 0.1,
+                'aprotic': 0.05,
+                'IL': 0.025,
+                'MS': 0.025,
+                'aq': 0.8 #05
             }
             
         self.class_mapping = {
@@ -722,11 +722,13 @@ def generate_electrolytes(is_rpmd: bool = False,
         else:
             # Set distances and temperatures based on mode
             if is_rpmd:
+                # RPMD mode: only low concentration and minimum temperature
                 distances = [2.25]  # Only low concentration (2.25 nm)
                 temperatures = [electrolyte.min_temp]  # Only minimum temperature
             else:
-                distances = [2.225]  # Standard distance for non-RPMD
-                temperatures = [electrolyte.min_temp]  # Use minimum temperature
+                # Non-RPMD mode: include both concentrations and temperatures
+                distances = [1.75, 2.25]  # Both high (1.75 nm) and low (2.25 nm) concentrations
+                temperatures = [electrolyte.min_temp, electrolyte.max_temp]  # Both min and max temperatures
             
             boxsize = 5  # nm
             minboxsize = 4  # nm
@@ -752,13 +754,21 @@ def generate_electrolytes(is_rpmd: bool = False,
                         totalmol = np.sum(mols)
                         boxsize = (totalmol/conc)**(1/3)
                     
-                    # Generate entry name
-                    name = f'{elyte_class}-{i+1}-minT'
-                    if is_rpmd:
-                        name += '-lowconc'  # Always low concentration for RPMD
+                    # Generate entry name with appropriate suffixes
+                    name = f'{elyte_class}-{i+1}'
+                    if temperature == electrolyte.min_temp:
+                        name += '-minT'
+                    else:
+                        name += '-maxT'
+                    
+                    if dis == 2.25:
+                        name += '-lowconc'
+                    else:
+                        name += '-highconc'
                     
                     # Create and add entry
                     entry = electrolyte.to_dict(name)
+                    entry['temperature'] = temperature  # Set the actual temperature
                     elytes = pd.concat([elytes, pd.DataFrame([entry])], ignore_index=True)
     
     # Verify all required species were included

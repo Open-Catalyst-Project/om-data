@@ -33,18 +33,21 @@ class SystemBuilder(ABC):
     AVOGADRO = 6.023e23
     DEFAULT_DENSITY = 0.5  # g/mL
     
-    def __init__(self, output_dir: str, target_atoms: int = 5000, density: float = None):
+    def __init__(self, output_dir: str, target_atoms: int = 5000, density: float = None, is_droplet: bool = False):
         """Initialize the system builder.
         
         Args:
             output_dir: Directory to save the generated system.
             target_atoms: Target number of atoms in the system.
             density: System density in g/mL (defaults to DEFAULT_DENSITY if None)
+            is_droplet: Whether to generate a droplet system
         """
         self.output_dir = output_dir
         self.target_atoms = target_atoms
         self.density = density if density is not None else self.DEFAULT_DENSITY
         self.box_size = None
+        self.is_droplet = is_droplet
+        self.droplet_radius = None  # Will be calculated later
         
     def _check_charge_balance(self) -> bool:
         """Check if the system has balanced charges.
@@ -110,6 +113,27 @@ class SystemBuilder(ABC):
         
         self._prepare_openmm()
         self._write_metadata()  # Add metadata writing at the end
+
+    def _calculate_droplet_radius(self) -> float:
+        """Calculate the radius of the droplet based on density and number of molecules."""
+        # Calculate total mass in g
+        total_mass = 0
+        if hasattr(self, 'cations'):
+            for spec, num in zip(self.cations + self.anions, self.n_molecules[:len(self.cations + self.anions)]):
+                total_mass += calculate_mw(spec) * num / self.AVOGADRO
+        for spec, num in zip(self.solvents, self.n_molecules[-len(self.solvents):]):
+            total_mass += calculate_mw(spec) * num / self.AVOGADRO
+            
+        # Convert density from g/mL to g/nm³
+        density_nm3 = self.density  # g/mL = g/cm³ = 1e-21 g/nm³
+        
+        # Calculate volume in nm³
+        volume = total_mass / (density_nm3 * 1e-21)
+        
+        # Calculate radius in nm: V = 4/3 * π * r³
+        radius = (3 * volume / (4 * np.pi)) ** (1/3)
+        
+        return radius
 
     def _create_configuration(self) -> None:
         """Create initial configuration using packmol."""
@@ -224,12 +248,23 @@ class SystemBuilder(ABC):
             f.write(f'filetype pdb\n')
             f.write(f'output {self.output_pdb}\n\n')
             
-            # Write structure section for each molecule type
-            for i, (pdb_file, n_mol) in enumerate(zip(pdb_files, self.n_molecules)):
-                f.write(f'structure {pdb_file}\n')
-                f.write(f'  number {int(n_mol)}\n')
-                f.write(f'  inside box 0. 0. 0. {self.box_size} {self.box_size} {self.box_size}\n')
-                f.write('end structure\n\n')
+            if self.is_droplet:
+                # For droplet, pack inside a sphere
+                self.droplet_radius = self._calculate_droplet_radius()
+                print(f"DEBUG: Droplet radius: {self.droplet_radius} nm")
+                radius_ang = self.droplet_radius * 10  # Convert nm to Å
+                for i, (pdb_file, n_mol) in enumerate(zip(pdb_files, self.n_molecules)):
+                    f.write(f'structure {pdb_file}\n')
+                    f.write(f'  number {int(n_mol)}\n')
+                    f.write(f'  inside sphere 0. 0. 0. {radius_ang}\n')
+                    f.write('end structure\n\n')
+            else:
+                # Original cubic box packing
+                for i, (pdb_file, n_mol) in enumerate(zip(pdb_files, self.n_molecules)):
+                    f.write(f'structure {pdb_file}\n')
+                    f.write(f'  number {int(n_mol)}\n')
+                    f.write(f'  inside box 0. 0. 0. {self.box_size} {self.box_size} {self.box_size}\n')
+                    f.write('end structure\n\n')
                 
         # Run packmol with input file from output directory
         try:
@@ -280,14 +315,16 @@ class SystemBuilder(ABC):
         with open(self.output_pdb, 'r') as f:
             content = f.readlines()
             
-        # Create CRYST1 record and ensure it's the first line
-        cryst_line = f"CRYST1{self.box_size:9.3f}{self.box_size:9.3f}{self.box_size:9.3f}  90.00  90.00  90.00 P 1           1\n"
-        
-        # Remove any existing CRYST1 records
-        content = [line for line in content if not line.startswith('CRYST1')]
-        
-        # Insert CRYST1 as the first line
-        content.insert(0, cryst_line)
+        if self.is_droplet:
+            # For droplets, remove any CRYST1 records
+            content = [line for line in content if not line.startswith('CRYST1')]
+        else:
+            # Original cubic box packing with CRYST1
+            cryst_line = f"CRYST1{self.box_size:9.3f}{self.box_size:9.3f}{self.box_size:9.3f}  90.00  90.00  90.00 P 1           1\n"
+            # Remove any existing CRYST1 records
+            content = [line for line in content if not line.startswith('CRYST1')]
+            # Insert CRYST1 as the first line
+            content.insert(0, cryst_line)
         
         # Propagate bonds for all molecules
         all_bonds = []
@@ -367,7 +404,7 @@ class SystemBuilder(ABC):
             res_name = self.generate_molres(len(all_species))[i]
             content = re.sub(r'<Residue name="[A-Z]{3}">', f'<Residue name="{res_name}">', content)
             xml_contents.append(content)
-            
+        
         # Combine force fields with appropriate name based on system type
         output_name = "solvent.xml" if isinstance(self, SolventSystem) else "system.xml"
         output_xml = os.path.join(self.output_dir, output_name)
@@ -570,7 +607,7 @@ class SolventSystem(SystemBuilder):
     """Class for generating pure solvent systems."""
     
     def __init__(self, solvents: List[str], solvent_ratios: List[float], 
-                 output_dir: str, target_atoms: int = 5000, density: float = None):
+                 output_dir: str, target_atoms: int = 5000, density: float = None, is_droplet: bool = False):
         """Initialize the solvent system.
         
         Args:
@@ -579,8 +616,9 @@ class SolventSystem(SystemBuilder):
             output_dir: Directory to save the generated system.
             target_atoms: Target number of atoms in the system.
             density: System density in g/mL (defaults to DEFAULT_DENSITY if None)
+            is_droplet: Whether to generate a droplet system
         """
-        super().__init__(output_dir, target_atoms, density)
+        super().__init__(output_dir, target_atoms, density, is_droplet)
         self.solvents = solvents
         
         # Convert ratios to numpy array and normalize
@@ -728,7 +766,7 @@ class ElectrolyteSystem(SystemBuilder):
     
     def __init__(self, cations: List[str], anions: List[str], solvents: List[str],
                  concentrations: Dict[str, List[float]], units: str,
-                 output_dir: str, target_atoms: int = 5000, density: float = None):
+                 output_dir: str, target_atoms: int = 5000, density: float = None, is_droplet: bool = False):
         """Initialize the electrolyte system.
         
         Args:
@@ -740,8 +778,9 @@ class ElectrolyteSystem(SystemBuilder):
             output_dir: Directory to save the generated system.
             target_atoms: Target number of atoms in the system.
             density: System density in g/mL (defaults to DEFAULT_DENSITY if None)
+            is_droplet: Whether to generate a droplet system
         """
-        super().__init__(output_dir, target_atoms, density)
+        super().__init__(output_dir, target_atoms, density, is_droplet)
         self.cations = cations
         self.anions = anions
         self.solvents = solvents
@@ -1060,37 +1099,38 @@ class ElectrolyteSystem(SystemBuilder):
         self.box_size = volume ** (1/3)  # Calculate box length in Å
 
 def generate_solvent_system(solvents: List[str], ratios: List[float], output: str, 
-                          target_atoms: int = 5000, density: float = None) -> None:
+                          target_atoms: int = 5000, density: float = None,
+                          is_droplet: bool = False) -> None:
     """Generate a pure solvent system.
-        
-        Args:
+    
+    Args:
         solvents: List of solvent species names
         ratios: List of molar ratios for each solvent
-        output: Output file prefix
+        output: Output directory
         target_atoms: Target number of atoms in the system
         density: System density in g/mL (defaults to 0.5 if None)
+        is_droplet: Whether to generate a droplet system
     """
     # Normalize ratios
     ratios = np.array(ratios)
     ratios = ratios / np.sum(ratios)
     
-    # Create system builder using the correct parameter names from SolventSystem class
     system = SolventSystem(
         solvents=solvents,
         solvent_ratios=ratios,
         output_dir=output,
         target_atoms=target_atoms,
-        density=density
+        density=density,
+        is_droplet=is_droplet
     )
     
-    # Generate the system
     system.generate_system()
 
 def generate_electrolyte_system(cations: List[str], anions: List[str], 
                               solvents: List[str], salt_conc: List[float],
                               solvent_ratios: List[float], units: str,
                               output: str, target_atoms: int = 5000,
-                              density: float = None) -> None:
+                              density: float = None, is_droplet: bool = False) -> None:
     """Generate an electrolyte system.
     
     Args:
@@ -1100,15 +1140,15 @@ def generate_electrolyte_system(cations: List[str], anions: List[str],
         salt_conc: List of salt concentrations
         solvent_ratios: List of molar ratios for solvents
         units: Concentration units ('mass', 'volume', or 'number')
-        output: Output file prefix
+        output: Output directory
         target_atoms: Target number of atoms in the system
         density: System density in g/mL (defaults to 0.5 if None)
+        is_droplet: Whether to generate a droplet system
     """
     # Normalize solvent ratios
     solvent_ratios = np.array(solvent_ratios)
     solvent_ratios = solvent_ratios / np.sum(solvent_ratios)
     
-    # Create system builder
     system = ElectrolyteSystem(
         cations=cations,
         anions=anions,
@@ -1117,13 +1157,13 @@ def generate_electrolyte_system(cations: List[str], anions: List[str],
         units=units,
         output_dir=output,
         target_atoms=target_atoms,
-        density=density
+        density=density,
+        is_droplet=is_droplet
     )
     
-    # Generate the system
     system.generate_system()
 
-def process_csv_row(row, row_idx, density=None, output_dir=None):
+def process_csv_row(row, row_idx, density=None, output_dir=None, is_droplet=False):
     """Process a single row from the CSV file.
     
     Args:
@@ -1131,6 +1171,7 @@ def process_csv_row(row, row_idx, density=None, output_dir=None):
         row_idx: Index of the row being processed
         density: Optional system density in g/mL (defaults to 0.5 if None)
         output_dir: Optional output directory (defaults to str(row_idx))
+        is_droplet: Whether to generate a droplet system
     """
     # Use row index as output directory if not specified
     output_dir = output_dir if output_dir is not None else str(row_idx)
@@ -1193,9 +1234,10 @@ def process_csv_row(row, row_idx, density=None, output_dir=None):
         solvents=solvents,
         concentrations=concentrations,
         units=row['units'],
-        output_dir=output_dir,  # Use the output_dir parameter
+        output_dir=output_dir,
         target_atoms=5000,
-        density=density
+        density=density,
+        is_droplet=is_droplet
     )
 
     system.generate_system()
@@ -1204,7 +1246,8 @@ def handle_csv_mode(args):
     """Handle CSV mode by processing specified row."""
     df = pd.read_csv(args.file)
     row = df.iloc[args.row]
-    process_csv_row(row, args.row, density=args.density, output_dir=args.output)
+    process_csv_row(row, args.row, density=args.density, 
+                   output_dir=args.output, is_droplet=args.droplet)
 
 def main(mode=None, **kwargs):
     """Main function to generate molecular systems.
@@ -1238,17 +1281,17 @@ def main(mode=None, **kwargs):
     # If no arguments provided, use command line
     if mode is None:
         parser = argparse.ArgumentParser(
-            description='Generate molecular systems (pure solvents or electrolytes)',
+            description='Generate molecular systems (pure solvents, electrolytes, or droplets)',
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog=textwrap.dedent('''
                 Examples:
-                    # Generate from CSV file:
-                    python system_generator.py csv --file rpmd_elytes.csv --row 0
+                    # Generate from CSV file with droplet:
+                    python system_generator.py csv --file rpmd_elytes.csv --row 0 --droplet
                     
-                    # Generate pure solvent system:
-                    python system_generator.py solvent --solvents H2O CH3OH --ratios 0.7 0.3 --output solvent_test
+                    # Generate pure solvent droplet:
+                    python system_generator.py solvent --solvents H2O CH3OH --ratios 0.7 0.3 --output solvent_test --droplet
                     
-                    # Generate electrolyte system:
+                    # Generate electrolyte droplet:
                     python system_generator.py electrolyte \\
                         --cations "Li+" "Na+" \\
                         --anions "Cl-" \\
@@ -1256,7 +1299,8 @@ def main(mode=None, **kwargs):
                         --salt-conc 0.5 0.3 \\
                         --solvent-ratios 1.0 \\
                         --units mass \\
-                        --output electrolyte_test
+                        --output electrolyte_test \\
+                        --droplet
                 '''))
 
         subparsers = parser.add_subparsers(dest='mode', required=True,
@@ -1272,6 +1316,8 @@ def main(mode=None, **kwargs):
                                help='System density in g/mL (default: 0.5)')
         csv_parser.add_argument('--output', type=str, default=None,
                                help='Output directory (default: row number)')
+        csv_parser.add_argument('--droplet', action='store_true',
+                                 help='Generate a droplet system instead of periodic box')
 
         # Solvent subcommand
         solvent_parser = subparsers.add_parser('solvent', help='Generate pure solvent system')
@@ -1285,6 +1331,8 @@ def main(mode=None, **kwargs):
                                    help='Target number of atoms (default: 5000)')
         solvent_parser.add_argument('--density', type=float, default=None,
                                    help='System density in g/mL (default: 0.5)')
+        solvent_parser.add_argument('--droplet', action='store_true',
+                                 help='Generate a droplet system instead of periodic box')
 
         # Electrolyte subcommand
         elyte_parser = subparsers.add_parser('electrolyte', help='Generate electrolyte system')
@@ -1306,6 +1354,8 @@ def main(mode=None, **kwargs):
                                  help='Target number of atoms (default: 5000)')
         elyte_parser.add_argument('--density', type=float, default=None,
                                    help='System density in g/mL (default: 0.5)')
+        elyte_parser.add_argument('--droplet', action='store_true',
+                                 help='Generate a droplet system instead of periodic box')
 
         args = parser.parse_args()
         
@@ -1316,13 +1366,14 @@ def main(mode=None, **kwargs):
             if len(args.solvents) != len(args.ratios):
                 parser.error("Number of solvents must match number of ratios")
             generate_solvent_system(args.solvents, args.ratios, args.output, 
-                                  args.target_atoms, args.density)
+                                  args.target_atoms, args.density, args.droplet)
         elif args.mode == 'electrolyte':
             if len(args.solvents) != len(args.solvent_ratios):
                 parser.error("Number of solvents must match number of solvent ratios")
             generate_electrolyte_system(args.cations, args.anions, args.solvents,
                                       args.salt_conc, args.solvent_ratios,
-                                      args.units, args.output, args.target_atoms, args.density)
+                                      args.units, args.output, args.target_atoms, 
+                                      args.density, args.droplet)
         
         return args
     else:
@@ -1331,6 +1382,7 @@ def main(mode=None, **kwargs):
             pass
         args = Args()
         args.mode = mode
+        args.droplet = kwargs.get('droplet', False)
         
         if mode == 'csv':
             args.file = kwargs.get('file')
@@ -1373,13 +1425,14 @@ def main(mode=None, **kwargs):
         if len(args.solvents) != len(args.ratios):
             raise ValueError("Number of solvents must match number of ratios")
         generate_solvent_system(args.solvents, args.ratios, args.output, 
-                              args.target_atoms, args.density)
+                              args.target_atoms, args.density, args.droplet)
     elif args.mode == 'electrolyte':
         if len(args.solvents) != len(args.solvent_ratios):
             raise ValueError("Number of solvents must match number of solvent ratios")
         generate_electrolyte_system(args.cations, args.anions, args.solvents,
                                   args.salt_conc, args.solvent_ratios,
-                                  args.units, args.output, args.target_atoms, args.density)
+                                  args.units, args.output, args.target_atoms, 
+                                  args.density, args.droplet)
     
     return args
 
