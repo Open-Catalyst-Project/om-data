@@ -1,13 +1,13 @@
 Gd+3 {
     # AtomID  MolID  AtomType  charge   X       Y         Z
     write("Data Atoms") {
-        $atom:Gd $mol @atom:Gd    3    0.00000  0.00000   0.000000
+        $atom:Gd3 $mol @atom:Gd3    +3    0.00000  0.00000   0.000000
     }
     write_once("Data Masses") {
-        @atom:Gd 157.25
+        @atom:Gd3 157.25
     }
     # The "In Settings" section stores force-field parameters for this molecule
     write_once("In Settings") {
-        pair_coeff @atom:Gd @atom:Gd  0.03450196 2.645969192876808
+        pair_coeff @atom:Gd3 @atom:Gd3  0.08337961 2.8652
     }
 }

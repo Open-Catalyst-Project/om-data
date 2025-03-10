@@ -1,13 +1,13 @@
 Eu+2 {
     # AtomID  MolID  AtomType  charge   X       Y         Z
     write("Data Atoms") {
-        $atom:Eu $mol @atom:Eu    2    0.00000  0.00000   0.000000
+        $atom:Eu2 $mol @atom:Eu2    +2    0.00000  0.00000   0.000000
     }
     write_once("Data Masses") {
-        @atom:Eu 152.0
+        @atom:Eu2 151.964
     }
     # The "In Settings" section stores force-field parameters for this molecule
     write_once("In Settings") {
-        pair_coeff @atom:Eu @atom:Eu  0.10829364 2.945311162171962
+        pair_coeff @atom:Eu2 @atom:Eu2  0.08965674 2.8866
     }
 }

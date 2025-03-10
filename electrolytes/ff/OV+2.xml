@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="O_ov" class="O_ov" element="O" mass="15.999" />
+    <Type name="V_ov" class="V_ov" element="V" mass="50.943964" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="O1" type="O_ov" />
+      <Atom name="V1" type="V_ov" />
+      <Bond atomName1="O1" atomName2="V1" />
+    </Residue>
+  </Residues>
+  <HarmonicBondForce>
+    <Bond type1="V_ov" type2="O_ov" k="430319.4" length="0.157000" />
+  </HarmonicBondForce>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="O_ov" charge="-0.75" sigma="0.225300" epsilon="2.993800" />
+    <Atom type="V_ov" charge="2.75" sigma="0.251700" epsilon="0.079800" />
+  </NonbondedForce>
+</ForceField>

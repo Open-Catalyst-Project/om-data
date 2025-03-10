@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Hf4" class="Hf4" element="Hf" mass="178.49" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="HF0" type="Hf4" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Hf4" charge="4.0" sigma="0.260800" epsilon="0.123861" />
+  </NonbondedForce>
+</ForceField>

@@ -1,0 +1,13 @@
+Hf+3 {
+    # AtomID  MolID  AtomType  charge   X       Y         Z
+    write("Data Atoms") {
+        $atom:Hf3 $mol @atom:Hf3    +3    0.00000  0.00000   0.000000
+    }
+    write_once("Data Masses") {
+        @atom:Hf3 178.49
+    }
+    # The "In Settings" section stores force-field parameters for this molecule
+    write_once("In Settings") {
+        pair_coeff @atom:Hf3 @atom:Hf3  0.02960343 2.6138
+    }
+}

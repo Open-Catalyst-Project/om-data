@@ -1,13 +1,13 @@
 Ce+3 {
     # AtomID  MolID  AtomType  charge   X       Y         Z
     write("Data Atoms") {
-        $atom:Ce $mol @atom:Ce    3    0.00000  0.00000   0.000000
+        $atom:Ce3 $mol @atom:Ce3    +3    0.00000  0.00000   0.000000
     }
     write_once("Data Masses") {
-        @atom:Ce 140.1
+        @atom:Ce3 140.116
     }
     # The "In Settings" section stores force-field parameters for this molecule
     write_once("In Settings") {
-        pair_coeff @atom:Ce @atom:Ce  0.07399405 2.8312761262499984
+        pair_coeff @atom:Ce3 @atom:Ce3  0.16500296 3.0968
     }
 }

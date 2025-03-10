@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Ti3" class="Ti3" element="Ti" mass="47.867" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="TI0" type="Ti3" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Ti3" charge="3.0" sigma="0.265140" epsilon="0.147991" />
+  </NonbondedForce>
+</ForceField>

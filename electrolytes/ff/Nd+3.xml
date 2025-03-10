@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Nd3" class="Nd3" element="Nd" mass="144.24" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="ND0" type="Nd3" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Nd3" charge="3.0" sigma="0.298460" epsilon="0.509653" />
+  </NonbondedForce>
+</ForceField>

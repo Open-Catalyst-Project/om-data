@@ -1,0 +1,81 @@
+CH2Cl2 inherits OPLSCM1A {
+
+  ### LAMMPS commands for initialization
+  ### (These can be overridden later.)
+
+
+  write_once("In Init") {
+    atom_style full
+  }
+
+  write_once("In Settings") {
+    pair_coeff @atom:type1_c_unk_7d4bb @atom:type1_c_unk_7d4bb 0.066 3.5000000
+    pair_coeff @atom:type2_cl_unk_7d4bb @atom:type2_cl_unk_7d4bb 0.300 3.4000000
+    pair_coeff @atom:type3_cl_unk_7d4bb @atom:type3_cl_unk_7d4bb 0.300 3.4000000
+    pair_coeff @atom:type4_h_unk_7d4bb @atom:type4_h_unk_7d4bb 0.030 2.5000000
+    pair_coeff @atom:type5_h_unk_7d4bb @atom:type5_h_unk_7d4bb 0.030 2.5000000
+  }
+
+  write_once("In Settings") {
+    bond_coeff @bond:type1_unk_7d4bb 245.0000 1.7810
+    bond_coeff @bond:type2_unk_7d4bb 245.0000 1.7810
+    bond_coeff @bond:type3_unk_7d4bb 340.0000 1.0900
+    bond_coeff @bond:type4_unk_7d4bb 340.0000 1.0900
+  }
+
+  write_once("In Settings") {
+    angle_coeff @angle:type1_unk_7d4bb 78.000 111.700
+    angle_coeff @angle:type2_unk_7d4bb 51.000 107.600
+    angle_coeff @angle:type3_unk_7d4bb 51.000 107.600
+    angle_coeff @angle:type4_unk_7d4bb 51.000 107.600
+    angle_coeff @angle:type5_unk_7d4bb 33.000 107.800
+    angle_coeff @angle:type6_unk_7d4bb 51.000 107.600
+  }
+
+  write_once("In Settings") {
+    improper_coeff @improper:type1_unk_7d4bb 0.000 -1 2
+    improper_coeff @improper:type2_unk_7d4bb 0.000 -1 2
+  }
+
+
+  ### DATA sections
+
+
+  write_once("Data Masses") {
+    @atom:type1_c_unk_7d4bb 12.011
+    @atom:type2_cl_unk_7d4bb 35.450
+    @atom:type3_cl_unk_7d4bb 35.450
+    @atom:type4_h_unk_7d4bb 1.008
+    @atom:type5_h_unk_7d4bb 1.008
+  }
+
+  write("Data Atoms") {
+    $atom:id1 $mol:m1 @atom:type1_c_unk_7d4bb -0.02850000 1.000 1.00000 0.00000
+    $atom:id2 $mol:m1 @atom:type2_cl_unk_7d4bb -0.13060000 -0.767 1.00000 0.00000
+    $atom:id3 $mol:m1 @atom:type3_cl_unk_7d4bb -0.13060000 1.637 1.00000 -1.64861
+    $atom:id4 $mol:m1 @atom:type4_h_unk_7d4bb 0.14480000 1.355 0.10588 0.51797
+    $atom:id5 $mol:m1 @atom:type5_h_unk_7d4bb 0.14480000 1.355 1.89415 0.51799
+  }
+
+  write("Data Bonds") {
+    $bond:id1 @bond:type1_unk_7d4bb $atom:id2 $atom:id1
+    $bond:id2 @bond:type2_unk_7d4bb $atom:id3 $atom:id1
+    $bond:id3 @bond:type3_unk_7d4bb $atom:id4 $atom:id1
+    $bond:id4 @bond:type4_unk_7d4bb $atom:id5 $atom:id1
+  }
+
+  write("Data Angles") {
+    $angle:id1 @angle:type1_unk_7d4bb $atom:id2 $atom:id1 $atom:id3
+    $angle:id2 @angle:type2_unk_7d4bb $atom:id2 $atom:id1 $atom:id4
+    $angle:id3 @angle:type3_unk_7d4bb $atom:id2 $atom:id1 $atom:id5
+    $angle:id4 @angle:type4_unk_7d4bb $atom:id3 $atom:id1 $atom:id4
+    $angle:id5 @angle:type5_unk_7d4bb $atom:id4 $atom:id1 $atom:id5
+    $angle:id6 @angle:type6_unk_7d4bb $atom:id3 $atom:id1 $atom:id5
+  }
+
+  write("Data Impropers") {
+    $improper:id1 @improper:type1_unk_7d4bb $atom:id1 $atom:id2 $atom:id3 $atom:id4
+    $improper:id2 @improper:type2_unk_7d4bb $atom:id1 $atom:id2 $atom:id3 $atom:id5
+  }
+
+} # end of "CH2Cl2 inherits OPLSCM1A" type definition

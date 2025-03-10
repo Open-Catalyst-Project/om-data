@@ -1,22 +1,22 @@
 REMARK LIGPARGEN GENERATED PDB FILE
 ATOM      1  C00 UNK     1       1.000   1.000   0.000
-ATOM      2  C01 UNK     1      -0.527   1.000   0.000
-ATOM      3  C02 UNK     1      -1.102   1.000   1.408
-ATOM      4  F03 UNK     1      -0.663   2.081   2.106
-ATOM      5  F04 UNK     1      -2.459   1.092   1.374
-ATOM      6  F05 UNK     1      -0.956   2.085  -0.700
+ATOM      2  C01 UNK     1      -0.526   1.000   0.000
+ATOM      3  C02 UNK     1      -1.101   1.000   1.408
+ATOM      4  F03 UNK     1      -0.662   2.081   2.106
+ATOM      5  F04 UNK     1      -2.458   1.091   1.374
+ATOM      6  F05 UNK     1      -0.957   2.085  -0.700
 ATOM      7  F06 UNK     1      -0.963  -0.095  -0.685
-ATOM      8  O07 UNK     1       1.519  -0.129   0.712
-ATOM      9  C08 UNK     1       2.950  -0.130   0.711
-ATOM     10  C09 UNK     1       3.522  -1.366   1.412
-ATOM     11  F0A UNK     1       4.881  -1.352   1.404
-ATOM     12  F0B UNK     1       3.145  -1.402   2.720
-ATOM     13  F0C UNK     1       3.357  -0.093  -0.584
-ATOM     14  F0D UNK     1       3.365   1.017   1.300
-ATOM     15  H0E UNK     1       1.366   1.929   0.451
-ATOM     16  H0F UNK     1       1.345   0.963  -1.039
-ATOM     17  H0G UNK     1      -0.842   0.094   1.962
-ATOM     18  H0H UNK     1       3.181  -2.287   0.932
+ATOM      8  O07 UNK     1       1.519  -0.130   0.711
+ATOM      9  C08 UNK     1       2.950  -0.132   0.710
+ATOM     10  C09 UNK     1       3.522  -1.368   1.410
+ATOM     11  F0A UNK     1       4.881  -1.354   1.402
+ATOM     12  F0B UNK     1       3.145  -1.406   2.717
+ATOM     13  F0C UNK     1       3.356  -0.092  -0.585
+ATOM     14  F0D UNK     1       3.365   1.014   1.301
+ATOM     15  H0E UNK     1       1.366   1.929   0.452
+ATOM     16  H0F UNK     1       1.345   0.966  -1.039
+ATOM     17  H0G UNK     1      -0.840   0.094   1.962
+ATOM     18  H0H UNK     1       3.182  -2.289   0.928
 TER 
 CONECT    1    2 
 CONECT    2    3 
