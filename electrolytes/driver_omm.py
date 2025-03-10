@@ -3,8 +3,8 @@ import runmd_omm
 import json
 import pandas as pd
 
-row_number = 615
-csv_file = "omm-elytes.csv"
+row_number = 1
+csv_file = "rpmd_elytes.csv"
 # Read the CSV file to get the temperature
 df = pd.read_csv(csv_file)
 temperature = df.iloc[row_number]['temperature']
@@ -21,10 +21,10 @@ result = runmd_omm.run_simulation(
     xml_file=f"{row_number}/system.xml", 
     output_dir=f"{row_number}",
     temperature=temperature,  # Use temperature from CSV
-    t_final=250.0*10, #time in ps
+    t_final=20.0*10000, #time in ps
     n_frames=5000,
-    dt=0.001,  # Fixed timestep for all systems, in ps
-    is_droplet=False#,  # Enable droplet mode. False for bulk mode. 
-    #num_replicas=32, # Number of replicas for RPMD
-    #rpmd=True # Enable RPMD
+    dt=0.0005,  # Fixed timestep for all systems, in ps
+    is_droplet=False,  # Enable droplet mode. False for bulk mode. 
+    num_replicas=32, # Number of replicas for RPMD
+    rpmd=True # Enable RPMD
 )
