@@ -5,7 +5,7 @@ import sys
 
 row_number = int(sys.argv[1])
 
-csv_file = "rpmd-elytes.csv"
+csv_file = "rpmd_elytes.csv"
 #csv_file = "omm-elytes.csv"
 # Read the CSV file to get the temperature
 df = pd.read_csv(csv_file)
