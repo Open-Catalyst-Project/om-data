@@ -16,6 +16,8 @@ import numpy as np
 import sys  # Add this import if not already present
 import time  # Add this import at the top
 import glob
+import json
+from math import sqrt, pi
 
 # Add this class before TestSimulation class
 class RPMDPDBReporter(object):
@@ -195,7 +197,8 @@ class TestSimulation:
                  num_replicas: int = 32,
                  t_final: float = 50.0,
                  n_frames: int = 1000,
-                 dt: float = 0.001):
+                 dt: float = 0.001,
+                 is_droplet: bool = False):
         """Initialize the test simulation.
         
         Args:
@@ -211,6 +214,7 @@ class TestSimulation:
             t_final: Final simulation time in picoseconds (default: 50.0 ps)
             n_frames: Number of frames to output (default: 1000)
             dt: Timestep in picoseconds (default: 0.001 ps)
+            is_droplet: Whether this is a droplet simulation (no PBC)
         """
         self.pdb_file = pdb_file
         self.xml_file = xml_file
@@ -224,6 +228,7 @@ class TestSimulation:
         self.t_final = t_final
         self.n_frames = n_frames
         self.dt = dt
+        self.is_droplet = is_droplet
         
         # Create output directory
         os.makedirs(output_dir, exist_ok=True)
@@ -251,39 +256,14 @@ class TestSimulation:
             return 0
     
     def setup_system(self) -> Tuple[Simulation, bool]:
-        """Set up the OpenMM simulation system.
-        
-        Returns:
-            Tuple of (Simulation object, bool indicating if this is a restart)
-        """
+        """Set up the OpenMM simulation system."""
         print("\nLoading PDB file...")
         pdb = PDBFile(self.pdb_file)
         
-        # Get box vectors from the first CRYST1 record
-        box_vectors = None
-        use_pbc = False
-        with open(self.pdb_file, 'r') as f:
-            for line in f:
-                if line.startswith('CRYST1'):
-                    # Parse the first CRYST1 record we find
-                    fields = line.split()
-                    if len(fields) >= 7:
-                        a, b, c = float(fields[1]), float(fields[2]), float(fields[3])
-                        alpha, beta, gamma = float(fields[4]), float(fields[5]), float(fields[6])
-                        # Convert to nanometers for OpenMM
-                        a, b, c = a/10, b/10, c/10  # Convert Angstroms to nm
-                        box_vectors = (Vec3(a, 0, 0), Vec3(0, b, 0), Vec3(0, 0, c))
-                        use_pbc = True
-                        print(f"\nUsing box vectors from first CRYST1 record:")
-                        print(f"Box dimensions: {a:.3f} x {b:.3f} x {c:.3f} nm")
-                    break
-        
-        if not use_pbc:
-            print("No valid CRYST1 record found - using NoCutoff method")
-        
-        # Create system
-        print(f"\nLoading force field from: {self.xml_file}")
-        forcefield = ForceField(self.xml_file)
+        # Immediately verify positions
+        if not pdb.positions:
+            raise ValueError("No positions in PDB file!")
+        print(f"Loaded {len(pdb.positions)} positions from PDB")
         
         # Print residue information and verify templates exist
         print("\nResidue information:")
@@ -291,6 +271,9 @@ class TestSimulation:
         for res in pdb.topology.residues():
             residues.add(res.name)
         print(f"Found residues: {', '.join(sorted(residues))}")
+        
+        print(f"\nLoading force field from: {self.xml_file}")
+        forcefield = ForceField(self.xml_file)
         
         # Verify force field templates
         print("\nForce field templates:")
@@ -301,76 +284,97 @@ class TestSimulation:
             else:
                 raise ValueError(f"No template found for residue {res_name}")
         
-        # Create modeller and add virtual sites if needed
-        print("\nSetting up modeller for virtual sites (if needed)...")
+        print("\nSetting up modeller...")
         modeller = Modeller(pdb.topology, pdb.positions)
         modeller.addExtraParticles(forcefield)
         
-        # Create system with careful nonbonded settings but no constraints
-        rdist = 1.0 * nanometer
-        system = forcefield.createSystem(
-            modeller.topology,
-            nonbondedMethod=PME,
-            nonbondedCutoff=rdist,
-            constraints=None,
-            rigidWater=False,
-            switchDistance=0.9*rdist
-        )
+        # Choose nonbonded method based on droplet mode
+        nonbonded_method = NoCutoff if self.is_droplet else PME
+        print(f"\nUsing nonbonded method: {'NoCutoff' if self.is_droplet else 'PME'}")
         
+        # Create system with appropriate nonbonded method
+        if nonbonded_method == NoCutoff:
+            system = forcefield.createSystem(
+                modeller.topology,
+                nonbondedMethod=nonbonded_method,  # Use NoCutoff for droplet mode
+                constraints=None,
+                rigidWater=False
+            )
+        else:
+            system = forcefield.createSystem(
+                modeller.topology,
+                nonbondedMethod=nonbonded_method,  # Use PME for periodic system
+                nonbondedCutoff=1.0 * nanometer,
+                constraints=None,
+                rigidWater=False,
+                switchDistance=0.9 * nanometer
+            )
+
+        if self.is_droplet:
+            print("\nSetting up droplet forces...")
+            for force in system.getForces():
+                if hasattr(force, 'setUsesPeriodicBoundaryConditions'):
+                    force.setUsesPeriodicBoundaryConditions(False)
+                if isinstance(force, NonbondedForce):
+                    force.setNonbondedMethod(NonbondedForce.NoCutoff)
+            self._add_adaptive_container_force(system)
+
         if self.rpmd:
             print(f"\nSetting up RPMD simulation with {self.num_replicas} beads...")
             
-             # Print and set force groups
+            # Print and set force groups
             print("\nForce groups:")
             for i, force in enumerate(system.getForces()):
                 force_type = force.__class__.__name__
                 print(f"Force {i}: {force_type}")
                 
-                if force_type == "NonbondedForce":
-                    # Split NonbondedForce:
-                    # Direct space (short-range) -> group 1 (6 beads)
+                if not self.is_droplet and force_type == "NonbondedForce":
+                    # Split NonbondedForce for periodic systems:
+                    # Direct space (short-range) -> group 1 (3 beads)
                     # Reciprocal space (long-range) -> group 2 (1 bead)
-                    force.setReciprocalSpaceForceGroup(2)  # PME reciprocal space
-                    force.setForceGroup(1)                 # Direct space
+                    force.setReciprocalSpaceForceGroup(2)
+                    force.setForceGroup(1)
                     print(f"  -> Direct space set to group 1 (contracted to 3 beads)")
                     print(f"  -> Reciprocal space set to group 2 (contracted to 1 bead)")
                 else:
-                    # All other forces (bonded) use full number of beads
+                    # All other forces use full number of beads
                     force.setForceGroup(0)
                     print(f"  -> Set to group 0 (using all {self.num_replicas} beads)")
-                    
-            # First minimize with a temporary context
-            temp_integrator = LangevinMiddleIntegrator(
-            self.temperature,
+            
+            # First minimize with a regular simulation
+            print("\nPerforming energy minimization...")
+            min_integrator = LangevinMiddleIntegrator(
+                self.temperature,
                 1.0/picosecond,
                 self.dt*picoseconds
             )
-            temp_context = Context(system, temp_integrator)
-            temp_context.setPositions(modeller.positions)
+            min_simulation = Simulation(modeller.topology, system, min_integrator)
+            min_simulation.context.setPositions(modeller.positions)
+            min_simulation.minimizeEnergy(maxIterations=15000, tolerance=1.0*kilojoule/mole/nanometer)
             
-            # Aggressive energy minimization
-            print("\nPerforming energy minimization...")
-            LocalEnergyMinimizer.minimize(temp_context, 0.01*kilojoules_per_mole/nanometer, 15000)
-                        # Get minimized positions
-            state = temp_context.getState(getPositions=True, getEnergy=True)
+            # Get minimized positions
+            state = min_simulation.context.getState(getPositions=True, getEnergy=True)
             minimized_positions = state.getPositions()
             print(f"Final potential energy: {state.getPotentialEnergy()}")
             
-            # Clean up temporary objects
-            del temp_context
-            del temp_integrator
+            # Clean up minimization objects
+            del min_simulation
+            del min_integrator
             
-            # Now create the actual RPMD system
+            # Now create RPMD integrator and simulation
+            print("\nCreating RPMD simulation...")
             rpmd_integrator = RPMDIntegrator(
                 self.num_replicas,
                 self.temperature,
                 1.0 / picosecond,
                 self.dt * picosecond,
-                {0: self.num_replicas, 1: 3, 2: 1}  # Updated contractions
+                {0: self.num_replicas, 1: 3, 2: 1} if not self.is_droplet else {0: self.num_replicas}
             )
             
-            # Add RPMD barostat
-            system.addForce(RPMDMonteCarloBarostat(self.pressure, 100))
+            # Add appropriate barostat for RPMD
+            if not self.is_droplet:
+                print("\nAdding RPMD barostat...")
+                system.addForce(RPMDMonteCarloBarostat(self.pressure, 100))
             
             # Create RPMD simulation
             simulation = Simulation(modeller.topology, system, rpmd_integrator)
@@ -383,12 +387,16 @@ class TestSimulation:
                 simulation.loadCheckpoint(self.checkpoint_file)
             else:
                 # Set minimized positions for all beads
+                print("\nInitializing RPMD beads with minimized positions...")
                 for copy in range(self.num_replicas):
                     rpmd_integrator.setPositions(copy, minimized_positions)
-            
+                    print(f"Set positions for bead {copy + 1}/{self.num_replicas}")
+        
         else:
             # Regular MD setup
-            system.addForce(MonteCarloBarostat(self.pressure, self.temperature, 100))
+            if not self.is_droplet:
+                print("\nAdding MonteCarloBarostat for pressure coupling...")
+                system.addForce(MonteCarloBarostat(self.pressure, self.temperature, 100))
             
             integrator = LangevinMiddleIntegrator(
                 self.temperature,
@@ -407,13 +415,52 @@ class TestSimulation:
             else:
                 # Set positions and minimize
                 simulation.context.setPositions(modeller.positions)
-                
                 print("\nPerforming energy minimization...")
                 simulation.minimizeEnergy(maxIterations=15000, tolerance=1.0*kilojoule/mole/nanometer)
-                state = simulation.context.getState(getEnergy=True)
+                # Get and explicitly set minimized positions
+                state = simulation.context.getState(getPositions=True, getEnergy=True)
+                minimized_positions = state.getPositions()
+                simulation.context.setPositions(minimized_positions)
                 print(f"Final potential energy: {state.getPotentialEnergy()}")
 
         return simulation, is_restart
+    
+    def _add_adaptive_container_force(self, system: System) -> None:
+        """Add a spherical container force with a static force constant."""
+        
+        # Read droplet radius from metadata
+        metadata_file = os.path.join(os.path.dirname(self.pdb_file), "electrolyte_metadata.json")
+        if os.path.exists(metadata_file):
+            with open(metadata_file, 'r') as f:
+                metadata = json.load(f)
+                if 'box_size_ang' in metadata:
+                    R = metadata['box_size_ang'] / 20.0  # Convert Å to nm and divide by 2
+                    print(f"\nUsing radius from metadata: {R} nm")
+                else:
+                    R = 2.0  # Default radius in nm
+                    print(f"\nNo box_size_ang in metadata, using default radius: {R} nm")
+        else:
+            R = 2.0  # Default radius in nm
+            print(f"\nNo metadata.json found, using default radius: {R} nm")
+
+        # Create a custom force with static force constant
+        energy_expression = "100*step(r-R)*((r-R)^2); r=sqrt(x*x+y*y+z*z)"
+        force = CustomExternalForce(energy_expression)
+        
+        # Add radius parameter
+        force.addGlobalParameter('R', R)
+        
+        print(f"Container radius R: {R} nm")
+        print("Using static force constant k = 100 kJ/mol/nm²")
+        
+        # Add the force to all particles
+        n_particles = system.getNumParticles()
+        for i in range(n_particles):
+            force.addParticle(i, [])
+        print(f"Added container force to {n_particles} particles")
+
+        # Add force to system
+        system.addForce(force)
     
     def run(self) -> None:
         try:
@@ -438,9 +485,11 @@ class TestSimulation:
             if remaining_steps <= 0:
                 print("\nSimulation has already completed the requested steps.")
                 return
+
+            print("\nStarting production...")
             
+            # Add reporters after announcing start
             if self.rpmd:
-                # RPMD-specific trajectory reporter
                 simulation.reporters.append(
                     RPMDPDBReporter(
                         os.path.join(self.output_dir, f"rpmd_{restart_count}"),
@@ -450,7 +499,6 @@ class TestSimulation:
                     )
                 )
             else:
-                # Regular trajectory reporter
                 simulation.reporters.append(
                     PDBReporter(
                         os.path.join(self.output_dir, f"trajectory_{restart_count}.pdb"),
@@ -496,7 +544,6 @@ class TestSimulation:
                 )
             )
             
-            print("\nStarting production...")
             simulation.step(remaining_steps)  # Only run the remaining steps
             
             # Save final state
@@ -507,69 +554,108 @@ class TestSimulation:
             print(f"\nError during simulation: {str(e)}")
             raise
 
-def run_simulation(pdb_file, xml_file, output_dir=None, temperature=300.0, pressure=1.0,
-                  equil_steps=5000, prod_steps=10000, rpmd=False, num_replicas=32,
-                  t_final=None, n_frames=None, dt=0.001):
-    """Run molecular dynamics simulation with OpenMM.
+def run_simulation(pdb_file: str, xml_file: str, output_dir: str, 
+                  temperature: float = 300.0, pressure: float = 1.0,
+                  equil_steps: int = 5000, prod_steps: int = 5000,
+                  rpmd: bool = False, num_replicas: int = 32,
+                  t_final: float = 50.0, n_frames: int = 5000,
+                  dt: float = 0.001, is_droplet: bool = False) -> None:
+    """Run OpenMM simulation with specified parameters."""
     
-    Args:
-        pdb_file: Path to input PDB file
-        xml_file: Path to force field XML file
-        output_dir: Directory for simulation outputs (if None, uses ./sim_output)
-        temperature: Temperature in Kelvin
-        pressure: Pressure in bar
-        equil_steps: Number of equilibration steps
-        prod_steps: Number of production steps
-        rpmd: Whether to run RPMD simulation
-        num_replicas: Number of ring polymer beads for RPMD
-        t_final: Final simulation time in picoseconds (if None, uses prod_steps * dt)
-        n_frames: Number of frames to output (if None, uses prod_steps)
-        dt: Timestep in picoseconds
-        
-    Returns:
-        int: 0 for success, 1 for failure
-    """
-    try:
-        if output_dir is None:
-            output_dir = "./sim_output"
-            
-        # Calculate production steps based on t_final if provided
-        if t_final is not None:
-            prod_steps = int(t_final / dt)
-            
-        if n_frames is None:
-            n_frames = prod_steps
-        
-        # Create TestSimulation instance
-        simulation = TestSimulation(
-            pdb_file=pdb_file,
-            xml_file=xml_file,
-            output_dir=output_dir,
-            temperature=temperature,
-            pressure=pressure,
-            equil_steps=equil_steps,
-            prod_steps=prod_steps,
-            rpmd=rpmd,
-            num_replicas=num_replicas,
-            t_final=t_final,
-            n_frames=n_frames,
-            dt=dt
+    # Calculate production steps from t_final and dt if provided
+    if t_final is not None:
+        prod_steps = int(t_final / dt)
+        print(f"\nCalculated {prod_steps} steps from t_final={t_final} ps and dt={dt} ps")
+    
+    test = TestSimulation(
+        pdb_file, xml_file, output_dir,
+        temperature=temperature,
+        pressure=pressure,
+        equil_steps=equil_steps,
+        prod_steps=prod_steps,
+        rpmd=rpmd,
+        num_replicas=num_replicas,
+        t_final=t_final,
+        n_frames=n_frames,
+        dt=dt,
+        is_droplet=is_droplet
+    )
+    
+    simulation, is_restart = test.setup_system()
+    
+    # Calculate report interval based on desired number of frames
+    report_interval = max(1, prod_steps // n_frames)
+    print(f"\nOutput settings:")
+    print(f"Total steps: {prod_steps}")
+    print(f"Number of frames requested: {n_frames}")
+    print(f"Saving trajectory every {report_interval} steps")
+    
+    print("\nStarting production...")
+    
+    # Get restart count for PDB file naming
+    restart_count = test._get_restart_count()
+    
+    # Add reporters after announcing start
+    if rpmd:
+        simulation.reporters.append(
+            RPMDPDBReporter(
+                os.path.join(output_dir, f"rpmd_{restart_count}"),
+                report_interval,
+                enforcePeriodicBox=not is_droplet,
+                nbeads=num_replicas
+            )
         )
-
-        # Run simulation
-        simulation.run()
-        return 0
-        
-    except Exception as e:
-        print(f"\nError during simulation: {str(e)}")
-        print("\nDebug information:")
-        print(f"PDB file exists: {os.path.exists(pdb_file)}")
-        print(f"XML file exists: {os.path.exists(xml_file)}")
-        if os.path.exists(xml_file):
-            print("\nFirst few lines of XML file:")
-            with open(xml_file, 'r') as f:
-                print(''.join(f.readlines()[:10]))
-        return 1
+    else:
+        simulation.reporters.append(
+            PDBReporter(
+                os.path.join(output_dir, f"trajectory_{restart_count}.pdb"),
+                report_interval,
+                enforcePeriodicBox=not is_droplet
+            )
+        )
+    
+    # Progress reporter
+    simulation.reporters.append(
+        FormattedReporter(
+            sys.stdout,
+            report_interval,
+            prod_steps,
+            dt
+        )
+    )
+    
+    # Data reporter
+    simulation.reporters.append(
+        StateDataReporter(
+            os.path.join(output_dir, "data.csv"),
+            report_interval,
+            step=True,
+            time=True,
+            potentialEnergy=True,
+            kineticEnergy=True,
+            totalEnergy=True,
+            temperature=True,
+            volume=True,
+            density=True,
+            speed=True,
+            separator=",",
+            append=is_restart
+        )
+    )
+    
+    # Add checkpoint reporter
+    simulation.reporters.append(
+        CheckpointReporter(
+            test.checkpoint_file,
+            report_interval
+        )
+    )
+    
+    simulation.step(prod_steps)
+    
+    # Save final checkpoint
+    simulation.saveCheckpoint(test.checkpoint_file)
+    print("\nSimulation completed!")
 
 def main():
     parser = argparse.ArgumentParser(description='Run test MD simulation with OpenMM')
@@ -593,6 +679,10 @@ def main():
     parser.add_argument('--n-frames', type=int, default=1000,
                        help='Number of frames to output')
     
+    # Add droplet mode argument
+    parser.add_argument('--droplet', action='store_true',
+                       help='Run simulation in droplet mode (no periodic boundary conditions)')
+    
     args = parser.parse_args()
     
     return run_simulation(
@@ -607,7 +697,8 @@ def main():
         num_replicas=args.num_replicas,
         t_final=args.t_final,
         n_frames=args.n_frames,
-        dt=args.dt
+        dt=args.dt,
+        is_droplet=args.droplet  # Pass the droplet mode parameter
     )
 
 if __name__ == "__main__":
