@@ -23,7 +23,8 @@ from omdata.orca.calc import (
     get_symm_break_block,
 )
 
-@job
+GEOM_FILE = "geom.xyz"
+
 def ase_calc_freq_job(
     calc,
     atoms: Atoms,
@@ -78,7 +79,6 @@ def ase_calc_freq_job(
     )
 
 
-@job
 def ase_calc_relax_job(
     calc,
     atoms: Atoms,
@@ -122,6 +122,47 @@ def ase_calc_relax_job(
         additional_fields={"name": "ASE Relax"}
         | (additional_fields or {}),
     ).opt(dyn)
+
+
+def ase_calc_single_point_job(
+    calc,
+    atoms: Atoms,
+    charge: int = 0,
+    spin_multiplicity: int = 1,
+    additional_fields=None,
+    copy_files=None,
+):
+    """
+    Carry out a single point calculation via ASE utilities.
+
+    Parameters
+    ----------
+    atoms
+        Atoms object
+    charge
+        Charge of the system.
+    spin_multiplicity
+        Multiplicity of the system.
+    additional_fields
+        Any additional fields to supply to the summarizer.
+    copy_files
+        Files to copy (and decompress) from source to the runtime directory.
+
+    Returns
+    -------
+    OptSchema
+        Dictionary of results
+    """
+
+    final_atoms = Runner(atoms, calc, copy_files=copy_files).run_calc(
+        geom_file=GEOM_FILE
+    )
+
+    return Summarize(
+        charge_and_multiplicity=(charge, spin_multiplicity),
+        additional_fields={"name": "ASE Single Point"}
+        | (additional_fields or {}),
+    ).run(final_atoms, atoms)
 
 
 def ase_calc_double_opt_freq(
