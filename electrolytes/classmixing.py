@@ -1,13 +1,18 @@
 """classmixing.py
 Author: Muhammad R. Hasyim
 
-Script to generate a list of random electrolytes based on their classifications using an object-oriented approach.
-Classifications:
+Script to generate a list of random electrolytes based on their classifications using an object-oriented approach. Classifications for doing non-RPMD simulations:
 (1) 40% Salt in protic solvents
-(2) 45% Salt in polar aprotic solvents
+(2) 40% Salt in polar aprotic solvents
 (3) 10% Salt in ionic liquids
 (4) 5% Molten salt 
 (5) 5% Aqueous electrolytes
+To change these ratios manually, go to Line 544-550. For RPMD simulations:
+(1) 30% Salt in protic solvents
+(2) 30% Salt in aprotic solvents
+(3) 40% Aqueous electrolytes
+
+If we turn on the flag, --random-only, then these ratios are ignored and we go with fully random mixtures.
 """
 
 import re
@@ -18,6 +23,7 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple, Dict, Any
 import csv
 import argparse
+import textwrap
 
 class SpeciesSelector:
     """Utility class for selecting chemical species."""
@@ -540,11 +546,11 @@ class ElectrolyteFactory:
             }
         else:
             self.class_probabilities = {
-                'protic': 0.1,
-                'aprotic': 0.05,
-                'IL': 0.025,
-                'MS': 0.025,
-                'aq': 0.8 #05
+                'protic': 0.40,
+                'aprotic': 0.40,
+                'IL': 0.1,
+                'MS': 0.05,
+                'aq': 0.05
             }
             
         self.class_mapping = {
@@ -794,7 +800,27 @@ def generate_electrolytes(is_rpmd: bool = False,
 
 def main():
     """Main function to parse command line arguments and generate electrolytes."""
-    parser = argparse.ArgumentParser(description='Generate random electrolytes')
+    parser = argparse.ArgumentParser(
+        description=textwrap.dedent("""
+            Script to generate a list of random electrolytes based on their classifications using an object-oriented approach.
+
+            Classifications for doing non-RPMD simulations:
+            (1) 40% Salt in protic solvents
+            (2) 40% Salt in polar aprotic solvents
+            (3) 10% Salt in ionic liquids
+            (4) 5% Molten salt
+            (5) 5% Aqueous electrolytes
+
+            To change these ratios manually, go to Line 544-550.
+
+            For RPMD simulations:
+            (1) 30% Salt in protic solvents
+            (2) 30% Salt in aprotic solvents
+            (3) 40% Aqueous electrolytes
+
+            If we turn on the flag, --random-only, then these ratios are ignored and we go with fully random mixtures.
+            """),
+        formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--rpmd', action='store_true', help='Generate electrolytes for RPMD simulations')
     parser.add_argument('--random-only', action='store_true', help='Generate only random electrolytes without type constraints')
     parser.add_argument('--cations', type=str, help='Path to cations CSV file', default='cations.csv')

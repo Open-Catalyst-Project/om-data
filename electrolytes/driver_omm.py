@@ -25,7 +25,8 @@ result = runmd_omm.run_simulation(
     temperature=temperature,  # Use temperature from CSV
     t_final=20.0*1000, #time in ps
     n_frames=100,
-    dt=0.001,  # Fixed timestep for all systems, in ps
+    dt=0.0005,  # Fixed timestep for all systems, in ps
+    is_droplet=False,  # Enable droplet mode. False for bulk mode. 
     rpmd=True,
     num_replicas=32,
 )
