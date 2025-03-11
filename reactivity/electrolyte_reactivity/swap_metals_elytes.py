@@ -32,6 +32,7 @@ from schrodinger.structutils.analyze import evaluate_asl
 from schrodinger.structutils import rmsd
 from ase.data import vdw_alvarez, atomic_numbers
 from schrodinger.comparison.atom_mapper import ConnectivityAtomMapper
+import copy
 
 def renumber_molecules_to_match(mol_list):
     """
@@ -88,6 +89,9 @@ def dilate_distance(st: Structure, scale_factor: float, metal_index: int) -> Non
 plus1_swaps = {"Li":0,"Na":0,"K":0,"Cs":0,"Cu":0,"Ag":0,"Rb":0,"Tl":0,"Hg":1}
 plus2_swaps = {"Ca":0,"Mg":0,"Zn":0,"Be":0,"Cu":1,"Ni":2,"Pt":2,"Co":3,"Pd":2,"Ag":1,"Mn":5,"Hg":0,"Cd":0,"Yb":0,"Sn":0,"Pb":0,"Eu":7,"Sm":6,"Cr":4,"Fe":4,"V":3,"Ba":0,"Sr":0}
 plus3_swaps = {'La': 0, 'Ce': 1, 'Pr': 2, 'Nd': 3, 'Pm': 4, 'Sm': 5, 'Eu': 6, 'Gd': 7, 'Tb': 6, 'Dy': 5, 'Ho': 4, 'Er': 3, 'Tm': 2, 'Yb': 1, 'Lu': 0, 'Al': 0, 'Ga': 0, 'In': 0, 'Tl': 0, 'Bi': 0, 'Sc': 0, 'Cr': 3, 'Fe': 5, 'Co': 4, 'Y': 0, 'Ru': 5, 'Rh': 4, 'Ir': 4, 'Au': 2}
+
+fixed_vdw = copy.deepcopy(vdw_alvarez.vdw_radii)
+fixed_vdw[atomic_numbers["Pm"]] = 2.9
 
 special_cases_orig = [5367, 3447, 10165, 8330, 5835, 2998, 2365, 1502, 961]
 special_cases_mapped = [5218, 10329, 9480, 9333, 11184]
@@ -201,7 +205,7 @@ def main(args):
                         swapped_product_st = orig_product_st.copy()
                         swapped_reactant_st.atom[metal_ind].element = el
                         swapped_product_st.atom[metal_ind].element = el
-                        ratio = vdw_alvarez.vdw_radii[atomic_numbers[el]] / vdw_alvarez.vdw_radii[atomic_numbers[metal]]
+                        ratio = fixed_vdw[atomic_numbers[el]] / fixed_vdw[atomic_numbers[metal]]
                         for st, name in zip((swapped_reactant_st, swapped_product_st), ("R", "P")):
                             delete_m_lig_bonds(st, metal_ind)
                             dilate_distance(st, ratio, metal_ind)
