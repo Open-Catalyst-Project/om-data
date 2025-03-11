@@ -84,8 +84,7 @@ def ase_calc_relax_job(
     atoms: Atoms,
     charge: int = 0,
     spin_multiplicity: int = 1,
-    opt_defaults=None,
-    opt_params=None,
+    opt_params=EVAL_OPT_PARAMETERS,
     additional_fields=None,
     copy_files=None,
 ):
@@ -100,8 +99,6 @@ def ase_calc_relax_job(
         Charge of the system.
     spin_multiplicity
         Multiplicity of the system.
-    opt_defaults
-        Default arguments for the ASE optimizer.
     opt_params
         Dictionary of custom kwargs for [quacc.runners.ase.Runner.run_opt][]
     additional_fields
@@ -115,8 +112,7 @@ def ase_calc_relax_job(
         Dictionary of results
     """
 
-    opt_flags = recursive_dict_merge(opt_defaults, opt_params)
-    dyn = Runner(atoms, calc, copy_files=copy_files).run_opt(**opt_flags)
+    dyn = Runner(atoms, calc, copy_files=copy_files).run_opt(**opt_params)
     return Summarize(
         charge_and_multiplicity=(charge, spin_multiplicity),
         additional_fields={"name": "ASE Relax"}
