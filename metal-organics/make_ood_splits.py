@@ -51,12 +51,14 @@ def get_metal_ligs_in_df(df):
             metal_lig_dict[(metal, lig)]["systems"].append(idx)
     return metal_lig_dict
 
+
 def get_best_version(options):
     """
     Pick a "best" version of the data for duplicated datapoints
     """
-    hierarchy = ('070324', '072324', 'temp_ls', '062424', '060424', '060124', 'incomplete_060424', 'failed_060424')
+    hierarchy = ("low_spin_241118", "072324", "070324", "062424", "060424", "060124", "incomplete_060424", "failed_060424")
     return min(options, key=lambda x: hierarchy.index(x))
+
 
 def dedup(dup_dict):
     """
@@ -64,15 +66,25 @@ def dedup(dup_dict):
     1) singlets computed with the wrong flag
     2) duplicates of another datapoint (where we keep one that we like the best)
     """
+    batch_dict = {
+        "failed_060424": "failed_060424",
+        "temp_ls": "outputs_low_spin_241118",
+    }
     discard = []
     for key, val in dup_dict.items():
-        if key[0].split('_')[-1] == '1':
-            if '060124' in val:
-                val.remove('060124')
+        if key[0].split("_")[-1] == "1":
+            if "060124" in val:
+                val.remove("060124")
                 discard.append(f'outputs_060124/{"/".join(key)}')
         keeper = get_best_version(val)
-        discard.extend([f'outputs_{version}/{"/".join(key)}' for version in val if version != keeper])
+        discard.extend(
+            [
+                f'{batch_dict.get(version, f"outputs_{version}")}/{"/".join(key)}'
+                for version in val if version != keeper
+            ]
+        )
     return discard
+
 
 def main():
     metal_lig_dict = defaultdict(lambda: {"count": 0, "systems": []})
@@ -80,28 +92,28 @@ def main():
     large_system_list = defaultdict(list)
     large_steps_list = set()
     duplicates = []
-    for i in ("060124", "060424", "062424", "070324", "072324", "incomplete_060424", "failed_060424", "temp_ls"):
-        steps = get_steps_list(i)
+    for batch_name in ("060124", "060424", "062424", "070324", "072324", "incomplete_060424", "failed_060424", "low_spin_241118"):
+        steps = get_steps_list(batch_name)
         duplicates.extend(large_steps_list.intersection(steps))
         large_steps_list.update(steps)
         for step in steps:
-            large_system_list[step].append(i)
+            large_system_list[step].append(batch_name)
     grouped_large_list = group_list(large_steps_list)
     df_large = pd.read_pickle(
         "/large_experiments/opencatalyst/foundation_models/data/omol/metal_organics/MO_1m.pkl"
     )
     update_metal_lig_dict(df_large, metal_lig_dict, grouped_large_list, "large")
 
-    dups = {k:v for k,v in large_system_list.items() if len(v) > 1}
+    dups = {k: v for k, v in large_system_list.items() if len(v) > 1}
     discard = dedup(dups)
-    with open('discard_list.txt', 'w') as fh:
-        fh.write(str(discard)) ## IDK, how do you want to disk a list
+    with open("discard_list.txt", "w") as fh:
+        fh.write(str(discard))  ## IDK, how do you want to disk a list
     print(len(discard))
     print(len(duplicates))
 
     small_steps_list = set()
-    for i in ("061824",):
-        small_steps_list.update(get_steps_list(i))
+    for batch_name in ("061824",):
+        small_steps_list.update(get_steps_list(batch_name))
     grouped_small_list = group_list(small_steps_list)
     df_small = pd.read_pickle(
         "/large_experiments/opencatalyst/foundation_models/data/omol/metal_organics/MO_1m_small.pkl"
@@ -109,8 +121,8 @@ def main():
     update_metal_lig_dict(df_small, metal_lig_dict, grouped_small_list, "small")
 
     hydride_steps_list = set()
-    for i in ("hydrides",):
-        hydride_steps_list.update(get_steps_list(i, offset=-2))
+    for batch_name in ("hydrides",):
+        hydride_steps_list.update(get_steps_list(batch_name, offset=-2))
     grouped_hydride_list = group_list(hydride_steps_list)
     df_H = pd.read_pickle(
         "/large_experiments/opencatalyst/foundation_models/data/omol/metal_organics/hydride_18200.pkl"
@@ -118,8 +130,8 @@ def main():
     update_metal_lig_dict(df_H, metal_lig_dict, grouped_hydride_list, "hydride")
 
     ln_steps_list = set()
-    for i in ("082524",):
-        ln_steps_list.update(get_steps_list(i))
+    for batch_name in ("082524",):
+        ln_steps_list.update(get_steps_list(batch_name))
     grouped_ln_list = group_list(ln_steps_list)
     df_ln = pd.read_pickle(
         "/large_experiments/opencatalyst/foundation_models/data/omol/metal_organics/MO_Ln_255k.pkl"

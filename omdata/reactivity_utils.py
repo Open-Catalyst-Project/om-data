@@ -8,7 +8,7 @@ import architector.io_ptable as io_ptable
 
 from ase.constraints import ExternalForce
 from ase.io import read,write # Read in the initial and final molecules.
-
+from ase.optimize import BFGSLineSearch
 import shutil
 import os
 import sys
@@ -133,7 +133,7 @@ def run_afir(mol1, mol2, calc, logfile):
     
     fconst = start_force_constant
     save_trajectory = [] # Full output trajectory
-    opt_mol = copy.deepcopy(mol1)
+    opt_mol = mol1
     
     keep_going = True # Exit flag for loop
     nstep = 0 
@@ -174,11 +174,25 @@ def run_afir(mol1, mol2, calc, logfile):
                               use_constraints=True,
                               debug=False,
                              )
+
+        if not tmpopt.successful:
+            tmpopt = CalcExecutor(opt_mol,
+                              method=method,
+                              calculator=calc,
+                              fmax=fmax_opt,
+                              maxsteps=max_steps,
+                              relax=True,
+                              ase_opt_method=BFGSLineSearch,
+                              save_trajectories=True,
+                              use_constraints=True,
+                              debug=False,
+                             )
+
         if tmpopt.successful:
             min_distance=np.min([find_min_distance(atoms) for atoms in tmpopt.trajectory])
-            if min_distance < 0.8:
+            if min_distance < 0.7:
                 with open(logfile, 'a') as file1:
-                    file1.write(f"Min distance {min_distance} < 0.8. Stopping optimization.\n")
+                    file1.write(f"Min distance {min_distance} < 0.7. Stopping optimization.\n")
                 break
             failure_number = 10 # Reset failures tracking.
             save_trajectory += tmpopt.trajectory
@@ -241,7 +255,7 @@ def check_isolated_o2(molecule):
     return False
 
 
-def filter_unique_structures(atoms_list, rmsd_cutoff):
+def filter_unique_structures_simple(atoms_list, rmsd_cutoff):
     """Filter structures to keep only those with RMSD > cutoff from all others
     
     Parameters
@@ -262,6 +276,51 @@ def filter_unique_structures(atoms_list, rmsd_cutoff):
     # Loop through remaining structures
     for atoms in atoms_list[1:]:
         is_unique = True
+        
+        # Compare against all previously accepted structures
+        for ref_atoms in unique_structures:
+            rmsd = simple_rmsd(atoms, ref_atoms)
+            if rmsd < rmsd_cutoff:
+                is_unique = False
+                break
+                
+        if is_unique:
+            unique_structures.append(atoms)
+            
+    return unique_structures
+
+
+def filter_unique_structures(atoms_list):
+    max_energy=-np.inf
+    max_energy_structure=None
+    for ii, atoms in enumerate(atoms_list):
+        if atoms.get_potential_energy() > max_energy:
+            max_energy = atoms.get_potential_energy()
+            max_energy_structure = atoms
+
+    # Note that this dict must be ordered from largest to smallest keys
+    rmsd_cutoff_dict = {0.6: 0.03, 0.4: 0.04, 0.3: 0.07, 0.18: 0.1, 0.0: 0.14}
+
+    unique_structures = [max_energy_structure]  # Start with highest energy
+    
+    # Loop through structures
+    for ii, atoms in enumerate(atoms_list):
+        is_unique = True
+        avg_force = np.mean(np.linalg.norm(atoms.get_forces(), axis=1))
+        if ii == 0:
+            deltaE = deltaE = abs(atoms.get_potential_energy()-atoms_list[ii+1].get_potential_energy())
+        elif ii == len(atoms_list)-1:
+            deltaE = abs(atoms.get_potential_energy()-atoms_list[ii-1].get_potential_energy())
+        else:
+            left_deltaE = abs(atoms.get_potential_energy()-atoms_list[ii-1].get_potential_energy())
+            right_deltaE = abs(atoms.get_potential_energy()-atoms_list[ii+1].get_potential_energy())
+            deltaE = max(left_deltaE, right_deltaE)
+
+        avg_force = max(avg_force, deltaE)
+
+        for cutoff, rmsd_cutoff in rmsd_cutoff_dict.items():
+            if avg_force > cutoff:
+                break
         
         # Compare against all previously accepted structures
         for ref_atoms in unique_structures:
