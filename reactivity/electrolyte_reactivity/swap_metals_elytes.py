@@ -1,4 +1,5 @@
 import argparse
+import copy
 import os
 
 from ase.data import atomic_numbers, vdw_alvarez
@@ -134,6 +135,9 @@ plus3_swaps = {
     "Ir": 4,
     "Au": 2,
 }
+
+fixed_vdw = copy.deepcopy(vdw_alvarez.vdw_radii)
+fixed_vdw[atomic_numbers["Pm"]] = 2.9
 
 special_cases_orig = [5367, 3447, 10165, 8330, 5835, 2998, 2365, 1502, 961]
 special_cases_mapped = [5218, 10329, 9480, 9333, 11184]
@@ -302,8 +306,8 @@ def main(args):
                         swapped_reactant_st.atom[metal_ind].element = el
                         swapped_product_st.atom[metal_ind].element = el
                         ratio = (
-                            vdw_alvarez.vdw_radii[atomic_numbers[el]]
-                            / vdw_alvarez.vdw_radii[atomic_numbers[metal]]
+                            fixed_vdw[atomic_numbers[el]]
+                            / fixed_vdw[atomic_numbers[metal]]
                         )
                         for st, name in zip(
                             (swapped_reactant_st, swapped_product_st), ("R", "P")
