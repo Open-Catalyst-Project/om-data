@@ -16,7 +16,6 @@ import pathlib
 import copy
 from tqdm import tqdm
 import argparse
-import multiprocessing as mp
 from datetime import datetime
 import numpy as np
 
@@ -164,9 +163,9 @@ def mechdb_pipeline(input_path, file_name, output_path):
 
 
 def main(args):
-    if os.path.exists(args.output_path):
-        shutil.rmtree(args.output_path)
-    os.makedirs(args.output_path)
+#    if os.path.exists(args.output_path):
+#        shutil.rmtree(args.output_path)
+#    os.makedirs(args.output_path)
     if not os.path.exists(args.mechdb_sdfs_path):
         raise ValueError(f"Path to MechDB SDFs not found at {args.mechdb_sdfs_path}")
 

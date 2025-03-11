@@ -56,7 +56,7 @@ def get_best_version(options):
     """
     Pick a "best" version of the data for duplicated datapoints
     """
-    hierarchy = ("070324", "072324", "temp_ls", "062424", "060424", "060124", "incomplete_060424", "failed_060424")
+    hierarchy = ("low_spin_241118", "072324", "070324", "062424", "060424", "060124", "incomplete_060424", "failed_060424")
     return min(options, key=lambda x: hierarchy.index(x))
 
 
@@ -92,7 +92,7 @@ def main():
     large_system_list = defaultdict(list)
     large_steps_list = set()
     duplicates = []
-    for batch_name in ("060124", "060424", "062424", "070324", "072324", "incomplete_060424", "failed_060424", "temp_ls"):
+    for batch_name in ("060124", "060424", "062424", "070324", "072324", "incomplete_060424", "failed_060424", "low_spin_241118"):
         steps = get_steps_list(batch_name)
         duplicates.extend(large_steps_list.intersection(steps))
         large_steps_list.update(steps)

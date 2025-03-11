@@ -133,7 +133,7 @@ def run_afir(mol1, mol2, calc, logfile):
     
     fconst = start_force_constant
     save_trajectory = [] # Full output trajectory
-    opt_mol = copy.deepcopy(mol1)
+    opt_mol = mol1
     
     keep_going = True # Exit flag for loop
     nstep = 0 
