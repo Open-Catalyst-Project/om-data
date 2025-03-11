@@ -28,7 +28,7 @@ from omdata.eval_workflows.eval_workflows import ase_calc_single_point_job, ase_
 # Each entry in this list should be a three element list with ligand_pocket structure, ligand structure, pocket structure
 ligand_pocket_structures = []
 
-# Each entry in this list should be an N element list defining the N different conformer structures for a given family
+# Each entry in this list should be an N element list of the N different conformer structures for a given family
 geom_conformers_structures = []
 
 def mlip_ligand_pocket(ligand_pocket_structures):
