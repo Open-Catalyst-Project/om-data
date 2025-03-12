@@ -21,5 +21,5 @@ def extract_h5py(h5_name, start, output_dir):
             )
 
 
-for fname, start in zip(*(("water70-1.hdf5", "water70-2.hdf5"), (0, 50000))):
+for fname, start in zip(*(("water70-1.hdf5", "water70-2.hdf5", "water70-3.hdf5"), (0, 50000, 100000))):
     extract_h5py(fname, start, output_dir)
