@@ -199,8 +199,10 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--radii",
-        type=list,
-        default=[3],
+        type=float,
+        metavar='F',
+        nargs='+',
+        default=3.0,
         help="List of shell radii to extract around solutes and solvents",
     )
 
