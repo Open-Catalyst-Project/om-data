@@ -19,8 +19,8 @@ def write_file(fn):
 def main(path):
     file_list = glob.glob(os.path.join(path, f"*.{ftype}"))
 
-    pool = mp.Pool(60)
-    list(tqdm(pool.imap(write_file, file_list), total=len(file_list)))
+    with mp.Pool(60) as pool:
+        list(tqdm(pool.imap(write_file, file_list), total=len(file_list)))
 
 
 def parse_args():
