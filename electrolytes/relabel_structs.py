@@ -137,10 +137,10 @@ def parse_args():
 
 
 def main():
-    pool = mp.Pool(60)
     args = parse_args()
     dir_list = glob.glob(os.path.join(args.output_path, "*"))
-    list(tqdm(pool.imap(generate_frames, dir_list), total=len(dir_list)))
+    with mp.Pool(60) as pool:
+        list(tqdm(pool.imap(generate_frames, dir_list), total=len(dir_list)))
 
 
 if __name__ == "__main__":
