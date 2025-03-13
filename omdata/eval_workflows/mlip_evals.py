@@ -72,7 +72,7 @@ unoptimized_spin_gap_structures = {}
 # NOTE: structures should all be "high spin", i.e. spin_multiplicity > 2
 
 
-def mlip_ligand_pocket(ligand_pocket_structures):
+def mlip_ligand_pocket(ligand_pocket_structures, results_directory=None):
     results = {}
     for identifier, structs in tqdm.tqdm(ligand_pocket_structures.items()):
         lp_calc = prep_mlip_calc(structs["ligand_pocket"]["charge"], structs["ligand_pocket"]["spin_multiplicity"])
@@ -85,10 +85,13 @@ def mlip_ligand_pocket(ligand_pocket_structures):
 
         results[identifier] = {"ligand_pocket": lp_result, "ligand": l_result, "pocket": p_result}
 
-    dumpfn(results, "mlip_ligand_pocket.json")
+    if results_directory is not None:
+        dumpfn(results, os.path.join(results_directory, "mlip_ligand_pocket.json"))
+    else:
+        return results
 
 
-def ligand_strain(ligand_strain_structures):
+def mlip_ligand_strain(ligand_strain_structures, results_directory=None):
     results = {}
     for family_identifier, structs in tqdm.tqdm(geom_conformers_structures.items()):
         family_results = {}
@@ -101,10 +104,13 @@ def ligand_strain(ligand_strain_structures):
             family_results[conformer_identifier] = result
         results[family_identifier] = family_results
 
-    dumpfn(results, "mlip_ligand_strain.json")
+    if results_directory is not None:
+        dumpfn(results, os.path.join(results_directory, "mlip_ligand_strain.json"))
+    else:
+        return results
 
 
-def mlip_geom_conformers(geom_conformers_structures):
+def mlip_geom_conformers(geom_conformers_structures, results_directory=None):
     results = {}
     for family_identifier, structs in tqdm.tqdm(geom_conformers_structures.items()):
         family_results = {}
@@ -114,10 +120,13 @@ def mlip_geom_conformers(geom_conformers_structures):
             family_results[conformer_identifier] = result
         results[family_identifier] = family_results
 
-    dumpfn(results, "mlip_geom_conformers.json")
+    if results_directory is not None:
+        dumpfn(results, os.path.join(results_directory, "mlip_geom_conformers.json"))
+    else:
+        return results
 
 
-def mlip_protonation_energies(protonation_structures):
+def mlip_protonation_energies(protonation_structures, results_directory=None):
     results = {}
     for identifier, structs in tqdm.tqdm(protonation_structures.items()):
         unprotonated_calc = prep_mlip_calc(structs["unprotonated"]["charge"], structs["unprotonated"]["spin_multiplicity"])
@@ -126,13 +135,15 @@ def mlip_protonation_energies(protonation_structures):
         protonated_result = ase_calc_relax_job(protonated_calc, structs["protonated"]["atoms"], structs["protonated"]["charge"], structs["protonated"]["spin_multiplicity"])
         results[identifier] = {"unprotonated": unprotonated_result, "protonated": protonated_result}
 
-    dumpfn(results, "mlip_protonation_energies.json")
+    if results_directory is not None:
+        dumpfn(results, os.path.join(results_directory, "mlip_protonation_energies.json"))
+    else:
+        return results
 
 
-def mlip_unoptimized_ie_ea(unoptimized_ie_ea_structures):
+def mlip_unoptimized_ie_ea(unoptimized_ie_ea_structures, results_directory=None):
     results = {}
     for identifier, struct in tqdm.tqdm(unoptimized_ie_ea_structures.items()):
-        identifier_results = {}
         add_electron_charge = struct["charge"] - 1
         remove_electron_charge = struct["charge"] + 1
         if struct["spin_multiplicity"] == 1:
@@ -143,35 +154,43 @@ def mlip_unoptimized_ie_ea(unoptimized_ie_ea_structures):
             remove_electron_spin_multiplicity = [struct["spin_multiplicity"]+1, struct["spin_multiplicity"]-1]
 
         calc_orig = prep_mlip_calc(struct["charge"], struct["spin_multiplicity"])
-        result_orig = ase_calc_single_point_job(calc_orig, struct["atoms"], struct["charge"], struct["spin_multiplicity"])
-        identifier_results["original"] = result_orig
+        result_orig = {struct["spin_multiplicity"]: ase_calc_single_point_job(calc_orig, struct["atoms"], struct["charge"], struct["spin_multiplicity"])}
 
+        add_electron_results = {}
         for spin_multiplicity in add_electron_spin_multiplicity:
             calc_add_electron = prep_mlip_calc(add_electron_charge, spin_multiplicity)
             result_add_electron = ase_calc_single_point_job(calc_add_electron, struct["atoms"], add_electron_charge, spin_multiplicity)
-            identifier_results[f"add_electron_{spin_multiplicity}"] = result_add_electron
+            add_electron_results[spin_multiplicity] = result_add_electron
 
+        remove_electron_results = {}
         for spin_multiplicity in remove_electron_spin_multiplicity:
             calc_remove_electron = prep_mlip_calc(remove_electron_charge, spin_multiplicity)
             result_remove_electron = ase_calc_single_point_job(calc_remove_electron, struct["atoms"], remove_electron_charge, spin_multiplicity)
-            identifier_results[f"remove_electron_{spin_multiplicity}"] = result_remove_electron
+            remove_electron_results[spin_multiplicity] = result_remove_electron
 
-        results[identifier] = identifier_results
+        results[identifier] = {"original": result_orig, "add_electron": add_electron_results, "remove_electron": remove_electron_results}
 
-    dumpfn(results, "mlip_unoptimized_ie_ea.json")
+    if results_directory is not None:
+        dumpfn(results, os.path.join(results_directory, "mlip_unoptimized_ie_ea.json"))
+    else:
+        return results
 
 
-def mlip_distance_scaling(distance_scaling_structures):
+def mlip_distance_scaling(distance_scaling_structures, results_directory=None):
     results = {}
     for identifier, structs in tqdm.tqdm(distance_scaling_structures.items()):
         for component_identifier, component_struct in structs.items():
             calc = prep_mlip_calc(component_struct["charge"], component_struct["spin_multiplicity"])
             result = ase_calc_single_point_job(calc, component_struct["atoms"], component_struct["charge"], component_struct["spin_multiplicity"])
             results[identifier][component_identifier] = result
-    dumpfn(results, "mlip_distance_scaling.json")   
+
+    if results_directory is not None:
+        dumpfn(results, os.path.join(results_directory, "mlip_distance_scaling.json"))
+    else:
+        return results
 
 
-def mlip_unoptimized_spin_gap(unoptimized_spin_gap_structures):
+def mlip_unoptimized_spin_gap(unoptimized_spin_gap_structures, results_directory=None):
     results = {}
     for identifier, struct in tqdm.tqdm(unoptimized_spin_gap_structures.items()):
         assert struct["spin_multiplicity"] > 2
@@ -185,4 +204,30 @@ def mlip_unoptimized_spin_gap(unoptimized_spin_gap_structures):
 
         results[identifier] = {"high_spin": result_orig, "low_spin": result_low_spin}
 
-    dumpfn(results, "mlip_unoptimized_spin_gap.json")
+    if results_directory is not None:
+        dumpfn(results, os.path.join(results_directory, "mlip_unoptimized_spin_gap.json"))
+    else:
+        return results
+
+
+def assemble_mlip_results(results_directory=None):
+    results = {}
+    if results_directory is None: # Run all the tasks in series
+        results["ligand_pocket"] = mlip_ligand_pocket(ligand_pocket_structures)
+        results["ligand_strain"] = mlip_ligand_strain(ligand_strain_structures)
+        results["geom_conformers"] = mlip_geom_conformers(geom_conformers_structures)
+        results["protonation_energies"] = mlip_protonation_energies(protonation_structures)
+        results["unoptimized_ie_ea"] = mlip_unoptimized_ie_ea(unoptimized_ie_ea_structures)
+        results["distance_scaling"] = mlip_distance_scaling(distance_scaling_structures)
+        results["unoptimized_spin_gap"] = mlip_unoptimized_spin_gap(unoptimized_spin_gap_structures)
+    else: # Assume that all tasks have previously been run (likely in parallel) with results dumped, so load the results
+        results_directory = Path(results_directory)
+        results["ligand_pocket"] = loadfn(os.path.join(results_directory, "mlip_ligand_pocket.json"))
+        results["ligand_strain"] = loadfn(os.path.join(results_directory, "mlip_ligand_strain.json"))
+        results["geom_conformers"] = loadfn(os.path.join(results_directory, "mlip_geom_conformers.json"))
+        results["protonation_energies"] = loadfn(os.path.join(results_directory, "mlip_protonation_energies.json"))
+        results["unoptimized_ie_ea"] = loadfn(os.path.join(results_directory, "mlip_unoptimized_ie_ea.json"))
+        results["distance_scaling"] = loadfn(os.path.join(results_directory, "mlip_distance_scaling.json"))
+        results["unoptimized_spin_gap"] = loadfn(os.path.join(results_directory, "mlip_unoptimized_spin_gap.json"))
+
+    dumpfn(results, os.path.join(results_directory, "mlip_results.json"))
