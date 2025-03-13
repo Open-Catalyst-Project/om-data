@@ -50,7 +50,7 @@ geom_conformers_structures_type1 = {}
 #                ...
 #                }
 geom_conformers_structures_type2 = {}
-# NOTE: these structures are already optimized by DFT
+# NOTE: these structures should have already optimized by DFT
 
 # key: identifier, value: {
 #                "unprotonated": {"atoms": Atoms, "charge": int, "spin_multiplicity": int}, 
@@ -125,7 +125,7 @@ def mlip_geom_conformers_type1(geom_conformers_structures_type1, results_directo
         for conformer_identifier, struct in structs.items():
             calc = prep_mlip_calc(struct["charge"], struct["spin_multiplicity"])
             result = ase_calc_relax_job(calc, struct["atoms"], struct["charge"], struct["spin_multiplicity"])
-            # Only save the relaxed structure, in order to avoid large files?
+            # TODO: Only save the relaxed structure, in order to avoid large files
             family_results[conformer_identifier] = result
         results[family_identifier] = family_results
 
@@ -142,7 +142,7 @@ def mlip_geom_conformers_type2(geom_conformers_structures_type2, results_directo
         for conformer_identifier, struct in structs.items():
             calc = prep_mlip_calc(struct["charge"], struct["spin_multiplicity"])
             result = ase_calc_relax_job(calc, struct["atoms"], struct["charge"], struct["spin_multiplicity"])
-            # Need to save the first structure and the last structure, but can jettison the rest
+            # TODO: Save the first structure and the last structure, but can jettison the rest to avoid large files
             family_results[conformer_identifier] = result
         results[family_identifier] = family_results
 

@@ -68,7 +68,7 @@ class OMol_Evaluator:
         },
         "geom_conformers_type2": {
             "deltaE": ["mae"],
-            "structures": ["rmsd"],
+            "structures": ["reoptimized_rmsd", "boltzmann_weighted_rmsd"],
         },
         "protonation_energies": {
         },
