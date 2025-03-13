@@ -13,9 +13,9 @@ setup(
     url="http://github.com/Open-Catalyst-Project/om-data",
     packages=find_packages(),
     install_requires=[
-        "ase@git+https://gitlab.com/ase/ase.git@dc86a19a280741aa2b42a08d0fa63a8d0348e225",
-        "quacc[sella]>=0.7.6",
-        "sella==2.3.3",
+        "ase>=3.24.0",
+        "quacc>=0.12.1",
+        "sella>=2.3.5",
         "numpy<2"
     ],
     include_package_data=True,
