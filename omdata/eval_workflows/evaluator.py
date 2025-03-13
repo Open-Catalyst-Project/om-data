@@ -32,6 +32,10 @@ class OMol_Evaluator:
             "deltaF": ["mae", "cosine_similarity"]
         },
         "distance_scaling": {
+            "energy": ["mae"],
+            "forces": ["mae", "cosine_similarity"],
+            "interaction_energy": ["mae"],
+            "interaction_forces": ["mae", "cosine_similarity"]
         },
         "unoptimized_spin_gap": {
             "energy": ["mae"],
