@@ -42,7 +42,15 @@ ligand_strain_structures = {}
 #                "conformer_1_identifier": {"atoms": Atoms, "charge": int, "spin_multiplicity": int}, 
 #                ...
 #                }
-geom_conformers_structures = {}
+geom_conformers_structures_type1 = {}
+
+# key: family_identifier, value: {
+#                "conformer_0_identifier": {"atoms": Atoms, "charge": int, "spin_multiplicity": int}, 
+#                "conformer_1_identifier": {"atoms": Atoms, "charge": int, "spin_multiplicity": int}, 
+#                ...
+#                }
+geom_conformers_structures_type2 = {}
+# NOTE: these structures are already optimized by DFT
 
 # key: identifier, value: {
 #                "unprotonated": {"atoms": Atoms, "charge": int, "spin_multiplicity": int}, 
@@ -110,18 +118,36 @@ def mlip_ligand_strain(ligand_strain_structures, results_directory=None):
         return results
 
 
-def mlip_geom_conformers(geom_conformers_structures, results_directory=None):
+def mlip_geom_conformers_type1(geom_conformers_structures_type1, results_directory=None):
     results = {}
-    for family_identifier, structs in tqdm.tqdm(geom_conformers_structures.items()):
+    for family_identifier, structs in tqdm.tqdm(geom_conformers_structures_type1.items()):
         family_results = {}
         for conformer_identifier, struct in structs.items():
             calc = prep_mlip_calc(struct["charge"], struct["spin_multiplicity"])
             result = ase_calc_relax_job(calc, struct["atoms"], struct["charge"], struct["spin_multiplicity"])
+            # Only save the relaxed structure, in order to avoid large files?
             family_results[conformer_identifier] = result
         results[family_identifier] = family_results
 
     if results_directory is not None:
         dumpfn(results, os.path.join(results_directory, "mlip_geom_conformers.json"))
+    else:
+        return results
+
+
+def mlip_geom_conformers_type2(geom_conformers_structures_type2, results_directory=None):
+    results = {}
+    for family_identifier, structs in tqdm.tqdm(geom_conformers_structures_type2.items()):
+        family_results = {}
+        for conformer_identifier, struct in structs.items():
+            calc = prep_mlip_calc(struct["charge"], struct["spin_multiplicity"])
+            result = ase_calc_relax_job(calc, struct["atoms"], struct["charge"], struct["spin_multiplicity"])
+            # Need to save the first structure and the last structure, but can jettison the rest
+            family_results[conformer_identifier] = result
+        results[family_identifier] = family_results
+
+    if results_directory is not None:
+        dumpfn(results, os.path.join(results_directory, "mlip_geom_conformers_type2.json"))
     else:
         return results
 

@@ -63,7 +63,12 @@ class OMol_Evaluator:
         },
         "ligand_strain": {
         },
-        "geom_conformers": {
+        "geom_conformers_type1": {
+            "structures": ["ensemble_rmsd", "boltzmann_weighted_rmsd"],
+        },
+        "geom_conformers_type2": {
+            "deltaE": ["mae"],
+            "structures": ["rmsd"],
         },
         "protonation_energies": {
         },
@@ -117,6 +122,7 @@ class OMol_Evaluator:
             interaction_energy_mae += abs(orca_interaction_energy[identifier] - mlip_interaction_energy[identifier])
             interaction_forces_mae += np.mean(np.abs(orca_interaction_forces[identifier] - mlip_interaction_forces[identifier]))
             interaction_forces_cosine_similarity += cosine_similarity(orca_interaction_forces[identifier], mlip_interaction_forces[identifier])
+
         results = {
             "energy": {"mae": energy_mae / len(orca_results.keys())},
             "forces": {"mae": forces_mae / len(orca_results.keys()), "cosine_similarity": forces_cosine_similarity / len(orca_results.keys())},
@@ -130,7 +136,11 @@ class OMol_Evaluator:
         pass
 
 
-    def geom_conformers(self, orca_results, mlip_results):
+    def geom_conformers_type1(self, orca_results, mlip_results):
+        pass
+
+
+    def geom_conformers_type2(self, orca_results, mlip_results):
         pass
 
 
