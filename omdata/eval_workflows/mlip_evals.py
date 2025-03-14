@@ -118,26 +118,9 @@ def mlip_ligand_strain(ligand_strain_structures, results_directory=None):
         return results
 
 
-def mlip_geom_conformers_type1(geom_conformers_structures_type1, results_directory=None):
+def mlip_geom_conformers(geom_conformers_structures, conf_task_type, results_directory=None):
     results = {}
-    for family_identifier, structs in tqdm.tqdm(geom_conformers_structures_type1.items()):
-        family_results = {}
-        for conformer_identifier, struct in structs.items():
-            calc = prep_mlip_calc(struct["charge"], struct["spin_multiplicity"])
-            result = ase_calc_relax_job(calc, struct["atoms"], struct["charge"], struct["spin_multiplicity"])
-            # TODO: Only save the relaxed structure, in order to avoid large files
-            family_results[conformer_identifier] = result
-        results[family_identifier] = family_results
-
-    if results_directory is not None:
-        dumpfn(results, os.path.join(results_directory, "mlip_geom_conformers.json"))
-    else:
-        return results
-
-
-def mlip_geom_conformers_type2(geom_conformers_structures_type2, results_directory=None):
-    results = {}
-    for family_identifier, structs in tqdm.tqdm(geom_conformers_structures_type2.items()):
+    for family_identifier, structs in tqdm.tqdm(geom_conformers_structures.items()):
         family_results = {}
         for conformer_identifier, struct in structs.items():
             calc = prep_mlip_calc(struct["charge"], struct["spin_multiplicity"])
@@ -147,7 +130,7 @@ def mlip_geom_conformers_type2(geom_conformers_structures_type2, results_directo
         results[family_identifier] = family_results
 
     if results_directory is not None:
-        dumpfn(results, os.path.join(results_directory, "mlip_geom_conformers_type2.json"))
+        dumpfn(results, os.path.join(results_directory, f"mlip_geom_conformers_{conf_task_type}.json"))
     else:
         return results
 
@@ -241,7 +224,8 @@ def assemble_mlip_results(results_directory=None):
     if results_directory is None: # Run all the tasks in series
         results["ligand_pocket"] = mlip_ligand_pocket(ligand_pocket_structures)
         results["ligand_strain"] = mlip_ligand_strain(ligand_strain_structures)
-        results["geom_conformers"] = mlip_geom_conformers(geom_conformers_structures)
+        results["geom_conformers_type1"] = mlip_geom_conformers(geom_conformers_structures_type1, "type1")
+        results["geom_conformers_type2"] = mlip_geom_conformers(geom_conformers_structures_type2, "type2")
         results["protonation_energies"] = mlip_protonation_energies(protonation_structures)
         results["unoptimized_ie_ea"] = mlip_unoptimized_ie_ea(unoptimized_ie_ea_structures)
         results["distance_scaling"] = mlip_distance_scaling(distance_scaling_structures)
@@ -250,7 +234,8 @@ def assemble_mlip_results(results_directory=None):
         results_directory = Path(results_directory)
         results["ligand_pocket"] = loadfn(os.path.join(results_directory, "mlip_ligand_pocket.json"))
         results["ligand_strain"] = loadfn(os.path.join(results_directory, "mlip_ligand_strain.json"))
-        results["geom_conformers"] = loadfn(os.path.join(results_directory, "mlip_geom_conformers.json"))
+        results["geom_conformers_type1"] = loadfn(os.path.join(results_directory, "mlip_geom_conformers_type1.json"))
+        results["geom_conformers_type2"] = loadfn(os.path.join(results_directory, "mlip_geom_conformers_type2.json"))
         results["protonation_energies"] = loadfn(os.path.join(results_directory, "mlip_protonation_energies.json"))
         results["unoptimized_ie_ea"] = loadfn(os.path.join(results_directory, "mlip_unoptimized_ie_ea.json"))
         results["distance_scaling"] = loadfn(os.path.join(results_directory, "mlip_distance_scaling.json"))

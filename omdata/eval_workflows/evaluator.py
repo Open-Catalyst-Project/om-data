@@ -67,8 +67,10 @@ class OMol_Evaluator:
             "structures": ["ensemble_rmsd", "boltzmann_weighted_rmsd"],
         },
         "geom_conformers_type2": {
+            "energy": ["mae"],
+            "forces": ["mae", "cosine_similarity"],
             "deltaE": ["mae"],
-            "structures": ["reoptimized_rmsd", "boltzmann_weighted_rmsd"],
+            "structures": ["boltzmann_weighted_rmsd"],
         },
         "protonation_energies": {
         },
@@ -141,7 +143,27 @@ class OMol_Evaluator:
 
 
     def geom_conformers_type2(self, orca_results, mlip_results):
-        pass
+        energy_mae = 0
+        forces_mae = 0
+        forces_cosine_similarity = 0
+        for family_identifier, structs in orca_results.items():
+            dft_min_energy = float("inf")
+            dft_min_energy_id = None
+            for conformer_identifier, struct in structs.items():
+                if struct["energy"] < dft_min_energy:
+                    dft_min_energy = struct["energy"]
+                    dft_min_energy_id = conformer_identifier
+                energy_mae += abs(struct["energy"] - mlip_results[family_identifier][conformer_identifier]["initial"]["energy"])
+                forces_mae += np.mean(np.abs(struct["forces"] - mlip_results[family_identifier][conformer_identifier]["initial"]["forces"]))
+                forces_cosine_similarity += cosine_similarity(struct["forces"], mlip_results[family_identifier][conformer_identifier]["initial"]["forces"])
+            for conformer_identifier, struct in structs.items():
+                
+
+        results = {
+            "energy": {"mae": energy_mae / len(orca_results.keys())},
+            "forces": {"mae": forces_mae / len(orca_results.keys()), "cosine_similarity": forces_cosine_similarity / len(orca_results.keys())}
+        }
+        return results
 
 
     def protonation_energies(self, orca_results, mlip_results):
