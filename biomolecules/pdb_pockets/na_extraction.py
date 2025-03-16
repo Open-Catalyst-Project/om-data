@@ -54,12 +54,14 @@ def main(output_path, start_pdb=0, end_pdb=1):
         for f in glob.glob(os.path.join(output_path, "*.mae"))
     }
     for pdb_count in range(start_pdb, min(end_pdb, len(pdb_list))):
-        # pdb_id = random.choice(list(grouped_biolip.groups.keys()))
         pdb_id = pdb_list[pdb_count]
         st = blp_ext.download_cif(pdb_id)
-        st = prot_core.prepwizard_core(st, pdb_id)
+        try:
+            st = prot_core.prepwizard_core(st, pdb_id)
+        except RuntimeError:
+            continue
         rows = grouped_biolip.get_group(pdb_id)
-        print(f"preparing {pdb_id} (entry: {pdb_count})")
+        print(f"preparing {pdb_id} (entry: {pdb_count})", flush=True)
         chains = set()
         for idx, row in rows.iterrows():
             chains.add((row['ligand_chain'], (row['ligand_residue_number'], row['ligand_residue_end'] + 1)))
@@ -69,7 +71,9 @@ def main(output_path, start_pdb=0, end_pdb=1):
             random.shuffle(res_list)
             system_types = defaultdict(list)
             for seed_res in res_list:
-                at_list = st.findResidue(f'{chain[0]}:{seed_res}').getAtomList()
+                at_list = evaluate_asl(st, f'chain {chain[0]} and res.num {seed_res}')
+                if not at_list:
+                    continue
                 if len(system_types['S--']) < 3:
                     addl_atoms = evaluate_asl(st, f'fillres (within 2.5 at.num {stringify(at_list)}) and not (chain {chain[0]} and (dna or rna))')
                     system_types['S--'].append((seed_res, at_list+addl_atoms))
@@ -122,7 +126,7 @@ def main(output_path, start_pdb=0, end_pdb=1):
                         continue
                     na_st = build.reorder_protein_atoms_by_sequence(na_st)
                     fname = f'{pdb_id}_{chain[0]}{system[0]}_{sys_class}_{na_st.formal_charge}_1.mae'
-                    na_st.write(fname)
+                    na_st.write(os.path.join(output_path, fname))
 
 def parse_args():
     parser = argparse.ArgumentParser()
