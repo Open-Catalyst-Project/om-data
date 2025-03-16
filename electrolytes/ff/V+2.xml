@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="V2" class="V2" element="V" mass="50.944" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="V00" type="V2" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="V2" charge="2.0" sigma="0.261040" epsilon="0.121720" />
+  </NonbondedForce>
+</ForceField>

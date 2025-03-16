@@ -1,13 +1,13 @@
 Pr+3 {
     # AtomID  MolID  AtomType  charge   X       Y         Z
     write("Data Atoms") {
-        $atom:Pr $mol @atom:Pr    3    0.00000  0.00000   0.000000
+        $atom:Pr3 $mol @atom:Pr3    +3    0.00000  0.00000   0.000000
     }
     write_once("Data Masses") {
-        @atom:Pr 140.9
+        @atom:Pr3 140.908
     }
     # The "In Settings" section stores force-field parameters for this molecule
     write_once("In Settings") {
-        pair_coeff @atom:Pr @atom:Pr  0.06140287 2.781385798034139
+        pair_coeff @atom:Pr3 @atom:Pr3  0.15989650 3.0842
     }
 }

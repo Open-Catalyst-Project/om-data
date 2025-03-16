@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Sn2" class="Sn2" element="Sn" mass="118.711" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="SN0" type="Sn2" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Sn2" charge="2.0" sigma="0.308420" epsilon="0.669007" />
+  </NonbondedForce>
+</ForceField>

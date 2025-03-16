@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="S1_so4" class="S1_so4" element="S" mass="32.065" />
+    <Type name="O1_so4" class="O1_so4" element="O" mass="15.9994" />
+    <Type name="O2_so4" class="O2_so4" element="O" mass="15.9994" />
+    <Type name="O3_so4" class="O3_so4" element="O" mass="15.9994" />
+    <Type name="O4_so4" class="O4_so4" element="O" mass="15.9994" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="S1" type="S1_so4" />
+      <Atom name="O" type="O1_so4" />
+      <Atom name="OXT" type="O2_so4" />
+      <Atom name="O3" type="O3_so4" />
+      <Atom name="O4" type="O4_so4" />
+      <Bond atomName1="S1" atomName2="O" />
+      <Bond atomName1="S1" atomName2="OXT" />
+      <Bond atomName1="S1" atomName2="O3" />
+      <Bond atomName1="S1" atomName2="O4" />
+    </Residue>
+  </Residues>
+  <HarmonicBondForce>
+    <Bond type1="S1_so4" type2="O1_so4" k="571701.8" length="0.145300" />
+    <Bond type1="S1_so4" type2="O2_so4" k="571701.8" length="0.145300" />
+    <Bond type1="S1_so4" type2="O3_so4" k="571701.8" length="0.145300" />
+    <Bond type1="S1_so4" type2="O4_so4" k="571701.8" length="0.145300" />
+  </HarmonicBondForce>
+  <HarmonicAngleForce>
+    <Angle type1="O1_so4" type2="S1_so4" type3="O2_so4" k="1072.8" angle="2.095269" />
+    <Angle type1="O1_so4" type2="S1_so4" type3="O3_so4" k="1072.8" angle="2.095269" />
+    <Angle type1="O1_so4" type2="S1_so4" type3="O4_so4" k="1072.8" angle="2.095269" />
+    <Angle type1="O2_so4" type2="S1_so4" type3="O3_so4" k="1072.8" angle="2.095269" />
+    <Angle type1="O2_so4" type2="S1_so4" type3="O4_so4" k="1072.8" angle="2.095269" />
+    <Angle type1="O3_so4" type2="S1_so4" type3="O4_so4" k="1072.8" angle="2.095269" />
+  </HarmonicAngleForce>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="S1_so4" charge="2.832" sigma="0.353241" epsilon="1.181562" />
+    <Atom type="O1_so4" charge="-1.208" sigma="0.304812" epsilon="0.612119" />
+    <Atom type="O2_so4" charge="-1.208" sigma="0.304812" epsilon="0.612119" />
+    <Atom type="O3_so4" charge="-1.208" sigma="0.304812" epsilon="0.612119" />
+    <Atom type="O4_so4" charge="-1.208" sigma="0.304812" epsilon="0.612119" />
+  </NonbondedForce>
+</ForceField>

@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="N1_no3" class="N1_no3" element="N" mass="14.007" />
+    <Type name="O1_no3" class="O1_no3" element="O" mass="15.9994" />
+    <Type name="O2_no3" class="O2_no3" element="O" mass="15.9994" />
+    <Type name="O3_no3" class="O3_no3" element="O" mass="15.9994" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="NX1" type="N1_no3" />
+      <Atom name="OX1" type="O1_no3" />
+      <Atom name="OX2" type="O2_no3" />
+      <Atom name="OX3" type="O3_no3" />
+      <Bond atomName1="NX1" atomName2="OX1" />
+      <Bond atomName1="NX1" atomName2="OX2" />
+      <Bond atomName1="NX1" atomName2="OX3" />
+    </Residue>
+  </Residues>
+  <HarmonicBondForce>
+    <Bond type1="N1_no3" type2="O1_no3" k="530698.6" length="0.125600" />
+    <Bond type1="N1_no3" type2="O2_no3" k="530698.6" length="0.125600" />
+    <Bond type1="N1_no3" type2="O3_no3" k="530698.6" length="0.125600" />
+  </HarmonicBondForce>
+  <HarmonicAngleForce>
+    <Angle type1="O1_no3" type2="N1_no3" type3="O2_no3" k="1004.2" angle="2.108708" />
+    <Angle type1="O2_no3" type2="N1_no3" type3="O3_no3" k="1004.2" angle="2.108708" />
+    <Angle type1="O3_no3" type2="N1_no3" type3="O1_no3" k="1004.2" angle="2.108708" />
+  </HarmonicAngleForce>
+  <PeriodicTorsionForce>
+    <Improper type1="O1_no3" type2="N1_no3" type3="O2_no3" type4="O3_no3" k1="16.736000" periodicity1="2" phase1="0.000000" />
+    <Improper type1="O2_no3" type2="N1_no3" type3="O1_no3" type4="O3_no3" k1="16.736000" periodicity1="2" phase1="0.000000" />
+    <Improper type1="O3_no3" type2="N1_no3" type3="O1_no3" type4="O2_no3" k1="16.736000" periodicity1="2" phase1="0.000000" />
+  </PeriodicTorsionForce>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="N1_no3" charge="0.794" sigma="0.286000" epsilon="0.878640" />
+    <Atom type="O1_no3" charge="-0.598" sigma="0.315000" epsilon="0.711280" />
+    <Atom type="O2_no3" charge="-0.598" sigma="0.315000" epsilon="0.711280" />
+    <Atom type="O3_no3" charge="-0.598" sigma="0.315000" epsilon="0.711280" />
+  </NonbondedForce>
+</ForceField>
