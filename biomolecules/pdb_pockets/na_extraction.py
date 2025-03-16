@@ -97,7 +97,7 @@ def main(output_path, start_pdb=0, end_pdb=1):
                         if seed_res == chain[1][1] - 1:
                             seed_res -= 1
                         at_list = evaluate_asl(st, f'chain {chain[0]} and res.num {seed_res},{seed_res+1}')
-                        addl_atoms = evaluate_asl(st, f'fillres (within 2.5 at.num {stringify(at_list)}) and not protein')
+                        addl_atoms = evaluate_asl(st, f'fillres (within 2.5 at.num {stringify(at_list)}) and not protein and not chain {chain[0]}')
                         system_types['=='].append((seed_res, at_list+addl_atoms))
                         break
             for sys_class, system_list in system_types.items():
@@ -131,6 +131,7 @@ def main(output_path, start_pdb=0, end_pdb=1):
                     na_st = build.reorder_protein_atoms_by_sequence(na_st)
                     fname = f'{pdb_id}_{chain[0]}{system[0]}_{sys_class}_{na_st.formal_charge}_1.mae'
                     na_st.write(os.path.join(output_path, fname))
+        prot_core.cleanup(pdb_id)
 
 def parse_args():
     parser = argparse.ArgumentParser()
