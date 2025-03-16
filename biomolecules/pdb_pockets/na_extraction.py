@@ -87,7 +87,7 @@ def main(output_path, start_pdb=0, end_pdb=1):
                     addl_atoms = evaluate_asl(st, f'fillres (within 2.5 at.num {stringify(at_list)}) and not (chain {chain[0]} and (dna or rna)) and (not protein)')
                     system_types['--'].append((seed_res, at_list+addl_atoms))
                 elif not system_types['=='] and not system_types['E-']:
-                    if random.random() < 0.5 and seed_res < chain[1][1]:
+                    if random.random() < 0.5 or seed_res == chain[1][1] - 1:
                         addl_atoms = evaluate_asl(st, f'fillres (within 2.5 at.num {stringify(at_list)}) and not protein')
                         system_types['E-'].append((seed_res, at_list+addl_atoms))
                         break
