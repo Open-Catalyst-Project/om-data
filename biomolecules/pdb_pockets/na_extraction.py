@@ -68,6 +68,8 @@ def main(output_path, start_pdb=0, end_pdb=1):
             sys.stdout.flush()
         for chain in chains:
             res_list = list(range(*chain[1]))
+            if len(res_list) < 8:
+                res_list.extend(res_list)
             random.shuffle(res_list)
             system_types = defaultdict(list)
             for seed_res in res_list:
