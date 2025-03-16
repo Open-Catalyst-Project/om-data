@@ -121,7 +121,11 @@ pdb_names = []
 pdb_resname_mol = []
 pdb_resnames = []
 
-def prep_openmm_md(filename,cat,an,solv,Nmols,directory):
+def prep_openmm_md(filename, cat, an, solv, Nmols, directory):
+    """Prepare OpenMM simulation from LAMMPS data."""
+    # Reset all global variables
+    _reset_globals()
+    
     # Check filename if it is solvent vs. system.
     with contextlib.chdir(directory):
         lmpdata_file = filename+".data"
@@ -889,3 +893,49 @@ def _nonbonding(line):#,fixedtypes):
         print(CGREY + line.strip() + CEND)
         omm_out=""
     return [omm_out]
+
+def _reset_globals():
+    """Reset all global variables to their initial empty state."""
+    global lmp_id, lmp_type, lmp_mass
+    global lmp_bondtype, lmp_bond_ids
+    global lmp_angletype, lmp_angle_ids
+    global lmp_dihedraltype, lmp_dihedral_ids
+    global lmp_impropertype, improper_atomids_list
+    global lmp_alltypes, lmp_allids, lmp_allels, lmp_allcharges
+    global bondstyles, anglestyles, dihedralstyles, improperstyles, pairstyles
+    global pdb_ids_mol, pdb_names, pdb_resname_mol, pdb_resnames
+
+    # Reset data from LAMMPS DATA file
+    lmp_id = []
+    lmp_type = []
+    lmp_mass = []
+    
+    lmp_bondtype = []
+    lmp_bond_ids = []
+    
+    lmp_angletype = []
+    lmp_angle_ids = []
+    
+    lmp_dihedraltype = []
+    lmp_dihedral_ids = []
+    
+    lmp_impropertype = []
+    improper_atomids_list = []
+    
+    lmp_alltypes = []
+    lmp_allids = []
+    lmp_allels = []
+    lmp_allcharges = []
+    
+    # Reset force field styles
+    bondstyles = []
+    anglestyles = []
+    dihedralstyles = []
+    improperstyles = []
+    pairstyles = []
+    
+    # Reset PDB data
+    pdb_ids_mol = []
+    pdb_names = []
+    pdb_resname_mol = []
+    pdb_resnames = []

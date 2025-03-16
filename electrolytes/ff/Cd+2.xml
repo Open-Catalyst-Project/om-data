@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Cd2" class="Cd2" element="Cd" mass="112.412" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="CD0" type="Cd2" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Cd2" charge="2.0" sigma="0.269220" epsilon="0.178000" />
+  </NonbondedForce>
+</ForceField>

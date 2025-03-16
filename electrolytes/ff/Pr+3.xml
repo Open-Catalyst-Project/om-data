@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Pr3" class="Pr3" element="Pr" mass="140.908" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="PR0" type="Pr3" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Pr3" charge="3.0" sigma="0.308420" epsilon="0.669007" />
+  </NonbondedForce>
+</ForceField>

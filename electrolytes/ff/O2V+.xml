@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="O_o2v" class="O_o2v" element="O" mass="15.999" />
+    <Type name="V_o2v" class="V_o2v" element="V" mass="50.943964" />
+    <Type name="O_o2v" class="O_o2v" element="O" mass="15.999" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="O1" type="O_o2v" />
+      <Atom name="V1" type="V_o2v" />
+      <Atom name="O2" type="O_o2v" />
+      <Bond atomName1="V1" atomName2="O2" />
+      <Bond atomName1="O1" atomName2="V1" />
+    </Residue>
+  </Residues>
+  <HarmonicBondForce>
+    <Bond type1="V_o2v" type2="O_o2v" k="1018536.6" length="0.160000" />
+    <Bond type1="V_o2v" type2="O_o2v" k="1018536.6" length="0.160000" />
+  </HarmonicBondForce>
+  <HarmonicAngleForce>
+    <Angle type1="O_o2v" type2="V_o2v" type3="O_o2v" k="1032.9" angle="1.832597" />
+  </HarmonicAngleForce>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="O_o2v" charge="-0.65" sigma="0.225300" epsilon="2.993800" />
+    <Atom type="V_o2v" charge="2.3" sigma="0.251700" epsilon="0.079800" />
+    <Atom type="O_o2v" charge="-0.65" sigma="0.225300" epsilon="2.993800" />
+  </NonbondedForce>
+</ForceField>

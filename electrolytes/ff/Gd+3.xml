@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Gd3" class="Gd3" element="Gd" mass="157.25" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="GD0" type="Gd3" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Gd3" charge="3.0" sigma="0.286520" epsilon="0.348860" />
+  </NonbondedForce>
+</ForceField>

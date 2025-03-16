@@ -5,7 +5,7 @@
 #SBATCH --output=/private/home/levineds/architector_generation/logs/%A_%a.out
 #SBATCH --error=/private/home/levineds/architector_generation/logs/%A_%a.err
 
-#SBATCH --partition=scavenge,learnaccel
+#SBATCH --partition=scavenge
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=41
 #SBATCH --mem=12g

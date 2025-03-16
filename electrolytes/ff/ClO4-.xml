@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Cl1_clo4" class="Cl1_clo4" element="Cl" mass="35.45" />
+    <Type name="O1_clo4" class="O1_clo4" element="O" mass="15.99" />
+    <Type name="O2_clo4" class="O2_clo4" element="O" mass="15.99" />
+    <Type name="O3_clo4" class="O3_clo4" element="O" mass="15.99" />
+    <Type name="O4_clo4" class="O4_clo4" element="O" mass="15.99" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="CL1" type="Cl1_clo4" />
+      <Atom name="O01" type="O1_clo4" />
+      <Atom name="O02" type="O2_clo4" />
+      <Atom name="O03" type="O3_clo4" />
+      <Atom name="O04" type="O4_clo4" />
+      <Bond atomName1="CL1" atomName2="O01" />
+      <Bond atomName1="CL1" atomName2="O02" />
+      <Bond atomName1="CL1" atomName2="O03" />
+      <Bond atomName1="CL1" atomName2="O04" />
+    </Residue>
+  </Residues>
+  <HarmonicBondForce>
+    <Bond type1="Cl1_clo4" type2="O1_clo4" k="633959.7" length="0.150600" />
+    <Bond type1="Cl1_clo4" type2="O2_clo4" k="633959.7" length="0.150600" />
+    <Bond type1="Cl1_clo4" type2="O3_clo4" k="633959.7" length="0.150600" />
+    <Bond type1="Cl1_clo4" type2="O4_clo4" k="633959.7" length="0.150600" />
+  </HarmonicBondForce>
+  <HarmonicAngleForce>
+    <Angle type1="O1_clo4" type2="Cl1_clo4" type3="O2_clo4" k="1739.7" angle="1.911136" />
+    <Angle type1="O2_clo4" type2="Cl1_clo4" type3="O3_clo4" k="1739.7" angle="1.911136" />
+    <Angle type1="O3_clo4" type2="Cl1_clo4" type3="O4_clo4" k="1739.7" angle="1.911136" />
+    <Angle type1="O1_clo4" type2="Cl1_clo4" type3="O3_clo4" k="1739.7" angle="1.911136" />
+    <Angle type1="O1_clo4" type2="Cl1_clo4" type3="O4_clo4" k="1739.7" angle="1.911136" />
+    <Angle type1="O2_clo4" type2="Cl1_clo4" type3="O4_clo4" k="1739.7" angle="1.911136" />
+  </HarmonicAngleForce>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Cl1_clo4" charge="0.8276" sigma="0.350000" epsilon="0.493712" />
+    <Atom type="O1_clo4" charge="-0.4569" sigma="0.290000" epsilon="0.878640" />
+    <Atom type="O2_clo4" charge="-0.4569" sigma="0.290000" epsilon="0.878640" />
+    <Atom type="O3_clo4" charge="-0.4569" sigma="0.290000" epsilon="0.878640" />
+    <Atom type="O4_clo4" charge="-0.4569" sigma="0.290000" epsilon="0.878640" />
+  </NonbondedForce>
+</ForceField>
