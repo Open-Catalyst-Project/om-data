@@ -35,17 +35,19 @@ def append_O3prime(st, system):
 def stringify(at_list):
     return ",".join(str(i) for i in at_list)
 
-def main(output_path, start_pdb=0, end_pdb=1):
+def main(output_path, start_pdb=0, end_pdb=1, na_type='dna'):
     """
-    For each DNA entry in biolip, extract from around a residue (a new random one each time)
-        1) within 3A and different chain (S--) fillres (within 2.5 res.num 5015) and not (chain B and dna) or res.num 5015
-        2) within 3A and same chain not protein (E) fillres within 2.5 res.num 4003) and not protein
-        3) within 3A and protein (S-) nvm fillres (within 2.5 res.num 5005) and not dna or res.num 5005
-        4) including res+1 or -1, within 3A and different chain and not protein (==) fillres (within 2.5 res.num 4019,4020) and not (protein or chain A and dna)
-        5) within 3A and not protein (E-) ??? fillres (within 2.5 res.num 5007) and not protein
+    For each NA chain entry in biolip, extract from around a residue (a new random one each time)
+        1) within 2.5A and different chain (S--) x 3
+        2) within 2.5A and protein (S-) x 2
+        3) within 2.5A and same chain not protein (E)
+        4) within 2.5A and not same chain and not protein (--)
+        and one of either:
+        5) including res+1 or -1, within 3A and different chain and not protein (==)
+        6) within 2.5A and not protein (E-)
     """
     biolip_df = blp_ext.get_biolip_db("macromol")
-    biolip_df = biolip_df[biolip_df['ligand_id'] == 'dna']
+    biolip_df = biolip_df[biolip_df['ligand_id'] == na_type]
     
     grouped_biolip = biolip_df.groupby("pdb_id")
     pdb_list = list(grouped_biolip.groups.keys())
@@ -77,32 +79,40 @@ def main(output_path, start_pdb=0, end_pdb=1):
                 at_list = evaluate_asl(st, f'chain {chain[0]} and res.num {seed_res}')
                 if not at_list:
                     continue
+                near_asl = f'fillres (within 2.5 at.num {stringify(at_list)})'
                 if len(system_types['S--']) < 3:
-                    addl_atoms = evaluate_asl(st, f'fillres (within 2.5 at.num {stringify(at_list)}) and not (chain {chain[0]} and (dna or rna))')
+                    addl_atoms = evaluate_asl(st, f'{near_asl} and not (chain {chain[0]} and (dna or rna))')
                     system_types['S--'].append((seed_res, at_list+addl_atoms))
                 elif len(system_types['S-']) < 2:
-                    addl_atoms = evaluate_asl(st, f'fillres (within 2.5 at.num {stringify(at_list)}) and not (dna or rna)')
+                    addl_atoms = evaluate_asl(st, f'{near_asl} and not (dna or rna)')
                     system_types['S-'].append((seed_res, at_list+addl_atoms))
                 elif not system_types['E']:
-                    addl_atoms = evaluate_asl(st, f'fillres (within 2.5 at.num {stringify(at_list)}) and not protein and chain {chain[0]}')
+                    addl_atoms = evaluate_asl(st, f'{near_asl} and not protein and chain {chain[0]}')
                     system_types['E'].append((seed_res, at_list+addl_atoms))
                 elif not system_types['--']:
-                    addl_atoms = evaluate_asl(st, f'fillres (within 2.5 at.num {stringify(at_list)}) and not (chain {chain[0]} and (dna or rna)) and (not protein)')
-                    system_types['--'].append((seed_res, at_list+addl_atoms))
+                    addl_atoms = evaluate_asl(st, f'{near_asl} and not (chain {chain[0]} and (dna or rna)) and (not protein)')
+                    if len(addl_atoms) < 10: # If there wasn't another residue, just do another protein one (thinking about RNA where lots isn't double-stranded)
+                        addl_atoms = evaluate_asl(st, f'{near_asl} and not (dna or rna)')
+                        system_types['S-'].append((seed_res, at_list+addl_atoms))
+                        system_types['--'].append(None)
+                    else:
+                        system_types['--'].append((seed_res, at_list+addl_atoms))
                 elif not system_types['=='] and not system_types['E-']:
                     if random.random() < 0.5:
-                        addl_atoms = evaluate_asl(st, f'fillres (within 2.5 at.num {stringify(at_list)}) and not protein')
+                        addl_atoms = evaluate_asl(st, f'{near_asl} and not protein')
                         system_types['E-'].append((seed_res, at_list+addl_atoms))
                         break
                     else:
                         if seed_res == chain[1][1] - 1:
                             seed_res -= 1
                         at_list = evaluate_asl(st, f'chain {chain[0]} and res.num {seed_res},{seed_res+1}')
-                        addl_atoms = evaluate_asl(st, f'fillres (within 2.5 at.num {stringify(at_list)}) and not protein and not chain {chain[0]}')
+                        addl_atoms = evaluate_asl(st, f'{near_asl} and not protein and not chain {chain[0]}')
                         system_types['=='].append((seed_res, at_list+addl_atoms))
                         break
             for sys_class, system_list in system_types.items():
                 for system in system_list:
+                    if system is None:
+                        continue
                     st_copy = st.copy()
                     append_O3prime(st_copy, system)
                     protein_atoms = evaluate_asl(st_copy, f'atom.num {stringify(system[1])} and protein')
@@ -146,10 +156,11 @@ def parse_args():
     parser.add_argument("--end_idx", type=int, default=1000)
     parser.add_argument("--output_path", default=".")
     parser.add_argument("--seed", type=int, default=4621)
+    parser.add_argument("--na_type", type=str, default='dna')
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
     random.seed(args.seed)
-    main(args.output_path, args.start_idx, args.end_idx)
+    main(args.output_path, args.start_idx, args.end_idx, args.na_type)
