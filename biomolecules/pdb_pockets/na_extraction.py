@@ -55,13 +55,14 @@ def main(output_path, start_pdb=0, end_pdb=1):
     }
     for pdb_count in range(start_pdb, min(end_pdb, len(pdb_list))):
         pdb_id = pdb_list[pdb_count]
+        print(f"preparing {pdb_id} (entry: {pdb_count})", flush=True)
         st = blp_ext.download_cif(pdb_id)
         try:
             st = prot_core.prepwizard_core(st, pdb_id)
         except RuntimeError:
+            print('Prepwizard problem')
             continue
         rows = grouped_biolip.get_group(pdb_id)
-        print(f"preparing {pdb_id} (entry: {pdb_count})", flush=True)
         chains = set()
         for idx, row in rows.iterrows():
             chains.add((row['ligand_chain'], (row['ligand_residue_number'], row['ligand_residue_end'] + 1)))
@@ -108,13 +109,18 @@ def main(output_path, start_pdb=0, end_pdb=1):
                     if protein_atoms:
                         res_list = list({st_copy.atom[at].getResidue() for at in protein_atoms})
                         gap_res = prot_core.get_single_gap_residues(st_copy, res_list)
-                        try:
-                            st_copy = blp_ext.make_gaps_gly(st_copy, None, gap_res)
-                        except:
-                            continue
+                        if gap_res:
+                            for at in system[1]:
+                                st_copy.atom[at].property['b_user_interest'] = True
+                            try:
+                                st_copy = blp_ext.make_gaps_gly(st_copy, None, gap_res)
+                            except:
+                                continue
+                            system[1].clear()
+                            system[1].extend(at.index for at in st_copy.atom if at.property.get('b_user_interest', False))
 
-                        for res in gap_res:
-                            system[1].extend(res.getAtomIndices())
+                            for res in gap_res:
+                                system[1].extend(res.getAtomIndices())
 
                     # Try to label ligands
                     for at in evaluate_asl(st_copy, "ligand"):
@@ -131,6 +137,7 @@ def main(output_path, start_pdb=0, end_pdb=1):
                     na_st = build.reorder_protein_atoms_by_sequence(na_st)
                     fname = f'{pdb_id}_{chain[0]}{system[0]}_{sys_class}_{na_st.formal_charge}_1.mae'
                     na_st.write(os.path.join(output_path, fname))
+        print('finished with {pdb_id}', flush=True)
         prot_core.cleanup(pdb_id)
 
 def parse_args():
