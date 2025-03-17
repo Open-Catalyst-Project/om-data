@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Ba2" class="Ba2" element="Ba" mass="137.328" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="BA0" type="Ba2" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Ba2" charge="2.0" sigma="0.338540" epsilon="1.250890" />
+  </NonbondedForce>
+</ForceField>

@@ -1,13 +1,13 @@
 Zr+4 {
     # AtomID  MolID  AtomType  charge   X       Y         Z
     write("Data Atoms") {
-        $atom:Zr $mol @atom:Zr    4    0.00000  0.00000   0.000000
+        $atom:Zr4 $mol @atom:Zr4    +4    0.00000  0.00000   0.000000
     }
     write_once("Data Masses") {
-        @atom:Zr 91.224
+        @atom:Zr4 91.224
     }
     # The "In Settings" section stores force-field parameters for this molecule
     write_once("In Settings") {
-        pair_coeff @atom:Zr @atom:Zr  0.00045105 2.0490670517227803
+        pair_coeff @atom:Zr4 @atom:Zr4  0.03745682 2.6638
     }
 }
