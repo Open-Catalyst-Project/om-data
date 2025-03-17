@@ -10,7 +10,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --mem=500m
 #SBATCH --time=72:00:00
-#SBATCH --array=0-753
+#SBATCH --array=0-1506
 
 val=$SLURM_ARRAY_TASK_ID
-/private/home/levineds/schrodinger2024-2/run na_extraction.py --start_idx $((val*10)) --end_idx $((val*10+10)) --output_path /checkpoint/levineds/dna/ --seed $val
+/private/home/levineds/schrodinger2024-2/run na_extraction.py --start_idx $((val*5)) --end_idx $((val*5+5)) --output_path /checkpoint/levineds/dna/ --seed $val
