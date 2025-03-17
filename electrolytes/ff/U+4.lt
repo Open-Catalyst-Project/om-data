@@ -1,0 +1,13 @@
+U+4 {
+    # AtomID  MolID  AtomType  charge   X       Y         Z
+    write("Data Atoms") {
+        $atom:U4 $mol @atom:U4    +4    0.00000  0.00000   0.000000
+    }
+    write_once("Data Masses") {
+        @atom:U4 238.029
+    }
+    # The "In Settings" section stores force-field parameters for this molecule
+    write_once("In Settings") {
+        pair_coeff @atom:U4 @atom:U4  0.13282966 3.0148
+    }
+}

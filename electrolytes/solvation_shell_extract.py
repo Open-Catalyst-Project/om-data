@@ -8,8 +8,11 @@ import json
 import os
 import random
 from tqdm import tqdm
+from functools import partial
+from more_itertools import collapse
 
 import numpy as np
+import multiprocessing as mp
 
 from schrodinger.structure import StructureReader
 from schrodinger.structutils.analyze import evaluate_asl
@@ -25,6 +28,7 @@ from solvation_shell_utils import (
 )
 from utils import validate_metadata_file
 
+NCORES=8
 
 def neutralize_tempo(st, tempo_res):
     for at in evaluate_asl(st, f'res {tempo_res}'):
@@ -41,6 +45,7 @@ def extract_solvation_shells(
     shells_per_frame: int,
     max_shell_size: int,
     top_n: int,
+    rmsd_sampling: bool=True,
 ):
     """
     Given a MD trajectory in a PDB file, perform a solvation analysis
@@ -110,21 +115,18 @@ def extract_solvation_shells(
                 )
                 if os.path.exists(save_path):
                     continue
-                for i, st in tqdm(
-                    enumerate(structures), total=len(structures)
-                ):  # loop over timesteps
-
-                    # extract shells from the structure, centered on the residue type
-                    extracted_shells.extend(
-                        extract_shells_from_structure(
-                            st,
-                            radius,
-                            residue,
-                            spec_type,
-                            shells_per_frame,
-                            max_shell_size,
+                
+                extract_fxn = partial(extract_shells_from_structure,
+                            radius=radius,
+                            residue=residue,
+                            spec_type=spec_type,
+                            shells_per_frame=shells_per_frame,
+                            max_shell_size=max_shell_size,
                         )
-                    )
+                # extract shells from the structure, centered on the residue type
+                with mp.Pool(NCORES) as pool:
+                    results = list(tqdm(pool.imap(extract_fxn, structures), total=len(structures)))
+                extracted_shells = collapse(results)
 
                 if not extracted_shells:
                     # raise a warning and continue to the next radii/species
@@ -134,10 +136,11 @@ def extract_solvation_shells(
 
                 grouped_shells = group_shells(extracted_shells, spec_type)
 
-                # Now ensure that topologically related atoms are equivalently numbered (up to molecular symmetry)
-                grouped_shells = [
-                    renumber_molecules_to_match(items) for items in grouped_shells
-                ]
+                if rmsd_sampling:
+                    # Now ensure that topologically related atoms are equivalently numbered (up to molecular symmetry)
+                    grouped_shells = [
+                        renumber_molecules_to_match(items) for items in grouped_shells
+                    ]
 
                 # Now extract the top N most diverse shells from each group
                 logging.info(
@@ -148,8 +151,10 @@ def extract_solvation_shells(
                 for group_idx, shell_group in tqdm(
                     enumerate(grouped_shells), total=len(grouped_shells)
                 ):
-                    #filtered = random.sample(shell_group, min(top_n, len(shell_group)))
-                    filtered = filter_by_rmsd(shell_group, n=top_n)
+                    if rmsd_sampling:
+                        filtered = filter_by_rmsd(shell_group, n=top_n)
+                    else:
+                        filtered = random.sample(shell_group, min(top_n, len(shell_group)))
                     filtered = [(group_idx, st) for st in filtered]
                     final_shells.extend(filtered)
 
@@ -162,11 +167,12 @@ def extract_solvation_shells(
                         counter += 1
                     else:
                         counter = 0
-                    charge = get_structure_charge(st)
+                    charge = st.formal_charge
                     spin = get_structure_spin(st)
                     fname = os.path.join(
                         save_path, f"group_{group_idx}_shell_{counter}_{charge}_{spin}.mae"
                     )
+                    cur_group_idx = group_idx
 
                     st.write(fname)
 
@@ -193,8 +199,10 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--radii",
-        type=list,
-        default=[3],
+        type=float,
+        metavar='F',
+        nargs='+',
+        default=3.0,
         help="List of shell radii to extract around solutes and solvents",
     )
 
@@ -238,6 +246,13 @@ if __name__ == "__main__":
         help="Number of most diverse shells to extract per topology",
     )
 
+    parser.add_argument(
+        "--rmsd_sampling",
+        action=argparse.BooleanOptionalAction,
+        help="Use RMSD to pick the most dissimilar structures within a topology",
+    )
+
+
     args = parser.parse_args()
 
     random.seed(args.seed)
@@ -253,4 +268,5 @@ if __name__ == "__main__":
         args.shells_per_frame,
         args.max_shell_size,
         args.top_n,
+        args.rmsd_sampling,
     )

@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Fe2" class="Fe2" element="Fe" mass="55.845" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="FE0" type="Fe2" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Fe2" charge="2.0" sigma="0.249460" epsilon="0.065720" />
+  </NonbondedForce>
+</ForceField>

@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Dy3" class="Dy3" element="Dy" mass="162.5" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="DY0" type="Dy3" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Dy3" charge="3.0" sigma="0.283660" epsilon="0.315602" />
+  </NonbondedForce>
+</ForceField>

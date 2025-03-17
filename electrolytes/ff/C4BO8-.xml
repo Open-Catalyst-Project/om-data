@@ -1,0 +1,116 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="O8_c4bo8" class="O8_c4bo8" element="O" mass="15.9994" />
+    <Type name="C4_c4bo8" class="C4_c4bo8" element="C" mass="12.011" />
+    <Type name="O4_c4bo8" class="O4_c4bo8" element="O" mass="15.9994" />
+    <Type name="B1_c4bo8" class="B1_c4bo8" element="B" mass="10.811" />
+    <Type name="O3_c4bo8" class="O3_c4bo8" element="O" mass="15.9994" />
+    <Type name="C3_c4bo8" class="C3_c4bo8" element="C" mass="12.011" />
+    <Type name="O7_c4bo8" class="O7_c4bo8" element="O" mass="15.9994" />
+    <Type name="O1_c4bo8" class="O1_c4bo8" element="O" mass="15.9994" />
+    <Type name="C1_c4bo8" class="C1_c4bo8" element="C" mass="12.011" />
+    <Type name="O5_c4bo8" class="O5_c4bo8" element="O" mass="15.9994" />
+    <Type name="C2_c4bo8" class="C2_c4bo8" element="C" mass="12.011" />
+    <Type name="O2_c4bo8" class="O2_c4bo8" element="O" mass="15.9994" />
+    <Type name="O6_c4bo8" class="O6_c4bo8" element="O" mass="15.9994" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="O8" type="O8_c4bo8" />
+      <Atom name="C4" type="C4_c4bo8" />
+      <Atom name="O4" type="O4_c4bo8" />
+      <Atom name="B1" type="B1_c4bo8" />
+      <Atom name="O3" type="O3_c4bo8" />
+      <Atom name="C3" type="C3_c4bo8" />
+      <Atom name="O7" type="O7_c4bo8" />
+      <Atom name="O1" type="O1_c4bo8" />
+      <Atom name="C1" type="C1_c4bo8" />
+      <Atom name="O5" type="O5_c4bo8" />
+      <Atom name="C2" type="C2_c4bo8" />
+      <Atom name="O2" type="O2_c4bo8" />
+      <Atom name="O6" type="O6_c4bo8" />
+      <Bond atomName1="C1" atomName2="O5" />
+      <Bond atomName1="O8" atomName2="C4" />
+      <Bond atomName1="O4" atomName2="B1" />
+      <Bond atomName1="C2" atomName2="O6" />
+      <Bond atomName1="B1" atomName2="O2" />
+      <Bond atomName1="C4" atomName2="O4" />
+      <Bond atomName1="C3" atomName2="O7" />
+      <Bond atomName1="B1" atomName2="O3" />
+      <Bond atomName1="O1" atomName2="C1" />
+      <Bond atomName1="C4" atomName2="C3" />
+      <Bond atomName1="O3" atomName2="C3" />
+      <Bond atomName1="B1" atomName2="O1" />
+      <Bond atomName1="C2" atomName2="O2" />
+      <Bond atomName1="C1" atomName2="C2" />
+    </Residue>
+  </Residues>
+  <HarmonicBondForce>
+    <Bond type1="O8_c4bo8" type2="C4_c4bo8" k="477320.0" length="0.121900" />
+    <Bond type1="C4_c4bo8" type2="O4_c4bo8" k="549340.0" length="0.125000" />
+    <Bond type1="C4_c4bo8" type2="C3_c4bo8" k="392280.0" length="0.140900" />
+    <Bond type1="O4_c4bo8" type2="B1_c4bo8" k="585480.0" length="0.147500" />
+    <Bond type1="B1_c4bo8" type2="O3_c4bo8" k="585480.0" length="0.147500" />
+    <Bond type1="B1_c4bo8" type2="O1_c4bo8" k="585480.0" length="0.147500" />
+    <Bond type1="B1_c4bo8" type2="O2_c4bo8" k="585480.0" length="0.147500" />
+    <Bond type1="O3_c4bo8" type2="C3_c4bo8" k="549340.0" length="0.125000" />
+    <Bond type1="C3_c4bo8" type2="O7_c4bo8" k="477320.0" length="0.121900" />
+    <Bond type1="O1_c4bo8" type2="C1_c4bo8" k="549340.0" length="0.125000" />
+    <Bond type1="C1_c4bo8" type2="O5_c4bo8" k="477320.0" length="0.121900" />
+    <Bond type1="C1_c4bo8" type2="C2_c4bo8" k="392280.0" length="0.140900" />
+    <Bond type1="C2_c4bo8" type2="O2_c4bo8" k="549340.0" length="0.125000" />
+    <Bond type1="C2_c4bo8" type2="O6_c4bo8" k="477320.0" length="0.121900" />
+  </HarmonicBondForce>
+  <HarmonicAngleForce>
+    <Angle type1="O8_c4bo8" type2="C4_c4bo8" type3="O4_c4bo8" k="670.0" angle="2.209588" />
+    <Angle type1="O8_c4bo8" type2="C4_c4bo8" type3="C3_c4bo8" k="711.0" angle="2.202606" />
+    <Angle type1="O4_c4bo8" type2="C4_c4bo8" type3="C3_c4bo8" k="584.4" angle="2.199116" />
+    <Angle type1="C4_c4bo8" type2="O4_c4bo8" type3="B1_c4bo8" k="836.4" angle="2.015856" />
+    <Angle type1="O4_c4bo8" type2="B1_c4bo8" type3="O3_c4bo8" k="836.4" angle="1.911136" />
+    <Angle type1="O4_c4bo8" type2="B1_c4bo8" type3="O1_c4bo8" k="836.4" angle="1.911136" />
+    <Angle type1="O4_c4bo8" type2="B1_c4bo8" type3="O2_c4bo8" k="836.4" angle="1.911136" />
+    <Angle type1="O3_c4bo8" type2="B1_c4bo8" type3="O1_c4bo8" k="836.4" angle="1.911136" />
+    <Angle type1="O3_c4bo8" type2="B1_c4bo8" type3="O2_c4bo8" k="836.4" angle="1.911136" />
+    <Angle type1="O1_c4bo8" type2="B1_c4bo8" type3="O2_c4bo8" k="836.4" angle="1.911136" />
+    <Angle type1="B1_c4bo8" type2="O3_c4bo8" type3="C3_c4bo8" k="836.4" angle="2.015856" />
+    <Angle type1="C4_c4bo8" type2="C3_c4bo8" type3="O3_c4bo8" k="584.4" angle="2.199116" />
+    <Angle type1="C4_c4bo8" type2="C3_c4bo8" type3="O7_c4bo8" k="711.0" angle="2.202606" />
+    <Angle type1="O3_c4bo8" type2="C3_c4bo8" type3="O7_c4bo8" k="670.0" angle="2.209588" />
+    <Angle type1="B1_c4bo8" type2="O1_c4bo8" type3="C1_c4bo8" k="836.4" angle="2.015856" />
+    <Angle type1="O1_c4bo8" type2="C1_c4bo8" type3="O5_c4bo8" k="670.0" angle="2.209588" />
+    <Angle type1="O1_c4bo8" type2="C1_c4bo8" type3="C2_c4bo8" k="584.4" angle="2.199116" />
+    <Angle type1="O5_c4bo8" type2="C1_c4bo8" type3="C2_c4bo8" k="711.0" angle="2.202606" />
+    <Angle type1="C1_c4bo8" type2="C2_c4bo8" type3="O2_c4bo8" k="584.4" angle="2.199116" />
+    <Angle type1="C1_c4bo8" type2="C2_c4bo8" type3="O6_c4bo8" k="711.0" angle="2.202606" />
+    <Angle type1="O2_c4bo8" type2="C2_c4bo8" type3="O6_c4bo8" k="670.0" angle="2.209588" />
+    <Angle type1="B1_c4bo8" type2="O2_c4bo8" type3="C2_c4bo8" k="836.4" angle="2.015856" />
+  </HarmonicAngleForce>
+  <PeriodicTorsionForce>
+    <Proper type1="C4_c4bo8" type2="O4_c4bo8" type3="B1_c4bo8" type4="O3_c4bo8" k2="4.499997" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="O4_c4bo8" type2="C4_c4bo8" type3="C3_c4bo8" type4="O3_c4bo8" k2="41.500050" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="O4_c4bo8" type2="B1_c4bo8" type3="O3_c4bo8" type4="C3_c4bo8" k2="4.499997" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="B1_c4bo8" type2="O3_c4bo8" type3="C3_c4bo8" type4="C4_c4bo8" k2="41.500050" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="B1_c4bo8" type2="O1_c4bo8" type3="C1_c4bo8" type4="C2_c4bo8" k2="41.500050" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="C3_c4bo8" type2="C4_c4bo8" type3="O4_c4bo8" type4="B1_c4bo8" k2="41.500050" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="O1_c4bo8" type2="B1_c4bo8" type3="O2_c4bo8" type4="C2_c4bo8" k2="41.500050" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="O1_c4bo8" type2="C1_c4bo8" type3="C2_c4bo8" type4="O2_c4bo8" k2="41.500050" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="C1_c4bo8" type2="C2_c4bo8" type3="O2_c4bo8" type4="B1_c4bo8" k2="41.500050" periodicity2="2" phase2="3.141592653589793" />
+    <Proper type1="O2_c4bo8" type2="B1_c4bo8" type3="O1_c4bo8" type4="C1_c4bo8" k2="4.499997" periodicity2="2" phase2="3.141592653589793" />
+  </PeriodicTorsionForce>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="O8_c4bo8" charge="-0.559" sigma="0.296030" epsilon="0.879300" />
+    <Atom type="C4_c4bo8" charge="0.618" sigma="0.340010" epsilon="0.360100" />
+    <Atom type="O4_c4bo8" charge="-0.511" sigma="0.296030" epsilon="0.879300" />
+    <Atom type="B1_c4bo8" charge="0.808" sigma="0.358100" epsilon="0.397400" />
+    <Atom type="O3_c4bo8" charge="-0.511" sigma="0.296030" epsilon="0.879300" />
+    <Atom type="C3_c4bo8" charge="0.618" sigma="0.340010" epsilon="0.360100" />
+    <Atom type="O7_c4bo8" charge="-0.559" sigma="0.296030" epsilon="0.879300" />
+    <Atom type="O1_c4bo8" charge="-0.511" sigma="0.296030" epsilon="0.879300" />
+    <Atom type="C1_c4bo8" charge="0.618" sigma="0.340010" epsilon="0.360100" />
+    <Atom type="O5_c4bo8" charge="-0.559" sigma="0.296030" epsilon="0.879300" />
+    <Atom type="C2_c4bo8" charge="0.618" sigma="0.340010" epsilon="0.360100" />
+    <Atom type="O2_c4bo8" charge="-0.511" sigma="0.296030" epsilon="0.879300" />
+    <Atom type="O6_c4bo8" charge="-0.559" sigma="0.296030" epsilon="0.879300" />
+  </NonbondedForce>
+</ForceField>

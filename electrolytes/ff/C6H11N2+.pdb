@@ -1,23 +1,23 @@
 REMARK LIGPARGEN GENERATED PDB FILE
 ATOM      1  C00 UNK     1       1.000   1.000   0.000
 ATOM      2  C01 UNK     1      -0.516   1.000   0.000
-ATOM      3  N02 UNK     1      -1.048   1.000   1.365
-ATOM      4  C03 UNK     1      -1.370  -0.122   2.113
-ATOM      5  C04 UNK     1      -1.829   0.328   3.318
-ATOM      6  N05 UNK     1      -1.776   1.711   3.274
-ATOM      7  C06 UNK     1      -1.299   2.105   2.084
-ATOM      8  C07 UNK     1      -2.170   2.625   4.338
-ATOM      9  H08 UNK     1       1.382   0.999  -1.025
-ATOM     10  H09 UNK     1       1.390   0.117   0.516
-ATOM     11  H0A UNK     1       1.388   1.886   0.513
-ATOM     12  H0B UNK     1      -0.898   0.117  -0.524
-ATOM     13  H0C UNK     1      -0.897   1.888  -0.517
-ATOM     14  H0D UNK     1      -1.229  -1.099   1.684
-ATOM     15  H0E UNK     1      -2.191  -0.162   4.206
-ATOM     16  H0F UNK     1      -1.146   3.128   1.759
-ATOM     17  H0G UNK     1      -2.585   2.067   5.182
-ATOM     18  H0H UNK     1      -2.925   3.314   3.951
-ATOM     19  H0I UNK     1      -1.290   3.183   4.668
+ATOM      3  N02 UNK     1      -1.049   1.000   1.364
+ATOM      4  C03 UNK     1      -1.349  -0.122   2.121
+ATOM      5  C04 UNK     1      -1.820   0.328   3.323
+ATOM      6  N05 UNK     1      -1.794   1.712   3.267
+ATOM      7  C06 UNK     1      -1.324   2.105   2.074
+ATOM      8  C07 UNK     1      -2.208   2.624   4.325
+ATOM      9  H08 UNK     1       1.382   1.001  -1.025
+ATOM     10  H09 UNK     1       1.389   0.114   0.512
+ATOM     11  H0A UNK     1       1.389   1.884   0.515
+ATOM     12  H0B UNK     1      -0.898   0.118  -0.525
+ATOM     13  H0C UNK     1      -0.896   1.888  -0.517
+ATOM     14  H0D UNK     1      -1.188  -1.100   1.700
+ATOM     15  H0E UNK     1      -2.172  -0.162   4.214
+ATOM     16  H0F UNK     1      -1.192   3.129   1.742
+ATOM     17  H0G UNK     1      -2.553   2.061   5.197
+ATOM     18  H0H UNK     1      -3.022   3.250   3.951
+ATOM     19  H0I UNK     1      -1.356   3.248   4.607
 TER 
 CONECT    1    2 
 CONECT    2    3 
