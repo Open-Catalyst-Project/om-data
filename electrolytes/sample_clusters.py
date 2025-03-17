@@ -91,10 +91,10 @@ def parse_args():
 
 
 def main(output_path, favor_ions):
-    pool = mp.Pool(60)
     dir_list = [f for f in glob.glob(os.path.join(output_path, '*')) if os.path.basename(f).isdigit()]
     sample_fxn = partial(sample_clusters, favor_ions=favor_ions)
-    list(tqdm(pool.imap(sample_fxn, dir_list), total=len(dir_list)))
+    with mp.Pool(60) as pool:
+        list(tqdm(pool.imap(sample_fxn, dir_list), total=len(dir_list)))
 
 if __name__ == "__main__":
     args = parse_args()
