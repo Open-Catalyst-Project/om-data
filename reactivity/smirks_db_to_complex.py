@@ -126,9 +126,11 @@ def minimal_form_reaction_complex(
     return reactant_out, product_out
 
 
-def get_rxn_list(smirks_list):
+def get_rxn_list(smirks_list, key_list):
     rxn_list = defaultdict(list)
     for idx, rxn_smirks in enumerate(smirks_list):
+        if idx not in key_list:
+            continue
         rxn = AllChem.ReactionFromSmarts(rxn_smirks, useSmiles=True)
         try:
             reactants = [to_structure(mol) for mol in rxn.GetReactants()]
@@ -192,20 +194,24 @@ def main(n_batch, batch_idx, output_path, db_name):
     print(key_list, flush=True)
     fast3d_volumizer = fast3d.Volumizer()
 
-    rxn_list = get_rxn_list(smirks_list)
-    rxn_list = {k: rxn_list[k] for k in key_list}
+    rxn_list = get_rxn_list(smirks_list, key_list)
+    print('Generated structure inputs', flush=True)
 
     for idx, rxns in rxn_list.items():
+        output_name = os.path.join(output_path, f"{db_name}_{idx}.sdf")
+        if os.path.exists(output_name):
+            print(f'{output_name} exists')
+            continue
         for rxn in rxns:
+            # check again because it may have appeared in the loop
+            if os.path.exists(output_name):
+                print(f'{output_name} exists')
+                break
             net_matter = get_net_matter(flatten_st_list(rxn[0]), flatten_st_list(rxn[1]))
             if any(f for f in net_matter):
                 print("Reaction does not conserve mattter, will not do")
                 print(smirks_list[idx])
                 print(net_matter)
-                continue
-            output_name = os.path.join(output_path, f"{db_name}_{idx}.sdf")
-            if os.path.exists(output_name):
-                print(f'{output_name} exists')
                 continue
             for st in collapse(rxn):
                 fast3d_volumizer.run(st, False, True)
@@ -223,7 +229,7 @@ def main(n_batch, batch_idx, output_path, db_name):
                     # these databases) then we don't include them.
                     print(f"reaction {idx} is a no-op")
                     print(smirks_list[idx])
-                    continue
+                    break
                 # Stick the total charge in the comment line of the .xyz
                 r.title = f"charge={r.formal_charge}"
                 p.title = f"charge={p.formal_charge}"
