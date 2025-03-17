@@ -69,41 +69,36 @@ $SCHRODINGER/utilities/multisim -o final_config.cms -mode umbrella elyte-out.cms
 cd -
 ```
 
-
 ### OpenMM
 
-Run your MD simulations in this directory. Systems are already prepped in the tar file. So first, un-tar the files
-```console
-tar -xvf electrolytes.tar.gz
+Simply run the driver function to generate an electrolyte system given the CSV file available and the row that you want to simulate
 ```
-This should result in 3418 directories labeled in numerical order, each of which containing a set of initial input files to run the MD simulation. The number labeling each directory represents the index in the CSV file `elytes.csv`. To run an MD simulation for one system, we can go to one of the directories (let's say `0`) and do the following: 
-
-```console
-cd 0;
-cp ../runsystem.py ./
-python runsystem.py 0
+python driver_omm.py
 ```
 
-If one wants to run simulations all simulations one-by-one, we can also write the following bash script
-```bash
-#!/bin/bash 
+```python 
+import os
+import runmd_omm
 
-num_lines=$(wc -l < elytes.csv)
-num_lines=$((num_lines-1))
+row_number = 1
 
-for ((i = 0; i < num_lines; i++)); do
-    cd $i
-    cp ../runsystem.py ./
-    python runsystem.py $i
-    cd ..
-done
+# Only generate system if not restarting (i.e. checkpoint file doesn't exist)
+checkpoint_file = os.path.join(f"{row_number}", "md.chk")
+if not os.path.exists(checkpoint_file):
+    import system_generator_omm
+    system_generator_omm.main("csv", file="rpmd_elytes.csv", density=0.5, row=row_number)
+
+# Run simulation, which can be restarted from a checkpoint file
+result = runmd_omm.run_simulation(
+    pdb_file=f"{row_number}/system.pdb",
+    xml_file=f"{row_number}/system.xml", 
+    output_dir=f"{row_number}",
+    t_final=500.0,
+    n_frames=100,
+  #  rpmd=True,
+  #  num_replicas=32,
+    dt=0.002
+)
+
 ```
-which is provided in `runsimulations.sh.` Right now, the simulations are configured to perform an NPT run at 1 bar and whichever temperature relevant for the system for 500 ns
-
-## How it works
-
-The workflow uses Packmol to generate a system configuration and Moltemplate to generate force field files. However, the format generated is only compatible with LAMMPS. Thus, the next step is to convert the LAMMPS files to OpenMM-compatible files. 
-
-The input to the workflow is the `ff` directory, which contains the PDB and LT files of all electrolyte components, and elytes.csv, which specifies the molar/molal concentrations of the salt and ratios for solvent mixtures. 
-
-Because concentrations can be volumetric vs. by-weight, we often need the density of the pure solvent to determine how many moles of salt we need to put in the simulation box. Thus, there is an intermediate step of generating the pure solvent system and running a short simulation to get density data. 
+Two modueles, which are `system_generator_omm` and `runmd_omm`, can also be called in the command line. Use `-h` to see what options are available. 

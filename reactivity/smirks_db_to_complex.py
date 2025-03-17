@@ -1,13 +1,15 @@
 import argparse
 import csv
+import itertools
 import math
 import os
+from collections import defaultdict
 from typing import List, Tuple
 
-import numpy as np
 from more_itertools import collapse
 from rdkit import Chem
-from rdkit.Chem import AllChem
+from rdkit.Chem import AllChem, rdmolops
+from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers
 from schrodinger.adapter import to_structure
 from schrodinger.application.jaguar.autots_input import AutoTSInput
 from schrodinger.application.jaguar.autots_rmsd import \
@@ -28,7 +30,6 @@ from schrodinger.application.jaguar.packages.reaction_mapping import (
     flatten_st_list, get_net_matter)
 from schrodinger.infra import fast3d
 from schrodinger.structure import Structure, StructureWriter
-from schrodinger.structutils import transform
 
 """
 Convert Reaction SMIRKS (from RMechDB/PMechDB) to 3D fully mapped complexes.
@@ -50,12 +51,6 @@ class local_rinp(AutoTSInput):
 
     def getProducts(self):
         return self.products
-
-
-def invert_structures(products):
-    for st in products:
-        refl_mat = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
-        transform.transform_structure(st, refl_mat)
 
 
 def build_complexes(
@@ -83,37 +78,10 @@ def build_complexes(
             )
     except ChiralityMismatchError as e:
         print(
-            "Bad stereoguess, inverting everything in hopes that fixes it (i.e. no diasteromers)..."
+            "Bad stereoguess, relying on enumeration of stereochemistry to fix..."
         )
-        invert_structures(products)
-        try:
-            with FileLogger("logger", True):
-                reactant_complex, product_complex = build_reaction_complex(
-                    reactants, products, rinp
-                )
-        except ChiralityMismatchError as e:
-            print(e)
-            print(
-                "There is still a chirality problem so there must be "
-                "multiple stereocenters and only some are set wrong. We "
-                "could go through and fix it but that's more effort than "
-                "it's worth. This will not end well if we are going to "
-                "do an interpolation with chirality changes so skip this."
-            )
-            raise
-        except Exception as e:
-            print(e)
-            print(
-                "getting renumbered complexes but can't do assembly. This is probably a license issue"
-            )
-            reactants = flatten_st_list(reactants)
-            products = flatten_st_list(products)
-            reactant_complex, product_complex = get_renumbered_complex(
-                reactants, products
-            )
-            reactant_complex, product_complex = minimal_form_reaction_complex(
-                reactant_complex, product_complex, rinp
-            )
+        print(e)
+        raise
     except Exception as e:
         print(e)
         print(
@@ -158,9 +126,11 @@ def minimal_form_reaction_complex(
     return reactant_out, product_out
 
 
-def get_rxn_list(smirks_list):
-    rxn_list = []
-    for rxn_smirks in smirks_list:
+def get_rxn_list(smirks_list, key_list):
+    rxn_list = defaultdict(list)
+    for idx, rxn_smirks in enumerate(smirks_list):
+        if idx not in key_list:
+            continue
         rxn = AllChem.ReactionFromSmarts(rxn_smirks, useSmiles=True)
         try:
             reactants = [to_structure(mol) for mol in rxn.GetReactants()]
@@ -168,24 +138,31 @@ def get_rxn_list(smirks_list):
             print("R", rxn_smirks)
             continue
         try:
-            products = [to_structure(mol) for mol in rxn.GetProducts()]
+            prod_mols = rxn.GetProducts()
+            for p in prod_mols:
+                Chem.SanitizeMol(p)
+                rdmolops.AssignStereochemistry(p, force=True, flagPossibleStereoCenters=True)
+            enum_prods = [list(EnumerateStereoisomers(p, verbose=False)) for p in prod_mols]
+            all_prod_mols = itertools.product(*enum_prods)
+            all_prod_sts = [[to_structure(mol) for mol in plist] for plist in all_prod_mols]
         except ValueError:
             print("P", rxn_smirks)
             continue
-        rxn_st = []
 
         # *MechDBs sometimes include molecules with no mapped atoms which
         # seem to be spectators. We exclude these molecules from the reaction
         # complexes
-        for st_list in (reactants, products):
-            rxn_st.append(
-                [
-                    st
-                    for st in st_list
-                    if any("i_rdkit_molAtomMapNumber" in at.property for at in st.atom)
-                ]
-            )
-        rxn_list.append(rxn_st)
+        for products in all_prod_sts:
+            rxn_st = []
+            for st_list in (reactants, products):
+                rxn_st.append(
+                    [
+                        st
+                        for st in st_list
+                        if any("i_rdkit_molAtomMapNumber" in at.property for at in st.atom)
+                    ]
+                )
+            rxn_list[idx].append(rxn_st)
     return rxn_list
 
 
@@ -213,43 +190,51 @@ def main(n_batch, batch_idx, output_path, db_name):
         csvreader = csv.reader(fh)
         smirks_list = [row[0] for row in csvreader]
     batch_size = math.ceil(len(smirks_list) / n_batch)
-    smirks_list = smirks_list[batch_idx * batch_size : (batch_idx + 1) * batch_size]
+    key_list = list(range(batch_idx * batch_size, (batch_idx + 1) * batch_size))
+    print(key_list, flush=True)
     fast3d_volumizer = fast3d.Volumizer()
 
-    rxn_list = get_rxn_list(smirks_list)
+    rxn_list = get_rxn_list(smirks_list, key_list)
+    print('Generated structure inputs', flush=True)
 
-    for idx, rxn in enumerate(rxn_list, start=batch_idx * batch_size):
-        net_matter = get_net_matter(flatten_st_list(rxn[0]), flatten_st_list(rxn[1]))
-        if any(f for f in net_matter):
-            print("Reaction does not conserve mattter, will not do")
-            print(smirks_list[idx - batch_idx * batch_size])
-            print(net_matter)
-            continue
+    for idx, rxns in rxn_list.items():
         output_name = os.path.join(output_path, f"{db_name}_{idx}.sdf")
         if os.path.exists(output_name):
+            print(f'{output_name} exists')
             continue
-        for st in collapse(rxn):
-            fast3d_volumizer.run(st, False, True)
-        try:
-            r, p = build_complexes(*rxn)
-        except Exception as e:
-            print(e)
-            print(f"problem with reaction {idx}")
-            print(smirks_list[idx - batch_idx * batch_size])
-            continue
-        else:
-            if reform_barely_broken_bonds(r, p):
-                # If the reaction does not change the molecular graph
-                # (e.g. resonance structures are included in some of
-                # these databases) then we don't include them.
-                print(f"reaction {idx} is a no-op")
-                print(smirks_list[idx - batch_idx * batch_size])
+        for rxn in rxns:
+            # check again because it may have appeared in the loop
+            if os.path.exists(output_name):
+                print(f'{output_name} exists')
+                break
+            net_matter = get_net_matter(flatten_st_list(rxn[0]), flatten_st_list(rxn[1]))
+            if any(f for f in net_matter):
+                print("Reaction does not conserve mattter, will not do")
+                print(smirks_list[idx])
+                print(net_matter)
                 continue
-            # Stick the total charge in the comment line of the .xyz
-            r.title = f"charge={r.formal_charge}"
-            p.title = f"charge={p.formal_charge}"
-            with StructureWriter(output_name) as writer:
-                writer.extend([r, p])
+            for st in collapse(rxn):
+                fast3d_volumizer.run(st, False, True)
+            try:
+                r, p = build_complexes(*rxn)
+            except Exception as e:
+                print(e)
+                print(f"problem with reaction {idx}")
+                print(smirks_list[idx])
+                continue
+            else:
+                if reform_barely_broken_bonds(r, p):
+                    # If the reaction does not change the molecular graph
+                    # (e.g. resonance structures are included in some of
+                    # these databases) then we don't include them.
+                    print(f"reaction {idx} is a no-op")
+                    print(smirks_list[idx])
+                    break
+                # Stick the total charge in the comment line of the .xyz
+                r.title = f"charge={r.formal_charge}"
+                p.title = f"charge={p.formal_charge}"
+                with StructureWriter(output_name) as writer:
+                    writer.extend([r, p])
 
 
 if __name__ == "__main__":

@@ -1,0 +1,57 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="type1_c_unk_b2160" class="type1_c_unk_b2160" element="C" mass="12.011" />
+    <Type name="type2_o_unk_b2160" class="type2_o_unk_b2160" element="O" mass="15.999" />
+    <Type name="type3_h_unk_b2160" class="type3_h_unk_b2160" element="H" mass="1.008" />
+    <Type name="type4_h_unk_b2160" class="type4_h_unk_b2160" element="H" mass="1.008" />
+    <Type name="type5_h_unk_b2160" class="type5_h_unk_b2160" element="H" mass="1.008" />
+    <Type name="type6_h_unk_b2160" class="type6_h_unk_b2160" element="H" mass="1.008" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="C00" type="type1_c_unk_b2160" />
+      <Atom name="O01" type="type2_o_unk_b2160" />
+      <Atom name="H02" type="type3_h_unk_b2160" />
+      <Atom name="H03" type="type4_h_unk_b2160" />
+      <Atom name="H04" type="type5_h_unk_b2160" />
+      <Atom name="H05" type="type6_h_unk_b2160" />
+      <Bond atomName1="C00" atomName2="O01" />
+      <Bond atomName1="C00" atomName2="H04" />
+      <Bond atomName1="C00" atomName2="H03" />
+      <Bond atomName1="O01" atomName2="H05" />
+      <Bond atomName1="C00" atomName2="H02" />
+    </Residue>
+  </Residues>
+  <HarmonicBondForce>
+    <Bond type1="type2_o_unk_b2160" type2="type1_c_unk_b2160" k="267776.0" length="0.141000" />
+    <Bond type1="type3_h_unk_b2160" type2="type1_c_unk_b2160" k="284512.0" length="0.109000" />
+    <Bond type1="type4_h_unk_b2160" type2="type1_c_unk_b2160" k="284512.0" length="0.109000" />
+    <Bond type1="type5_h_unk_b2160" type2="type1_c_unk_b2160" k="284512.0" length="0.109000" />
+    <Bond type1="type6_h_unk_b2160" type2="type2_o_unk_b2160" k="462750.4" length="0.094500" />
+  </HarmonicBondForce>
+  <HarmonicAngleForce>
+    <Angle type1="type2_o_unk_b2160" type2="type1_c_unk_b2160" type3="type3_h_unk_b2160" k="292.9" angle="1.911136" />
+    <Angle type1="type2_o_unk_b2160" type2="type1_c_unk_b2160" type3="type4_h_unk_b2160" k="292.9" angle="1.911136" />
+    <Angle type1="type2_o_unk_b2160" type2="type1_c_unk_b2160" type3="type5_h_unk_b2160" k="292.9" angle="1.911136" />
+    <Angle type1="type1_c_unk_b2160" type2="type2_o_unk_b2160" type3="type6_h_unk_b2160" k="460.2" angle="1.893683" />
+    <Angle type1="type3_h_unk_b2160" type2="type1_c_unk_b2160" type3="type4_h_unk_b2160" k="276.1" angle="1.881466" />
+    <Angle type1="type3_h_unk_b2160" type2="type1_c_unk_b2160" type3="type5_h_unk_b2160" k="276.1" angle="1.881466" />
+    <Angle type1="type4_h_unk_b2160" type2="type1_c_unk_b2160" type3="type5_h_unk_b2160" k="276.1" angle="1.881466" />
+  </HarmonicAngleForce>
+  <PeriodicTorsionForce>
+    <Proper type1="type6_h_unk_b2160" type2="type2_o_unk_b2160" type3="type1_c_unk_b2160" type4="type3_h_unk_b2160" k3="0.736384" periodicity3="3" phase3="0.0" />
+    <Proper type1="type6_h_unk_b2160" type2="type2_o_unk_b2160" type3="type1_c_unk_b2160" type4="type5_h_unk_b2160" k3="0.736384" periodicity3="3" phase3="0.0" />
+    <Proper type1="type6_h_unk_b2160" type2="type2_o_unk_b2160" type3="type1_c_unk_b2160" type4="type4_h_unk_b2160" k3="0.736384" periodicity3="3" phase3="0.0" />
+    <Improper type1="type1_c_unk_b2160" type2="type2_o_unk_b2160" type3="type3_h_unk_b2160" type4="type4_h_unk_b2160" k1="0.000000" periodicity1="2" phase1="3.141593" />
+    <Improper type1="type1_c_unk_b2160" type2="type2_o_unk_b2160" type3="type3_h_unk_b2160" type4="type5_h_unk_b2160" k1="0.000000" periodicity1="2" phase1="3.141593" />
+  </PeriodicTorsionForce>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="type1_c_unk_b2160" charge="-0.0492" sigma="0.350000" epsilon="0.276144" />
+    <Atom type="type2_o_unk_b2160" charge="-0.5873" sigma="0.312000" epsilon="0.711280" />
+    <Atom type="type3_h_unk_b2160" charge="0.0768" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type4_h_unk_b2160" charge="0.0768" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type5_h_unk_b2160" charge="0.0768" sigma="0.250000" epsilon="0.125520" />
+    <Atom type="type6_h_unk_b2160" charge="0.4061" sigma="0.000000" epsilon="0.000000" />
+  </NonbondedForce>
+</ForceField>

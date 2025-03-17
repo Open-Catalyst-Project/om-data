@@ -3,6 +3,7 @@ from typing import List, Set
 from tqdm import tqdm
 import logging
 from collections import Counter
+import multiprocessing as mp
 
 
 import numpy as np
@@ -13,6 +14,8 @@ from schrodinger.structutils import analyze, rmsd
 from schrodinger.application.jaguar.utils import group_with_comparison
 from schrodinger.application.matsci import clusterstruct
 from schrodinger.application.jaguar.utils import get_stoichiometry_string
+
+NCORES = 8
 
 ION_SPIN = {
     "Ag+2": 1,
@@ -148,8 +151,10 @@ def group_shells(shell_list: list[Structure], spec_type: str) -> list[list[Struc
 
     if spec_type == "solute":
         new_grouped_shells = []
-        for isomer_group in tqdm(grouped_shells):
-            new_grouped_shells.extend(groupby_molecules_are_conformers(isomer_group))
+        with mp.Pool(NCORES) as pool:
+            results = list(tqdm(pool.imap(groupby_molecules_are_conformers, grouped_shells), total=len(grouped_shells)))
+        for res in results:
+            new_grouped_shells.extend(res)
         grouped_shells = new_grouped_shells
     return grouped_shells
 

@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Lu3" class="Lu3" element="Lu" mass="174.967" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="LU0" type="Lu3" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Lu3" charge="3.0" sigma="0.279200" epsilon="0.267679" />
+  </NonbondedForce>
+</ForceField>

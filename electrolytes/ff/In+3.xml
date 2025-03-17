@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="In3" class="In3" element="In" mass="114.818" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="IN0" type="In3" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="In3" charge="3.0" sigma="0.257120" epsilon="0.099893" />
+  </NonbondedForce>
+</ForceField>

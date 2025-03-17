@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="Er3" class="Er3" element="Er" mass="167.26" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNK">
+      <Atom name="ER0" type="Er3" />
+    </Residue>
+  </Residues>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="Er3" charge="3.0" sigma="0.282060" epsilon="0.297782" />
+  </NonbondedForce>
+</ForceField>

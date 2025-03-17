@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ForceField>
+  <AtomTypes>
+    <Type name="O1_f2o2p" class="O1_f2o2p" element="O" mass="15.9994" />
+    <Type name="P1_f2o2p" class="P1_f2o2p" element="P" mass="30.97" />
+    <Type name="Os2_f2o2p" class="Os2_f2o2p" element="O" mass="15.9994" />
+    <Type name="F1_f2o2p" class="F1_f2o2p" element="F" mass="19.0" />
+    <Type name="F2_f2o2p" class="F2_f2o2p" element="F" mass="19.0" />
+  </AtomTypes>
+  <Residues>
+    <Residue name="UNL">
+      <Atom name="O1" type="O1_f2o2p" />
+      <Atom name="P1" type="P1_f2o2p" />
+      <Atom name="O2" type="Os2_f2o2p" />
+      <Atom name="F1" type="F1_f2o2p" />
+      <Atom name="F2" type="F2_f2o2p" />
+      <Bond atomName1="P1" atomName2="O2" />
+      <Bond atomName1="P1" atomName2="F1" />
+      <Bond atomName1="O1" atomName2="P1" />
+      <Bond atomName1="P1" atomName2="F2" />
+    </Residue>
+  </Residues>
+  <HarmonicBondForce>
+    <Bond type1="F1_f2o2p" type2="P1_f2o2p" k="370451.4" length="0.158600" />
+    <Bond type1="F2_f2o2p" type2="P1_f2o2p" k="370451.4" length="0.158600" />
+    <Bond type1="P1_f2o2p" type2="O1_f2o2p" k="443085.6" length="0.148700" />
+    <Bond type1="P1_f2o2p" type2="Os2_f2o2p" k="289700.2" length="0.161500" />
+  </HarmonicBondForce>
+  <HarmonicAngleForce>
+    <Angle type1="F1_f2o2p" type2="P1_f2o2p" type3="F2_f2o2p" k="773.2" angle="1.609543" />
+    <Angle type1="F1_f2o2p" type2="P1_f2o2p" type3="O1_f2o2p" k="712.1" angle="1.955991" />
+    <Angle type1="F1_f2o2p" type2="P1_f2o2p" type3="Os2_f2o2p" k="717.1" angle="1.784949" />
+    <Angle type1="F2_f2o2p" type2="P1_f2o2p" type3="O1_f2o2p" k="712.1" angle="1.959482" />
+    <Angle type1="F2_f2o2p" type2="P1_f2o2p" type3="Os2_f2o2p" k="717.1" angle="1.784949" />
+    <Angle type1="O1_f2o2p" type2="P1_f2o2p" type3="Os2_f2o2p" k="684.5" angle="2.015158" />
+  </HarmonicAngleForce>
+  <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+    <Atom type="O1_f2o2p" charge="-1.181" sigma="0.304812" epsilon="0.612119" />
+    <Atom type="P1_f2o2p" charge="2.548" sigma="0.369402" epsilon="0.960228" />
+    <Atom type="Os2_f2o2p" charge="-1.181" sigma="0.315610" epsilon="0.303758" />
+    <Atom type="F1_f2o2p" charge="-0.593" sigma="0.303422" epsilon="0.348109" />
+    <Atom type="F2_f2o2p" charge="-0.593" sigma="0.303422" epsilon="0.348109" />
+  </NonbondedForce>
+</ForceField>
