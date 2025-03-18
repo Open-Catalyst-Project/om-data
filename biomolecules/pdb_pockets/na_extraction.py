@@ -12,6 +12,7 @@ from schrodinger.structutils import build
 
 import biolip_extraction as blp_ext
 import protein_core_extraction as prot_core
+from cleanup import deprotonate_phosphate_esters
 
 MAX_ATOMS = 350
 
@@ -34,6 +35,10 @@ def append_O3prime(st, system):
 
 def stringify(at_list):
     return ",".join(str(i) for i in at_list)
+
+def add_sig(at_list, addl_atoms, thresh = 10):
+    at_set = set(at_list)
+    return len([at for at in addl_atoms if at not in at_set]) >= thresh
 
 def main(output_path, start_pdb=0, end_pdb=1, na_type='dna'):
     """
@@ -64,6 +69,7 @@ def main(output_path, start_pdb=0, end_pdb=1, na_type='dna'):
         except RuntimeError:
             print('Prepwizard problem')
             continue
+        deprotonate_phosphate_esters(st)
         rows = grouped_biolip.get_group(pdb_id)
         chains = set()
         for idx, row in rows.iterrows():
@@ -80,35 +86,51 @@ def main(output_path, start_pdb=0, end_pdb=1, na_type='dna'):
                 if not at_list:
                     continue
                 near_asl = f'fillres (within 2.5 at.num {stringify(at_list)})'
+                n_E = 1
+                if na_type == 'rna':
+                    n_E += 1
                 if len(system_types['S--']) < 3:
                     addl_atoms = evaluate_asl(st, f'{near_asl} and not (chain {chain[0]} and (dna or rna))')
-                    system_types['S--'].append((seed_res, at_list+addl_atoms))
-                elif len(system_types['S-']) < 2:
+                    if add_sig(at_list, addl_atoms):
+                        system_types['S--'].append((seed_res, at_list+addl_atoms))
+                        continue
+                if len(system_types['S-']) < 2:
                     addl_atoms = evaluate_asl(st, f'{near_asl} and not (dna or rna)')
-                    system_types['S-'].append((seed_res, at_list+addl_atoms))
-                elif not system_types['E']:
-                    addl_atoms = evaluate_asl(st, f'{near_asl} and not protein and chain {chain[0]}')
-                    system_types['E'].append((seed_res, at_list+addl_atoms))
-                elif not system_types['--']:
-                    addl_atoms = evaluate_asl(st, f'{near_asl} and not (chain {chain[0]} and (dna or rna)) and (not protein)')
-                    if len(addl_atoms) < 10: # If there wasn't another residue, just do another protein one (thinking about RNA where lots isn't double-stranded)
-                        addl_atoms = evaluate_asl(st, f'{near_asl} and not (dna or rna)')
+                    if add_sig(at_list, addl_atoms):
                         system_types['S-'].append((seed_res, at_list+addl_atoms))
-                        system_types['--'].append(None)
-                    else:
+                        continue
+                if len(system_types['E']) < n_E:
+                    addl_atoms = evaluate_asl(st, f'{near_asl} and not protein and chain {chain[0]}')
+                    if add_sig(at_list, addl_atoms):
+                        system_types['E'].append((seed_res, at_list+addl_atoms))
+                        continue
+                if not system_types['--']:
+                    addl_atoms = evaluate_asl(st, f'{near_asl} and not (chain {chain[0]} and (dna or rna)) and (not protein)')
+                    if add_sig(at_list, addl_atoms):
                         system_types['--'].append((seed_res, at_list+addl_atoms))
-                elif not system_types['=='] and not system_types['E-']:
+                        continue
+                    else:
+                        # If there wasn't another residue, try another protein one
+                        # (thinking about RNA where lots isn't double-stranded)
+                        addl_atoms = evaluate_asl(st, f'{near_asl} and not (dna or rna)')
+                        if add_sig(at_list, addl_atoms):
+                            system_types['S-'].append((seed_res, at_list+addl_atoms))
+                            system_types['--'].append(None)
+                            continue
+                if not system_types['=='] and not system_types['E-']:
                     if random.random() < 0.5:
                         addl_atoms = evaluate_asl(st, f'{near_asl} and not protein')
-                        system_types['E-'].append((seed_res, at_list+addl_atoms))
-                        break
+                        if add_sig(at_list, addl_atoms):
+                            system_types['E-'].append((seed_res, at_list+addl_atoms))
+                            continue
                     else:
                         if seed_res == chain[1][1] - 1:
                             seed_res -= 1
                         at_list = evaluate_asl(st, f'chain {chain[0]} and res.num {seed_res},{seed_res+1}')
                         addl_atoms = evaluate_asl(st, f'{near_asl} and not protein and not chain {chain[0]}')
-                        system_types['=='].append((seed_res, at_list+addl_atoms))
-                        break
+                        if add_sig(at_list, addl_atoms):
+                            system_types['=='].append((seed_res, at_list+addl_atoms))
+                            continue
             for sys_class, system_list in system_types.items():
                 for system in system_list:
                     if system is None:
@@ -147,7 +169,7 @@ def main(output_path, start_pdb=0, end_pdb=1, na_type='dna'):
                     na_st = build.reorder_protein_atoms_by_sequence(na_st)
                     fname = f'{pdb_id}_{chain[0]}{system[0]}_{sys_class}_{na_st.formal_charge}_1.mae'
                     na_st.write(os.path.join(output_path, fname))
-        print('finished with {pdb_id}', flush=True)
+        print(f'finished with {pdb_id}', flush=True)
         prot_core.cleanup(pdb_id)
 
 def parse_args():
