@@ -1,4 +1,4 @@
-from mace.calculators import mace_mp
+
 from ase import build
 
 from architector.io_molecule import convert_io_molecule
