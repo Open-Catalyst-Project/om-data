@@ -194,26 +194,29 @@ def prepwizard_core(core: Structure, pdb_id: str, epik_states: int = 0) -> Struc
     """
     maename = f"{pdb_id}.maegz"
     outname = f"{pdb_id}_prepped.maegz"
-    # Remove any dummy atoms, PrepWizard doesn't like them
-    dummy_atoms = [at for at in core.atom if at.atomic_number < 1]
-    core.deleteAtoms(dummy_atoms)
-    core.write(maename)
-    # Run PrepWizard
-    try:
-        blp_ext.run_prepwizard(
-            maename, outname, fill_sidechain=False, epik_states=epik_states
-        )
-    except subprocess.TimeoutExpired:
-        raise RuntimeError("PrepWizard took longer than 2 hours, skipping")
-    if not os.path.exists(outname):
-        raise RuntimeError("PrepWizard failed")
+    if os.path.exists(outname): 
+        prepped_core = StructureReader.read(outname)
+    else:
+        # Remove any dummy atoms, PrepWizard doesn't like them
+        dummy_atoms = [at for at in core.atom if at.atomic_number < 1]
+        core.deleteAtoms(dummy_atoms)
+        core.write(maename)
+        # Run PrepWizard
+        try:
+            blp_ext.run_prepwizard(
+                maename, outname, fill_sidechain=False, epik_states=epik_states
+            )
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("PrepWizard took longer than 2 hours, skipping")
+        if not os.path.exists(outname):
+            raise RuntimeError("PrepWizard failed")
 
-    prepped_core = StructureReader.read(outname)
+        prepped_core = StructureReader.read(outname)
     prepped_core = build.remove_alternate_positions(prepped_core)
     prepped_core = build.reorder_protein_atoms_by_sequence(prepped_core)
 
     # Cleanup
-    for file_to_del in (maename, outname):
+    for file_to_del in (maename,):
         if os.path.exists(file_to_del):
             os.remove(file_to_del)
     for deldir in glob.glob(f"{pdb_id}-???"):
