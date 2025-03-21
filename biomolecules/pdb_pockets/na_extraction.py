@@ -9,6 +9,7 @@ import sys
 from schrodinger.structure import Residue, Structure
 from schrodinger.structutils.analyze import evaluate_asl
 from schrodinger.structutils import build
+from schrodinger.comparison import are_same_geometry
 
 import biolip_extraction as blp_ext
 import protein_core_extraction as prot_core
@@ -39,6 +40,17 @@ def stringify(at_list):
 def add_sig(at_list, addl_atoms, thresh = 10):
     at_set = set(at_list)
     return len([at for at in addl_atoms if at not in at_set]) >= thresh
+
+def remove_identical_inputs(st_list):
+    new_st_list = [st_list[0]]
+    for st in st_list[1:]:
+        if not any(are_same_geometry(st, st2) for st2 in new_st_list):
+            new_st_list.append(st)
+    return new_st_list
+
+def remove_lonesome_H(st):
+    lonesome_H = evaluate_asl(st, 'at.ele H and at.att 0')
+    st.deleteAtoms(lonesome_H)
 
 def main(output_path, start_pdb=0, end_pdb=1, na_type='dna'):
     """
@@ -75,6 +87,7 @@ def main(output_path, start_pdb=0, end_pdb=1, na_type='dna'):
         for idx, row in rows.iterrows():
             chains.add((row['ligand_chain'], (row['ligand_residue_number'], row['ligand_residue_end'] + 1)))
             sys.stdout.flush()
+        na = '(dna or rna or res. " DU ")'
         for chain in chains:
             res_list = list(range(*chain[1]))
             if len(res_list) < 8:
@@ -86,51 +99,93 @@ def main(output_path, start_pdb=0, end_pdb=1, na_type='dna'):
                 if not at_list:
                     continue
                 near_asl = f'fillres (within 2.5 at.num {stringify(at_list)})'
-                n_E = 1
-                if na_type == 'rna':
-                    n_E += 1
-                if len(system_types['S--']) < 3:
-                    addl_atoms = evaluate_asl(st, f'{near_asl} and not (chain {chain[0]} and (dna or rna))')
-                    if add_sig(at_list, addl_atoms):
-                        system_types['S--'].append((seed_res, at_list+addl_atoms))
-                        continue
-                if len(system_types['S-']) < 2:
-                    addl_atoms = evaluate_asl(st, f'{near_asl} and not (dna or rna)')
-                    if add_sig(at_list, addl_atoms):
-                        system_types['S-'].append((seed_res, at_list+addl_atoms))
-                        continue
-                if len(system_types['E']) < n_E:
-                    addl_atoms = evaluate_asl(st, f'{near_asl} and not protein and chain {chain[0]}')
-                    if add_sig(at_list, addl_atoms):
-                        system_types['E'].append((seed_res, at_list+addl_atoms))
-                        continue
-                if not system_types['--']:
-                    addl_atoms = evaluate_asl(st, f'{near_asl} and not (chain {chain[0]} and (dna or rna)) and (not protein)')
-                    if add_sig(at_list, addl_atoms):
-                        system_types['--'].append((seed_res, at_list+addl_atoms))
-                        continue
-                    else:
-                        # If there wasn't another residue, try another protein one
-                        # (thinking about RNA where lots isn't double-stranded)
+                if na_type == 'dna': # not re-using for RNA because RNA ASL needed tweaks and DNA was already run
+                    if len(system_types['S--']) < 3:
+                        addl_atoms = evaluate_asl(st, f'{near_asl} and not (chain {chain[0]} and (dna or rna))')
+                        if add_sig(at_list, addl_atoms):
+                            system_types['S--'].append((seed_res, at_list+addl_atoms))
+                            continue
+                    if len(system_types['S-']) < 2:
                         addl_atoms = evaluate_asl(st, f'{near_asl} and not (dna or rna)')
                         if add_sig(at_list, addl_atoms):
                             system_types['S-'].append((seed_res, at_list+addl_atoms))
-                            system_types['--'].append(None)
                             continue
-                if not system_types['=='] and not system_types['E-']:
-                    if random.random() < 0.5:
+                    if len(system_types['E']) < 1:
+                        addl_atoms = evaluate_asl(st, f'{near_asl} and not protein and chain {chain[0]}')
+                        if add_sig(at_list, addl_atoms):
+                            system_types['E'].append((seed_res, at_list+addl_atoms))
+                            continue
+                    if not system_types['--']:
+                        addl_atoms = evaluate_asl(st, f'{near_asl} and not (chain {chain[0]} and (dna or rna)) and (not protein)')
+                        if add_sig(at_list, addl_atoms):
+                            system_types['--'].append((seed_res, at_list+addl_atoms))
+                            continue
+                        else:
+                            # If there wasn't another residue, try another protein one
+                            # (thinking about RNA where lots isn't double-stranded)
+                            addl_atoms = evaluate_asl(st, f'{near_asl} and not (dna or rna)')
+                            if add_sig(at_list, addl_atoms):
+                                system_types['S-'].append((seed_res, at_list+addl_atoms))
+                                system_types['--'].append(None)
+                                continue
+                    if not system_types['=='] and not system_types['E-']:
+                        if random.random() < 0.5:
+                            addl_atoms = evaluate_asl(st, f'{near_asl} and not protein')
+                            if add_sig(at_list, addl_atoms):
+                                system_types['E-'].append((seed_res, at_list+addl_atoms))
+                                continue
+                        else:
+                            if seed_res == chain[1][1] - 1:
+                                seed_res -= 1
+                            at_list = evaluate_asl(st, f'chain {chain[0]} and res.num {seed_res},{seed_res+1}')
+                            addl_atoms = evaluate_asl(st, f'{near_asl} and not protein and not chain {chain[0]}')
+                            if add_sig(at_list, addl_atoms):
+                                system_types['=='].append((seed_res, at_list+addl_atoms))
+                                continue
+                ### RNA ASL
+                elif na_type == 'rna':
+                    if len(system_types['S--']) < 3:
+                        addl_atoms = evaluate_asl(st, f'{near_asl} and not fillres (withinbonds 1 at.num {stringify(at_list)})')
+                        if add_sig(at_list, addl_atoms):
+                            system_types['S--'].append((seed_res, at_list+addl_atoms))
+                            continue
+                    if len(system_types['S-']) < 2:
+                        addl_atoms = evaluate_asl(st, f'{near_asl} and not {na}')
+                        if add_sig(at_list, addl_atoms):
+                            system_types['S-'].append((seed_res, at_list+addl_atoms))
+                            continue
+                    if len(system_types['E']) < 2:
+                        addl_atoms = evaluate_asl(st, f'fillres (withinbonds 1 at.num {stringify(at_list)})')
+                        if add_sig(at_list, addl_atoms):
+                            system_types['E'].append((seed_res, at_list+addl_atoms))
+                            continue
+                    if not system_types['--']:
+                        addl_atoms = evaluate_asl(st, f'{near_asl} and not fillres (withinbonds 1 at.num {stringify(at_list)}) and not protein')
+                        if add_sig(at_list, addl_atoms):
+                            system_types['--'].append((seed_res, at_list+addl_atoms))
+                            continue
+                        else:
+                            # If there wasn't another residue, try another protein one
+                            # (thinking about RNA where lots isn't double-stranded)
+                            addl_atoms = evaluate_asl(st, f'{near_asl} and not {na}')
+                            if add_sig(at_list, addl_atoms):
+                                system_types['S-'].append((seed_res, at_list+addl_atoms))
+                                system_types['--'].append(None)
+                                continue
+                    if not system_types['E-']:
                         addl_atoms = evaluate_asl(st, f'{near_asl} and not protein')
                         if add_sig(at_list, addl_atoms):
                             system_types['E-'].append((seed_res, at_list+addl_atoms))
                             continue
-                    else:
+                    if not system_types['==']:
                         if seed_res == chain[1][1] - 1:
                             seed_res -= 1
                         at_list = evaluate_asl(st, f'chain {chain[0]} and res.num {seed_res},{seed_res+1}')
-                        addl_atoms = evaluate_asl(st, f'{near_asl} and not protein and not chain {chain[0]}')
+                        addl_atoms = evaluate_asl(st, f'{near_asl} and not protein and not fillres (withinbonds 1 at.num {stringify(at_list)})')
                         if add_sig(at_list, addl_atoms):
                             system_types['=='].append((seed_res, at_list+addl_atoms))
                             continue
+            st_list = []
             for sys_class, system_list in system_types.items():
                 for system in system_list:
                     if system is None:
@@ -166,9 +221,14 @@ def main(output_path, start_pdb=0, end_pdb=1, na_type='dna'):
                         print("Error: Cannot cap termini")
                         print(e)
                         continue
+                    remove_lonesome_H(na_st)
                     na_st = build.reorder_protein_atoms_by_sequence(na_st)
                     fname = f'{pdb_id}_{chain[0]}{system[0]}_{sys_class}_{na_st.formal_charge}_1.mae'
-                    na_st.write(os.path.join(output_path, fname))
+                    na_st.title = fname
+                    st_list.append(na_st)
+            st_list = remove_identical_inputs(st_list)
+            for na_st in st_list:
+                na_st.write(os.path.join(output_path, na_st.title))
         print(f'finished with {pdb_id}', flush=True)
         prot_core.cleanup(pdb_id)
 
