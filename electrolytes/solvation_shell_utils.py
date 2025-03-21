@@ -15,7 +15,7 @@ from schrodinger.application.jaguar.utils import group_with_comparison
 from schrodinger.application.matsci import clusterstruct
 from schrodinger.application.jaguar.utils import get_stoichiometry_string
 
-NCORES = 8
+NCORES = 40
 
 ION_SPIN = {
     "Ag+2": 1,

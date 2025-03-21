@@ -28,7 +28,7 @@ from solvation_shell_utils import (
 )
 from utils import validate_metadata_file
 
-NCORES=8
+NCORES=40
 
 def neutralize_tempo(st, tempo_res):
     for at in evaluate_asl(st, f'res {tempo_res}'):
@@ -199,10 +199,10 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--radii",
-        type=float,
+        type=int,
         metavar='F',
         nargs='+',
-        default=3.0,
+        default=3,
         help="List of shell radii to extract around solutes and solvents",
     )
 

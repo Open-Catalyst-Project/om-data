@@ -13,15 +13,16 @@ from tqdm import tqdm
 from schrodinger.structure import StructureReader
 from collections import defaultdict
 
-TOTAL_PER_SYSTEM = 25
-RADIUS_LIST = [5]
+TOTAL_PER_SYSTEM = 10000
+RADIUS_LIST = [3]
 TM_LIST = {*range(21, 31), *range(39, 49), *range(72, 81)}
 MAX_TMS = 3
 # radius 5 seed 4353
 # radius 7 seed 353
 # radius 3 ml-md seed 628
-# radius 5 ml-md seed 9173
-random.seed(9173)
+# radius 5 ml-md seed 9173, TOTAL 25
+# radius 3 rpmd seed 631, TOTAL 10000
+random.seed(631)
 
 def filter_heavy_atoms(species_glob):
     species_list = []
