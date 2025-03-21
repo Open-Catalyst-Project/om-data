@@ -28,6 +28,7 @@ from omdata.eval_workflows.eval_jobs import ase_calc_single_point_job, ase_calc_
 ligand_pocket_structures = {}
 # NOTE: in order to make it easy to calculate an "interaction force", the ligand_pocket atoms should be in the order ligand_atoms, pocket_atoms.
 # Otherwise, we will need to track the indices of the ligand atoms and pocket atoms in the ligand_pocket atoms.
+# Mask in atoms.info
 
 # key: family_identifier, value: {
 #                "ligand_in_pocket": {"atoms": Atoms, "charge": int, "spin_multiplicity": int}, 

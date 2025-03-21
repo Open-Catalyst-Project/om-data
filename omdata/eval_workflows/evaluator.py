@@ -4,7 +4,46 @@ from functools import wraps
 from typing import TYPE_CHECKING, Callable, ClassVar
 
 import numpy as np
+from itertools import permutations
 
+from schrodinger.application.jaguar.autots_bonding import clean_st
+from schrodinger.application.jaguar.packages.shared import read_cartesians
+from schrodinger.comparison.atom_mapper import ConnectivityAtomMapper
+from schrodinger.structure import Structure, StructureWriter
+from schrodinger.structutils import rmsd
+from schrodinger.structutils.analyze import evaluate_asl
+from schrodinger.structutils.transform import get_centroid, translate_structure
+from tqdm import tqdm
+
+
+boltzmann_constant = 8.617333262*10**-5
+
+
+def renumber_molecules_to_match(mol_list):
+    """
+    Ensure that topologically equivalent sites are equivalently numbered
+    """
+    mapper = ConnectivityAtomMapper(use_chirality=False)
+    atlist = range(1, mol_list[0].atom_total + 1)
+    renumbered_mols = [mol_list[0]]
+    for mol in mol_list[1:]:
+        _, r_mol = mapper.reorder_structures(mol_list[0], atlist, mol, atlist)
+        renumbered_mols.append(r_mol)
+    return renumbered_mols
+
+
+def rmsd_wrapper(st1: Structure, st2: Structure) -> float:
+    """
+    Wrapper around Schrodinger's RMSD calculation function.
+    """
+    assert (
+        st1.atom_total == st2.atom_total
+    ), "Structures must have the same number of atoms for RMSD calculation"
+    if st1 == st2:
+        return 0.0
+    at_list = list(range(1, st1.atom_total + 1))
+    return rmsd.superimpose(st1, at_list, st2.copy(), at_list, use_symmetry=True)
+    
 
 def cosine_similarity(forces_1, forces_2):
     return np.dot(forces_1, forces_2) / (np.linalg.norm(forces_1) * np.linalg.norm(forces_2))
@@ -52,6 +91,79 @@ def charge_deltas(results):
     return deltaE, deltaF
 
 
+def boltzmann_weighted_structures(results, temp=298.15):
+    weighted_families = {}
+    for family_identifier, structs in results.items():
+        weights = {}
+        weighted_structs = {}
+        sum = 0
+        for conformer_identifier, struct in structs.items():
+            weights[conformer_identifier] = np.exp(-struct["energy"] / (boltzmann_constant * temp))
+            sum += weights[conformer_identifier]
+        for conformer_identifier, struct in structs.items():
+            weights[conformer_identifier] /= sum
+            if weights[conformer_identifier] > 0.01:
+                weighted_structs[conformer_identifier]["struct"] = struct
+                weighted_structs[conformer_identifier]["weight"] = weights[conformer_identifier]
+        weighted_families[family_identifier] = weighted_structs
+    return weighted_families
+
+
+def sdgr_rmsd(atoms1, atoms2):
+    st1 = Structure()
+    st1.set_atoms(atoms1)
+    st2 = Structure()
+    st2.set_atoms(atoms2)
+    renumbered_sts = renumber_molecules_to_match([st1, st2])
+    return rmsd_wrapper(renumbered_sts[0], renumbered_sts[1])
+    
+
+def get_all_mappings(list1, list2):
+    # Handle empty list cases
+    if not list1 or not list2:
+        return []
+    
+    # If lists are different lengths, we'll pad the shorter one with None
+    max_length = max(len(list1), len(list2))
+    
+    # Pad lists with None if necessary
+    padded_list1 = list1 + [None] * (max_length - len(list1))
+    padded_list2 = list2 + [None] * (max_length - len(list2))
+    
+    # Get all possible permutations of the second list
+    perms = permutations(padded_list2)
+    
+    # Create mappings and filter out None pairs
+    mappings = []
+    for perm in perms:
+        mapping = {}
+        for i, item1 in enumerate(padded_list1):
+            if item1 is not None and perm[i] is not None:
+                mapping[item1] = perm[i]
+        if mapping:  # Only add non-empty mappings
+            mappings.append(mapping)
+    
+    return mappings
+
+
+def boltzmann_weighted_rmsd(orca_weighted_structs, mlip_weighted_structs):
+    if len(orca_weighted_structs.keys()) == len(mlip_weighted_structs.keys()):
+        if len(orca_weighted_structs.keys()) == 1:
+            return sdgr_rmsd(orca_weighted_structs[orca_weighted_structs.keys()[0]]["struct"], mlip_weighted_structs[mlip_weighted_structs.keys()[0]]["struct"])
+    else:
+        mappings = get_all_mappings(orca_weighted_structs.keys(), mlip_weighted_structs.keys())
+        rmsds = {}
+        best_mapping = 0
+        for ii, mapping in enumerate(mappings):
+            rmsds[ii] = 0
+            for key in orca_weighted_structs.keys():
+                rmsds[ii] += sdgr_rmsd(orca_weighted_structs[key]["struct"], mlip_weighted_structs[mapping[key]]["struct"])
+            if rmsds[ii] < rmsds[best_mapping]:
+                best_mapping = ii
+        return rmsds[best_mapping]
+        
+
+
 # The use of task_metrics and eval are both mockups and will need help to function as envisioned
 class OMol_Evaluator:
     task_metrics = {
@@ -69,7 +181,8 @@ class OMol_Evaluator:
         "geom_conformers_type2": {
             "energy": ["mae"],
             "forces": ["mae", "cosine_similarity"],
-            "deltaE": ["mae"],
+            "deltaE_MLSP": ["mae"],
+            "deltaE_MLRX": ["mae"],
             "structures": ["boltzmann_weighted_rmsd"],
         },
         "protonation_energies": {
@@ -146,22 +259,34 @@ class OMol_Evaluator:
         energy_mae = 0
         forces_mae = 0
         forces_cosine_similarity = 0
+        deltaE_MLSP_mae = 0
+        deltaE_MLRX_mae = 0
+        boltzmann_rmsd = 0
+        orca_boltzmann_weighted_structures = boltzmann_weighted_structures(orca_results)
+        mlip_boltzmann_weighted_structures = boltzmann_weighted_structures(mlip_results)
         for family_identifier, structs in orca_results.items():
-            dft_min_energy = float("inf")
-            dft_min_energy_id = None
+            orca_min_energy = float("inf")
+            orca_min_energy_id = None
             for conformer_identifier, struct in structs.items():
-                if struct["energy"] < dft_min_energy:
-                    dft_min_energy = struct["energy"]
-                    dft_min_energy_id = conformer_identifier
+                if struct["energy"] < orca_min_energy:
+                    orca_min_energy = struct["energy"]
+                    orca_min_energy_id = conformer_identifier
                 energy_mae += abs(struct["energy"] - mlip_results[family_identifier][conformer_identifier]["initial"]["energy"])
                 forces_mae += np.mean(np.abs(struct["forces"] - mlip_results[family_identifier][conformer_identifier]["initial"]["forces"]))
                 forces_cosine_similarity += cosine_similarity(struct["forces"], mlip_results[family_identifier][conformer_identifier]["initial"]["forces"])
             for conformer_identifier, struct in structs.items():
+                orca_deltaE = struct["energy"] - orca_min_energy
+                deltaE_MLSP = mlip_results[family_identifier][conformer_identifier]["initial"]["energy"] - mlip_results[family_identifier][orca_min_energy_id]["initial"]["energy"]
+                deltaE_MLRX = mlip_results[family_identifier][conformer_identifier]["final"]["energy"] - mlip_results[family_identifier][orca_min_energy_id]["final"]["energy"]
+                deltaE_MLSP_mae += abs(orca_deltaE - deltaE_MLSP)
+                deltaE_MLRX_mae += abs(orca_deltaE - deltaE_MLRX)
+            boltzmann_rmsd += boltzmann_weighted_rmsd(orca_boltzmann_weighted_structures[family_identifier], mlip_boltzmann_weighted_structures[family_identifier])
                 
-
         results = {
             "energy": {"mae": energy_mae / len(orca_results.keys())},
-            "forces": {"mae": forces_mae / len(orca_results.keys()), "cosine_similarity": forces_cosine_similarity / len(orca_results.keys())}
+            "forces": {"mae": forces_mae / len(orca_results.keys()), "cosine_similarity": forces_cosine_similarity / len(orca_results.keys())},
+            "deltaE_MLSP": {"mae": deltaE_MLSP_mae / len(orca_results.keys())},
+            "deltaE_MLRX": {"mae": deltaE_MLRX_mae / len(orca_results.keys())}
         }
         return results
 
