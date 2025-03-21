@@ -8,6 +8,7 @@ from functools import partial
 from schrodinger.structure import StructureReader
 from tqdm import tqdm
 
+# The commented out lines are for extracting the first two frames, for DNA/RNA
 
 def write_file(fn, frame0):
     if not frame0:
@@ -21,12 +22,14 @@ def write_file(fn, frame0):
     else:
         st = StructureReader.read(fn)
         xyz_name = fn.replace(".mae", ".xyz")
+        #xyz_name = os.path.join(os.path.dirname(xyz_name), 'xyz', os.path.basename(xyz_name))
         st.write(xyz_name)
 
 
 def main(frame0, path):
     if frame0:
         file_list = glob.glob(os.path.join(path, "*frame0*.mae"))
+        #file_list +=glob.glob(os.path.join(path, "*frame1*.mae")) 
         done_list = [
             os.path.basename(fn)
             for fn in glob.glob(os.path.join(path, "2024_09_26_inputs", "*.xyz"))
@@ -37,9 +40,9 @@ def main(frame0, path):
     else:
         file_list = glob.glob(os.path.join(path, "*.xyz"))
 
-    pool = mp.Pool(60)
     write_frame = partial(write_file, frame0=frame0)
-    list(tqdm(pool.imap(write_frame, file_list), total=len(file_list)))
+    with mp.Pool(60) as pool:
+        list(tqdm(pool.imap(write_frame, file_list), total=len(file_list)))
 
 
 def parse_args():
@@ -51,4 +54,6 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     main(True, args.output_path)
+    # This will also take the last extracted frame for anything that
+    # has a first extracted frame
     main(False, args.output_path)
