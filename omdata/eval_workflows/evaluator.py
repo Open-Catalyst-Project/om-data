@@ -105,7 +105,7 @@ def boltzmann_weighted_structures(results, temp=298.15):
         for conformer_identifier, struct in structs.items():
             weights[conformer_identifier] /= sum
             if weights[conformer_identifier] > 0.01:
-                weighted_structs[conformer_identifier]["struct"] = struct
+                weighted_structs[conformer_identifier]["atoms"] = struct["atoms"]
                 weighted_structs[conformer_identifier]["weight"] = weights[conformer_identifier]
         weighted_families[family_identifier] = weighted_structs
     return weighted_families
@@ -124,7 +124,7 @@ def boltzmann_weighted_rmsd(orca_weighted_structs, mlip_weighted_structs):
     cost_matrix = np.array(shape=(len(orca_weighted_structs.keys()), len(mlip_weighted_structs.keys())))
     for ii, o_key in enumerate(orca_weighted_structs.keys()):
         for jj, m_key in enumerate(mlip_weighted_structs.keys()):
-            cost_matrix[ii][jj] = abs(orca_weighted_structs[o_key]["weight"] - mlip_weighted_structs[m_key]["weight"]) * sdgr_rmsd(orca_weighted_structs[o_key]["struct"], mlip_weighted_structs[m_key]["struct"])
+            cost_matrix[ii][jj] = abs(orca_weighted_structs[o_key]["weight"] - mlip_weighted_structs[m_key]["weight"]) * sdgr_rmsd(orca_weighted_structs[o_key]["atoms"], mlip_weighted_structs[m_key]["atoms"])
     row_ind, column_ind = linear_sum_assignment(cost_matrix)
     return cost_matrix[row_ind, col_ind].sum()
 
@@ -133,7 +133,7 @@ def ensemble_rmsd(orca_structs, mlip_structs):
     cost_matrix = np.array(shape=(len(orca_structs.keys()), len(mlip_structs.keys())))
     for ii, o_key in enumerate(orca_structs.keys()):
         for jj, m_key in enumerate(mlip_structs.keys()):
-            cost_matrix[ii][jj] = sdgr_rmsd(orca_weighted_structs[o_key]["struct"], mlip_weighted_structs[m_key]]["struct"])
+            cost_matrix[ii][jj] = sdgr_rmsd(orca_structs[o_key]["atoms"], mlip_structs[m_key]["atoms"])
     row_ind, column_ind = linear_sum_assignment(cost_matrix)
     return cost_matrix[row_ind, col_ind].sum()
 
@@ -227,7 +227,19 @@ class OMol_Evaluator:
 
 
     def geom_conformers_type1(self, orca_results, mlip_results):
-        pass
+        boltzmann_rmsd = 0
+        ensemble_rmsd = 0
+        orca_boltzmann_weighted_structures = boltzmann_weighted_structures(orca_results)
+        mlip_boltzmann_weighted_structures = boltzmann_weighted_structures(mlip_results)
+        for family_identifier, structs in orca_results.items():
+            ensemble_rmsd += ensemble_rmsd(structs, mlip_results[family_identifier])
+            boltzmann_rmsd += boltzmann_weighted_rmsd(orca_boltzmann_weighted_structures[family_identifier], mlip_boltzmann_weighted_structures[family_identifier])
+            boltzmann_rmsd += boltzmann_weighted_rmsd(mlip_boltzmann_weighted_structures[family_identifier], orca_boltzmann_weighted_structures[family_identifier])
+            
+        results = {
+            "structures": {"ensemble_rmsd": ensemble_rmsd, "boltzmann_weighted_rmsd": boltzmann_rmsd}
+        }
+        return results
 
 
     def geom_conformers_type2(self, orca_results, mlip_results):
