@@ -15,6 +15,8 @@ from schrodinger.structutils.analyze import evaluate_asl
 from schrodinger.structutils.transform import get_centroid, translate_structure
 from tqdm import tqdm
 
+from scipy.optimize import linear_sum_assignment
+
 
 boltzmann_constant = 8.617333262*10**-5
 
@@ -116,52 +118,25 @@ def sdgr_rmsd(atoms1, atoms2):
     st2.set_atoms(atoms2)
     renumbered_sts = renumber_molecules_to_match([st1, st2])
     return rmsd_wrapper(renumbered_sts[0], renumbered_sts[1])
-    
-
-def get_all_mappings(list1, list2):
-    # Handle empty list cases
-    if not list1 or not list2:
-        return []
-    
-    # If lists are different lengths, we'll pad the shorter one with None
-    max_length = max(len(list1), len(list2))
-    
-    # Pad lists with None if necessary
-    padded_list1 = list1 + [None] * (max_length - len(list1))
-    padded_list2 = list2 + [None] * (max_length - len(list2))
-    
-    # Get all possible permutations of the second list
-    perms = permutations(padded_list2)
-    
-    # Create mappings and filter out None pairs
-    mappings = []
-    for perm in perms:
-        mapping = {}
-        for i, item1 in enumerate(padded_list1):
-            if item1 is not None and perm[i] is not None:
-                mapping[item1] = perm[i]
-        if mapping:  # Only add non-empty mappings
-            mappings.append(mapping)
-    
-    return mappings
 
 
 def boltzmann_weighted_rmsd(orca_weighted_structs, mlip_weighted_structs):
-    if len(orca_weighted_structs.keys()) == len(mlip_weighted_structs.keys()):
-        if len(orca_weighted_structs.keys()) == 1:
-            return sdgr_rmsd(orca_weighted_structs[orca_weighted_structs.keys()[0]]["struct"], mlip_weighted_structs[mlip_weighted_structs.keys()[0]]["struct"])
-    else:
-        mappings = get_all_mappings(orca_weighted_structs.keys(), mlip_weighted_structs.keys())
-        rmsds = {}
-        best_mapping = 0
-        for ii, mapping in enumerate(mappings):
-            rmsds[ii] = 0
-            for key in orca_weighted_structs.keys():
-                rmsds[ii] += sdgr_rmsd(orca_weighted_structs[key]["struct"], mlip_weighted_structs[mapping[key]]["struct"])
-            if rmsds[ii] < rmsds[best_mapping]:
-                best_mapping = ii
-        return rmsds[best_mapping]
-        
+    cost_matrix = np.array(shape=(len(orca_weighted_structs.keys()), len(mlip_weighted_structs.keys())))
+    for ii, o_key in enumerate(orca_weighted_structs.keys()):
+        for jj, m_key in enumerate(mlip_weighted_structs.keys()):
+            cost_matrix[ii][jj] = abs(orca_weighted_structs[o_key]["weight"] - mlip_weighted_structs[m_key]["weight"]) * sdgr_rmsd(orca_weighted_structs[o_key]["struct"], mlip_weighted_structs[m_key]["struct"])
+    row_ind, column_ind = linear_sum_assignment(cost_matrix)
+    return cost_matrix[row_ind, col_ind].sum()
+
+
+def ensemble_rmsd(orca_structs, mlip_structs):
+    cost_matrix = np.array(shape=(len(orca_structs.keys()), len(mlip_structs.keys())))
+    for ii, o_key in enumerate(orca_structs.keys()):
+        for jj, m_key in enumerate(mlip_structs.keys()):
+            cost_matrix[ii][jj] = sdgr_rmsd(orca_weighted_structs[o_key]["struct"], mlip_weighted_structs[m_key]]["struct"])
+    row_ind, column_ind = linear_sum_assignment(cost_matrix)
+    return cost_matrix[row_ind, col_ind].sum()
+
 
 
 # The use of task_metrics and eval are both mockups and will need help to function as envisioned
@@ -281,12 +256,14 @@ class OMol_Evaluator:
                 deltaE_MLSP_mae += abs(orca_deltaE - deltaE_MLSP)
                 deltaE_MLRX_mae += abs(orca_deltaE - deltaE_MLRX)
             boltzmann_rmsd += boltzmann_weighted_rmsd(orca_boltzmann_weighted_structures[family_identifier], mlip_boltzmann_weighted_structures[family_identifier])
+            boltzmann_rmsd += boltzmann_weighted_rmsd(mlip_boltzmann_weighted_structures[family_identifier], orca_boltzmann_weighted_structures[family_identifier])
                 
         results = {
             "energy": {"mae": energy_mae / len(orca_results.keys())},
             "forces": {"mae": forces_mae / len(orca_results.keys()), "cosine_similarity": forces_cosine_similarity / len(orca_results.keys())},
             "deltaE_MLSP": {"mae": deltaE_MLSP_mae / len(orca_results.keys())},
-            "deltaE_MLRX": {"mae": deltaE_MLRX_mae / len(orca_results.keys())}
+            "deltaE_MLRX": {"mae": deltaE_MLRX_mae / len(orca_results.keys())},
+            "structures": {"boltzmann_weighted_rmsd": boltzmann_rmsd}
         }
         return results
 
