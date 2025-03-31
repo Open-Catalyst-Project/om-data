@@ -3,10 +3,10 @@ import runmd_omm
 import pandas as pd
 import sys
 
-row_number = int(sys.argv[1])
+row_number = 895#int(sys.argv[1])
 
-csv_file = "rpmd_elytes.csv"
-#csv_file = "omm-elytes.csv"
+#csv_file = "rpmd_elytes.csv"
+csv_file = "omm-elytes.csv"
 # Read the CSV file to get the temperature
 df = pd.read_csv(csv_file)
 temperature = df.iloc[row_number]['temperature']
@@ -15,7 +15,7 @@ temperature = df.iloc[row_number]['temperature']
 checkpoint_file = os.path.join(f"{row_number}", "md.chk")
 if not os.path.exists(checkpoint_file):
     import system_generator_omm
-    system_generator_omm.main("csv", file=csv_file, density=1.0, row=row_number, droplet=False) # Set droplet to True for droplet mode
+    system_generator_omm.main("csv", file=csv_file, density=0.5, row=row_number, droplet=False) # Set droplet to True for droplet mode
 
 # Run simulation with temperature from CSV
 result = runmd_omm.run_simulation(
@@ -24,7 +24,7 @@ result = runmd_omm.run_simulation(
     output_dir=f"{row_number}",
     temperature=temperature,  # Use temperature from CSV
     t_final=20.0*1000, #time in ps
-    n_frames=100,
+    n_frames=5000,
     dt=0.0005,  # Fixed timestep for all systems, in ps
     is_droplet=False,  # Enable droplet mode. False for bulk mode. 
     rpmd=True,
