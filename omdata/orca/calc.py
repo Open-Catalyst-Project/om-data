@@ -125,10 +125,30 @@ ORCA_BLOCKS = [
 ]
 NBO_FLAGS = '%nbo NBOKEYLIST = "$NBO NPA NBO E2PERT 0.1 $END" end'
 ORCA_ASE_SIMPLE_INPUT = " ".join([ORCA_FUNCTIONAL] + [ORCA_BASIS] + ORCA_SIMPLE_INPUT)
-OPT_PARAMETERS = {
+LOOSE_OPT_PARAMETERS = {
+    "optimizer": Sella,
+    "store_intermediate_results": True,
+    "fmax": 0.1,
+    "max_steps": 100,
+    "optimizer_kwargs": {
+        "order": 0,
+        "internal": True,
+    },
+}
+MEDIUM_OPT_PARAMETERS = {
     "optimizer": Sella,
     "store_intermediate_results": True,
     "fmax": 0.05,
+    "max_steps": 100,
+    "optimizer_kwargs": {
+        "order": 0,
+        "internal": True,
+    },
+}
+TIGHT_OPT_PARAMETERS = {
+    "optimizer": Sella,
+    "store_intermediate_results": True,
+    "fmax": 0.01,
     "max_steps": 100,
     "optimizer_kwargs": {
         "order": 0,
