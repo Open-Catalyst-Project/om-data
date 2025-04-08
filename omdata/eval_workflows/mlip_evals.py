@@ -150,7 +150,7 @@ def mlip_protonation_energies(protonation_structures, results_directory=None):
     else:
         return results
 
-
+# OOD bio metals with clusters specifically later, no restrictions on elytes or MCs, but multiple spin states will need to be expicitly noted
 def mlip_unoptimized_ie_ea(unoptimized_ie_ea_structures, results_directory=None):
     results = {}
     for identifier, struct in tqdm.tqdm(unoptimized_ie_ea_structures.items()):
@@ -199,7 +199,7 @@ def mlip_distance_scaling(distance_scaling_structures, results_directory=None):
     else:
         return results
 
-
+# For electrolytes, only one transition metal. Metal complexes nothing special. OOD bio metals with clusters specifically later
 def mlip_unoptimized_spin_gap(unoptimized_spin_gap_structures, results_directory=None):
     results = {}
     for identifier, struct in tqdm.tqdm(unoptimized_spin_gap_structures.items()):
