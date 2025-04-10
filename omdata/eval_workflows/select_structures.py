@@ -15,14 +15,53 @@ def num_open_shell_metals(atoms):
     return len([atom for atom in atoms if atom.symbol in open_shell_metals])
 
 
+def parse_sdf_metal_ox_state(input_path, filename):
+    """
+    Parse the oxidation states of metals in a given SDF file.
+
+    Args:
+        input_path (str): The path to the directory containing the SDF file.
+        filename (str): The name of the SDF file.
+
+    Returns:
+        list: A list of tuples, where each tuple contains the metal symbol and its oxidation state.
+    """
+    metal_list = []
+    with open(input_path + "/cod_complexes/" + filename, "r") as f:
+        for line in f.readlines():
+            split_line = line.split()
+            if len(split_line) > 7: # This line contains an XYZ position of an atom
+                if split_line[3] in open_shell_metals: # This atom is a metal
+                    if len(split_line) > 8: # This metal has info that might be an oxidation state
+                        for kk in range(8, len(split_line)):
+                            if split_line[kk][0:4] == "CHG=": # This info is an oxidation state
+                                metal_list.append([split_line[3], int(split_line[kk][4:])])
+                                break
+                        else: # This metal has no oxidation state info, so we assume charge is 0
+                            metal_list.append([split_line[3], 0])
+                    else: # This metal has no oxidation state info, so we assume charge is 0
+                        metal_list.append([split_line[3], 0])
+
+    return metal_list
+
+
 def ie_ea_processing(atoms):
+    """
+    Process the atoms to add or remove an electron and return the structures to add.
+
+    Args:
+        atoms (ase.Atoms): The atoms object to process.
+
+    Returns:
+        list: A list of dictionaries, where each dictionary contains the charge, spin, and source of the structure to add.
+    """
     structs_to_add = []
     add_electron_charge = atoms.info["charge"] - 1
     remove_electron_charge = atoms.info["charge"] + 1
-    if atoms.info["spin"] == 1:
+    if atoms.info["spin"] == 1: # If the structure is a singlet, then both oxidized and reduced states are doublets
         add_electron_spin_multiplicity = [2]
         remove_electron_spin_multiplicity = [2]
-    else:
+    else: # If the structure is not a singlet, then oxidized and reduced states can take two different spin multiplicities
         add_electron_spin_multiplicity = [atoms.info["spin"]+1, atoms.info["spin"]-1]
         remove_electron_spin_multiplicity = [atoms.info["spin"]+1, atoms.info["spin"]-1]
 
@@ -44,17 +83,30 @@ def ie_ea_processing(atoms):
 
 
 def sample_structures_for_unoptimized_ie_ea(structures, number, idx_name):
+    """
+    Sample structures for unoptimized IE/EA.
+
+    Args:
+        structures (ase.Atoms): The structures to sample.
+        number (int): The number of structures to sample.
+        idx_name (str): The name of the index, distinguishing between electrolyte structures (e_idx),
+                        metal complex structures from Architector (mca_idx), 
+                        and metal complex structures from COD (mcc_idx).
+
+    Returns:
+        list: A list of dictionaries, where each dictionary contains the charge, spin, and source of the structure to add.
+    """
     sampled_structures = []
     viable_idxs = []
     for idx in range(len(structures)):
         if idx_name == "e_idx":
-            if num_open_shell_metals(structures.get_atoms(idx)) > 2:
+            if num_open_shell_metals(structures.get_atoms(idx)) > 2: # Electrolytes are allowed to have one or two open-shell metals
                 continue
             viable_idxs.append(idx)
-        elif idx_name == "mca_idx":
+        elif idx_name == "mca_idx": # Architector metal complexes are assumed to have only one open-shell metal
             viable_idxs.append(idx)
         elif idx_name == "mcc_idx":
-            if len(structures[idx].info["metal_list"]) > 1:
+            if len(structures[idx].info["metal_list"]) > 1: # COD metal complexes are allowed to have one open-shell metal
                 continue
             viable_idxs.append(idx)
     for idx in random.sample(viable_idxs, number):
@@ -69,6 +121,19 @@ def sample_structures_for_unoptimized_ie_ea(structures, number, idx_name):
 
 
 def sample_structures_for_unoptimized_spin_gap(structures, number, idx_name):
+    """
+    Sample structures for unoptimized spin gap.
+
+    Args:
+        structures (ase.Atoms): The structures to sample.
+        number (int): The number of structures to sample.
+        idx_name (str): The name of the index, distinguishing between electrolyte structures (e_idx),
+                        metal complex structures from Architector (mca_idx), 
+                        and metal complex structures from COD (mcc_idx).
+
+    Returns:
+        list: A list of dictionaries, where each dictionary contains the charge, spin, and source of the structure to add.
+    """
     cached_unpaired_electrons = {}
     sampled_structures = []
     idx_list = list(range(len(structures)))
@@ -78,17 +143,17 @@ def sample_structures_for_unoptimized_spin_gap(structures, number, idx_name):
         new_spins = []
         if idx_name in ["e_idx", "mca_idx"]:
             tmp_atoms = structures.get_atoms(idx)
-            if tmp_atoms.info["spin"] > 2:
+            if tmp_atoms.info["spin"] > 2: # Electrolytes and Architector metal complexes start as high spin and thus must be at least a triplet for a spin gap
                 if idx_name == "e_idx":
-                    if num_open_shell_metals(tmp_atoms) > 1:
+                    if num_open_shell_metals(tmp_atoms) > 1: # Electrolytes are allowed to have only one open-shell metal. Architector complexes are assumed to have only one open-shell metal
                         continue
-                new_spin = tmp_atoms.info["spin"] - 2
+                new_spin = tmp_atoms.info["spin"] - 2 # Iteratively reduce the spin by two to find all viable spins
                 while new_spin > 0:
                     new_spins.append(new_spin)
                     new_spin -= 2
         elif idx_name in ["mcc_idx"]:
             tmp_atoms = structures[idx]
-            if len(tmp_atoms.info["metal_list"]) > 2 and idx_name == "mcc_idx":
+            if len(tmp_atoms.info["metal_list"]) > 2 and idx_name == "mcc_idx": # Only consider COD metal complexes with one open-shell metal
                 continue
             max_num_unpaired_electrons = 0
             lanthanide_present = False
@@ -100,13 +165,13 @@ def sample_structures_for_unoptimized_spin_gap(structures, number, idx_name):
                 max_num_unpaired_electrons += cached_unpaired_electrons[(metal[0], metal[1])]
             if max_num_unpaired_electrons != 0:
                 new_spin = max_num_unpaired_electrons+1
-                while new_spin > 0:
+                while new_spin > 0: # Iteratively reduce the spin by two to find all viable spins
                     if new_spin != tmp_atoms.info["spin"]:
-                        if new_spin < 12 or lanthanide_present:
+                        if new_spin < 12 or lanthanide_present: # Only consider spins less than 12 or lanthanides
                             new_spins.append(new_spin)
                     new_spin -= 2
 
-        if new_spins != []:
+        if new_spins != []: # If there are viable additional spin states, then this structure is viable for a spin gap
             samples_taken += 1
             for new_spin in new_spins:
                 assert new_spin != tmp_atoms.info["spin"]
@@ -139,21 +204,7 @@ def main(args):
         atoms.info["charge"] = int(filename[:-4].split("_")[-2])
         atoms.info["spin"] = int(filename[:-4].split("_")[-1])
         atoms.info["source"] = filename
-        metal_list = []
-        with open(input_path + "/cod_complexes/" + filename, "r") as f:
-            for line in f.readlines():
-                split_line = line.split()
-                if len(split_line) > 7:
-                    if split_line[3] in open_shell_metals:
-                        if len(split_line) > 8:
-                            for kk in range(8, len(split_line)):
-                                if split_line[kk][0:4] == "CHG=":
-                                    metal_list.append([split_line[3], int(split_line[kk][4:])])
-                                    break
-                            else:
-                                metal_list.append([split_line[3], 0])
-                        else:
-                            metal_list.append([split_line[3], 0])
+        metal_list = parse_sdf_metal_ox_state(input_path, filename)
         negative_or_zero_ox_found = False
         for metal in metal_list:
             if metal[1] <= 0:
