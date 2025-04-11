@@ -5,7 +5,8 @@ import os
 from monty.serialization import dumpfn
 from architector.io_molecule import convert_io_molecule
 import mendeleev
-
+from ase.io import write
+import copy
 random.seed(42)
 
 
@@ -53,7 +54,7 @@ def ie_ea_processing(atoms):
         atoms (ase.Atoms): The atoms object to process.
 
     Returns:
-        list: A list of dictionaries, where each dictionary contains the charge, spin, and source of the structure to add.
+        list: A list of dictionaries, where each dictionary contains the charge and spin of the structure to add.
     """
     structs_to_add = []
     add_electron_charge = atoms.info["charge"] - 1
@@ -69,14 +70,12 @@ def ie_ea_processing(atoms):
         structs_to_add.append({
             "charge": add_electron_charge,
             "spin": spin_multiplicity,
-            "source": atoms.info["source"]
         })
 
     for spin_multiplicity in remove_electron_spin_multiplicity:
         structs_to_add.append({
             "charge": remove_electron_charge,
             "spin": spin_multiplicity,
-            "source": atoms.info["source"]
         })
 
     return structs_to_add
@@ -94,7 +93,7 @@ def sample_structures_for_unoptimized_ie_ea(structures, number, idx_name):
                         and metal complex structures from COD (mcc_idx).
 
     Returns:
-        list: A list of dictionaries, where each dictionary contains the charge, spin, and source of the structure to add.
+        list: A list of ASE atoms objects to save for calculations
     """
     sampled_structures = []
     viable_idxs = []
@@ -112,11 +111,18 @@ def sample_structures_for_unoptimized_ie_ea(structures, number, idx_name):
     for idx in random.sample(viable_idxs, number):
         if idx_name in ["e_idx", "mca_idx"]:
             structs_to_add = ie_ea_processing(structures.get_atoms(idx))
+            tmp_atoms = structures.get_atoms(idx)
         elif idx_name == "mcc_idx":
             structs_to_add = ie_ea_processing(structures[idx])
+            tmp_atoms = structures[idx]
+        tmp_atoms.info["idx_name"] = idx_name
+        tmp_atoms.info["idx"] = idx
+        sampled_structures.append(tmp_atoms) # Add the original structure
         for struct in structs_to_add:
-            struct[idx_name] = idx
-            sampled_structures.append(struct)
+            new_atoms = copy.deepcopy(tmp_atoms)
+            new_atoms.info["spin"] = struct["spin"]
+            new_atoms.info["charge"] = struct["charge"]
+            sampled_structures.append(new_atoms)
     return sampled_structures
 
 
@@ -132,7 +138,7 @@ def sample_structures_for_unoptimized_spin_gap(structures, number, idx_name):
                         and metal complex structures from COD (mcc_idx).
 
     Returns:
-        list: A list of dictionaries, where each dictionary contains the charge, spin, and source of the structure to add.
+        list: A list of ASE atoms objects to save for calculations
     """
     cached_unpaired_electrons = {}
     sampled_structures = []
@@ -173,18 +179,17 @@ def sample_structures_for_unoptimized_spin_gap(structures, number, idx_name):
 
         if new_spins != []: # If there are viable additional spin states, then this structure is viable for a spin gap
             samples_taken += 1
+            tmp_atoms.info["idx_name"] = idx_name
+            tmp_atoms.info["idx"] = idx
+            sampled_structures.append(tmp_atoms) # Add the original structure
             for new_spin in new_spins:
                 assert new_spin != tmp_atoms.info["spin"]
                 assert new_spin%2 == tmp_atoms.info["spin"]%2
-                sampled_structures.append({
-                    "charge": tmp_atoms.info["charge"],
-                    "spin": new_spin,
-                    "source": tmp_atoms.info["source"],
-                    idx_name: idx,
-                })
+                new_atoms = copy.deepcopy(tmp_atoms)
+                new_atoms.info["spin"] = new_spin
+                sampled_structures.append(new_atoms)
             if samples_taken == number:
                 break
-    print(samples_taken, "samples taken for unoptimized spin gap for", idx_name)
     return sampled_structures
 
 
@@ -221,9 +226,12 @@ def main(args):
     unoptimized_ie_ea_structures_metal_complexes_cod = sample_structures_for_unoptimized_ie_ea(metal_complexes_cod, 4000, "mcc_idx")
     print(len(unoptimized_ie_ea_structures_metal_complexes_cod), "COD metal complex calcs to run for unoptimized IE/EA")
 
-    dumpfn(unoptimized_ie_ea_structures_elytes, os.path.join(output_path, "unoptimized_ie_ea_structures_elytes.json"))
-    dumpfn(unoptimized_ie_ea_structures_metal_complexes_arch, os.path.join(output_path, "unoptimized_ie_ea_structures_metal_complexes_arch.json"))
-    dumpfn(unoptimized_ie_ea_structures_metal_complexes_cod, os.path.join(output_path, "unoptimized_ie_ea_structures_metal_complexes_cod.json"))
+    for atoms in unoptimized_ie_ea_structures_elytes:
+        write(os.path.join(output_path, "ieea_" + atoms.info["idx_name"] + "_" + str(atoms.info["idx"]) + "_" + str(atoms.info["charge"]) + "_" + str(atoms.info["spin"]) + ".traj"), atoms)
+    for atoms in unoptimized_ie_ea_structures_metal_complexes_arch:
+        write(os.path.join(output_path, "ieea_" + atoms.info["idx_name"] + "_" + str(atoms.info["idx"]) + "_" + str(atoms.info["charge"]) + "_" + str(atoms.info["spin"]) + ".traj"), atoms)
+    for atoms in unoptimized_ie_ea_structures_metal_complexes_cod:
+        write(os.path.join(output_path, "ieea_" + atoms.info["idx_name"] + "_" + str(atoms.info["idx"]) + "_" + str(atoms.info["charge"]) + "_" + str(atoms.info["spin"]) + ".traj"), atoms)
 
     unoptimized_spin_gap_structures_elytes = sample_structures_for_unoptimized_spin_gap(elytes, 1000, "e_idx")
     print(len(unoptimized_spin_gap_structures_elytes), "elyte calcs to run for unoptimized spin gap")
@@ -232,9 +240,12 @@ def main(args):
     unoptimized_spin_gap_structures_metal_complexes_cod = sample_structures_for_unoptimized_spin_gap(metal_complexes_cod, 5000, "mcc_idx")
     print(len(unoptimized_spin_gap_structures_metal_complexes_cod), "COD metal complex calcs to run for unoptimized spin gap")
 
-    dumpfn(unoptimized_spin_gap_structures_elytes, os.path.join(output_path, "unoptimized_spin_gap_structures_elytes.json"))
-    dumpfn(unoptimized_spin_gap_structures_metal_complexes_arch, os.path.join(output_path, "unoptimized_spin_gap_structures_metal_complexes_arch.json"))
-    dumpfn(unoptimized_spin_gap_structures_metal_complexes_cod, os.path.join(output_path, "unoptimized_spin_gap_structures_metal_complexes_cod.json"))
+    for atoms in unoptimized_spin_gap_structures_elytes:
+        write(os.path.join(output_path, "spingap_" + atoms.info["idx_name"] + "_" + str(atoms.info["idx"]) + "_" + str(atoms.info["charge"]) + "_" + str(atoms.info["spin"]) + ".traj"), atoms)
+    for atoms in unoptimized_spin_gap_structures_metal_complexes_arch:
+        write(os.path.join(output_path, "spingap_" + atoms.info["idx_name"] + "_" + str(atoms.info["idx"]) + "_" + str(atoms.info["charge"]) + "_" + str(atoms.info["spin"]) + ".traj"), atoms)
+    for atoms in unoptimized_spin_gap_structures_metal_complexes_cod:
+        write(os.path.join(output_path, "spingap_" + atoms.info["idx_name"] + "_" + str(atoms.info["idx"]) + "_" + str(atoms.info["charge"]) + "_" + str(atoms.info["spin"]) + ".traj"), atoms)
 
 
 def parse_args():
