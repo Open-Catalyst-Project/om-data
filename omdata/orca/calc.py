@@ -135,7 +135,7 @@ LOOSE_OPT_PARAMETERS = {
         "internal": True,
     },
 }
-MEDIUM_OPT_PARAMETERS = {
+OPT_PARAMETERS = {
     "optimizer": Sella,
     "store_intermediate_results": True,
     "fmax": 0.05,

@@ -12,7 +12,9 @@ from quacc.atoms.core import perturb
 from monty.serialization import dumpfn
 
 from omdata.orca.calc import (
-    EVAL_OPT_PARAMETERS,
+    LOOSE_OPT_PARAMETERS,
+    OPT_PARAMETERS,
+    TIGHT_OPT_PARAMETERS,
     EVAL_TS_PARAMETERS,
     ORCA_BASIS,
     ORCA_BLOCKS,
@@ -31,7 +33,7 @@ def ase_calc_relax_job(
     atoms: Atoms,
     charge: int = 0,
     spin_multiplicity: int = 1,
-    opt_params=EVAL_OPT_PARAMETERS,
+    opt_params=TIGHT_OPT_PARAMETERS,
     additional_fields=None,
     copy_files=None,
 ):
