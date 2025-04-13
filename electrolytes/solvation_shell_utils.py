@@ -45,6 +45,7 @@ def extract_shells_from_structure(
     spec_type: str,
     shells_per_frame: int,
     max_shell_size: int,
+    has_pbc: bool,
 ) -> Structure:
     """
     Extract around a given residue type from a structure by a given radius
@@ -81,7 +82,7 @@ def extract_shells_from_structure(
             if len(shell) <= max_shell_size and (not shell.intersection(solute_atoms))
         ]
         extracted_shells = [
-            extract_contracted_shell(st, at_list, central_mol)
+            extract_contracted_shell(st, at_list, central_mol, has_pbc)
             for at_list, central_mol in shells
         ]
 
@@ -91,7 +92,7 @@ def extract_shells_from_structure(
             if len(shell_ats) > max_shell_size:
                 continue
             expanded_shell = extract_contracted_shell(
-                st, shell_ats, central_solute
+                st, shell_ats, central_solute, has_pbc
             )
 
             if expanded_shell.atom_total <= max_shell_size:
@@ -100,8 +101,8 @@ def extract_shells_from_structure(
 
 
 def extract_contracted_shell(
-    st: Structure, at_list: list[int], central_mol: int
-) -> Structure:
+    st: Structure, at_list: list[int], central_mol: int,
+has_pbc=True) -> Structure:
     """
     Extract the shell from the structure
 
@@ -123,9 +124,10 @@ def extract_contracted_shell(
 
     # contract everthing to be centered on our molecule of interest
     # (this will also handle if a molecule is split across a PBC)
-    clusterstruct.contract_structure(
-        extracted_shell, contract_on_atoms=[central_atom_idx]
-    )
+    if has_pbc:
+        clusterstruct.contract_structure(
+            extracted_shell, contract_on_atoms=[central_atom_idx]
+        )
     return extracted_shell
 
 
