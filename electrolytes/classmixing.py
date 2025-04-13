@@ -24,6 +24,8 @@ from typing import List, Tuple, Dict, Any
 import csv
 import argparse
 import textwrap
+from math import gcd
+from functools import reduce
 
 class SpeciesSelector:
     """Utility class for selecting chemical species."""
@@ -251,9 +253,29 @@ class Electrolyte(ABC):
             # Solvents
             if i < self.max_solvents:
                 entry[f'solvent{i+1}'] = self.solvents[i] if i < len(self.solvents) else ''
-                entry[f'solvent{i+1}_ratio'] = (self.stoich_solv[i]/min(self.stoich_solv) 
-                                              if i < len(self.stoich_solv) and len(self.stoich_solv) > 0 
-                                              else '')
+                
+                # Special handling for ionic liquid solvents
+                if isinstance(self, IonicLiquidElectrolyte) and len(self.stoich_solv) > 0:
+                    # For ionic liquids, normalize while preserving charge balance relationships
+                    if i < len(self.stoich_solv):
+                        # Find the GCD of all stoich values to maintain integer relationships
+                        def find_gcd(list_of_nums):
+                            # Convert to integers if they're not already
+                            ints = [int(x) for x in list_of_nums]
+                            # Find GCD of the list
+                            return reduce(gcd, ints)
+                        
+                        # Calculate GCD and normalize by dividing all values by it
+                        common_divisor = find_gcd(self.stoich_solv)
+                        normalized_value = self.stoich_solv[i] / common_divisor
+                        entry[f'solvent{i+1}_ratio'] = normalized_value
+                    else:
+                        entry[f'solvent{i+1}_ratio'] = ''
+                else:
+                    # For other solvents, normalize by dividing by minimum as before
+                    entry[f'solvent{i+1}_ratio'] = (self.stoich_solv[i]/min(self.stoich_solv) 
+                                                  if i < len(self.stoich_solv) and len(self.stoich_solv) > 0 
+                                                  else '')
         
         return entry
 
@@ -397,13 +419,52 @@ class IonicLiquidElectrolyte(Electrolyte):
         il_solv_cations = self.original_cations_df[self.original_cations_df['IL_comp']].copy()
         il_solv_anions = self.original_anions_df[self.original_anions_df['IL_comp']].copy()
         
+        # Select ionic liquid components
         solv1, solv_charges1 = self.species_selector.choose_species(
             il_solv_cations, self.max_cations, self.cations + self.anions)
         solv2, solv_charges2 = self.species_selector.choose_species(
             il_solv_anions, self.max_cations, self.cations + self.anions + solv1)
         
-        self.solvents = solv1 + solv2
-        self.stoich_solv = self.charge_solver.solve_single_equation(solv_charges1 + solv_charges2)
+        # Ensure we have at least one cation and one anion
+        if not solv1 and len(il_solv_cations) > 0:
+            idx = 0  # Select first available cation
+            solv1 = [il_solv_cations.iloc[idx]['formula']]
+            solv_charges1 = [il_solv_cations.iloc[idx]['charge']]
+        
+        if not solv2 and len(il_solv_anions) > 0:
+            idx = 0  # Select first available anion
+            solv2 = [il_solv_anions.iloc[idx]['formula']]
+            solv_charges2 = [il_solv_anions.iloc[idx]['charge']]
+        
+        # At this point, we should have both cations and anions
+        # Now use a simple balancing approach to ensure perfect charge neutrality
+        if solv1 and solv2:
+            # Use the charge solver to find the optimal ratio for charge balance
+            cat_charge = solv_charges1[0]
+            an_charge = solv_charges2[0]  # This is already negative
+            
+            # Solve the charge balance equation: cat_charge * x + an_charge * y = 0
+            # We need to find integer values for x and y
+            coefficients = [0, cat_charge, an_charge]  # First 0 is for the objective function
+            solution = self.charge_solver.solve_single_equation(coefficients)
+            
+            # Extract the solution values
+            cat_count = solution[0]
+            an_count = solution[1]
+            
+            # Keep only the first cation and anion with the calculated ratio
+            self.solvents = [solv1[0], solv2[0]]
+            self.stoich_solv = [cat_count, an_count]
+            
+            # Check the charge balance
+            total_charge = cat_charge * cat_count + an_charge * an_count
+            print(f"IL solvent pair: {self.solvents[0]} (charge {cat_charge}, ratio {cat_count}) and "
+                  f"{self.solvents[1]} (charge {an_charge}, ratio {an_count})")
+            print(f"Charge balance check: {total_charge}")
+        else:
+            # If we couldn't find IL components, fall back to the standard behavior
+            # using the regular solvents dataframe
+            super()._generate_solvents(solvents_df)
     
     def _set_temperature_range(self) -> None:
         """Set the temperature range for ionic liquid electrolytes."""
