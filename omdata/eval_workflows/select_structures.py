@@ -159,7 +159,7 @@ def sample_structures_for_unoptimized_spin_gap(structures, number, idx_name):
                     new_spin -= 2
         elif idx_name in ["mcc_idx"]:
             tmp_atoms = structures[idx]
-            if len(tmp_atoms.info["metal_list"]) > 2 and idx_name == "mcc_idx": # Only consider COD metal complexes with one open-shell metal
+            if len(tmp_atoms.info["metal_list"]) > 1: # Only consider COD metal complexes with one open-shell metal
                 continue
             max_num_unpaired_electrons = 0
             lanthanide_present = False
@@ -193,6 +193,75 @@ def sample_structures_for_unoptimized_spin_gap(structures, number, idx_name):
     return sampled_structures
 
 
+def sample_structures_for_distance_scaling(structures, number, idx_name):
+    """
+    Sample structures for distance scaling.
+
+    Args:
+        structures (ase.Atoms): The structures to sample.
+        number (int): The number of structures to sample.
+        idx_name (str): The name of the index, distinguishing between electrolyte structures (e_idx),
+                        electrolyte structures with one open-shell metal (eo_idx),
+                        metal complex structures from Architector (mca_idx), 
+                        and metal complex structures from COD (mcc_idx).
+
+    Returns:
+        list: A list of ASE atoms objects to save for subsequent distance scaling
+    """
+    sampled_structures = []
+    viable_idxs = []
+    num_3A = 0
+    num_5A = 0
+    num_solvated = 0
+    if idx_name in ["mca_idx", "mcc_idx"]:
+        viable_idxs = list(range(len(structures))) # All Architector metal complexes and COD metal complexes are viable
+    else:
+        for idx in range(len(structures)):
+            if idx_name == "e_idx":
+                tmp_atoms = structures.get_atoms(idx)
+                if ("3_shell" in tmp_atoms.info["source"] or "3_group" in tmp_atoms.info["source"]) and num_3A < 1500:
+                    if num_open_shell_metals(tmp_atoms) == 0:
+                        num_3A += 1
+                        viable_idxs.append(idx)
+                elif "5A" in tmp_atoms.info["source"] and num_5A < 500:
+                    if num_open_shell_metals(tmp_atoms) == 0:
+                        num_5A += 1
+                        viable_idxs.append(idx)
+                elif "solvated" in tmp_atoms.info["source"] and "unsolvated" not in tmp_atoms.info["source"] and num_solvated < 500:
+                    if num_open_shell_metals(tmp_atoms) == 0:
+                        num_solvated += 1
+                        viable_idxs.append(idx)
+            elif idx_name == "eo_idx":
+                tmp_atoms = structures.get_atoms(idx)
+                if "3_shell" in tmp_atoms.info["source"] or "3_group" in tmp_atoms.info["source"] and num_3A < 1000:
+                    if num_open_shell_metals(tmp_atoms) == 1:
+                        num_3A += 1
+                        viable_idxs.append(idx)
+                elif "solvated" in tmp_atoms.info["source"] and "unsolvated" not in tmp_atoms.info["source"] and num_solvated < 500:
+                    if num_open_shell_metals(tmp_atoms) == 1:
+                        num_solvated += 1
+                        viable_idxs.append(idx)
+            elif idx_name == "b_idx":
+                if "pdb_fragments" in structures.get_atoms(idx).info["source"]: # Must be a pdb fragment
+                    viable_idxs.append(idx)
+    print("num_3A", num_3A)
+    print("num_5A", num_5A)
+    print("num_solvated", num_solvated)
+    print(len(viable_idxs), "viable structures for distance scaling from", idx_name)
+    for idx in random.sample(viable_idxs, number):
+        if idx_name == "mcc_idx":
+            tmp_atoms = structures[idx]
+            tmp_atoms.info["idx_name"] = idx_name
+            tmp_atoms.info["idx"] = idx
+            sampled_structures.append(tmp_atoms)
+        else:
+            tmp_atoms = structures.get_atoms(idx)
+            tmp_atoms.info["idx_name"] = idx_name
+            tmp_atoms.info["idx"] = idx
+            sampled_structures.append(tmp_atoms)
+    return sampled_structures
+
+
 def main(args):
     input_path = args.input_path
     output_path = args.output_path
@@ -202,6 +271,8 @@ def main(args):
 
     elytes = AseDBDataset({"src": input_path + "/test_elytes_samples"})
     metal_complexes_arch = AseDBDataset({"src": input_path + "/test_organometallics_samples"})
+    biomolecules = AseDBDataset({"src": input_path + "/test_biomolecules_samples"})
+
 
     metal_complexes_cod = []
     for filename in os.listdir(input_path + "/cod_complexes"):
@@ -218,6 +289,29 @@ def main(args):
         if not negative_or_zero_ox_found:
             atoms.info["metal_list"] = metal_list
             metal_complexes_cod.append(atoms)
+
+
+    distance_scaling_elytes = sample_structures_for_distance_scaling(elytes, 2500, "e_idx")
+    assert len(distance_scaling_elytes) == 2500
+    distance_scaling_elytes_os = sample_structures_for_distance_scaling(elytes, 1000, "eo_idx")
+    assert len(distance_scaling_elytes_os) == 1000
+    distance_scaling_metal_complexes_arch = sample_structures_for_distance_scaling(metal_complexes_arch, 1000, "mca_idx")
+    assert len(distance_scaling_metal_complexes_arch) == 1000
+    distance_scaling_metal_complexes_cod = sample_structures_for_distance_scaling(metal_complexes_cod, 3000, "mcc_idx")
+    assert len(distance_scaling_metal_complexes_cod) == 3000
+    distance_scaling_biomolecules = sample_structures_for_distance_scaling(biomolecules, 2000, "b_idx")
+    assert len(distance_scaling_biomolecules) == 2000
+
+    for atoms in distance_scaling_elytes:
+        write(os.path.join(output_path, "distance_scaling_" + atoms.info["idx_name"] + "_" + str(atoms.info["idx"]) + ".traj"), atoms)
+    for atoms in distance_scaling_elytes_os:
+        write(os.path.join(output_path, "distance_scaling_" + atoms.info["idx_name"] + "_" + str(atoms.info["idx"]) + ".traj"), atoms)
+    for atoms in distance_scaling_metal_complexes_arch:
+        write(os.path.join(output_path, "distance_scaling_" + atoms.info["idx_name"] + "_" + str(atoms.info["idx"]) + ".traj"), atoms)
+    for atoms in distance_scaling_metal_complexes_cod:
+        write(os.path.join(output_path, "distance_scaling_" + atoms.info["idx_name"] + "_" + str(atoms.info["idx"]) + ".traj"), atoms)
+    for atoms in distance_scaling_biomolecules:
+        write(os.path.join(output_path, "distance_scaling_" + atoms.info["idx_name"] + "_" + str(atoms.info["idx"]) + ".traj"), atoms)
 
     unoptimized_ie_ea_structures_elytes = sample_structures_for_unoptimized_ie_ea(elytes, 4000, "e_idx")
     print(len(unoptimized_ie_ea_structures_elytes), "elyte calcs to run for unoptimized IE/EA")
