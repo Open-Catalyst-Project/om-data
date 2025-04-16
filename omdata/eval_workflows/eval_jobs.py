@@ -15,7 +15,6 @@ from omdata.orca.calc import (
     LOOSE_OPT_PARAMETERS,
     OPT_PARAMETERS,
     TIGHT_OPT_PARAMETERS,
-    EVAL_TS_PARAMETERS,
     ORCA_BASIS,
     ORCA_BLOCKS,
     NBO_FLAGS,

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Callable, ClassVar
 
 import numpy as np
 from itertools import permutations
+from monty.serialization import loadfn
 
 from schrodinger.application.jaguar.autots_bonding import clean_st
 from schrodinger.application.jaguar.packages.shared import read_cartesians
@@ -13,6 +14,8 @@ from schrodinger.structure import Structure, StructureWriter
 from schrodinger.structutils import rmsd
 from schrodinger.structutils.analyze import evaluate_asl
 from schrodinger.structutils.transform import get_centroid, translate_structure
+from schrodinger.application.matsci.aseutils import get_structure
+from schrodinger.application.jaguar.utils import mmjag_reset_connectivity
 from tqdm import tqdm
 
 from scipy.optimize import linear_sum_assignment
@@ -51,16 +54,16 @@ def sdgr_rmsd(atoms1, atoms2):
     """
     Calculate the RMSD between two sets of atoms.
     """
-    st1 = Structure()
-    st1.set_atoms(atoms1)
-    st2 = Structure()
-    st2.set_atoms(atoms2)
+    st1 = get_structure(atoms1)
+    mmjag_reset_connectivity(st1)
+    st2 = get_structure(atoms2)
+    mmjag_reset_connectivity(st2)
     renumbered_sts = renumber_molecules_to_match([st1, st2])
     return rmsd_wrapper(renumbered_sts[0], renumbered_sts[1])
     
 
 def cosine_similarity(forces_1, forces_2):
-    return np.dot(forces_1, forces_2) / (np.linalg.norm(forces_1) * np.linalg.norm(forces_2))
+    return np.sum(forces_1 * forces_2) / (np.linalg.norm(forces_1) * np.linalg.norm(forces_2))
 
 
 def interaction_energy_and_forces(results, principal_identifier):
@@ -151,40 +154,46 @@ def boltzmann_weighted_structures(results, temp=298.15):
         weights = {}
         weighted_structs = {}
         sum = 0
+        min_energy = float("inf")
         for conformer_identifier, struct in structs.items():
-            weights[conformer_identifier] = np.exp(-struct["energy"] / (boltzmann_constant * temp))
+            if struct["final"]["energy"] < min_energy:
+                min_energy = struct["final"]["energy"]
+        for conformer_identifier, struct in structs.items(): # If we don't subtract min_energy, we get overflow errors
+            weights[conformer_identifier] = np.exp(-(struct["final"]["energy"] - min_energy) / (boltzmann_constant * temp))
             sum += weights[conformer_identifier]
         for conformer_identifier, struct in structs.items():
             weights[conformer_identifier] /= sum
             if weights[conformer_identifier] > 0.01:
-                weighted_structs[conformer_identifier]["atoms"] = struct["atoms"]
-                weighted_structs[conformer_identifier]["weight"] = weights[conformer_identifier]
+                weighted_structs[conformer_identifier] = {
+                    "atoms": struct["final"]["atoms"],
+                    "weight": weights[conformer_identifier]
+                }
         weighted_families[family_identifier] = weighted_structs
     return weighted_families
 
 
-def boltzmann_weighted_rmsd(orca_weighted_structs, mlip_weighted_structs):
+def calc_boltzmann_weighted_rmsd(orca_weighted_structs, mlip_weighted_structs):
     """
     Calculate the Boltzmann weighted RMSD via a cost matrix on ORCA and MLIP conformer ensembles.
     """
-    cost_matrix = np.array(shape=(len(orca_weighted_structs.keys()), len(mlip_weighted_structs.keys())))
+    cost_matrix = np.zeros(shape=(len(orca_weighted_structs.keys()), len(mlip_weighted_structs.keys())))
     for ii, o_key in enumerate(orca_weighted_structs.keys()):
         for jj, m_key in enumerate(mlip_weighted_structs.keys()):
             cost_matrix[ii][jj] = abs(orca_weighted_structs[o_key]["weight"] - mlip_weighted_structs[m_key]["weight"]) * sdgr_rmsd(orca_weighted_structs[o_key]["atoms"], mlip_weighted_structs[m_key]["atoms"])
     row_ind, column_ind = linear_sum_assignment(cost_matrix)
-    return cost_matrix[row_ind, col_ind].sum()
+    return cost_matrix[row_ind, column_ind].sum()
 
 
-def ensemble_rmsd(orca_structs, mlip_structs):
+def calc_ensemble_rmsd(orca_structs, mlip_structs):
     """
     Calculate the ensemble RMSD via a cost matrix on ORCA and MLIP conformer ensembles.
     """
-    cost_matrix = np.array(shape=(len(orca_structs.keys()), len(mlip_structs.keys())))
+    cost_matrix = np.zeros(shape=(len(orca_structs.keys()), len(mlip_structs.keys())))
     for ii, o_key in enumerate(orca_structs.keys()):
         for jj, m_key in enumerate(mlip_structs.keys()):
-            cost_matrix[ii][jj] = sdgr_rmsd(orca_structs[o_key]["atoms"], mlip_structs[m_key]["atoms"])
+            cost_matrix[ii][jj] = sdgr_rmsd(orca_structs[o_key]["final"]["atoms"], mlip_structs[m_key]["final"]["atoms"])
     row_ind, column_ind = linear_sum_assignment(cost_matrix)
-    return cost_matrix[row_ind, col_ind].sum()
+    return cost_matrix[row_ind, column_ind].sum()
 
 
 def ligand_strain_processing(results):
@@ -354,17 +363,17 @@ class OMol_Evaluator:
         Returns:
             dict: Error metrics for type1 conformer evaluation task
         """
-        boltzmann_rmsd = 0
+        boltzmann_weighted_rmsd = 0
         ensemble_rmsd = 0
         orca_boltzmann_weighted_structures = boltzmann_weighted_structures(orca_results)
         mlip_boltzmann_weighted_structures = boltzmann_weighted_structures(mlip_results)
         for family_identifier, structs in orca_results.items():
-            ensemble_rmsd += ensemble_rmsd(structs, mlip_results[family_identifier])
-            boltzmann_rmsd += boltzmann_weighted_rmsd(orca_boltzmann_weighted_structures[family_identifier], mlip_boltzmann_weighted_structures[family_identifier])
-            boltzmann_rmsd += boltzmann_weighted_rmsd(mlip_boltzmann_weighted_structures[family_identifier], orca_boltzmann_weighted_structures[family_identifier])
+            ensemble_rmsd += calc_ensemble_rmsd(structs, mlip_results[family_identifier])
+            boltzmann_weighted_rmsd += calc_boltzmann_weighted_rmsd(orca_boltzmann_weighted_structures[family_identifier], mlip_boltzmann_weighted_structures[family_identifier])
+            boltzmann_weighted_rmsd += calc_boltzmann_weighted_rmsd(mlip_boltzmann_weighted_structures[family_identifier], orca_boltzmann_weighted_structures[family_identifier])
             
         results = {
-            "structures": {"ensemble_rmsd": ensemble_rmsd, "boltzmann_weighted_rmsd": boltzmann_rmsd}
+            "structures": {"ensemble_rmsd": ensemble_rmsd, "boltzmann_weighted_rmsd": boltzmann_weighted_rmsd}
         }
         return results
 
@@ -388,35 +397,35 @@ class OMol_Evaluator:
         forces_cosine_similarity = 0
         deltaE_MLSP_mae = 0
         deltaE_MLRX_mae = 0
-        boltzmann_rmsd = 0
+        boltzmann_weighted_rmsd = 0
         orca_boltzmann_weighted_structures = boltzmann_weighted_structures(orca_results)
         mlip_boltzmann_weighted_structures = boltzmann_weighted_structures(mlip_results)
         for family_identifier, structs in orca_results.items():
             orca_min_energy = float("inf")
             orca_min_energy_id = None
             for conformer_identifier, struct in structs.items():
-                if struct["energy"] < orca_min_energy:
-                    orca_min_energy = struct["energy"]
+                if struct["final"]["energy"] < orca_min_energy:
+                    orca_min_energy = struct["final"]["energy"]
                     orca_min_energy_id = conformer_identifier
                 # Compare DFT to MLIP on the DFT optimized structure, which is the MLIP initial structure
-                energy_mae += abs(struct["energy"] - mlip_results[family_identifier][conformer_identifier]["initial"]["energy"])
-                forces_mae += np.mean(np.abs(struct["forces"] - mlip_results[family_identifier][conformer_identifier]["initial"]["forces"]))
-                forces_cosine_similarity += cosine_similarity(struct["forces"], mlip_results[family_identifier][conformer_identifier]["initial"]["forces"])
+                energy_mae += abs(struct["final"]["energy"] - mlip_results[family_identifier][conformer_identifier]["initial"]["energy"])
+                forces_mae += np.mean(np.abs(struct["final"]["forces"] - mlip_results[family_identifier][conformer_identifier]["initial"]["forces"]))
+                forces_cosine_similarity += cosine_similarity(struct["final"]["forces"], mlip_results[family_identifier][conformer_identifier]["initial"]["forces"])
             for conformer_identifier, struct in structs.items():
-                orca_deltaE = struct["energy"] - orca_min_energy
+                orca_deltaE = struct["final"]["energy"] - orca_min_energy
                 deltaE_MLSP = mlip_results[family_identifier][conformer_identifier]["initial"]["energy"] - mlip_results[family_identifier][orca_min_energy_id]["initial"]["energy"]
                 deltaE_MLRX = mlip_results[family_identifier][conformer_identifier]["final"]["energy"] - mlip_results[family_identifier][orca_min_energy_id]["final"]["energy"]
                 deltaE_MLSP_mae += abs(orca_deltaE - deltaE_MLSP)
                 deltaE_MLRX_mae += abs(orca_deltaE - deltaE_MLRX)
-            boltzmann_rmsd += boltzmann_weighted_rmsd(orca_boltzmann_weighted_structures[family_identifier], mlip_boltzmann_weighted_structures[family_identifier])
-            boltzmann_rmsd += boltzmann_weighted_rmsd(mlip_boltzmann_weighted_structures[family_identifier], orca_boltzmann_weighted_structures[family_identifier])
+            boltzmann_weighted_rmsd += calc_boltzmann_weighted_rmsd(orca_boltzmann_weighted_structures[family_identifier], mlip_boltzmann_weighted_structures[family_identifier])
+            boltzmann_weighted_rmsd += calc_boltzmann_weighted_rmsd(mlip_boltzmann_weighted_structures[family_identifier], orca_boltzmann_weighted_structures[family_identifier])
                 
         results = {
             "energy": {"mae": energy_mae / len(orca_results.keys())},
             "forces": {"mae": forces_mae / len(orca_results.keys()), "cosine_similarity": forces_cosine_similarity / len(orca_results.keys())},
             "deltaE_MLSP": {"mae": deltaE_MLSP_mae / len(orca_results.keys())},
             "deltaE_MLRX": {"mae": deltaE_MLRX_mae / len(orca_results.keys())},
-            "structures": {"boltzmann_weighted_rmsd": boltzmann_rmsd}
+            "structures": {"boltzmann_weighted_rmsd": boltzmann_weighted_rmsd}
         }
         return results
 

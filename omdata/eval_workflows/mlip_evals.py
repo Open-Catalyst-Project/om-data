@@ -16,7 +16,6 @@ from omdata.orca.calc import (
     TIGHT_OPT_PARAMETERS,
     OPT_PARAMETERS,
     LOOSE_OPT_PARAMETERS,
-    EVAL_TS_PARAMETERS,
 )
 
 from omdata.eval_workflows.eval_jobs import ase_calc_single_point_job, ase_calc_relax_job
@@ -94,16 +93,24 @@ unoptimized_spin_gap_structures = {}
 # NOTE: structures should all be "high spin", i.e. spin_multiplicity > 2
 
 
-def mlip_ligand_pocket(ligand_pocket_structures, results_directory=None):
+def format_relax_result(result):
+    initial_atoms = result["trajectory"][0]
+    initial_atoms.info["charge"] = result["charge"]
+    initial_atoms.info["spin"] = result["spin_multiplicity"]
+    final_atoms = result["atoms"]
+    final_atoms.info["charge"] = result["charge"]
+    final_atoms.info["spin"] = result["spin_multiplicity"]
+    return {"initial": {"atoms": initial_atoms, "energy": result["trajectory_results"][0]["energy"], "forces": result["trajectory_results"][0]["forces"]}, 
+            "final": {"atoms": final_atoms, "energy": result["results"]["energy"], "forces": result["results"]["forces"]},
+    }
+
+
+def mlip_ligand_pocket(calc, ligand_pocket_structures, results_directory=None):
     results = {}
     for identifier, structs in tqdm.tqdm(ligand_pocket_structures.items()):
-        lp_calc = prep_mlip_calc(structs["ligand_pocket"].info["charge"], structs["ligand_pocket"].info["spin"])
-        l_calc = prep_mlip_calc(structs["ligand"].info["charge"], structs["ligand"].info["spin"])
-        p_calc = prep_mlip_calc(structs["pocket"].info["charge"], structs["pocket"].info["spin"])
-
-        lp_result = ase_calc_single_point_job(lp_calc, structs["ligand_pocket"], structs["ligand_pocket"].info["charge"], structs["ligand_pocket"].info["spin"])
-        l_result = ase_calc_single_point_job(l_calc, structs["ligand"], structs["ligand"].info["charge"], structs["ligand"].info["spin"])
-        p_result = ase_calc_single_point_job(p_calc, structs["pocket"], structs["pocket"].info["charge"], structs["pocket"].info["spin"])
+        lp_result = ase_calc_single_point_job(calc, structs["ligand_pocket"], structs["ligand_pocket"].info["charge"], structs["ligand_pocket"].info["spin"])
+        l_result = ase_calc_single_point_job(calc, structs["ligand"], structs["ligand"].info["charge"], structs["ligand"].info["spin"])
+        p_result = ase_calc_single_point_job(calc, structs["pocket"], structs["pocket"].info["charge"], structs["pocket"].info["spin"])
 
         results[identifier] = {"ligand_pocket": lp_result, "ligand": l_result, "pocket": p_result}
         # TODO: Confirm that mask info is passed through correctly
@@ -114,19 +121,16 @@ def mlip_ligand_pocket(ligand_pocket_structures, results_directory=None):
         return results
 
 
-def mlip_ligand_strain(ligand_strain_structures, results_directory=None):
+def mlip_ligand_strain(calc, ligand_strain_structures, results_directory=None):
     results = {}
     for family_identifier, structs in tqdm.tqdm(ligand_strain_structures.items()):
         family_results = {}
         for conformer_identifier, struct in structs.items():
-            calc = prep_mlip_calc(struct.info["charge"], struct.info["spin"])
             if conformer_identifier == "ligand_in_pocket":
                 result = ase_calc_relax_job(calc, struct, struct.info["charge"], struct.info["spin"], opt_params=LOOSE_OPT_PARAMETERS)
-                # TODO: Save the first structure and the last structure, but can jettison the rest to avoid large files
             else:
                 result = ase_calc_relax_job(calc, struct, struct.info["charge"], struct.info["spin"], opt_params=TIGHT_OPT_PARAMETERS)
-                # TODO: Save the first structure and the last structure, but can jettison the rest to avoid large files
-            family_results[conformer_identifier] = result
+            family_results[conformer_identifier] = format_relax_result(result)
         results[family_identifier] = family_results
 
     if results_directory is not None:
@@ -135,15 +139,14 @@ def mlip_ligand_strain(ligand_strain_structures, results_directory=None):
         return results
 
 
-def mlip_geom_conformers(geom_conformers_structures, conf_task_type, results_directory=None):
+def mlip_geom_conformers(calc, geom_conformers_structures, conf_task_type, results_directory=None):
     results = {}
     for family_identifier, structs in tqdm.tqdm(geom_conformers_structures.items()):
         family_results = {}
+        print(family_identifier)
         for conformer_identifier, struct in structs.items():
-            calc = prep_mlip_calc(struct.info["charge"], struct.info["spin"])
             result = ase_calc_relax_job(calc, struct, struct.info["charge"], struct.info["spin"], opt_params=TIGHT_OPT_PARAMETERS)
-            # TODO: Save the first structure and the last structure, but can jettison the rest to avoid large files
-            family_results[conformer_identifier] = result
+            family_results[conformer_identifier] = format_relax_result(result)
         results[family_identifier] = family_results
 
     if results_directory is not None:
@@ -152,15 +155,13 @@ def mlip_geom_conformers(geom_conformers_structures, conf_task_type, results_dir
         return results
 
 
-def mlip_protonation_energies(protonation_structures, results_directory=None):
+def mlip_protonation_energies(calc, protonation_structures, results_directory=None):
     results = {}
     for identifier, structs in tqdm.tqdm(protonation_structures.items()):
         family_results = {}
         for protonation_state in ["unprotonated", "protonated"]:
-            calc = prep_mlip_calc(structs[protonation_state].info["charge"], structs[protonation_state].info["spin"])
             result = ase_calc_relax_job(calc, structs[protonation_state], structs[protonation_state].info["charge"], structs[protonation_state].info["spin"], opt_params=TIGHT_OPT_PARAMETERS)
-            # TODO: Save the first structure and the last structure, but can jettison the rest to avoid large files
-            family_results[protonation_state] = result
+            family_results[protonation_state] = format_relax_result(result)
         results[identifier] = family_results
 
     if results_directory is not None:
@@ -169,19 +170,16 @@ def mlip_protonation_energies(protonation_structures, results_directory=None):
         return results
 
 
-def mlip_unoptimized_ie_ea(unoptimized_ie_ea_structures, results_directory=None):
+def mlip_unoptimized_ie_ea(calc, unoptimized_ie_ea_structures, results_directory=None):
     results = {}
     for identifier, struct in tqdm.tqdm(unoptimized_ie_ea_structures.items()):
-        calc_orig = prep_mlip_calc(struct["orig"].info["charge"], struct["orig"].info["spin"])
-        results[identifier] = {"original": ase_calc_single_point_job(calc_orig, struct["orig"], struct["orig"].info["charge"], struct["orig"].info["spin"]),
+        results[identifier] = {"original": ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"], struct["orig"].info["spin"]),
                                "add_electron": {},
                                "remove_electron": {},
         } 
         for spin in struct["add_electron_spins"]:
-            calc = prep_mlip_calc(struct["orig"].info["charge"] - 1, spin)
             results[identifier]["add_electron"][spin] = ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"] - 1, spin)
         for spin in struct["remove_electron_spins"]:
-            calc = prep_mlip_calc(struct["orig"].info["charge"] + 1, spin)
             results[identifier]["remove_electron"][spin] = ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"] + 1, spin)
 
     if results_directory is not None:
@@ -190,11 +188,10 @@ def mlip_unoptimized_ie_ea(unoptimized_ie_ea_structures, results_directory=None)
         return results
 
 
-def mlip_distance_scaling(distance_scaling_structures, results_directory=None):
+def mlip_distance_scaling(calc, distance_scaling_structures, results_directory=None):
     results = {}
     for identifier, structs in tqdm.tqdm(distance_scaling_structures.items()):
         for component_identifier, component_struct in structs.items():
-            calc = prep_mlip_calc(component_struct.info["charge"], component_struct.info["spin"])
             results[identifier][component_identifier] = ase_calc_single_point_job(calc, component_struct, component_struct.info["charge"], component_struct.info["spin"])
 
     if results_directory is not None:
@@ -203,13 +200,11 @@ def mlip_distance_scaling(distance_scaling_structures, results_directory=None):
         return results
 
 
-def mlip_unoptimized_spin_gap(unoptimized_spin_gap_structures, results_directory=None):
+def mlip_unoptimized_spin_gap(calc, unoptimized_spin_gap_structures, results_directory=None):
     results = {}
     for identifier, struct in tqdm.tqdm(unoptimized_spin_gap_structures.items()):
-        calc_orig = prep_mlip_calc(struct["orig"].info["charge"], struct["orig"].info["spin"])
-        results[identifier] = {struct["orig"].info["spin"]: ase_calc_single_point_job(calc_orig, struct["orig"], struct["orig"].info["charge"], struct["orig"].info["spin"])}
+        results[identifier] = {struct["orig"].info["spin"]: ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"], struct["orig"].info["spin"])}
         for spin in struct["additional_spins"]:
-            calc = prep_mlip_calc(struct["orig"].info["charge"], spin)
             results[identifier][spin] = ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"], spin)
 
     if results_directory is not None:
