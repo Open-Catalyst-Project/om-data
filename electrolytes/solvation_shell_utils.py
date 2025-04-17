@@ -196,6 +196,9 @@ def get_species_from_res(res:Residue)->str:
     charge = sum(at.formal_charge for at in res.atom)
     if stoich == 'C9H18NO' and 'r_ffio_custom_charge' in res.atom[1].property:
         charge = 0
+    if stoich == 'C4H8O2':
+        st = res.extractStructure()
+        stoich += f'-r{len(st.find_rings())}'
     label = stoich
     if res.chain == 'A' and charge == 0:
         label += '0'
