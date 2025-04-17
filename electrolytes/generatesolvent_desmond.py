@@ -25,7 +25,7 @@ def generate_solvent_desmond(row_idx, systems, job_dir):
 
     # Extract solvent species name  and their molar ratios
     solv = mb.get_species_and_conc(systems, row_idx, index_solv)
-    solv_ratio = mb.get_species_and_conc(systems, row_idx, index_solv_ratio)
+    solv_ratio = mb.get_species_and_conc(systems, row_idx, index_solv_ratio[:len(solv)])
     species = solv
     molfrac = np.array(solv_ratio).astype(float)#int)
     molfrac = molfrac/np.sum(molfrac)

@@ -44,8 +44,9 @@ def get_indices(labels, keyword):
 
         This helper function is specific to reading the elytes.csv file.
     """
-    indices = [i for i, string in enumerate(labels) if keyword in string]
-    return indices[::2], indices[1::2]
+    species_indices = [i for i, string in enumerate(labels) if keyword in string and not (string.endswith('_conc') or string.endswith('_ratio'))]
+    conc_indices = [i for i, string in enumerate(labels) if keyword in string and (string.endswith('_conc') or string.endswith('_ratio'))]
+    return species_indices, conc_indices
     
 def get_species_and_conc(systems, i, indices):
     """ Grab list of species and their corresponding concentrations 
@@ -194,8 +195,8 @@ def run_system_builder(cat,an, solv,Nmols,filename,directory,boxsize=40,mdengine
         
         # Collect rows corresponding to the first match for each known entry
         # Load the CSV file
-        cations_file = 'cations.csv'
-        anions_file = 'anions.csv'
+        cations_file = 'cations_with_ood.csv'
+        anions_file = 'anions_with_ood.csv'
         cations = load_csv(cations_file)
         anions = load_csv(anions_file)
 
