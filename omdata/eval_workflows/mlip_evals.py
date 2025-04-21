@@ -105,15 +105,20 @@ def format_relax_result(result):
     }
 
 
+def format_single_point_result(result):
+    atoms = result["atoms"]
+    atoms.info["charge"] = result["charge"]
+    atoms.info["spin"] = result["spin_multiplicity"]
+    return {"atoms": atoms, "energy": result["results"]["energy"], "forces": result["results"]["forces"]}
+
+
 def mlip_ligand_pocket(calc, ligand_pocket_structures, results_directory=None):
     results = {}
     for identifier, structs in tqdm.tqdm(ligand_pocket_structures.items()):
-        lp_result = ase_calc_single_point_job(calc, structs["ligand_pocket"], structs["ligand_pocket"].info["charge"], structs["ligand_pocket"].info["spin"])
-        l_result = ase_calc_single_point_job(calc, structs["ligand"], structs["ligand"].info["charge"], structs["ligand"].info["spin"])
-        p_result = ase_calc_single_point_job(calc, structs["pocket"], structs["pocket"].info["charge"], structs["pocket"].info["spin"])
-
+        lp_result = format_single_point_result(ase_calc_single_point_job(calc, structs["ligand_pocket"], structs["ligand_pocket"].info["charge"], structs["ligand_pocket"].info["spin"]))
+        l_result = format_single_point_result(ase_calc_single_point_job(calc, structs["ligand"], structs["ligand"].info["charge"], structs["ligand"].info["spin"]))
+        p_result = format_single_point_result(ase_calc_single_point_job(calc, structs["pocket"], structs["pocket"].info["charge"], structs["pocket"].info["spin"]))
         results[identifier] = {"ligand_pocket": lp_result, "ligand": l_result, "pocket": p_result}
-        # TODO: Confirm that mask info is passed through correctly
 
     if results_directory is not None:
         dumpfn(results, os.path.join(results_directory, "mlip_ligand_pocket.json"))
@@ -173,14 +178,14 @@ def mlip_protonation_energies(calc, protonation_structures, results_directory=No
 def mlip_unoptimized_ie_ea(calc, unoptimized_ie_ea_structures, results_directory=None):
     results = {}
     for identifier, struct in tqdm.tqdm(unoptimized_ie_ea_structures.items()):
-        results[identifier] = {"original": ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"], struct["orig"].info["spin"]),
+        results[identifier] = {"original": format_single_point_result(ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"], struct["orig"].info["spin"])),
                                "add_electron": {},
                                "remove_electron": {},
         } 
         for spin in struct["add_electron_spins"]:
-            results[identifier]["add_electron"][spin] = ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"] - 1, spin)
+            results[identifier]["add_electron"][spin] = format_single_point_result(ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"] - 1, spin))
         for spin in struct["remove_electron_spins"]:
-            results[identifier]["remove_electron"][spin] = ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"] + 1, spin)
+            results[identifier]["remove_electron"][spin] = format_single_point_result(ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"] + 1, spin))
 
     if results_directory is not None:
         dumpfn(results, os.path.join(results_directory, "mlip_unoptimized_ie_ea.json"))
@@ -192,7 +197,7 @@ def mlip_distance_scaling(calc, distance_scaling_structures, results_directory=N
     results = {}
     for identifier, structs in tqdm.tqdm(distance_scaling_structures.items()):
         for component_identifier, component_struct in structs.items():
-            results[identifier][component_identifier] = ase_calc_single_point_job(calc, component_struct, component_struct.info["charge"], component_struct.info["spin"])
+            results[identifier][component_identifier] = format_single_point_result(ase_calc_single_point_job(calc, component_struct, component_struct.info["charge"], component_struct.info["spin"]))
 
     if results_directory is not None:
         dumpfn(results, os.path.join(results_directory, "mlip_distance_scaling.json"))
@@ -203,9 +208,9 @@ def mlip_distance_scaling(calc, distance_scaling_structures, results_directory=N
 def mlip_unoptimized_spin_gap(calc, unoptimized_spin_gap_structures, results_directory=None):
     results = {}
     for identifier, struct in tqdm.tqdm(unoptimized_spin_gap_structures.items()):
-        results[identifier] = {struct["orig"].info["spin"]: ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"], struct["orig"].info["spin"])}
+        results[identifier] = {struct["orig"].info["spin"]: format_single_point_result(ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"], struct["orig"].info["spin"]))}
         for spin in struct["additional_spins"]:
-            results[identifier][spin] = ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"], spin)
+            results[identifier][spin] = format_single_point_result(ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"], spin))
 
     if results_directory is not None:
         dumpfn(results, os.path.join(results_directory, "mlip_unoptimized_spin_gap.json"))

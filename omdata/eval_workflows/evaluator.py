@@ -80,13 +80,20 @@ def interaction_energy_and_forces(results, principal_identifier):
     interaction_energy = {}
     interaction_forces = {}
     for identifier in results.keys():
+        indices_found = set()
         interaction_energy[identifier] = results[identifier][principal_identifier]["energy"]
         interaction_forces[identifier] = results[identifier][principal_identifier]["forces"]
+        principal_atoms = results[identifier][principal_identifier]["atoms"]
         for component_identifier in results[identifier].keys():
             if component_identifier != principal_identifier:
                 interaction_energy[identifier] -= results[identifier][component_identifier]["energy"]
-                for ii, atom in enumerate(results[identifier][component_identifier]["atoms"]):
-                    interaction_forces[identifier][results[identifier][component_identifier]["atoms"].info["mask"][ii]] -= atom.force
+                for ii, sub_atom in enumerate(results[identifier][component_identifier]["atoms"]):
+                    for jj, principal_atom in enumerate(principal_atoms):
+                        if sub_atom.symbol == principal_atom.symbol:
+                            if (sub_atom.position == principal_atom.position).all():
+                                indices_found.add(jj)
+                                interaction_forces[identifier][jj] -= results[identifier][component_identifier]["forces"][ii]
+        assert len(indices_found) == len(principal_atoms)
 
     return interaction_energy, interaction_forces
 
@@ -214,8 +221,8 @@ def ligand_strain_processing(results):
         min_energy_struct = None
         for conformer_identifier, struct in results[identifier].items():
             if conformer_identifier != "ligand_in_pocket":
-                if struct["energy"] < min_energy:
-                    min_energy = struct["energy"]
+                if struct["final"]["energy"] < min_energy:
+                    min_energy = struct["final"]["energy"]
                     min_energy_struct = struct
         processed_results[identifier]["global_min"] = min_energy_struct
         processed_results[identifier]["strain_energy"] = results[identifier]["ligand_in_pocket"]["final"]["energy"] - min_energy
@@ -479,10 +486,10 @@ class OMol_Evaluator:
         for identifier in orca_results.items():
             for tag in ["protonated", "unprotonated"]:
                 # Compare DFT to MLIP on the DFT optimized structure, which is the MLIP initial structure
-                energy_mae += abs(orca_results[identifier][tag]["energy"] - mlip_results[identifier][tag]["initial"]["energy"])
-                forces_mae += np.mean(np.abs(orca_results[identifier][tag]["forces"] - mlip_results[identifier][tag]["initial"]["forces"]))
-                forces_cosine_similarity += cosine_similarity(orca_results[identifier][tag]["forces"], mlip_results[identifier][tag]["initial"]["forces"])
-            orca_deltaE = orca_results[identifier]["protonated"]["energy"] - orca_results[identifier]["unprotonated"]["energy"]
+                energy_mae += abs(orca_results[identifier][tag]["final"]["energy"] - mlip_results[identifier][tag]["initial"]["energy"])
+                forces_mae += np.mean(np.abs(orca_results[identifier][tag]["final"]["forces"] - mlip_results[identifier][tag]["initial"]["forces"]))
+                forces_cosine_similarity += cosine_similarity(orca_results[identifier][tag]["final"]["forces"], mlip_results[identifier][tag]["initial"]["forces"])
+            orca_deltaE = orca_results[identifier]["protonated"]["final"]["energy"] - orca_results[identifier]["unprotonated"]["final"]["energy"]
             deltaE_MLSP = mlip_results[identifier]["protonated"]["initial"]["energy"] - mlip_results[identifier]["unprotonated"]["initial"]["energy"]
             deltaE_MLRX = mlip_results[identifier]["protonated"]["final"]["energy"] - mlip_results[identifier]["unprotonated"]["final"]["energy"]
             deltaE_MLSP_mae += abs(orca_deltaE - deltaE_MLSP)

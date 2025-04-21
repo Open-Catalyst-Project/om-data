@@ -98,9 +98,7 @@ def ase_calc_single_point_job(
         Dictionary of results
     """
 
-    final_atoms = Runner(atoms, calc, copy_files=copy_files).run_calc(
-        geom_file=GEOM_FILE
-    )
+    final_atoms = Runner(atoms, calc, copy_files=copy_files).run_calc()
 
     return Summarize(
         charge_and_multiplicity=(charge, spin_multiplicity),
