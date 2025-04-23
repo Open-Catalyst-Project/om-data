@@ -648,8 +648,8 @@ def unoptimized_ie_ea(orca_results, mlip_results):
     orca_deltaE, orca_deltaF = charge_deltas(orca_results)
     mlip_deltaE, mlip_deltaF = charge_deltas(mlip_results)
     for identifier in orca_results.keys():
-        for tag in ["original", "add_electron", "remove_electron"]:
-            for spin in orca_results[identifier][tag].keys():
+        for charge in orca_results[identifier].keys():
+            for spin in orca_results[identifier][charge].keys():
                 energy_mae += abs(
                     orca_results[identifier][tag][spin]["energy"]
                     - mlip_results[identifier][tag][spin]["energy"]
@@ -664,7 +664,8 @@ def unoptimized_ie_ea(orca_results, mlip_results):
                     np.array(orca_results[identifier][tag][spin]["forces"]),
                     np.array(mlip_results[identifier][tag][spin]["forces"]),
                 )
-                if tag != "original":
+        for tag in ["add_electron", "remove_electron"]:
+            for spin in orca_deltaE[identifier][tag].keys():
                     deltaE_mae += abs(
                         orca_deltaE[identifier][tag][spin]
                         - mlip_deltaE[identifier][tag][spin]
