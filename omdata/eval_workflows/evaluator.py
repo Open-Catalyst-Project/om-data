@@ -159,7 +159,9 @@ def charge_deltas(results):
         assert len(results[identifier][str(charges[1])].keys()) == 1
         orig_spin = list(results[identifier][str(charges[1])].keys())[0]
         orig_energy = results[identifier][str(charges[1])][orig_spin]["energy"]
-        orig_forces = np.array(results[identifier][str(charges[1])][orig_spin]["forces"])
+        orig_forces = np.array(
+            results[identifier][str(charges[1])][orig_spin]["forces"]
+        )
         for charge_val, tag in [
             (str(charges[0]), "add_electron"),
             (str(charges[2]), "remove_electron"),
@@ -292,15 +294,6 @@ def get_one_prot_diff_name_pairs(names):
             if abs(name0_charge - name1_charge) == 1:
                 name_pairs.append((name0, name1))
     return name_pairs
-
-
-# The use of task_metrics and eval are both mockups and will need help to function as envisioned
-class OMol_Evaluator:
-    def __init__(self, task_name):
-        self.task_name = task_name
-
-    def eval(self, orca_results, mlip_results):
-        return eval(self.task_name)(orca_results, mlip_results)
 
 
 def ligand_pocket(orca_results, mlip_results):
@@ -666,20 +659,20 @@ def unoptimized_ie_ea(orca_results, mlip_results):
                 )
         for tag in ["add_electron", "remove_electron"]:
             for spin in orca_deltaE[identifier][tag].keys():
-                    deltaE_mae += abs(
-                        orca_deltaE[identifier][tag][spin]
-                        - mlip_deltaE[identifier][tag][spin]
+                deltaE_mae += abs(
+                    orca_deltaE[identifier][tag][spin]
+                    - mlip_deltaE[identifier][tag][spin]
+                )
+                deltaF_mae += np.mean(
+                    np.abs(
+                        orca_deltaF[identifier][tag][spin]
+                        - mlip_deltaF[identifier][tag][spin]
                     )
-                    deltaF_mae += np.mean(
-                        np.abs(
-                            orca_deltaF[identifier][tag][spin]
-                            - mlip_deltaF[identifier][tag][spin]
-                        )
-                    )
-                    deltaF_cosine_similarity += cosine_similarity(
-                        orca_deltaF[identifier][tag][spin],
-                        mlip_deltaF[identifier][tag][spin],
-                    )
+                )
+                deltaF_cosine_similarity += cosine_similarity(
+                    orca_deltaF[identifier][tag][spin],
+                    mlip_deltaF[identifier][tag][spin],
+                )
 
     results = {
         "energy_mae": energy_mae / len(orca_results.keys()),
