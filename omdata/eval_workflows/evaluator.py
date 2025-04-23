@@ -258,56 +258,12 @@ def ligand_strain_processing(results):
 
 # The use of task_metrics and eval are both mockups and will need help to function as envisioned
 class OMol_Evaluator:
-    task_metrics = {
-        "ligand_pocket": {
-            "energy": ["mae"],
-            "forces": ["mae", "cosine_similarity"],
-            "interaction_energy": ["mae"],
-            "interaction_forces": ["mae", "cosine_similarity"],
-        },
-        "ligand_strain": {"deltaE": ["mae"], "structures": ["rmsd"]},
-        "geom_conformers_type1": {
-            "structures": ["ensemble_rmsd", "boltzmann_weighted_rmsd"],
-        },
-        "geom_conformers_type2": {
-            "energy": ["mae"],
-            "forces": ["mae", "cosine_similarity"],
-            "deltaE_MLSP": ["mae"],
-            "deltaE_MLRX": ["mae"],
-            "structures": ["boltzmann_weighted_rmsd"],
-        },
-        "protonation_energies_type1": {"deltaE": ["mae"], "structures": ["rmsd"]},
-        "protonation_energies_type2": {
-            "energy": ["mae"],
-            "forces": ["mae", "cosine_similarity"],
-            "deltaE_MLSP": ["mae"],
-            "deltaE_MLRX": ["mae"],
-        },
-        "unoptimized_ie_ea": {
-            "energy": ["mae"],
-            "forces": ["mae", "cosine_similarity"],
-            "deltaE": ["mae"],
-            "deltaF": ["mae", "cosine_similarity"],
-        },
-        "distance_scaling": {
-            "energy": ["mae"],
-            "forces": ["mae", "cosine_similarity"],
-            "interaction_energy": ["mae"],
-            "interaction_forces": ["mae", "cosine_similarity"],
-        },
-        "unoptimized_spin_gap": {
-            "energy": ["mae"],
-            "forces": ["mae", "cosine_similarity"],
-            "deltaE": ["mae"],
-            "deltaF": ["mae", "cosine_similarity"],
-        },
-    }
 
     def __init__(self, task_name):
         self.task_name = task_name
 
-    def eval(self, orca_results, ml_results):
-        return eval(self.task_name)(orca_results, ml_results)
+    def eval(self, orca_results, mlip_results):
+        return eval(self.task_name)(orca_results, mlip_results)
 
 
 def ligand_pocket(orca_results, mlip_results):
@@ -363,19 +319,12 @@ def ligand_pocket(orca_results, mlip_results):
         )
 
     results = {
-        "energy": {"mae": energy_mae / len(orca_results.keys())},
-        "forces": {
-            "mae": forces_mae / len(orca_results.keys()),
-            "cosine_similarity": forces_cosine_similarity / len(orca_results.keys()),
-        },
-        "interaction_energy": {
-            "mae": interaction_energy_mae / len(orca_results.keys())
-        },
-        "interaction_forces": {
-            "mae": interaction_forces_mae / len(orca_results.keys()),
-            "cosine_similarity": interaction_forces_cosine_similarity
-            / len(orca_results.keys()),
-        },
+        "energy_mae": energy_mae / len(orca_results.keys()),
+        "forces_mae": forces_mae / len(orca_results.keys()),
+        "forces_cosine_similarity": forces_cosine_similarity / len(orca_results.keys()),
+        "interaction_energy_mae": interaction_energy_mae / len(orca_results.keys()),
+        "interaction_forces_mae": interaction_forces_mae / len(orca_results.keys()),
+        "interaction_forces_cosine_similarity": interaction_forces_cosine_similarity / len(orca_results.keys()),
     }
     return results
 
@@ -393,21 +342,21 @@ def ligand_strain(orca_results, mlip_results):
     """
     processed_orca_results = ligand_strain_processing(orca_results)
     processed_mlip_results = ligand_strain_processing(mlip_results)
-    deltaE_mae = 0
-    rmsd = 0
+    strain_energy_mae = 0
+    global_min_rmsd = 0
     for identifier in orca_results.keys():
-        deltaE_mae += abs(
+        strain_energy_mae += abs(
             processed_orca_results[identifier]["strain_energy"]
             - processed_mlip_results[identifier]["strain_energy"]
         )
-        rmsd += sdgr_rmsd(
+        global_min_rmsd += sdgr_rmsd(
             processed_orca_results[identifier]["global_min"]["atoms"],
             processed_mlip_results[identifier]["global_min"]["atoms"],
         )
 
     results = {
-        "deltaE": {"mae": deltaE_mae / len(orca_results.keys())},
-        "structures": {"rmsd": rmsd / len(orca_results.keys())},
+        "strain_energy_mae": strain_energy_mae / len(orca_results.keys()),
+        "global_min_rmsd": global_min_rmsd / len(orca_results.keys()),
     }
     return results
 
@@ -428,7 +377,11 @@ def geom_conformers_type1(orca_results, mlip_results):
     orca_boltzmann_weighted_structures = boltzmann_weighted_structures(orca_results)
     mlip_boltzmann_weighted_structures = boltzmann_weighted_structures(mlip_results)
     for family_identifier, structs in orca_results.items():
+        # Only need to do ensemble_rmsd once because there will always be the same
+        # number of ORCA and MLIP structures
         ensemble_rmsd += calc_ensemble_rmsd(structs, mlip_results[family_identifier])
+        # Need to do boltzmann_weighted_rmsd in both directions because there may be a
+        # different number of ORCA and MLIP structures with non-trivial Boltzmann weights
         boltzmann_weighted_rmsd += calc_boltzmann_weighted_rmsd(
             orca_boltzmann_weighted_structures[family_identifier],
             mlip_boltzmann_weighted_structures[family_identifier],
@@ -439,10 +392,8 @@ def geom_conformers_type1(orca_results, mlip_results):
         )
 
     results = {
-        "structures": {
-            "ensemble_rmsd": ensemble_rmsd,
-            "boltzmann_weighted_rmsd": boltzmann_weighted_rmsd,
-        }
+        "ensemble_rmsd": ensemble_rmsd,
+        "boltzmann_weighted_rmsd": boltzmann_weighted_rmsd,
     }
     return results
 
@@ -523,14 +474,12 @@ def geom_conformers_type2(orca_results, mlip_results):
         )
 
     results = {
-        "energy": {"mae": energy_mae / len(orca_results.keys())},
-        "forces": {
-            "mae": forces_mae / len(orca_results.keys()),
-            "cosine_similarity": forces_cosine_similarity / len(orca_results.keys()),
-        },
-        "deltaE_MLSP": {"mae": deltaE_MLSP_mae / len(orca_results.keys())},
-        "deltaE_MLRX": {"mae": deltaE_MLRX_mae / len(orca_results.keys())},
-        "structures": {"boltzmann_weighted_rmsd": boltzmann_weighted_rmsd},
+        "energy_mae": energy_mae / len(orca_results.keys()),
+        "forces_mae": forces_mae / len(orca_results.keys()),
+        "forces_cosine_similarity": forces_cosine_similarity / len(orca_results.keys()),
+        "deltaE_MLSP_mae": deltaE_MLSP_mae / len(orca_results.keys()),
+        "deltaE_MLRX_mae": deltaE_MLRX_mae / len(orca_results.keys()),
+        "boltzmann_weighted_rmsd": boltzmann_weighted_rmsd,
     }
     return results
 
@@ -568,8 +517,8 @@ def protonation_energies_type1(orca_results, mlip_results):
         )
 
     results = {
-        "deltaE": {"mae": deltaE_mae / len(orca_results.keys())},
-        "structures": {"rmsd": rmsd / len(orca_results.keys())},
+        "deltaE_mae": deltaE_mae / len(orca_results.keys()),
+        "rmsd": rmsd / len(orca_results.keys()),
     }
     return results
 
@@ -626,13 +575,11 @@ def protonation_energies_type2(orca_results, mlip_results):
         deltaE_MLRX_mae += abs(orca_deltaE - deltaE_MLRX)
 
     results = {
-        "energy": {"mae": energy_mae / len(orca_results.keys())},
-        "forces": {
-            "mae": forces_mae / len(orca_results.keys()),
-            "cosine_similarity": forces_cosine_similarity / len(orca_results.keys()),
-        },
-        "deltaE_MLSP": {"mae": deltaE_MLSP_mae / len(orca_results.keys())},
-        "deltaE_MLRX": {"mae": deltaE_MLRX_mae / len(orca_results.keys())},
+        "energy_mae": energy_mae / len(orca_results.keys()),
+        "forces_mae": forces_mae / len(orca_results.keys()),
+        "forces_cosine_similarity": forces_cosine_similarity / len(orca_results.keys()),
+        "deltaE_MLSP_mae": deltaE_MLSP_mae / len(orca_results.keys()),
+        "deltaE_MLRX_mae": deltaE_MLRX_mae / len(orca_results.keys()),
     }
     return results
 
@@ -690,16 +637,12 @@ def unoptimized_ie_ea(orca_results, mlip_results):
                     )
 
     results = {
-        "energy": {"mae": energy_mae / len(orca_results.keys())},
-        "forces": {
-            "mae": forces_mae / len(orca_results.keys()),
-            "cosine_similarity": forces_cosine_similarity / len(orca_results.keys()),
-        },
-        "deltaE": {"mae": deltaE_mae / len(orca_results.keys())},
-        "deltaF": {
-            "mae": deltaF_mae / len(orca_results.keys()),
-            "cosine_similarity": deltaF_cosine_similarity / len(orca_results.keys()),
-        },
+        "energy_mae": energy_mae / len(orca_results.keys()),
+        "forces_mae": forces_mae / len(orca_results.keys()),
+        "forces_cosine_similarity": forces_cosine_similarity / len(orca_results.keys()),
+        "deltaE_mae": deltaE_mae / len(orca_results.keys()),
+        "deltaF_mae": deltaF_mae / len(orca_results.keys()),
+        "deltaF_cosine_similarity": deltaF_cosine_similarity / len(orca_results.keys()),
     }
     return results
 
@@ -757,19 +700,13 @@ def distance_scaling(orca_results, mlip_results):
         )
 
     results = {
-        "energy": {"mae": energy_mae / len(orca_results.keys())},
-        "forces": {
-            "mae": forces_mae / len(orca_results.keys()),
-            "cosine_similarity": forces_cosine_similarity / len(orca_results.keys()),
-        },
-        "interaction_energy": {
-            "mae": interaction_energy_mae / len(orca_results.keys())
-        },
-        "interaction_forces": {
-            "mae": interaction_forces_mae / len(orca_results.keys()),
-            "cosine_similarity": interaction_forces_cosine_similarity
-            / len(orca_results.keys()),
-        },
+        "energy_mae": energy_mae / len(orca_results.keys()),
+        "forces_mae": forces_mae / len(orca_results.keys()),
+        "forces_cosine_similarity": forces_cosine_similarity / len(orca_results.keys()),
+        "interaction_energy_mae": interaction_energy_mae / len(orca_results.keys()),
+        "interaction_forces_mae": interaction_forces_mae / len(orca_results.keys()),
+        "interaction_forces_cosine_similarity": interaction_forces_cosine_similarity
+        / len(orca_results.keys()),
     }
     return results
 
@@ -825,15 +762,11 @@ def unoptimized_spin_gap(orca_results, mlip_results):
                 )
 
     results = {
-        "energy": {"mae": energy_mae / len(orca_results.keys())},
-        "forces": {
-            "mae": forces_mae / len(orca_results.keys()),
-            "cosine_similarity": forces_cosine_similarity / len(orca_results.keys()),
-        },
-        "deltaE": {"mae": deltaE_mae / len(orca_results.keys())},
-        "deltaF": {
-            "mae": deltaF_mae / len(orca_results.keys()),
-            "cosine_similarity": deltaF_cosine_similarity / len(orca_results.keys()),
-        },
+        "energy_mae": energy_mae / len(orca_results.keys()),
+        "forces_mae": forces_mae / len(orca_results.keys()),
+        "forces_cosine_similarity": forces_cosine_similarity / len(orca_results.keys()),
+        "deltaE_mae": deltaE_mae / len(orca_results.keys()),
+        "deltaF_mae": deltaF_mae / len(orca_results.keys()),
+        "deltaF_cosine_similarity": deltaF_cosine_similarity / len(orca_results.keys()),
     }
     return results
