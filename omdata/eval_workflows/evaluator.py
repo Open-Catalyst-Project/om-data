@@ -139,17 +139,20 @@ def charge_deltas(results):
     deltaE = {}
     deltaF = {}
     for identifier in results.keys():
+        charges = sorted(list(results[identifier].keys()))
+        assert charges[1] - 1 == charges[0]
+        assert charges[1] + 1 == charges[2]
         deltaE[identifier] = {"add_electron": {}, "remove_electron": {}}
         deltaF[identifier] = {"add_electron": {}, "remove_electron": {}}
-        orig_energy = results[identifier]["original"]["energy"]
-        orig_forces = results[identifier]["original"]["forces"]
-        for tag in ["add_electron", "remove_electron"]:
-            for spin in results[identifier][tag].keys():
-                deltaE[identifier][tag][spin] = (
-                    results[identifier][tag][spin]["energy"] - orig_energy
+        orig_energy = results[identifier][charges[1]]["energy"]
+        orig_forces = results[identifier][charges[1]]["forces"]
+        for charge_val, tag in [(charges[0], "add_electron"), (charges[2], "remove_electron")]:
+            for spin in results[identifier][charge_val].keys():
+                deltaE[identifier][charge_val][spin] = (
+                    results[identifier][charge_val][spin]["energy"] - orig_energy
                 )
-                deltaF[identifier][tag][spin] = (
-                    results[identifier][tag][spin]["forces"] - orig_forces
+                deltaF[identifier][charge_val][spin] = (
+                    results[identifier][charge_val][spin]["forces"] - orig_forces
                 )
     return deltaE, deltaF
 
