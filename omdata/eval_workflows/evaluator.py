@@ -60,7 +60,7 @@ def interaction_energy_and_forces(results, principal_identifier):
     Calculate the interaction energy and interaction forces between a principal structure and each individual component in the complex.
 
     Args:
-        results (dict): Conformer results from ORCA or MLIP calculations.
+        results (dict): Results from ORCA or MLIP calculations.
         principal_identifier (str): The identifier of the principal structure.
 
     Returns:
@@ -95,6 +95,10 @@ def interaction_energy_and_forces(results, principal_identifier):
         assert len(indices_found) == len(principal_atoms)
 
     return interaction_energy, interaction_forces
+
+
+def distance_scaling_processing(results):
+    results = {}
 
 
 def spin_deltas(results):
@@ -148,10 +152,10 @@ def charge_deltas(results):
         orig_forces = results[identifier][charges[1]]["forces"]
         for charge_val, tag in [(charges[0], "add_electron"), (charges[2], "remove_electron")]:
             for spin in results[identifier][charge_val].keys():
-                deltaE[identifier][charge_val][spin] = (
+                deltaE[identifier][tag][spin] = (
                     results[identifier][charge_val][spin]["energy"] - orig_energy
                 )
-                deltaF[identifier][charge_val][spin] = (
+                deltaF[identifier][tag][spin] = (
                     results[identifier][charge_val][spin]["forces"] - orig_forces
                 )
     return deltaE, deltaF
@@ -688,11 +692,11 @@ def distance_scaling(orca_results, mlip_results):
     interaction_energy_mae = 0
     interaction_forces_mae = 0
     interaction_forces_cosine_similarity = 0
-    orca_interaction_energy, orca_interaction_forces = interaction_energy_and_forces(
-        orca_results, "complex"
+    orca_interaction_energy, orca_interaction_forces = distance_scaling_processing(
+        orca_results
     )
-    mlip_interaction_energy, mlip_interaction_forces = interaction_energy_and_forces(
-        mlip_results, "complex"
+    mlip_interaction_energy, mlip_interaction_forces = distance_scaling_processing(
+        mlip_results
     )
     for identifier in orca_results.keys():
         for component_identifier in orca_results[identifier].keys():
