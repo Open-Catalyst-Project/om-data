@@ -60,6 +60,7 @@ geom_conformers_structures_type2 = {}
 #                ...
 #                }
 protonation_structures_type1 = {}
+# NOTE: names should be in the format "name_charge_spin"
 
 # key: identifier, value: {
 #                "name1": Atoms, 
@@ -67,6 +68,7 @@ protonation_structures_type1 = {}
 #                ...
 #                }
 protonation_structures_type2 = {}
+# NOTE: names should be in the format "name_charge_spin"
 # NOTE: these structures should have already been optimized by DFT
 
 # key: identifier, value: {

@@ -256,6 +256,23 @@ def ligand_strain_processing(results):
     return processed_results
 
 
+def get_one_prot_diff_name_pairs(names):
+    """
+    Get all pairs of names that have a charge difference of 1.
+
+    Assumes that the names are in the format "name_charge_spin"
+    """
+    name_pairs = []
+    for ii, name0 in enumerate(names):
+        for jj in range(ii + 1, len(names)):
+            name1 = names[jj]
+            name0_charge = int(name0.split("_")[-2])
+            name1_charge = int(name1.split("_")[-2])
+            if abs(name0_charge - name1_charge) == 1:
+                name_pairs.append((name0, name1))
+    return name_pairs
+
+
 # The use of task_metrics and eval are both mockups and will need help to function as envisioned
 class OMol_Evaluator:
 
@@ -497,24 +514,26 @@ def protonation_energies_type1(orca_results, mlip_results):
     """
     deltaE_mae = 0
     rmsd = 0
-    for identifier in orca_results.keys():
-        orca_deltaE = (
-            orca_results[identifier]["protonated"]["final"]["energy"]
-            - orca_results[identifier]["unprotonated"]["final"]["energy"]
-        )
-        mlip_deltaE = (
-            mlip_results[identifier]["protonated"]["final"]["energy"]
-            - mlip_results[identifier]["unprotonated"]["final"]["energy"]
-        )
-        deltaE_mae += abs(orca_deltaE - mlip_deltaE)
-        rmsd += sdgr_rmsd(
-            orca_results[identifier]["protonated"]["final"]["atoms"],
-            mlip_results[identifier]["protonated"]["final"]["atoms"],
-        )
-        rmsd += sdgr_rmsd(
-            orca_results[identifier]["unprotonated"]["final"]["atoms"],
-            mlip_results[identifier]["unprotonated"]["final"]["atoms"],
-        )
+    for identifier, structs in orca_results.items():
+        one_prot_diff_name_pairs = get_one_prot_diff_name_pairs(list(structs.keys()))
+        for name0, name1 in one_prot_diff_name_pairs:
+            orca_deltaE = (
+                structs[name0]["final"]["energy"]
+                - structs[name1]["final"]["energy"]
+            )
+            mlip_deltaE = (
+                mlip_results[identifier][name0]["final"]["energy"]
+                - mlip_results[identifier][name1]["final"]["energy"]
+            )
+            deltaE_mae += abs(orca_deltaE - mlip_deltaE)
+            rmsd += sdgr_rmsd(
+                structs[name0]["final"]["atoms"],
+                mlip_results[identifier][name0]["final"]["atoms"],
+            )
+            rmsd += sdgr_rmsd(
+                structs[name1]["final"]["atoms"],
+                mlip_results[identifier][name1]["final"]["atoms"],
+            )
 
     results = {
         "deltaE_mae": deltaE_mae / len(orca_results.keys()),
@@ -526,9 +545,9 @@ def protonation_energies_type1(orca_results, mlip_results):
 def protonation_energies_type2(orca_results, mlip_results):
     """
     Calculate error metrics for the type2 protonation energies evaluation task.
-    deltaE_MLSP_i is the protonation energy for species i calculated with the MLIP using ORCA minimized structures without reoptimization by the MLIP
-    deltaE_MLRX_i is the protonation energy for species i calculated with the MLIP where ORCA minimized structures are reoptimized by the MLIP
-    Both are compared against the ORCA deltaE_i, with lower deltaE_MLSP_mae and deltaE_MLRX_mae values indicating a better match between the MLIP and DFT.
+    deltaE_MLSP_ij is energy difference between species i and j calculated with the MLIP using ORCA minimized structures without reoptimization by the MLIP
+    deltaE_MLRX_ij is energy difference between species i and j calculated with the MLIP where ORCA minimized structures are reoptimized by the MLIP
+    Both are compared against the ORCA deltaE_ij, with lower deltaE_MLSP_mae and deltaE_MLRX_mae values indicating a better match between the MLIP and DFT.
 
     Args:
         orca_results (dict): Results from ORCA calculations.
@@ -542,37 +561,39 @@ def protonation_energies_type2(orca_results, mlip_results):
     forces_cosine_similarity = 0
     deltaE_MLSP_mae = 0
     deltaE_MLRX_mae = 0
-    for identifier in orca_results.items():
-        for tag in ["protonated", "unprotonated"]:
+    for identifier, structs in orca_results.items():
+        for name in structs.keys():
             # Compare DFT to MLIP on the DFT optimized structure, which is the MLIP initial structure
             energy_mae += abs(
-                orca_results[identifier][tag]["final"]["energy"]
-                - mlip_results[identifier][tag]["initial"]["energy"]
+                structs[name]["final"]["energy"]
+                - mlip_results[identifier][name]["initial"]["energy"]
             )
             forces_mae += np.mean(
                 np.abs(
-                    orca_results[identifier][tag]["final"]["forces"]
-                    - mlip_results[identifier][tag]["initial"]["forces"]
+                    structs[name]["final"]["forces"]
+                    - mlip_results[identifier][name]["initial"]["forces"]
                 )
             )
             forces_cosine_similarity += cosine_similarity(
-                orca_results[identifier][tag]["final"]["forces"],
-                mlip_results[identifier][tag]["initial"]["forces"],
+                structs[name]["final"]["forces"],
+                mlip_results[identifier][name]["initial"]["forces"],
             )
-        orca_deltaE = (
-            orca_results[identifier]["protonated"]["final"]["energy"]
-            - orca_results[identifier]["unprotonated"]["final"]["energy"]
-        )
-        deltaE_MLSP = (
-            mlip_results[identifier]["protonated"]["initial"]["energy"]
-            - mlip_results[identifier]["unprotonated"]["initial"]["energy"]
-        )
-        deltaE_MLRX = (
-            mlip_results[identifier]["protonated"]["final"]["energy"]
-            - mlip_results[identifier]["unprotonated"]["final"]["energy"]
-        )
-        deltaE_MLSP_mae += abs(orca_deltaE - deltaE_MLSP)
-        deltaE_MLRX_mae += abs(orca_deltaE - deltaE_MLRX)
+        one_prot_diff_name_pairs = get_one_prot_diff_name_pairs(list(structs.keys()))
+        for name0, name1 in one_prot_diff_name_pairs:
+            orca_deltaE = (
+                structs[name0]["final"]["energy"]
+                - structs[name1]["final"]["energy"]
+            )
+            deltaE_MLSP = (
+                mlip_results[identifier][name0]["initial"]["energy"]
+                - mlip_results[identifier][name1]["initial"]["energy"]
+            )
+            deltaE_MLRX = (
+                mlip_results[identifier][name0]["final"]["energy"]
+                - mlip_results[identifier][name1]["final"]["energy"]
+            )
+            deltaE_MLSP_mae += abs(orca_deltaE - deltaE_MLSP)
+            deltaE_MLRX_mae += abs(orca_deltaE - deltaE_MLRX)
 
     results = {
         "energy_mae": energy_mae / len(orca_results.keys()),
