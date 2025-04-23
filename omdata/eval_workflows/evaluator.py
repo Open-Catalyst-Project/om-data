@@ -156,8 +156,10 @@ def charge_deltas(results):
         assert charges[1] + 1 == charges[2]
         deltaE[identifier] = {"add_electron": {}, "remove_electron": {}}
         deltaF[identifier] = {"add_electron": {}, "remove_electron": {}}
-        orig_energy = results[identifier][str(charges[1])]["energy"]
-        orig_forces = np.array(results[identifier][str(charges[1])]["forces"])
+        assert len(results[identifier][str(charges[1])].keys()) == 1
+        orig_spin = list(results[identifier][str(charges[1])].keys())[0]
+        orig_energy = results[identifier][str(charges[1])][orig_spin]["energy"]
+        orig_forces = np.array(results[identifier][str(charges[1])][orig_spin]["forces"])
         for charge_val, tag in [
             (str(charges[0]), "add_electron"),
             (str(charges[2]), "remove_electron"),
