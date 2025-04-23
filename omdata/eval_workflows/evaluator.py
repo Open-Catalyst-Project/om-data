@@ -120,16 +120,18 @@ def spin_deltas(results):
     for identifier in results.keys():
         deltaE[identifier] = {}
         deltaF[identifier] = {}
-        spins = list(results[identifier].keys())
+        spins = []
+        for spin in results[identifier].keys():
+            spins.append(int(spin))
         spins.sort(reverse=True)
         for spin in spins[1:]:
             deltaE[identifier][spin] = (
-                results[identifier][spins[0]]["energy"]
-                - results[identifier][spin]["energy"]
+                results[identifier][str(spins[0])]["energy"]
+                - results[identifier][str(spin)]["energy"]
             )
             deltaF[identifier][spin] = np.array(
-                results[identifier][spins[0]]["forces"]
-            ) - np.array(results[identifier][spin]["forces"])
+                results[identifier][str(spins[0])]["forces"]
+            ) - np.array(results[identifier][str(spin)]["forces"])
     return deltaE, deltaF
 
 
@@ -146,16 +148,19 @@ def charge_deltas(results):
     deltaE = {}
     deltaF = {}
     for identifier in results.keys():
-        charges = sorted(list(results[identifier].keys()))
+        charges = []
+        for charge in results[identifier].keys():
+            charges.append(int(charge))
+        charges = sorted(charges)
         assert charges[1] - 1 == charges[0]
         assert charges[1] + 1 == charges[2]
         deltaE[identifier] = {"add_electron": {}, "remove_electron": {}}
         deltaF[identifier] = {"add_electron": {}, "remove_electron": {}}
-        orig_energy = results[identifier][charges[1]]["energy"]
-        orig_forces = np.array(results[identifier][charges[1]]["forces"])
+        orig_energy = results[identifier][str(charges[1])]["energy"]
+        orig_forces = np.array(results[identifier][str(charges[1])]["forces"])
         for charge_val, tag in [
-            (charges[0], "add_electron"),
-            (charges[2], "remove_electron"),
+            (str(charges[0]), "add_electron"),
+            (str(charges[2]), "remove_electron"),
         ]:
             for spin in results[identifier][charge_val].keys():
                 deltaE[identifier][tag][spin] = (
@@ -768,22 +773,24 @@ def unoptimized_spin_gap(orca_results, mlip_results):
     orca_deltaE, orca_deltaF = spin_deltas(orca_results)
     mlip_deltaE, mlip_deltaF = spin_deltas(mlip_results)
     for identifier in orca_results.keys():
-        spins = list(orca_results[identifier].keys())
+        spins = []
+        for spin in orca_results[identifier].keys():
+            spins.append(int(spin))
         spins.sort(reverse=True)
         for spin in spins:
             energy_mae += abs(
-                orca_results[identifier][spin]["energy"]
-                - mlip_results[identifier][spin]["energy"]
+                orca_results[identifier][str(spin)]["energy"]
+                - mlip_results[identifier][str(spin)]["energy"]
             )
             forces_mae += np.mean(
                 np.abs(
-                    np.array(orca_results[identifier][spin]["forces"])
-                    - np.array(mlip_results[identifier][spin]["forces"])
+                    np.array(orca_results[identifier][str(spin)]["forces"])
+                    - np.array(mlip_results[identifier][str(spin)]["forces"])
                 )
             )
             forces_cosine_similarity += cosine_similarity(
-                np.array(orca_results[identifier][spin]["forces"]),
-                np.array(mlip_results[identifier][spin]["forces"]),
+                np.array(orca_results[identifier][str(spin)]["forces"]),
+                np.array(mlip_results[identifier][str(spin)]["forces"]),
             )
             if spin != spins[0]:
                 deltaE_mae += abs(
