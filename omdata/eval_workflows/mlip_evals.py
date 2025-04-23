@@ -55,42 +55,48 @@ geom_conformers_structures_type2 = {}
 # NOTE: these structures should have already been optimized by DFT
 
 # key: identifier, value: {
-#                "unprotonated": Atoms, 
-#                "protonated": Atoms, 
+#                "name1": Atoms, 
+#                "name2": Atoms, 
+#                ...
 #                }
 protonation_structures_type1 = {}
 
 # key: identifier, value: {
-#                "unprotonated": Atoms, 
-#                "protonated": Atoms, 
+#                "name1": Atoms, 
+#                "name2": Atoms, 
+#                ...
 #                }
 protonation_structures_type2 = {}
 # NOTE: these structures should have already been optimized by DFT
 
 # key: identifier, value: {
-#                "orig": Atoms,
-#                "add_electron_spins": [spin0, ...],
-#                "remove_electron_spins": [spin0, ...]
+#                    charge0: {
+#                        "spin0": Atoms,
+#                        ...
+#                    },
+#                    charge1: {
+#                        "spin0": Atoms,
+#                        ...
+#                    },
+#                    charge2: {
+#                        "spin0": Atoms,
+#                        ...
+#                    },
 #                }
 unoptimized_ie_ea_structures = {}
 
 # key: identifier, value: { 
-#                "scaled_complex_0": Atoms,
-#                "scaled_complex_1": Atoms,
-#                ...
-#                "component_0": Atoms,
-#                "component_1": Atoms,
+#                scaling_value0: Atoms,
+#                scaling_value1: Atoms,
 #                ...
 #                }
 distance_scaling_structures = {}
-# NOTE: component atoms should have mask info in atoms.info to map their atoms to the complex atoms
 
 # key: identifier, value: {
-#                "orig": Atoms,
-#                "additional_spins": [spin0, ...],
+#                spin0: Atoms,
+#                ...
 #                }
 unoptimized_spin_gap_structures = {}
-# NOTE: structures should all be "high spin", i.e. spin_multiplicity > 2
 
 
 def format_relax_result(result):
@@ -164,9 +170,9 @@ def mlip_protonation_energies(calc, protonation_structures, results_directory=No
     results = {}
     for identifier, structs in tqdm.tqdm(protonation_structures.items()):
         family_results = {}
-        for protonation_state in ["unprotonated", "protonated"]:
-            result = ase_calc_relax_job(calc, structs[protonation_state], structs[protonation_state].info["charge"], structs[protonation_state].info["spin"], opt_params=TIGHT_OPT_PARAMETERS)
-            family_results[protonation_state] = format_relax_result(result)
+        for name in structs.keys():
+            result = ase_calc_relax_job(calc, structs[name], structs[name].info["charge"], structs[name].info["spin"], opt_params=TIGHT_OPT_PARAMETERS)
+            family_results[name] = format_relax_result(result)
         results[identifier] = family_results
 
     if results_directory is not None:
@@ -177,16 +183,14 @@ def mlip_protonation_energies(calc, protonation_structures, results_directory=No
 
 def mlip_unoptimized_ie_ea(calc, unoptimized_ie_ea_structures, results_directory=None):
     results = {}
-    for identifier, struct in tqdm.tqdm(unoptimized_ie_ea_structures.items()):
-        results[identifier] = {"original": format_single_point_result(ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"], struct["orig"].info["spin"])),
-                               "add_electron": {},
-                               "remove_electron": {},
-        } 
-        for spin in struct["add_electron_spins"]:
-            results[identifier]["add_electron"][spin] = format_single_point_result(ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"] - 1, spin))
-        for spin in struct["remove_electron_spins"]:
-            results[identifier]["remove_electron"][spin] = format_single_point_result(ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"] + 1, spin))
-
+    for identifier, structs in tqdm.tqdm(unoptimized_ie_ea_structures.items()):
+        results[identifier] = {} 
+        for charge in structs.keys():
+            results[identifier][charge] = {}
+            for spin in structs[charge].keys():
+                assert structs[charge][spin].info["charge"] == charge
+                assert structs[charge][spin].info["spin"] == spin
+                results[identifier][charge][spin] = format_single_point_result(ase_calc_single_point_job(calc, structs[charge][spin], charge, spin))
     if results_directory is not None:
         dumpfn(results, os.path.join(results_directory, "mlip_unoptimized_ie_ea.json"))
     else:
@@ -196,8 +200,9 @@ def mlip_unoptimized_ie_ea(calc, unoptimized_ie_ea_structures, results_directory
 def mlip_distance_scaling(calc, distance_scaling_structures, results_directory=None):
     results = {}
     for identifier, structs in tqdm.tqdm(distance_scaling_structures.items()):
-        for component_identifier, component_struct in structs.items():
-            results[identifier][component_identifier] = format_single_point_result(ase_calc_single_point_job(calc, component_struct, component_struct.info["charge"], component_struct.info["spin"]))
+        results[identifier] = {}
+        for scaling_value, struct in structs.items():
+            results[identifier][scaling_value] = format_single_point_result(ase_calc_single_point_job(calc, struct, struct.info["charge"], struct.info["spin"]))
 
     if results_directory is not None:
         dumpfn(results, os.path.join(results_directory, "mlip_distance_scaling.json"))
@@ -207,10 +212,11 @@ def mlip_distance_scaling(calc, distance_scaling_structures, results_directory=N
 
 def mlip_unoptimized_spin_gap(calc, unoptimized_spin_gap_structures, results_directory=None):
     results = {}
-    for identifier, struct in tqdm.tqdm(unoptimized_spin_gap_structures.items()):
-        results[identifier] = {struct["orig"].info["spin"]: format_single_point_result(ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"], struct["orig"].info["spin"]))}
-        for spin in struct["additional_spins"]:
-            results[identifier][spin] = format_single_point_result(ase_calc_single_point_job(calc, struct["orig"], struct["orig"].info["charge"], spin))
+    for identifier, structs in tqdm.tqdm(unoptimized_spin_gap_structures.items()):
+        results[identifier] = {}
+        for spin in structs.keys():
+            assert structs[spin].info["spin"] == spin
+            results[identifier][spin] = format_single_point_result(ase_calc_single_point_job(calc, structs[spin], structs[spin].info["charge"], structs[spin].info["spin"]))
 
     if results_directory is not None:
         dumpfn(results, os.path.join(results_directory, "mlip_unoptimized_spin_gap.json"))
