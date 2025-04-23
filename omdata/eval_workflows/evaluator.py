@@ -127,10 +127,9 @@ def spin_deltas(results):
                 results[identifier][spins[0]]["energy"]
                 - results[identifier][spin]["energy"]
             )
-            deltaF[identifier][spin] = (
+            deltaF[identifier][spin] = np.array(
                 results[identifier][spins[0]]["forces"]
-                - results[identifier][spin]["forces"]
-            )
+            ) - np.array(results[identifier][spin]["forces"])
     return deltaE, deltaF
 
 
@@ -153,7 +152,7 @@ def charge_deltas(results):
         deltaE[identifier] = {"add_electron": {}, "remove_electron": {}}
         deltaF[identifier] = {"add_electron": {}, "remove_electron": {}}
         orig_energy = results[identifier][charges[1]]["energy"]
-        orig_forces = results[identifier][charges[1]]["forces"]
+        orig_forces = np.array(results[identifier][charges[1]]["forces"])
         for charge_val, tag in [
             (charges[0], "add_electron"),
             (charges[2], "remove_electron"),
@@ -163,7 +162,8 @@ def charge_deltas(results):
                     results[identifier][charge_val][spin]["energy"] - orig_energy
                 )
                 deltaF[identifier][tag][spin] = (
-                    results[identifier][charge_val][spin]["forces"] - orig_forces
+                    np.array(results[identifier][charge_val][spin]["forces"])
+                    - orig_forces
                 )
     return deltaE, deltaF
 
@@ -327,13 +327,13 @@ def ligand_pocket(orca_results, mlip_results):
             )
             forces_mae += np.mean(
                 np.abs(
-                    orca_results[identifier][component_identifier]["forces"]
-                    - mlip_results[identifier][component_identifier]["forces"]
+                    np.array(orca_results[identifier][component_identifier]["forces"])
+                    - np.array(mlip_results[identifier][component_identifier]["forces"])
                 )
             )
             forces_cosine_similarity += cosine_similarity(
-                orca_results[identifier][component_identifier]["forces"],
-                mlip_results[identifier][component_identifier]["forces"],
+                np.array(orca_results[identifier][component_identifier]["forces"]),
+                np.array(mlip_results[identifier][component_identifier]["forces"]),
             )
         interaction_energy_mae += abs(
             orca_interaction_energy[identifier] - mlip_interaction_energy[identifier]
