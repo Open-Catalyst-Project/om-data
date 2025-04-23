@@ -651,18 +651,18 @@ def unoptimized_ie_ea(orca_results, mlip_results):
         for charge in orca_results[identifier].keys():
             for spin in orca_results[identifier][charge].keys():
                 energy_mae += abs(
-                    orca_results[identifier][tag][spin]["energy"]
-                    - mlip_results[identifier][tag][spin]["energy"]
+                    orca_results[identifier][charge][spin]["energy"]
+                    - mlip_results[identifier][charge][spin]["energy"]
                 )
                 forces_mae += np.mean(
                     np.abs(
-                        np.array(orca_results[identifier][tag][spin]["forces"])
-                        - np.array(mlip_results[identifier][tag][spin]["forces"])
+                        np.array(orca_results[identifier][charge][spin]["forces"])
+                        - np.array(mlip_results[identifier][charge][spin]["forces"])
                     )
                 )
                 forces_cosine_similarity += cosine_similarity(
-                    np.array(orca_results[identifier][tag][spin]["forces"]),
-                    np.array(mlip_results[identifier][tag][spin]["forces"]),
+                    np.array(orca_results[identifier][charge][spin]["forces"]),
+                    np.array(mlip_results[identifier][charge][spin]["forces"]),
                 )
         for tag in ["add_electron", "remove_electron"]:
             for spin in orca_deltaE[identifier][tag].keys():
