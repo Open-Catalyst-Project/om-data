@@ -77,18 +77,21 @@ def interaction_energy_and_forces(results, principal_identifier):
         interaction_energy[identifier] = results[identifier][principal_identifier][
             "energy"
         ]
-        interaction_forces[identifier] = results[identifier][principal_identifier][
-            "forces"
-        ]
-        principal_atoms = results[identifier][principal_identifier]["atoms"]
+        interaction_forces[identifier] = np.array(
+            results[identifier][principal_identifier]["forces"]
+        )
+        principal_atoms = MSONAtoms.from_dict(
+            results[identifier][principal_identifier]["atoms"]
+        )
         for component_identifier in results[identifier].keys():
             if component_identifier != principal_identifier:
                 interaction_energy[identifier] -= results[identifier][
                     component_identifier
                 ]["energy"]
-                for ii, sub_atom in enumerate(
+                component_atoms = MSONAtoms.from_dict(
                     results[identifier][component_identifier]["atoms"]
-                ):
+                )
+                for ii, sub_atom in enumerate(component_atoms):
                     for jj, principal_atom in enumerate(principal_atoms):
                         if sub_atom.symbol == principal_atom.symbol:
                             if (sub_atom.position == principal_atom.position).all():
