@@ -28,19 +28,19 @@ def rmsd_wrapper(st1: Structure, st2: Structure) -> float:
     return rmsd.superimpose(st1, at_list, st2.copy(), at_list, use_symmetry=True)
 
 
-def sdgr_rmsd(atoms1, atoms2):
+def sdgr_rmsd(orca_atoms, mlip_atoms):
     """
-    Calculate the RMSD between two sets of atoms.
+    Calculate the RMSD between atoms optimized with ORCA and the MLIP,
+    where we assume that ORCA atoms have sensible bonding.
     """
-    atoms1 = MSONAtoms.from_dict(atoms1)
-    atoms2 = MSONAtoms.from_dict(atoms2)
+    orca_atoms = MSONAtoms.from_dict(orca_atoms)
+    mlip_atoms = MSONAtoms.from_dict(mlip_atoms)
 
-    st1 = get_structure(atoms1)
-    mmjag_reset_connectivity(st1)
-    st2 = get_structure(atoms2)
-    mmjag_reset_connectivity(st2)
-    copy_bonding(st1, st2)
-    return rmsd_wrapper(st1, st2)
+    orca_st = get_structure(orca_atoms)
+    mmjag_reset_connectivity(orca_st)
+    mlip_st = get_structure(mlip_atoms)
+    copy_bonding(orca_st, mlip_st)
+    return rmsd_wrapper(orca_st, mlip_st)
 
 
 def cosine_similarity(forces_1, forces_2):
