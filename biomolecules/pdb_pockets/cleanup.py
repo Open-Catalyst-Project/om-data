@@ -224,6 +224,9 @@ def ion_corrections(st):
         elif at.element in {"Cu"} and at.formal_charge not in {1, 2}:
             change_made = True
             at.formal_charge = 2  # Default to 2
+        elif at.element in {"Os"} and at.formal_charge not in {2, 3}:
+            change_made = True
+            at.formal_charge = 3  # Default to 3, seems more common than 2
         elif at.element in {"Sn"} and at.formal_charge != 4:
             change_made = True
             at.formal_charge = 4
@@ -623,6 +626,7 @@ def main():
         except:
             print("can't open structure:", fname)
             continue
+        st.title = os.path.basename(os.path.splitext(fname)[0])
         if "l" not in (ch.name for ch in st.chain):
             print("no ligand:", fname)
             continue

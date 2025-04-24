@@ -15,6 +15,7 @@ def write_file(fn, frame0):
         for i in range(9, 0, -1):
             xyz_name = fn.replace("frame0", f"frame{i}")
             mae_name = xyz_name.replace(".xyz", ".mae")
+            mae_name = os.path.join(os.path.dirname(os.path.dirname(mae_name)), os.path.basename(mae_name))
             if os.path.exists(mae_name):
                 st = StructureReader.read(mae_name)
                 st.write(xyz_name)
@@ -22,8 +23,9 @@ def write_file(fn, frame0):
     else:
         st = StructureReader.read(fn)
         xyz_name = fn.replace(".mae", ".xyz")
-        #xyz_name = os.path.join(os.path.dirname(xyz_name), 'xyz', os.path.basename(xyz_name))
-        st.write(xyz_name)
+        xyz_name = os.path.join(os.path.dirname(xyz_name), 'xyz', os.path.basename(xyz_name))
+        if not os.path.exists(xyz_name):
+            st.write(xyz_name)
 
 
 def main(frame0, path):
@@ -38,7 +40,7 @@ def main(frame0, path):
         done_list = {fn.replace(".xyz", ".mae") for fn in done_list}
         file_list = [fn for fn in file_list if os.path.basename(fn) not in done_list]
     else:
-        file_list = glob.glob(os.path.join(path, "*.xyz"))
+        file_list = glob.glob(os.path.join(path, 'xyz', "*frame0*.xyz"))
 
     write_frame = partial(write_file, frame0=frame0)
     with mp.Pool(60) as pool:
@@ -57,3 +59,4 @@ if __name__ == "__main__":
     # This will also take the last extracted frame for anything that
     # has a first extracted frame
     main(False, args.output_path)
+

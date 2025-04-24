@@ -9,7 +9,8 @@ from tqdm import tqdm
 def main(output_path):
     dest_path = os.path.join(os.path.dirname(output_path), "lig_pock_eval")
     os.makedirs(dest_path, exist_ok=True)
-    for fname in tqdm(glob.glob(f"{output_path}/*frame0*mae")):
+#    for fname in tqdm(glob.glob(f"{output_path}/*frame0*mae")):
+    for fname in tqdm(glob.glob(f"{output_path}/*frame9*mae")):
         st = StructureReader.read(fname)
         lig = st.chain["l"].extractStructure()
         lig_ats = st.chain["l"].getAtomList()

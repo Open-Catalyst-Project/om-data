@@ -122,6 +122,7 @@ def main():
     with mp.Pool(60) as pool:
         processed_traj = set(tqdm(pool.imap(proc_md, dir_list), total=len(dir_list)))
     processed_traj -= {None}
+    processed_traj.update(already_processed)
 
     processed_fname = f"processed_traj_list_{args.prefix}"
     if args.batch is not None:
