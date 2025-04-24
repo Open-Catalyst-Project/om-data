@@ -9,22 +9,10 @@ from schrodinger.application.matsci.aseutils import get_structure
 from schrodinger.comparison.atom_mapper import ConnectivityAtomMapper
 from schrodinger.structure import Structure
 from schrodinger.structutils import rmsd
+from schrodinger.application.jaguar.autots_bonding import copy_bonding
 from scipy.optimize import linear_sum_assignment
 
 boltzmann_constant = 8.617333262 * 10**-5
-
-
-def renumber_molecules_to_match(mol_list):
-    """
-    Ensure that topologically equivalent sites are equivalently numbered
-    """
-    mapper = ConnectivityAtomMapper(use_chirality=False)
-    atlist = range(1, mol_list[0].atom_total + 1)
-    renumbered_mols = [mol_list[0]]
-    for mol in mol_list[1:]:
-        _, r_mol = mapper.reorder_structures(mol_list[0], atlist, mol, atlist)
-        renumbered_mols.append(r_mol)
-    return renumbered_mols
 
 
 def rmsd_wrapper(st1: Structure, st2: Structure) -> float:
@@ -51,8 +39,8 @@ def sdgr_rmsd(atoms1, atoms2):
     mmjag_reset_connectivity(st1)
     st2 = get_structure(atoms2)
     mmjag_reset_connectivity(st2)
-    renumbered_sts = renumber_molecules_to_match([st1, st2])
-    return rmsd_wrapper(renumbered_sts[0], renumbered_sts[1])
+    copy_bonding(st1, st2)
+    return rmsd_wrapper(st1, st2)
 
 
 def cosine_similarity(forces_1, forces_2):
