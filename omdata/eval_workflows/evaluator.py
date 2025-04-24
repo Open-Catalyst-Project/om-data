@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections import defaultdict
+
 import numpy as np
 from pymatgen.io.ase import MSONAtoms
 from schrodinger.application.jaguar.utils import mmjag_reset_connectivity
@@ -266,18 +268,17 @@ def ligand_strain_processing(results):
     Returns:
         dict: Processed results for the ligand strain evaluation task.
     """
-    processed_results = {}
+    processed_results = defaultdict(dict)
     for identifier in results.keys():
         min_energy = float("inf")
         min_energy_struct = None
-        for conformer_identifier, struct in results[identifier].items():
-            if conformer_identifier != "ligand_in_pocket":
-                if struct["final"]["energy"] < min_energy:
-                    min_energy = struct["final"]["energy"]
-                    min_energy_struct = struct
+        for conformer_identifier, struct in results[identifier]["gas_phase"].items():
+            if struct["final"]["energy"] < min_energy:
+                min_energy = struct["final"]["energy"]
+                min_energy_struct = struct["final"]
         processed_results[identifier]["global_min"] = min_energy_struct
         processed_results[identifier]["strain_energy"] = (
-            results[identifier]["ligand_in_pocket"]["final"]["energy"] - min_energy
+            results[identifier]["bioactive"]["energy"] - min_energy
         )
     return processed_results
 
