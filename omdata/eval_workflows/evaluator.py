@@ -813,3 +813,27 @@ def unoptimized_spin_gap(orca_results, mlip_results):
         "deltaF_cosine_similarity": deltaF_cosine_similarity / len(orca_results.keys()),
     }
     return results
+
+
+def singlepoint(orca_results, mlip_results):
+    target_energies = []
+    target_forces = []
+    energies = []
+    forces = []
+    for identifier in orca_results:
+        target_energies.append(orca_results[identifier]["energy"])
+        target_forces.append(orca_results[identifier]["forces"])
+        energies.append(mlip_results[identifier]["energy"])
+        forces.append(mlip_results[identifier]["forces"])
+
+    target_energies = np.array(target_energies)
+    target_forces = np.concatenate(target_forces)
+    energies = np.array(energies)
+    forces = np.concatenate(forces)
+
+    metrics = {
+        "energy_mae": np.mean(np.abs(energies - target_energies)),
+        "forces_mae": np.mean(np.abs(forces - target_forces)),
+    }
+
+    return metrics
