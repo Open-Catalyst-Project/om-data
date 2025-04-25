@@ -299,12 +299,8 @@ def ligand_strain_processing(results):
     """
     processed_results = defaultdict(dict)
     for identifier in results.keys():
-        min_energy = float("inf")
-        min_energy_struct = None
-        for conformer_identifier, struct in results[identifier]["gas_phase"].items():
-            if struct["final"]["energy"] < min_energy:
-                min_energy = struct["final"]["energy"]
-                min_energy_struct = struct["final"]
+        min_energy_struct = min(results[identifier]["gas_phase"].values(), key=lambda x: x["final"]["energy"])
+        min_energy = min_energy_struct["energy"]
         processed_results[identifier]["global_min"] = min_energy_struct
         processed_results[identifier]["strain_energy"] = (
             results[identifier]["bioactive"]["energy"] - min_energy
