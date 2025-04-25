@@ -96,51 +96,6 @@ def interaction_energy_and_forces(results, principal_identifier):
     return interaction_energy, interaction_forces
 
 
-def distance_scaling_processing(results):
-    """
-    Calculate the interaction energy and interaction forces for each snapshot with a distance scaling factor
-    by subtracting the energy and forces of the snapshot with the maximum distance scaling factor. Short range
-    and long range samples are calculated separately.
-
-    Args:
-        results (dict): Results from ORCA or MLIP calculations.
-
-    Returns:
-        interaction_energy_sr, interaction_forces_sr, interaction_energy_lr, interaction_forces_lr
-    """
-    interaction_energy_sr = {}
-    interaction_forces_sr = {}
-    interaction_energy_lr = {}
-    interaction_forces_lr = {}
-    for identifier in results:
-        interaction_energy_sr[identifier] = {}
-        interaction_forces_sr[identifier] = {}
-        interaction_energy_lr[identifier] = {}
-        interaction_forces_lr[identifier] = {}
-        scaling_factors = []
-        for scaling_factor in results[identifier]:
-            scaling_factors.append(float(scaling_factor))
-        scaling_factors.sort(reverse=True)
-        for scaling_factor in scaling_factors[1:]:
-            if scaling_factor > 2.5:
-                interaction_energy_lr[identifier][scaling_factor] = (
-                    results[identifier][str(scaling_factor)]["energy"]
-                    - results[identifier][str(scaling_factors[0])]["energy"]
-                )
-                interaction_forces_lr[identifier][scaling_factor] = np.array(
-                    results[identifier][str(scaling_factor)]["forces"]
-                ) - np.array(results[identifier][str(scaling_factors[0])]["forces"])
-            else:
-                interaction_energy_sr[identifier][scaling_factor] = (
-                    results[identifier][str(scaling_factor)]["energy"]
-                    - results[identifier][str(scaling_factors[0])]["energy"]
-                )
-                interaction_forces_sr[identifier][scaling_factor] = np.array(
-                    results[identifier][str(scaling_factor)]["forces"]
-                ) - np.array(results[identifier][str(scaling_factors[0])]["forces"])
-    return interaction_energy_sr, interaction_forces_sr, interaction_energy_lr, interaction_forces_lr
-
-
 def spin_deltas(results):
     """
     Calculate deltaE and deltaF values for the spin gap evaluation task.
@@ -316,6 +271,19 @@ def get_one_prot_diff_name_pairs(names):
         if abs(name0_charge - name1_charge) == 1:
             name_pairs.append((name0, name1))
     return name_pairs
+
+
+def sr_or_lr(name, vertical):
+    """
+    Determine if a distance scaled structure is in short range or long range based on the name and vertical.
+    """
+    sf = float(name.split("_")[-1])
+    if vertical in ["biomolecules", "closed_elytes", "open_elytes"]:
+        return "sr" if sf < 1.8 else "lr"
+    elif vertical in ["cod_complexes", "arch_complexes"]:
+        return "sr" if sf < 9.5 else "lr"
+    else:
+        raise ValueError(f"Invalid vertical: {vertical}")
 
 
 
@@ -720,55 +688,67 @@ def distance_scaling(orca_results, mlip_results):
     Returns:
         dict: Error metrics for distance scaling evaluation task
     """
-    energy_mae = 0
-    forces_mae = 0
-    forces_cosine_similarity = 0
-    interaction_energy_mae = 0
-    interaction_forces_mae = 0
-    interaction_forces_cosine_similarity = 0
-    orca_interaction_energy, orca_interaction_forces = distance_scaling_processing(
-        orca_results
-    )
-    mlip_interaction_energy, mlip_interaction_forces = distance_scaling_processing(
-        mlip_results
-    )
-    for identifier in orca_results:
-        for component_identifier in orca_results[identifier]:
-            energy_mae += abs(
-                orca_results[identifier][component_identifier]["energy"]
-                - mlip_results[identifier][component_identifier]["energy"]
-            )
-            forces_mae += np.mean(
-                np.abs(
-                    np.array(orca_results[identifier][component_identifier]["forces"])
-                    - np.array(mlip_results[identifier][component_identifier]["forces"])
-                )
-            )
-            forces_cosine_similarity += cosine_similarity(
-                np.array(orca_results[identifier][component_identifier]["forces"]),
-                np.array(mlip_results[identifier][component_identifier]["forces"]),
-            )
-        interaction_energy_mae += abs(
-            orca_interaction_energy[identifier] - mlip_interaction_energy[identifier]
-        )
-        interaction_forces_mae += np.mean(
-            np.abs(
-                orca_interaction_forces[identifier]
-                - mlip_interaction_forces[identifier]
-            )
-        )
-        interaction_forces_cosine_similarity += cosine_similarity(
-            orca_interaction_forces[identifier], mlip_interaction_forces[identifier]
-        )
+    energy_mae = {"sr": 0, "lr": 0}
+    forces_mae = {"sr": 0, "lr": 0}
+    forces_cosine_similarity = {"sr": 0, "lr": 0}
+    deltaE_mae = {"sr": 0, "lr": 0}
+    deltaF_mae = {"sr": 0, "lr": 0}
+    deltaF_cosine_similarity = {"sr": 0, "lr": 0}
+    num_sr = sum(len(identifiers) for identifiers in orca_results.values())
+    num_lr = 0
+    for vertical in orca_results:
+        for identifier in orca_results[vertical]:
+            orca_min_energy_name, orca_min_energy_struct = min(orca_results[vertical][identifier].items(), key=lambda x: x[1]['energy'])
+            num_r = {}
+            num_r["sr"] = len([name for name in orca_results[vertical][identifier] if sr_or_lr(name, vertical) == "sr"])
+            num_r["lr"] = len([name for name in orca_results[vertical][identifier] if sr_or_lr(name, vertical) == "lr"])
+            if num_r["lr"] > 0:
+                num_lr += 1
+            assert num_r["sr"] + num_r["lr"] == len(orca_results[vertical][identifier])
+            for name in orca_results[vertical][identifier]:
+                energy_mae[sr_or_lr(name, vertical)] += abs(
+                    orca_results[vertical][identifier][name]["energy"]
+                    - mlip_results[vertical][identifier][name]["energy"]
+                )/num_r[sr_or_lr(name, vertical)]
+                forces_mae[sr_or_lr(name, vertical)] += np.mean(
+                    np.abs(
+                        np.array(orca_results[vertical][identifier][name]["forces"])
+                        - np.array(mlip_results[vertical][identifier][name]["forces"])
+                    )
+                )/num_r[sr_or_lr(name, vertical)]
+                forces_cosine_similarity[sr_or_lr(name, vertical)] += cosine_similarity(
+                    np.array(orca_results[vertical][identifier][name]["forces"]),
+                    np.array(mlip_results[vertical][identifier][name]["forces"]),
+                )/num_r[sr_or_lr(name, vertical)]
+                if name != orca_min_energy_name:
+                    orca_deltaE = orca_results[vertical][identifier][name]["energy"] - orca_min_energy_struct["energy"]
+                    orca_deltaF = np.array(orca_results[vertical][identifier][name]["forces"]) - np.array(orca_min_energy_struct["forces"])
+                    mlip_deltaE = mlip_results[vertical][identifier][name]["energy"] - mlip_results[vertical][identifier][orca_min_energy_name]["energy"]
+                    mlip_deltaF = np.array(mlip_results[vertical][identifier][name]["forces"]) - np.array(mlip_results[vertical][identifier][orca_min_energy_name]["forces"])
+                    deltaE_mae[sr_or_lr(name, vertical)] += abs(orca_deltaE - mlip_deltaE) / (num_r[sr_or_lr(name, vertical)] - (1 if sr_or_lr(name, vertical) == sr_or_lr(orca_min_energy_name, vertical) else 0))
+                    deltaF_mae[sr_or_lr(name, vertical)] += np.mean(
+                        np.abs(
+                            np.array(orca_results[vertical][identifier][name]["forces"])
+                            - np.array(mlip_results[vertical][identifier][name]["forces"])
+                        )
+                    )/(num_r[sr_or_lr(name, vertical)] - (1 if sr_or_lr(name, vertical) == sr_or_lr(orca_min_energy_name, vertical) else 0))
+                    deltaF_cosine_similarity[sr_or_lr(name, vertical)] += cosine_similarity(
+                        orca_deltaF, mlip_deltaF
+                    )/(num_r[sr_or_lr(name, vertical)] - (1 if sr_or_lr(name, vertical) == sr_or_lr(orca_min_energy_name, vertical) else 0))
 
     results = {
-        "energy_mae": energy_mae / len(orca_results),
-        "forces_mae": forces_mae / len(orca_results),
-        "forces_cosine_similarity": forces_cosine_similarity / len(orca_results),
-        "interaction_energy_mae": interaction_energy_mae / len(orca_results),
-        "interaction_forces_mae": interaction_forces_mae / len(orca_results),
-        "interaction_forces_cosine_similarity": interaction_forces_cosine_similarity
-        / len(orca_results),
+        "sr_energy_mae": energy_mae["sr"] / num_sr,
+        "sr_forces_mae": forces_mae["sr"] / num_sr,
+        "sr_forces_cosine_similarity": forces_cosine_similarity["sr"] / num_sr,
+        "lr_energy_mae": energy_mae["lr"] / num_lr,
+        "lr_forces_mae": forces_mae["lr"] / num_lr,
+        "lr_forces_cosine_similarity": forces_cosine_similarity["lr"] / num_lr,
+        "sr_deltaE_mae": deltaE_mae["sr"] / num_sr,
+        "sr_deltaF_mae": deltaF_mae["sr"] / num_sr,
+        "sr_deltaF_cosine_similarity": deltaF_cosine_similarity["sr"] / num_sr,
+        "lr_deltaE_mae": deltaE_mae["lr"] / num_lr,
+        "lr_deltaF_mae": deltaF_mae["lr"] / num_lr,
+        "lr_deltaF_cosine_similarity": deltaF_cosine_similarity["lr"] / num_lr,
     }
     return results
 
