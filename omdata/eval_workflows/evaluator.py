@@ -25,7 +25,7 @@ def rmsd_wrapper(st1: Structure, st2: Structure) -> float:
     if st1 == st2:
         return 0.0
     at_list = list(range(1, st1.atom_total + 1))
-    return rmsd.superimpose(st1, at_list, st2.copy(), at_list, use_symmetry=True)
+    return rmsd.superimpose(st1, at_list, st2.copy(), at_list, use_symmetry=False)
 
 
 def sdgr_rmsd(orca_atoms, mlip_atoms):
@@ -37,9 +37,7 @@ def sdgr_rmsd(orca_atoms, mlip_atoms):
     mlip_atoms = MSONAtoms.from_dict(mlip_atoms)
 
     orca_st = get_structure(orca_atoms)
-    mmjag_reset_connectivity(orca_st)
     mlip_st = get_structure(mlip_atoms)
-    copy_bonding(orca_st, mlip_st)
     return rmsd_wrapper(orca_st, mlip_st)
 
 
