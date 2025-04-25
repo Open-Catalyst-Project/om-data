@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import itertools
 
 import numpy as np
 from pymatgen.io.ase import MSONAtoms
@@ -309,13 +310,11 @@ def get_one_prot_diff_name_pairs(names):
     Assumes that the names are in the format "name_charge_spin"
     """
     name_pairs = []
-    for ii, name0 in enumerate(names):
-        for jj in range(ii + 1, len(names)):
-            name1 = names[jj]
-            name0_charge = int(name0.split("_")[-2])
-            name1_charge = int(name1.split("_")[-2])
-            if abs(name0_charge - name1_charge) == 1:
-                name_pairs.append((name0, name1))
+    for name0, name1 in itertools.combinations(names, 2):
+        name0_charge = int(name0.split("_")[-2])
+        name1_charge = int(name1.split("_")[-2])
+        if abs(name0_charge - name1_charge) == 1:
+            name_pairs.append((name0, name1))
     return name_pairs
 
 
