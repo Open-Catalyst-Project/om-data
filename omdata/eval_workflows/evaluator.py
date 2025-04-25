@@ -471,26 +471,27 @@ def geom_conformers_type2(orca_results, mlip_results):
         orca_min_energy_id, min_energy_struct = min(structs.items(), key=lambda x: x[1]['final']['energy'])
         orca_min_energy = min_energy_struct["energy"]
         for conformer_identifier, struct in structs.items():
-            orca_deltaE = struct["final"]["energy"] - orca_min_energy
-            # TODO: Determine if deltaE_MLSP is directly correlated with energy_mae
-            deltaE_MLSP = (
-                mlip_results[family_identifier][conformer_identifier]["initial"][
-                    "energy"
-                ]
-                - mlip_results[family_identifier][orca_min_energy_id]["initial"][
-                    "energy"
-                ]
-            )
-            deltaE_MLRX = (
-                mlip_results[family_identifier][conformer_identifier]["final"]["energy"]
-                - mlip_results[family_identifier][orca_min_energy_id]["final"]["energy"]
-            )
-            deltaE_MLSP_mae += abs(orca_deltaE - deltaE_MLSP)/len(structs)
-            deltaE_MLRX_mae += abs(orca_deltaE - deltaE_MLRX)/len(structs)
-            reopt_rmsd += sdgr_rmsd(
-                mlip_results[family_identifier][conformer_identifier]["initial"]["atoms"],
-                mlip_results[family_identifier][conformer_identifier]["final"]["atoms"],
-            )/len(structs)
+            if conformer_identifier != orca_min_energy_id:
+                orca_deltaE = struct["final"]["energy"] - orca_min_energy
+                # TODO: Determine if deltaE_MLSP is directly correlated with energy_mae
+                deltaE_MLSP = (
+                    mlip_results[family_identifier][conformer_identifier]["initial"][
+                        "energy"
+                    ]
+                    - mlip_results[family_identifier][orca_min_energy_id]["initial"][
+                        "energy"
+                    ]
+                )
+                deltaE_MLRX = (
+                    mlip_results[family_identifier][conformer_identifier]["final"]["energy"]
+                    - mlip_results[family_identifier][orca_min_energy_id]["final"]["energy"]
+                )
+                deltaE_MLSP_mae += abs(orca_deltaE - deltaE_MLSP)/(len(structs) - 1)
+                deltaE_MLRX_mae += abs(orca_deltaE - deltaE_MLRX)/(len(structs) - 1)
+                reopt_rmsd += sdgr_rmsd(
+                    mlip_results[family_identifier][conformer_identifier]["initial"]["atoms"],
+                    mlip_results[family_identifier][conformer_identifier]["final"]["atoms"],
+                )/(len(structs) - 1)
 
     results = {
         "energy_mae": energy_mae / len(orca_results),
@@ -694,7 +695,7 @@ def distance_scaling(orca_results, mlip_results):
     deltaE_mae = {"sr": 0, "lr": 0}
     deltaF_mae = {"sr": 0, "lr": 0}
     deltaF_cosine_similarity = {"sr": 0, "lr": 0}
-    num_sr = sum(len(identifiers) for identifiers in orca_results.values())
+    num_sr = 0
     num_lr = 0
     for vertical in orca_results:
         for identifier in orca_results[vertical]:
@@ -702,39 +703,43 @@ def distance_scaling(orca_results, mlip_results):
             num_r = {}
             num_r["sr"] = len([name for name in orca_results[vertical][identifier] if sr_or_lr(name, vertical) == "sr"])
             num_r["lr"] = len([name for name in orca_results[vertical][identifier] if sr_or_lr(name, vertical) == "lr"])
+            if num_r["sr"] > 0:
+                num_sr += 1
             if num_r["lr"] > 0:
                 num_lr += 1
             assert num_r["sr"] + num_r["lr"] == len(orca_results[vertical][identifier])
             for name in orca_results[vertical][identifier]:
-                energy_mae[sr_or_lr(name, vertical)] += abs(
+                my_range = sr_or_lr(name, vertical)
+                energy_mae[my_range] += abs(
                     orca_results[vertical][identifier][name]["energy"]
                     - mlip_results[vertical][identifier][name]["energy"]
-                )/num_r[sr_or_lr(name, vertical)]
-                forces_mae[sr_or_lr(name, vertical)] += np.mean(
+                )/num_r[my_range]
+                forces_mae[my_range] += np.mean(
                     np.abs(
                         np.array(orca_results[vertical][identifier][name]["forces"])
                         - np.array(mlip_results[vertical][identifier][name]["forces"])
                     )
-                )/num_r[sr_or_lr(name, vertical)]
-                forces_cosine_similarity[sr_or_lr(name, vertical)] += cosine_similarity(
+                )/num_r[my_range]
+                forces_cosine_similarity[my_range] += cosine_similarity(
                     np.array(orca_results[vertical][identifier][name]["forces"]),
                     np.array(mlip_results[vertical][identifier][name]["forces"]),
-                )/num_r[sr_or_lr(name, vertical)]
+                )/num_r[my_range]
                 if name != orca_min_energy_name:
                     orca_deltaE = orca_results[vertical][identifier][name]["energy"] - orca_min_energy_struct["energy"]
                     orca_deltaF = np.array(orca_results[vertical][identifier][name]["forces"]) - np.array(orca_min_energy_struct["forces"])
                     mlip_deltaE = mlip_results[vertical][identifier][name]["energy"] - mlip_results[vertical][identifier][orca_min_energy_name]["energy"]
                     mlip_deltaF = np.array(mlip_results[vertical][identifier][name]["forces"]) - np.array(mlip_results[vertical][identifier][orca_min_energy_name]["forces"])
-                    deltaE_mae[sr_or_lr(name, vertical)] += abs(orca_deltaE - mlip_deltaE) / (num_r[sr_or_lr(name, vertical)] - (1 if sr_or_lr(name, vertical) == sr_or_lr(orca_min_energy_name, vertical) else 0))
+                    norm_factor = (num_r[sr_or_lr(name, vertical)] - (1 if sr_or_lr(name, vertical) == sr_or_lr(orca_min_energy_name, vertical) else 0))
+                    deltaE_mae[sr_or_lr(name, vertical)] += abs(orca_deltaE - mlip_deltaE) / norm_factor
                     deltaF_mae[sr_or_lr(name, vertical)] += np.mean(
                         np.abs(
                             np.array(orca_results[vertical][identifier][name]["forces"])
                             - np.array(mlip_results[vertical][identifier][name]["forces"])
                         )
-                    )/(num_r[sr_or_lr(name, vertical)] - (1 if sr_or_lr(name, vertical) == sr_or_lr(orca_min_energy_name, vertical) else 0))
+                    )/norm_factor
                     deltaF_cosine_similarity[sr_or_lr(name, vertical)] += cosine_similarity(
                         orca_deltaF, mlip_deltaF
-                    )/(num_r[sr_or_lr(name, vertical)] - (1 if sr_or_lr(name, vertical) == sr_or_lr(orca_min_energy_name, vertical) else 0))
+                    )/norm_factor
 
     results = {
         "sr_energy_mae": energy_mae["sr"] / num_sr,
