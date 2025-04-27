@@ -805,31 +805,14 @@ def distance_scaling(orca_results, mlip_results):
                             "forces"
                         ]
                     )
-                    norm_factor = num_r[sr_or_lr(name, vertical)] - (
+                    norm_factor = num_r[my_range] - (
                         1
-                        if sr_or_lr(name, vertical)
-                        == sr_or_lr(orca_min_energy_name, vertical)
+                        if my_range == sr_or_lr(orca_min_energy_name, vertical)
                         else 0
                     )
-                    deltaE_mae[sr_or_lr(name, vertical)] += (
-                        abs(orca_deltaE - mlip_deltaE) / norm_factor
-                    )
-                    deltaF_mae[sr_or_lr(name, vertical)] += (
-                        np.mean(
-                            np.abs(
-                                np.array(
-                                    orca_results[vertical][identifier][name]["forces"]
-                                )
-                                - np.array(
-                                    mlip_results[vertical][identifier][name]["forces"]
-                                )
-                            )
-                        )
-                        / norm_factor
-                    )
-                    deltaF_cosine_similarity[sr_or_lr(name, vertical)] += (
-                        cosine_similarity(orca_deltaF, mlip_deltaF) / norm_factor
-                    )
+                    deltaE_mae[my_range] += abs(orca_deltaE - mlip_deltaE) / norm_factor
+                    deltaF_mae[my_range] += np.mean(np.abs(orca_deltaF - mlip_deltaF)) / norm_factor
+                    deltaF_cosine_similarity[my_range] += cosine_similarity(orca_deltaF, mlip_deltaF) / norm_factor
 
     results = {
         "sr_energy_mae": energy_mae["sr"] / num_sr,
