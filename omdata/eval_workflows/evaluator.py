@@ -277,9 +277,9 @@ def sr_or_lr(name, vertical):
     """
     sf = float(name.split("_")[-1])
     if vertical in ["biomolecules", "closed_elytes", "open_elytes"]:
-        return "sr" if sf < 1.8 else "lr"
+        return "sr" if sf < 1.6 else "lr"
     elif vertical in ["cod_complexes", "arch_complexes"]:
-        return "sr" if sf < 9.5 else "lr"
+        return "sr" if sf < 7.5 else "lr"
     else:
         raise ValueError(f"Invalid vertical: {vertical}")
 
