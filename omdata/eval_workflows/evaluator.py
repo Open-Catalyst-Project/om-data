@@ -374,8 +374,8 @@ def ligand_strain(orca_results, mlip_results):
             - processed_mlip_results[identifier]["strain_energy"]
         )
         global_min_rmsd += sdgr_rmsd(
-            processed_orca_results[identifier]["global_min"]["atoms"],
-            processed_mlip_results[identifier]["global_min"]["atoms"],
+            processed_orca_results[identifier]["global_min"]["final"]["atoms"],
+            processed_mlip_results[identifier]["global_min"]["final"]["atoms"],
         )
 
     results = {
