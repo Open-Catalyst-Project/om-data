@@ -248,7 +248,7 @@ def ligand_strain_processing(results):
             results[identifier]["gas_phase"].values(),
             key=lambda x: x["final"]["energy"],
         )
-        min_energy = min_energy_struct["energy"]
+        min_energy = min_energy_struct["final"]["energy"]
         processed_results[identifier]["global_min"] = min_energy_struct
         processed_results[identifier]["strain_energy"] = (
             results[identifier]["bioactive"]["energy"] - min_energy
@@ -806,13 +806,15 @@ def distance_scaling(orca_results, mlip_results):
                         ]
                     )
                     norm_factor = num_r[my_range] - (
-                        1
-                        if my_range == sr_or_lr(orca_min_energy_name, vertical)
-                        else 0
+                        1 if my_range == sr_or_lr(orca_min_energy_name, vertical) else 0
                     )
                     deltaE_mae[my_range] += abs(orca_deltaE - mlip_deltaE) / norm_factor
-                    deltaF_mae[my_range] += np.mean(np.abs(orca_deltaF - mlip_deltaF)) / norm_factor
-                    deltaF_cosine_similarity[my_range] += cosine_similarity(orca_deltaF, mlip_deltaF) / norm_factor
+                    deltaF_mae[my_range] += (
+                        np.mean(np.abs(orca_deltaF - mlip_deltaF)) / norm_factor
+                    )
+                    deltaF_cosine_similarity[my_range] += (
+                        cosine_similarity(orca_deltaF, mlip_deltaF) / norm_factor
+                    )
 
     results = {
         "sr_energy_mae": energy_mae["sr"] / num_sr,
