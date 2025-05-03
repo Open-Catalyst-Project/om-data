@@ -913,6 +913,7 @@ def singlepoint(orca_results, mlip_results):
     metrics = {
         "energy_mae": np.mean(np.abs(energies - target_energies)),
         "forces_mae": np.mean(np.abs(forces - target_forces)),
+        "forces_cos": cosine_similarity(target_forces, forces),
     }
 
     return metrics
