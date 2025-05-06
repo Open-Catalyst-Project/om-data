@@ -161,7 +161,7 @@ def charge_deltas(results):
     return deltaE, deltaF
 
 
-def boltzmann_weighted_structures(results, temp=298.15):
+def calc_boltzmann_weights(results, temp=298.15):
     """
     Assign Boltzmann weights to the conformers in each family.
 
@@ -170,54 +170,25 @@ def boltzmann_weighted_structures(results, temp=298.15):
         temp (float): Temperature in Kelvin.
 
     Returns:
-        dict: Boltzmann weighted structures for each family.
+        list: Boltzmann weights for each conformer.
     """
-    weighted_families = {}
+    family_weights = {}
     for family_identifier, structs in results.items():
-        weights = {}
-        weighted_structs = {}
+        weights = np.zeros(len(structs))
         sum = 0
-        min_energy_struct = min(structs.values(), key=lambda x: x["final"]["energy"])
-        min_energy = min_energy_struct["final"]["energy"]
-        for (
-            conformer_identifier,
-            struct,
-        ) in structs.items():  # If we don't subtract min_energy, we get overflow errors
-            weights[conformer_identifier] = np.exp(
+        min_energy = min(struct["final"]["energy"] for struct in structs.values())
+        for ii, struct in enumerate(structs.values()):  # If we don't subtract min_energy, we get overflow errors
+            weights[ii] = np.exp(
                 -(struct["final"]["energy"] - min_energy) / (boltzmann_constant * temp)
             )
-            sum += weights[conformer_identifier]
-        for conformer_identifier, struct in structs.items():
-            weights[conformer_identifier] /= sum
-            if weights[conformer_identifier] > 0.01:
-                weighted_structs[conformer_identifier] = {
-                    "atoms": struct["final"]["atoms"],
-                    "weight": weights[conformer_identifier],
-                }
-        weighted_families[family_identifier] = weighted_structs
-    return weighted_families
+            sum += weights[ii]
+        family_weights[family_identifier] = np.array([weight / sum for weight in weights])
+    return family_weights
 
 
-def calc_boltzmann_weighted_rmsd(weighted_structs0, weighted_structs1):
+def rmsd_mapping(structs0, structs1):
     """
-    Calculate the Boltzmann weighted RMSD via linear sum assignment on a cost matrix for weighted conformer ensembles.
-    """
-    cost_matrix = np.zeros(shape=(len(weighted_structs0), len(weighted_structs1)))
-    for ii, key0 in enumerate(weighted_structs0):
-        for jj, key1 in enumerate(weighted_structs1):
-            cost_matrix[ii][jj] = abs(weighted_structs0[key0]["weight"]) * sdgr_rmsd(
-                weighted_structs0[key0]["atoms"],
-                weighted_structs1[key1]["atoms"],
-            )
-    row_ind, column_ind = linear_sum_assignment(cost_matrix)
-    return cost_matrix[
-        row_ind, column_ind
-    ].sum()  # Boltzmann weights provide implicit normalization
-
-
-def calc_ensemble_rmsd(structs0, structs1):
-    """
-    Calculate the ensemble RMSD via linear sum assignment on a cost matrix for conformer ensembles.
+    Map two conformer ensembles via linear sum assignment on an RMSD cost matrix.
     """
     cost_matrix = np.zeros(shape=(len(structs0), len(structs1)))
     for ii, key0 in enumerate(structs0):
@@ -227,7 +198,11 @@ def calc_ensemble_rmsd(structs0, structs1):
                 structs1[key1]["final"]["atoms"],
             )
     row_ind, column_ind = linear_sum_assignment(cost_matrix)
-    return cost_matrix[row_ind, column_ind].mean()  # Mean gives normalized cost
+    assert (row_ind == sorted(row_ind)).all()
+    mapping = {}
+    for ii, jj in zip(row_ind, column_ind):
+        mapping[list(structs0)[ii]] = list(structs1)[jj]
+    return mapping, cost_matrix[row_ind, column_ind]
 
 
 def ligand_strain_processing(results):
@@ -392,28 +367,30 @@ def geom_conformers_type1(orca_results, mlip_results):
     """
     boltzmann_weighted_rmsd = 0
     ensemble_rmsd = 0
-    orca_boltzmann_weighted_structures = boltzmann_weighted_structures(orca_results)
-    mlip_boltzmann_weighted_structures = boltzmann_weighted_structures(mlip_results)
+    deltaE_mae = 0
+    orca_boltzmann_weights = calc_boltzmann_weights(orca_results)
+    mlip_boltzmann_weights = calc_boltzmann_weights(mlip_results)
     for family_identifier, structs in orca_results.items():
-        ensemble_rmsd += calc_ensemble_rmsd(structs, mlip_results[family_identifier])
-        boltzmann_weighted_rmsd += (
-            calc_boltzmann_weighted_rmsd(
-                orca_boltzmann_weighted_structures[family_identifier],
-                mlip_boltzmann_weighted_structures[family_identifier],
-            )
-            / 2
+        mapping, cost_vector = rmsd_mapping(structs, mlip_results[family_identifier])
+        ensemble_rmsd += cost_vector.mean()
+        boltzmann_weighted_rmsd += sum(orca_boltzmann_weights[family_identifier] * cost_vector) / 2
+        boltzmann_weighted_rmsd += sum(mlip_boltzmann_weights[family_identifier] * cost_vector) / 2
+
+        orca_min_energy_id, min_energy_struct = min(
+            structs.items(), key=lambda x: x[1]["final"]["energy"]
         )
-        boltzmann_weighted_rmsd += (
-            calc_boltzmann_weighted_rmsd(
-                mlip_boltzmann_weighted_structures[family_identifier],
-                orca_boltzmann_weighted_structures[family_identifier],
-            )
-            / 2
-        )
+        orca_min_energy = min_energy_struct["final"]["energy"]
+        mlip_energy_of_orca_min = mlip_results[family_identifier][mapping[orca_min_energy_id]]["final"]["energy"]
+        for conformer_identifier, struct in structs.items():
+            if conformer_identifier != orca_min_energy_id:
+                orca_deltaE = struct["final"]["energy"] - orca_min_energy
+                mlip_deltaE = mlip_results[family_identifier][mapping[conformer_identifier]]["final"]["energy"] - mlip_energy_of_orca_min
+                deltaE_mae += abs(orca_deltaE - mlip_deltaE) / len(structs)
 
     results = {
         "ensemble_rmsd": ensemble_rmsd / len(orca_results),
         "boltzmann_weighted_rmsd": boltzmann_weighted_rmsd / len(orca_results),
+        "deltaE_mae": deltaE_mae / len(orca_results),
     }
     return results
 
