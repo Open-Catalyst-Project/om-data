@@ -43,8 +43,8 @@ def sdgr_rmsd(orca_atoms, mlip_atoms):
 
 
 def cosine_similarity(forces_1, forces_2):
-    return np.sum(forces_1 * forces_2) / (
-        np.linalg.norm(forces_1) * np.linalg.norm(forces_2)
+    return np.sum(forces_1 * forces_2) / max(
+        np.linalg.norm(forces_1) * np.linalg.norm(forces_2), 1e-8
     )
 
 
@@ -271,17 +271,11 @@ def get_one_prot_diff_name_pairs(names):
     return name_pairs
 
 
-def sr_or_lr(name, vertical):
-    """
-    Determine if a distance scaled structure is in short range or long range based on the name and vertical.
-    """
-    sf = float(name.split("_")[-1])
-    if vertical in ["biomolecules", "closed_elytes", "open_elytes"]:
-        return "sr" if sf < 1.6 else "lr"
-    elif vertical in ["cod_complexes", "arch_complexes"]:
-        return "sr" if sf < 7.5 else "lr"
-    else:
-        raise ValueError(f"Invalid vertical: {vertical}")
+def sr_or_lr(name):
+    if "short_range" in name:
+        return "sr"
+    elif "long_range" in name:
+        return "lr"
 
 
 # Evaluator functions
