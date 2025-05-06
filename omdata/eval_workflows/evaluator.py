@@ -373,8 +373,7 @@ def geom_conformers_type1(orca_results, mlip_results):
     for family_identifier, structs in orca_results.items():
         mapping, cost_vector = rmsd_mapping(structs, mlip_results[family_identifier])
         ensemble_rmsd += cost_vector.mean()
-        boltzmann_weighted_rmsd += sum(orca_boltzmann_weights[family_identifier] * cost_vector) / 2
-        boltzmann_weighted_rmsd += sum(mlip_boltzmann_weights[family_identifier] * cost_vector) / 2
+        boltzmann_weighted_rmsd += sum(orca_boltzmann_weights[family_identifier] * cost_vector)
 
         orca_min_energy_id, min_energy_struct = min(
             structs.items(), key=lambda x: x[1]["final"]["energy"]
@@ -385,7 +384,7 @@ def geom_conformers_type1(orca_results, mlip_results):
             if conformer_identifier != orca_min_energy_id:
                 orca_deltaE = struct["final"]["energy"] - orca_min_energy
                 mlip_deltaE = mlip_results[family_identifier][mapping[conformer_identifier]]["final"]["energy"] - mlip_energy_of_orca_min
-                deltaE_mae += abs(orca_deltaE - mlip_deltaE) / len(structs)
+                deltaE_mae += abs(orca_deltaE - mlip_deltaE) / (len(structs) - 1)
 
     results = {
         "ensemble_rmsd": ensemble_rmsd / len(orca_results),
