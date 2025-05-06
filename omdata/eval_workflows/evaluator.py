@@ -706,21 +706,22 @@ def distance_scaling(orca_results, mlip_results):
     for vertical in orca_results:
         for identifier in orca_results[vertical]:
             orca_min_energy_name, orca_min_energy_struct = min(
-                orca_results[vertical][identifier].items(), key=lambda x: x[1]["energy"]
+                orca_results[vertical][identifier].items(), key=lambda x: x[1]["energy"] if sr_or_lr(x[0]) == "sr" else 0.0
             )
+            assert sr_or_lr(orca_min_energy_name) == "sr"
             num_r = {}
             num_r["sr"] = len(
                 [
                     name
                     for name in orca_results[vertical][identifier]
-                    if sr_or_lr(name, vertical) == "sr"
+                    if sr_or_lr(name) == "sr"
                 ]
             )
             num_r["lr"] = len(
                 [
                     name
                     for name in orca_results[vertical][identifier]
-                    if sr_or_lr(name, vertical) == "lr"
+                    if sr_or_lr(name) == "lr"
                 ]
             )
             if num_r["sr"] > 0:
@@ -729,7 +730,7 @@ def distance_scaling(orca_results, mlip_results):
                 num_lr += 1
             assert num_r["sr"] + num_r["lr"] == len(orca_results[vertical][identifier])
             for name in orca_results[vertical][identifier]:
-                my_range = sr_or_lr(name, vertical)
+                my_range = sr_or_lr(name)
                 energy_mae[my_range] += (
                     abs(
                         orca_results[vertical][identifier][name]["energy"]
@@ -777,7 +778,7 @@ def distance_scaling(orca_results, mlip_results):
                         ]
                     )
                     norm_factor = num_r[my_range] - (
-                        1 if my_range == sr_or_lr(orca_min_energy_name, vertical) else 0
+                        1 if my_range == sr_or_lr(orca_min_energy_name) else 0
                     )
                     deltaE_mae[my_range] += abs(orca_deltaE - mlip_deltaE) / norm_factor
                     deltaF_mae[my_range] += (
