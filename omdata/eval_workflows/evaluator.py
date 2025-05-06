@@ -369,7 +369,6 @@ def geom_conformers_type1(orca_results, mlip_results):
     ensemble_rmsd = 0
     deltaE_mae = 0
     orca_boltzmann_weights = calc_boltzmann_weights(orca_results)
-    mlip_boltzmann_weights = calc_boltzmann_weights(mlip_results)
     for family_identifier, structs in orca_results.items():
         mapping, cost_vector = rmsd_mapping(structs, mlip_results[family_identifier])
         ensemble_rmsd += cost_vector.mean()
