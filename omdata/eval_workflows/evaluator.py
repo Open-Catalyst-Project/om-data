@@ -705,58 +705,47 @@ def compute_distance_scaling_metrics(
     :param mlip_results: results from all points alng
     :param orca_min_point: name of reference point for ddE
     :param orca_min_data: data for reference point for ddE
-    :return: energy, force, ddE, and ddF metrics for the given PES curve
+    :return: ddE, and ddF metrics for the given PES curve
     """
-    # Each curve will be normalized separately
-    energy_mae_system = 0
-    forces_mae_system = 0
     ddEnergy_mae_system = 0
     ddForces_mae_system = 0
     # We need to keep track of the number of differences for normalization
     # this may or may not equal the total number of points depending on
     # where the reference is.
     n_deltas = 0
+
+    mlip_ref_data = mlip_results[orca_min_point]
+    orca_ref_forces = np.array(orca_min_data["forces"])
+    mlip_ref_forces = np.array(mlip_ref_data["forces"])
+
     for pes_point, orca_data in pes_curve.items():
         # pes_point is a given point on the PES curve
-
-        # Absolute energy and force MAEs
-        mlip_data = mlip_results[pes_point]
-        energy_mae_system += abs(mlip_data["energy"] - orca_data["energy"])
-
-        ml_forces = np.array(mlip_data["forces"])
-        orca_forces = np.array(orca_data["forces"])
-        forces_mae_system += np.mean(np.abs(ml_forces - orca_forces))
-
-        # Energy differences: We compute the DeltaDeltaE between ML and
-        # DFT of the energy diff of each point to that reference point
 
         # We exclude the reference point DeltaDelatE since it is
         # definitionally zero.
         if pes_point == orca_min_point:
             continue
-        mlip_ref_data = mlip_results[orca_min_point]
+
+        mlip_data = mlip_results[pes_point]
+        # Energy differences: We compute the DeltaDeltaE between ML and
+        # DFT of the energy diff of each point to that reference point
+        ml_forces = np.array(mlip_data["forces"])
+        orca_forces = np.array(orca_data["forces"])
 
         orca_deltaE = orca_data["energy"] - orca_min_data["energy"]
-        orca_deltaF = orca_forces - np.array(orca_min_data["forces"])
+        orca_deltaF = orca_forces - orca_ref_forces
         mlip_deltaE = mlip_data["energy"] - mlip_ref_data["energy"]
-        mlip_deltaF = ml_forces - np.array(mlip_ref_data["forces"])
+        mlip_deltaF = ml_forces - mlip_ref_forces
 
         ddEnergy_mae_system += abs(orca_deltaE - mlip_deltaE)
         ddForces_mae_system += np.mean(np.abs(orca_deltaF - mlip_deltaF))
         n_deltas += 1
 
     # Normalize MAEs due to number of points on PES curve
-    energy_mae_system /= len(pes_curve)
-    forces_mae_system /= len(pes_curve)
     ddEnergy_mae_system /= n_deltas
     ddForces_mae_system /= n_deltas
 
-    return (
-        energy_mae_system,
-        forces_mae_system,
-        ddEnergy_mae_system,
-        ddForces_mae_system,
-    )
+    return ddEnergy_mae_system, ddForces_mae_system
 
 
 def distance_scaling(orca_results, mlip_results):
@@ -770,8 +759,6 @@ def distance_scaling(orca_results, mlip_results):
     Returns:
         dict: Error metrics for distance scaling evaluation task
     """
-    energy_mae = {"sr": 0, "lr": 0}
-    forces_mae = {"sr": 0, "lr": 0}
     deltadeltaE_mae = {"sr": 0, "lr": 0}
     deltadeltaF_mae = {"sr": 0, "lr": 0}
     n_systems_with_sr = 0
@@ -798,35 +785,31 @@ def distance_scaling(orca_results, mlip_results):
             orca_min_point, orca_min_data = min(
                 lr_orca_curve.items(), key=lambda x: x[1]["energy"]
             )
+        # We require at least 2 points for short-range because, if there is
+        # only 1, it won't actually contribute to the metrics since that one
+        # point is the reference. Because we require that there are at least
+        # 5 points on the PES, if there are >0 in LR, then they will contribute
+        # so no need to adjust there.
+        if len(sr_orca_curve) == 1:
+            sr_orca_curve = {}
+
         n_systems_with_sr += len(sr_orca_curve)
         n_systems_with_lr += len(lr_orca_curve)
         for pes_curve, range_label in zip((sr_orca_curve, lr_orca_curve), ("sr", "lr")):
+            if not pes_curve:
+                continue
 
-            (
-                energy_mae_system,
-                forces_mae_system,
-                ddEnergy_mae_system,
-                ddForces_mae_system,
-            ) = compute_distance_scaling_metrics(
-                pes_curve,
-                mlip_curve,
-                orca_min_point,
-                orca_min_data,
+            ddEnergy_mae_system, ddForces_mae_system = compute_distance_scaling_metrics(
+                pes_curve, mlip_curve, orca_min_point, orca_min_data
             )
 
             # Package in overall metric
-            energy_mae[range_label] += energy_mae_system
-            forces_mae[range_label] += forces_mae_system
             deltadeltaE_mae[range_label] += ddEnergy_mae_system
             deltadeltaF_mae[range_label] += ddForces_mae_system
 
     results = {
-        "sr_energy_mae": energy_mae["sr"] / n_systems_with_sr,
-        "sr_forces_mae": forces_mae["sr"] / n_systems_with_sr,
         "sr_ddE_mae": deltadeltaE_mae["sr"] / n_systems_with_sr,
         "sr_ddF_mae": deltadeltaF_mae["sr"] / n_systems_with_sr,
-        "lr_energy_mae": energy_mae["lr"] / n_systems_with_lr,
-        "lr_forces_mae": forces_mae["lr"] / n_systems_with_lr,
         "lr_ddE_mae": deltadeltaE_mae["lr"] / n_systems_with_lr,
         "lr_ddF_mae": deltadeltaF_mae["lr"] / n_systems_with_lr,
     }
