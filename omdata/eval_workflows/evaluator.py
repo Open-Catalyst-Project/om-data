@@ -701,6 +701,8 @@ def distance_scaling(orca_results, mlip_results):
     deltaF_cosine_similarity = {"sr": 0, "lr": 0}
     num_sr = 0
     num_lr = 0
+    num_sr_delta = 0
+    num_lr_delta = 0
     for vertical in orca_results:
         for identifier in orca_results[vertical]:
             sr_dict = {k: v for k,v in orca_results[vertical][identifier].items() if sr_or_lr(k) == "sr"}
@@ -717,8 +719,14 @@ def distance_scaling(orca_results, mlip_results):
                 assert sr_or_lr(orca_min_energy_name) == "sr"
             else:
                 assert sr_or_lr(orca_min_energy_name) == "lr"
+            if num_r["sr"] > 1:
+                num_sr_delta += 1
             if num_r["lr"] > 0:
                 num_lr += 1
+            if num_r["lr"] > 0 and num_r["sr"] > 0:
+                num_lr_delta += 1
+            elif num_r["lr"] > 1:
+                num_lr_delta += 1
             assert num_r["sr"] + num_r["lr"] == len(orca_results[vertical][identifier])
             for name in orca_results[vertical][identifier]:
                 my_range = sr_or_lr(name)
@@ -786,12 +794,12 @@ def distance_scaling(orca_results, mlip_results):
         "lr_energy_mae": energy_mae["lr"] / num_lr,
         "lr_forces_mae": forces_mae["lr"] / num_lr,
         "lr_forces_cosine_similarity": forces_cosine_similarity["lr"] / num_lr,
-        "sr_deltaE_mae": deltaE_mae["sr"] / num_sr,
-        "sr_deltaF_mae": deltaF_mae["sr"] / num_sr,
-        "sr_deltaF_cosine_similarity": deltaF_cosine_similarity["sr"] / num_sr,
-        "lr_deltaE_mae": deltaE_mae["lr"] / num_lr,
-        "lr_deltaF_mae": deltaF_mae["lr"] / num_lr,
-        "lr_deltaF_cosine_similarity": deltaF_cosine_similarity["lr"] / num_lr,
+        "sr_deltaE_mae": deltaE_mae["sr"] / num_sr_delta,
+        "sr_deltaF_mae": deltaF_mae["sr"] / num_sr_delta,
+        "sr_deltaF_cosine_similarity": deltaF_cosine_similarity["sr"] / num_sr_delta,
+        "lr_deltaE_mae": deltaE_mae["lr"] / num_lr_delta,
+        "lr_deltaF_mae": deltaF_mae["lr"] / num_lr_delta,
+        "lr_deltaF_cosine_similarity": deltaF_cosine_similarity["lr"] / num_lr_delta,
     }
     return results
 
