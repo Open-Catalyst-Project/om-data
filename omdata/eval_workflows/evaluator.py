@@ -777,30 +777,30 @@ def distance_scaling(orca_results, mlip_results):
     n_systems_with_sr = 0
     n_systems_with_lr = 0
     for vertical, identifier in orca_results.items():
-        # vertical is e.g. 'biomolecultes', indentfier is a give PES curve (i.e. many points)
+        # vertical is e.g. 'biomolecultes', identifier is a given PES curve (i.e. many points)
 
-        mlip_data = mlip_results[vertical][identifier]
-        sr_orca_dict = {
+        mlip_curve = mlip_results[vertical][identifier]
+        sr_orca_curve = {
             k: v
             for k, v in orca_results[vertical][identifier].items()
             if sr_or_lr(k) == "sr"
         }
-        lr_orca_dict = {
+        lr_orca_curve = {
             k: v
             for k, v in orca_results[vertical][identifier].items()
             if sr_or_lr(k) == "lr"
         }
-        if sr_orca_dict:
+        if sr_orca_curve:
             orca_min_point, orca_min_data = min(
-                sr_orca_dict.items(), key=lambda x: x[1]["energy"]
+                sr_orca_curve.items(), key=lambda x: x[1]["energy"]
             )
         else:
             orca_min_point, orca_min_data = min(
-                lr_orca_dict.items(), key=lambda x: x[1]["energy"]
+                lr_orca_curve.items(), key=lambda x: x[1]["energy"]
             )
-        n_systems_with_sr += len(sr_orca_dict)
-        n_systems_with_lr += len(lr_orca_dict)
-        for pes_curve, range_label in zip((sr_orca_dict, lr_orca_dict), ("sr", "lr")):
+        n_systems_with_sr += len(sr_orca_curve)
+        n_systems_with_lr += len(lr_orca_curve)
+        for pes_curve, range_label in zip((sr_orca_curve, lr_orca_curve), ("sr", "lr")):
 
             (
                 energy_mae_system,
@@ -809,7 +809,7 @@ def distance_scaling(orca_results, mlip_results):
                 ddForces_mae_system,
             ) = compute_distance_scaling_metrics(
                 pes_curve,
-                mlip_data,
+                mlip_curve,
                 orca_min_point,
                 orca_min_data,
             )
