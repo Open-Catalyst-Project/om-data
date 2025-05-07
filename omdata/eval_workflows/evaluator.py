@@ -704,9 +704,8 @@ def distance_scaling(orca_results, mlip_results):
     for vertical in orca_results:
         for identifier in orca_results[vertical]:
             orca_min_energy_name, orca_min_energy_struct = min(
-                orca_results[vertical][identifier].items(), key=lambda x: x[1]["energy"] if sr_or_lr(x[0]) == "sr" else 0.0
+                orca_results[vertical][identifier].items(), key=lambda x: x[1]["energy"] if sr_or_lr(x[0]) == "sr" else x[1]["energy"] + 1e8
             )
-            assert sr_or_lr(orca_min_energy_name) == "sr"
             num_r = {}
             num_r["sr"] = len(
                 [
@@ -724,6 +723,9 @@ def distance_scaling(orca_results, mlip_results):
             )
             if num_r["sr"] > 0:
                 num_sr += 1
+                assert sr_or_lr(orca_min_energy_name) == "sr"
+            else:
+                assert sr_or_lr(orca_min_energy_name) == "lr"
             if num_r["lr"] > 0:
                 num_lr += 1
             assert num_r["sr"] + num_r["lr"] == len(orca_results[vertical][identifier])
