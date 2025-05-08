@@ -1,0 +1,9 @@
+category,comment/name,DOI,units,temperature,cation1,cation2,cation3,cation4,anion1,anion2,anion3,anion4,solvent1,solvent2,solvent3,solvent4,cation1_conc,cation2_conc,cation3_conc,cation4_conc,anion1_conc,anion2_conc,anion3_conc,anion4_conc,solvent1_ratio,solvent2_ratio,solvent3_ratio,solvent4_ratio
+random,random-1-minT-midconc,,mass,326.55,Li+,,,,F6P-,,,,C3H4O3,,,,0.0960904274551052,,,,0.0960904274551052,,,,1.0,,,
+random,random-1-maxT-midconc,,mass,494.95,Li+,,,,F6P-,,,,C3H4O3,,,,0.0960904274551052,,,,0.0960904274551052,,,,1.0,,,
+random,random-1-minT-lowconc,,mass,326.55,Li+,,,,F6P-,,,,C3H4O3,,,,0.0452112710796997,,,,0.0452112710796997,,,,1.0,,,
+random,random-1-maxT-lowconc,,mass,494.95,Li+,,,,F6P-,,,,C3H4O3,,,,0.0452112710796997,,,,0.0452112710796997,,,,1.0,,,
+random,random-1-minT-vhighconc,,mass,326.55,Li+,,,,F6P-,,,,C3H4O3,,,,0.9604274551052,,,,0.9604274551052,,,,1.0,,,
+random,random-1-maxT-vhighconc,,mass,494.95,Li+,,,,F6P-,,,,C3H4O3,,,,0.9604274551052,,,,0.9604274551052,,,,1.0,,,
+random,random-1-minT-highconc,,mass,326.55,Li+,,,,F6P-,,,,C3H4O3,,,,0.452112710796997,,,,0.452112710796997,,,,1.0,,,
+random,random-1-maxT-highconc,,mass,494.95,Li+,,,,F6P-,,,,C3H4O3,,,,0.452112710796997,,,,0.452112710796997,,,,1.0,,,
