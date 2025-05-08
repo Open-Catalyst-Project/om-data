@@ -763,49 +763,54 @@ def distance_scaling(orca_results, mlip_results):
     deltadeltaF_mae = {"sr": 0, "lr": 0}
     n_systems_with_sr = 0
     n_systems_with_lr = 0
-    for vertical, identifier in orca_results.items():
+    for vertical, samples in orca_results.items():
         # vertical is e.g. 'biomolecultes', identifier is a given PES curve (i.e. many points)
+        for identifier in samples:
+            mlip_curve = mlip_results[vertical][identifier]
+            sr_orca_curve = {
+                k: v
+                for k, v in orca_results[vertical][identifier].items()
+                if sr_or_lr(k) == "sr"
+            }
+            lr_orca_curve = {
+                k: v
+                for k, v in orca_results[vertical][identifier].items()
+                if sr_or_lr(k) == "lr"
+            }
+            if sr_orca_curve:
+                orca_min_point, orca_min_data = min(
+                    sr_orca_curve.items(), key=lambda x: x[1]["energy"]
+                )
+            else:
+                orca_min_point, orca_min_data = min(
+                    lr_orca_curve.items(), key=lambda x: x[1]["energy"]
+                )
+            # We require at least 2 points for short-range because, if there is
+            # only 1, it won't actually contribute to the metrics since that one
+            # point is the reference. Because we require that there are at least
+            # 5 points on the PES, if there are >0 in LR, then they will contribute
+            # so no need to adjust there.
+            if len(sr_orca_curve) == 1:
+                sr_orca_curve = {}
 
-        mlip_curve = mlip_results[vertical][identifier]
-        sr_orca_curve = {
-            k: v
-            for k, v in orca_results[vertical][identifier].items()
-            if sr_or_lr(k) == "sr"
-        }
-        lr_orca_curve = {
-            k: v
-            for k, v in orca_results[vertical][identifier].items()
-            if sr_or_lr(k) == "lr"
-        }
-        if sr_orca_curve:
-            orca_min_point, orca_min_data = min(
-                sr_orca_curve.items(), key=lambda x: x[1]["energy"]
-            )
-        else:
-            orca_min_point, orca_min_data = min(
-                lr_orca_curve.items(), key=lambda x: x[1]["energy"]
-            )
-        # We require at least 2 points for short-range because, if there is
-        # only 1, it won't actually contribute to the metrics since that one
-        # point is the reference. Because we require that there are at least
-        # 5 points on the PES, if there are >0 in LR, then they will contribute
-        # so no need to adjust there.
-        if len(sr_orca_curve) == 1:
-            sr_orca_curve = {}
+            n_systems_with_sr += len(sr_orca_curve)
+            n_systems_with_lr += len(lr_orca_curve)
+            for pes_curve, range_label in zip(
+                (sr_orca_curve, lr_orca_curve), ("sr", "lr")
+            ):
+                if not pes_curve:
+                    continue
 
-        n_systems_with_sr += len(sr_orca_curve)
-        n_systems_with_lr += len(lr_orca_curve)
-        for pes_curve, range_label in zip((sr_orca_curve, lr_orca_curve), ("sr", "lr")):
-            if not pes_curve:
-                continue
+                (
+                    ddEnergy_mae_system,
+                    ddForces_mae_system,
+                ) = compute_distance_scaling_metrics(
+                    pes_curve, mlip_curve, orca_min_point, orca_min_data
+                )
 
-            ddEnergy_mae_system, ddForces_mae_system = compute_distance_scaling_metrics(
-                pes_curve, mlip_curve, orca_min_point, orca_min_data
-            )
-
-            # Package in overall metric
-            deltadeltaE_mae[range_label] += ddEnergy_mae_system
-            deltadeltaF_mae[range_label] += ddForces_mae_system
+                # Package in overall metric
+                deltadeltaE_mae[range_label] += ddEnergy_mae_system
+                deltadeltaF_mae[range_label] += ddForces_mae_system
 
     results = {
         "sr_ddE_mae": deltadeltaE_mae["sr"] / n_systems_with_sr,
