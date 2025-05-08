@@ -764,19 +764,12 @@ def distance_scaling(orca_results, mlip_results):
     n_systems_with_sr = 0
     n_systems_with_lr = 0
     for vertical, samples in orca_results.items():
-        # vertical is e.g. 'biomolecultes', identifier is a given PES curve (i.e. many points)
-        for identifier in samples:
+        # vertical is e.g. 'biomolecules', samples is a dict keyed on identifiers
+        # with values being a given PES curve (i.e. many points)
+        for identifier, orca_curve in samples.items():
             mlip_curve = mlip_results[vertical][identifier]
-            sr_orca_curve = {
-                k: v
-                for k, v in orca_results[vertical][identifier].items()
-                if sr_or_lr(k) == "sr"
-            }
-            lr_orca_curve = {
-                k: v
-                for k, v in orca_results[vertical][identifier].items()
-                if sr_or_lr(k) == "lr"
-            }
+            sr_orca_curve = {k: v for k, v in orca_curve.items() if sr_or_lr(k) == "sr"}
+            lr_orca_curve = {k: v for k, v in orca_curve.items() if sr_or_lr(k) == "lr"}
             if sr_orca_curve:
                 orca_min_point, orca_min_data = min(
                     sr_orca_curve.items(), key=lambda x: x[1]["energy"]
