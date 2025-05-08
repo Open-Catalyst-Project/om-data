@@ -785,7 +785,7 @@ def distance_scaling(orca_results, mlip_results):
             # so no need to adjust there.
             if len(sr_orca_curve) == 1:
                 sr_orca_curve = {}
-            if len(lr_orca_curve) == 1:
+            if len(lr_orca_curve) == 1 and not sr_orca_curve:
                 lr_orca_curve = {}
 
             n_systems_with_sr += len(sr_orca_curve)
