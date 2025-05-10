@@ -882,19 +882,23 @@ def singlepoint(orca_results, mlip_results):
     target_forces = []
     energies = []
     forces = []
+    natoms = []
     for identifier in orca_results:
         target_energies.append(orca_results[identifier]["energy"])
         target_forces.append(orca_results[identifier]["forces"])
         energies.append(mlip_results[identifier]["energy"])
         forces.append(mlip_results[identifier]["forces"])
+        natoms.append(len(orca_results[identifier]["forces"]))
 
     target_energies = np.array(target_energies)
     target_forces = np.concatenate(target_forces)
     energies = np.array(energies)
     forces = np.concatenate(forces)
+    natoms = np.array(natoms)
 
     metrics = {
         "energy_mae": np.mean(np.abs(energies - target_energies)),
+        "energy_per_atom_mae": np.mean(np.abs(energies - target_energies) / natoms),
         "forces_mae": np.mean(np.abs(forces - target_forces)),
         "forces_cos": cosine_similarity(target_forces, forces),
     }
