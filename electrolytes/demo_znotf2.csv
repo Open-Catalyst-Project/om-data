@@ -1,0 +1,9 @@
+category,comment/name,DOI,units,temperature,cation1,cation2,cation3,cation4,anion1,anion2,anion3,anion4,solvent1,solvent2,solvent3,solvent4,cation1_conc,cation2_conc,cation3_conc,cation4_conc,anion1_conc,anion2_conc,anion3_conc,anion4_conc,solvent1_ratio,solvent2_ratio,solvent3_ratio,solvent4_ratio
+random,random-1-minT-highconc,,mass,239.4,Zn+2,,,,CF3O3S-,,,,C2H3N,,,,0.0640602849700701,,,,0.1281205699401403,,,,1.0,,,
+random,random-1-maxT-highconc,,mass,337.25,Zn+2,,,,CF3O3S-,,,,C2H3N,,,,0.06406028497007019,,,,0.12812056994014037,,,,1.0,,,
+random,random-1-minT-lowconc,,mass,239.4,Zn+2,,,,CF3O3S-,,,,C2H3N,,,,0.030140847386466496,,,,0.06028169477293299,,,,1.0,,,
+random,random-1-maxT-lowconc,,mass,337.25,Zn+2,,,,CF3O3S-,,,,C2H3N,,,,0.030140847386466496,,,,0.06028169477293299,,,,1.0,,,
+random,random-1-minT-vhighconc,,mass,239.4,Zn+2,,,,CF3O3S-,,,,C2H3N,,,,0.640602849700701,,,,1.281205699401403,,,,1.0,,,
+random,random-1-maxT-vhighconc,,mass,337.25,Zn+2,,,,CF3O3S-,,,,C2H3N,,,,0.6406028497007019,,,,1.2812056994014037,,,,1.0,,,
+random,random-1-minT-midconc,,mass,239.4,Zn+2,,,,CF3O3S-,,,,C2H3N,,,,0.30140847386466496,,,,0.6028169477293299,,,,1.0,,,
+random,random-1-maxT-midconc,,mass,337.25,Zn+2,,,,CF3O3S-,,,,C2H3N,,,,0.30140847386466496,,,,0.6028169477293299,,,,1.0,,,
