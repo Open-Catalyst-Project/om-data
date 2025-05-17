@@ -160,6 +160,8 @@ def get_core_neighborhood(
                     print(atom.pdbname, atom.index)
             st_copy.write(f"{pdb_id}_problem.maegz")
             raise
+        res_list = [st_copy.findResidue(f'{res_num.chain}:{res_num.resnum}{res_num.inscode.strip()}') for res_num in res_list]
+        gap_res = [st_copy.findResidue(f'{res_num.chain}:{res_num.resnum}{res_num.inscode.strip()}') for res_num in gap_res]
 
         core_ats_with_gaps = []
         for res in res_list + gap_res:
@@ -194,7 +196,7 @@ def prepwizard_core(core: Structure, pdb_id: str, epik_states: int = 0) -> Struc
     """
     maename = f"{pdb_id}.maegz"
     outname = f"{pdb_id}_prepped.maegz"
-    if os.path.exists(outname): 
+    if os.path.exists(outname):
         prepped_core = StructureReader.read(outname)
     else:
         # Remove any dummy atoms, PrepWizard doesn't like them
@@ -216,7 +218,7 @@ def prepwizard_core(core: Structure, pdb_id: str, epik_states: int = 0) -> Struc
     prepped_core = build.reorder_protein_atoms_by_sequence(prepped_core)
 
     # Cleanup
-    for file_to_del in (maename,):
+    for file_to_del in (maename, outname):
         if os.path.exists(file_to_del):
             os.remove(file_to_del)
     for deldir in glob.glob(f"{pdb_id}-???"):

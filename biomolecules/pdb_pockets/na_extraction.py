@@ -2,20 +2,19 @@ import argparse
 import glob
 import os
 import random
+import sys
+from collections import defaultdict
 from typing import List, Tuple
 
-from collections import defaultdict
-import sys
-from schrodinger.structure import Residue, Structure
-from schrodinger.structutils.analyze import evaluate_asl
-from schrodinger.structutils import build
+from omdata.spin_utils import guess_spin_state
 from schrodinger.comparison import are_same_geometry
+from schrodinger.structure import Structure
+from schrodinger.structutils import build
+from schrodinger.structutils.analyze import evaluate_asl
 
 import biolip_extraction as blp_ext
 import protein_core_extraction as prot_core
 from cleanup import deprotonate_phosphate_esters
-
-MAX_ATOMS = 350
 
 
 def has_protein(st, at_list):
@@ -52,7 +51,7 @@ def remove_lonesome_H(st):
     lonesome_H = evaluate_asl(st, 'at.ele H and at.att 0')
     st.deleteAtoms(lonesome_H)
 
-def main(output_path, start_pdb=0, end_pdb=1, na_type='dna'):
+def main(output_path, start_pdb=0, end_pdb=1, na_type='dna', more_sampling=False):
     """
     For each NA chain entry in biolip, extract from around a residue (a new random one each time)
         1) within 2.5A and different chain (S--) x 3
@@ -90,8 +89,12 @@ def main(output_path, start_pdb=0, end_pdb=1, na_type='dna'):
         na = '(dna or rna or res. " DU ")'
         for chain in chains:
             res_list = list(range(*chain[1]))
-            if len(res_list) < 8:
-                res_list.extend(res_list)
+            if more_sampling:
+                if len(res_list) < 13:
+                    continue
+            else:
+                if len(res_list) < 8:
+                    res_list.extend(res_list)                
             random.shuffle(res_list)
             system_types = defaultdict(list)
             for seed_res in res_list:
@@ -100,30 +103,30 @@ def main(output_path, start_pdb=0, end_pdb=1, na_type='dna'):
                     continue
                 near_asl = f'fillres (within 2.5 at.num {stringify(at_list)})'
                 if na_type == 'dna': # not re-using for RNA because RNA ASL needed tweaks and DNA was already run
-                    if len(system_types['S--']) < 3:
-                        addl_atoms = evaluate_asl(st, f'{near_asl} and not (chain {chain[0]} and (dna or rna))')
+                    if len(system_types['S--']) < (4 if more_sampling else 3):
+                        addl_atoms = evaluate_asl(st, f'{near_asl} and not fillres (withinbonds 1 at.num {stringify(at_list)})')
                         if add_sig(at_list, addl_atoms):
                             system_types['S--'].append((seed_res, at_list+addl_atoms))
                             continue
-                    if len(system_types['S-']) < 2:
-                        addl_atoms = evaluate_asl(st, f'{near_asl} and not (dna or rna)')
+                    if len(system_types['S-']) < (3 if more_sampling else 2):
+                        addl_atoms = evaluate_asl(st, f'{near_asl} and not {na}')
                         if add_sig(at_list, addl_atoms):
                             system_types['S-'].append((seed_res, at_list+addl_atoms))
                             continue
                     if len(system_types['E']) < 1:
-                        addl_atoms = evaluate_asl(st, f'{near_asl} and not protein and chain {chain[0]}')
+                        addl_atoms = evaluate_asl(st, f'fillres (withinbonds 1 at.num {stringify(at_list)})')
                         if add_sig(at_list, addl_atoms):
                             system_types['E'].append((seed_res, at_list+addl_atoms))
                             continue
-                    if not system_types['--']:
-                        addl_atoms = evaluate_asl(st, f'{near_asl} and not (chain {chain[0]} and (dna or rna)) and (not protein)')
+                    if len(system_types['--']) < (2 if more_sampling else 1):
+                        addl_atoms = evaluate_asl(st, f'{near_asl} and not fillres (withinbonds 1 at.num {stringify(at_list)}) and not protein')
                         if add_sig(at_list, addl_atoms):
                             system_types['--'].append((seed_res, at_list+addl_atoms))
                             continue
                         else:
                             # If there wasn't another residue, try another protein one
                             # (thinking about RNA where lots isn't double-stranded)
-                            addl_atoms = evaluate_asl(st, f'{near_asl} and not (dna or rna)')
+                            addl_atoms = evaluate_asl(st, f'{near_asl} and not {na}')
                             if add_sig(at_list, addl_atoms):
                                 system_types['S-'].append((seed_res, at_list+addl_atoms))
                                 system_types['--'].append(None)
@@ -138,28 +141,28 @@ def main(output_path, start_pdb=0, end_pdb=1, na_type='dna'):
                             if seed_res == chain[1][1] - 1:
                                 seed_res -= 1
                             at_list = evaluate_asl(st, f'chain {chain[0]} and res.num {seed_res},{seed_res+1}')
-                            addl_atoms = evaluate_asl(st, f'{near_asl} and not protein and not chain {chain[0]}')
+                            addl_atoms = evaluate_asl(st, f'{near_asl} and not protein and not fillres (withinbonds 1 at.num {stringify(at_list)})')
                             if add_sig(at_list, addl_atoms):
                                 system_types['=='].append((seed_res, at_list+addl_atoms))
                                 continue
                 ### RNA ASL
                 elif na_type == 'rna':
-                    if len(system_types['S--']) < 3:
+                    if len(system_types['S--']) < (6 if more_sampling else 3):
                         addl_atoms = evaluate_asl(st, f'{near_asl} and not fillres (withinbonds 1 at.num {stringify(at_list)})')
                         if add_sig(at_list, addl_atoms):
                             system_types['S--'].append((seed_res, at_list+addl_atoms))
                             continue
-                    if len(system_types['S-']) < 2:
+                    if len(system_types['S-']) < (4 if more_sampling else 2):
                         addl_atoms = evaluate_asl(st, f'{near_asl} and not {na}')
                         if add_sig(at_list, addl_atoms):
                             system_types['S-'].append((seed_res, at_list+addl_atoms))
                             continue
-                    if len(system_types['E']) < 2:
+                    if len(system_types['E']) < (4 if more_sampling else 2):
                         addl_atoms = evaluate_asl(st, f'fillres (withinbonds 1 at.num {stringify(at_list)})')
                         if add_sig(at_list, addl_atoms):
                             system_types['E'].append((seed_res, at_list+addl_atoms))
                             continue
-                    if not system_types['--']:
+                    if len(system_types['--']) < (2 if more_sampling else 1):
                         addl_atoms = evaluate_asl(st, f'{near_asl} and not fillres (withinbonds 1 at.num {stringify(at_list)}) and not protein')
                         if add_sig(at_list, addl_atoms):
                             system_types['--'].append((seed_res, at_list+addl_atoms))
@@ -172,12 +175,12 @@ def main(output_path, start_pdb=0, end_pdb=1, na_type='dna'):
                                 system_types['S-'].append((seed_res, at_list+addl_atoms))
                                 system_types['--'].append(None)
                                 continue
-                    if not system_types['E-']:
+                    if len(system_types['E-']) < (2 if more_sampling else 1):
                         addl_atoms = evaluate_asl(st, f'{near_asl} and not protein')
                         if add_sig(at_list, addl_atoms):
                             system_types['E-'].append((seed_res, at_list+addl_atoms))
                             continue
-                    if not system_types['==']:
+                    if len(system_types['==']) < (2 if more_sampling else 1):
                         if seed_res == chain[1][1] - 1:
                             seed_res -= 1
                         at_list = evaluate_asl(st, f'chain {chain[0]} and res.num {seed_res},{seed_res+1}')
@@ -205,6 +208,7 @@ def main(output_path, start_pdb=0, end_pdb=1, na_type='dna'):
                                 continue
                             system[1].clear()
                             system[1].extend(at.index for at in st_copy.atom if at.property.get('b_user_interest', False))
+                            gap_res = [st_copy.findResidue(f'{res_num.chain}:{res_num.resnum}{res_num.inscode.strip()}') for res_num in gap_res]
 
                             for res in gap_res:
                                 system[1].extend(res.getAtomIndices())
@@ -223,7 +227,8 @@ def main(output_path, start_pdb=0, end_pdb=1, na_type='dna'):
                         continue
                     remove_lonesome_H(na_st)
                     na_st = build.reorder_protein_atoms_by_sequence(na_st)
-                    fname = f'{pdb_id}_{chain[0]}{system[0]}_{sys_class}_{na_st.formal_charge}_1.mae'
+                    spin = guess_spin_state(na_st)
+                    fname = f'{pdb_id}_{chain[0]}{system[0]}_{sys_class}_{na_st.formal_charge}_{spin}.mae'
                     na_st.title = fname
                     st_list.append(na_st)
             st_list = remove_identical_inputs(st_list)
@@ -232,6 +237,7 @@ def main(output_path, start_pdb=0, end_pdb=1, na_type='dna'):
         print(f'finished with {pdb_id}', flush=True)
         prot_core.cleanup(pdb_id)
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--start_idx", type=int, default=0)
@@ -239,10 +245,11 @@ def parse_args():
     parser.add_argument("--output_path", default=".")
     parser.add_argument("--seed", type=int, default=4621)
     parser.add_argument("--na_type", type=str, default='dna')
+    parser.add_argument("--more_sampling", action='store_true')
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
     random.seed(args.seed)
-    main(args.output_path, args.start_idx, args.end_idx, args.na_type)
+    main(args.output_path, args.start_idx, args.end_idx, args.na_type, args.more_sampling)
