@@ -1,12 +1,15 @@
-REMARK LIGPARGEN GENERATED PDB FILE
-ATOM      1  C00 UNK     1       1.000   1.000   0.000
-ATOM      2  Cl0 UNK     1      -0.767   1.000   0.000
-ATOM      3  Cl1 UNK     1       1.637   1.000  -1.649
-ATOM      4  H03 UNK     1       1.354   0.106   0.518
-ATOM      5  H04 UNK     1       1.354   1.894   0.518
-TER 
-CONECT    1    2 
-CONECT    1    3 
-CONECT    1    4 
-CONECT    1    5 
-END
+TITLE     CH2Cl2
+REMARK   4      COMPLIES WITH FORMAT V. 3.0, 1-DEC-2006
+REMARK 888
+REMARK 888 WRITTEN BY MAESTRO (A PRODUCT OF SCHRODINGER, LLC)
+HETATM    1  C00 FFF B   1       1.000   1.000   0.000  0.00  0.00           C  
+HETATM    2 CL1  FFF B   1      -0.795   1.000   0.000  0.00  0.00          Cl  
+HETATM    3 CL2  FFF B   1       1.647   1.000  -1.674  0.00  0.00          Cl  
+HETATM    4  H03 FFF B   1       1.354   0.106   0.518  0.00  0.00           H  
+HETATM    5  H04 FFF B   1       1.354   1.894   0.518  0.00  0.00           H  
+CONECT    1    2    3    4    5
+CONECT    2    1
+CONECT    3    1
+CONECT    4    1
+CONECT    5    1
+END   

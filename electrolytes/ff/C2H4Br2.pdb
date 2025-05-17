@@ -1,18 +1,20 @@
-REMARK LIGPARGEN GENERATED PDB FILE
-ATOM      1  Br0 UNK     1       1.000   1.000   0.000
-ATOM      2  C01 UNK     1      -0.947   1.000   0.000
-ATOM      3  C02 UNK     1      -1.452   1.000   1.423
-ATOM      4  Br3 UNK     1      -3.399   1.002   1.423
-ATOM      5  H04 UNK     1      -1.258   0.108  -0.552
-ATOM      6  H05 UNK     1      -1.258   1.892  -0.552
-ATOM      7  H06 UNK     1      -1.139   1.891   1.975
-ATOM      8  H07 UNK     1      -1.141   0.108   1.974
-TER 
-CONECT    1    2 
-CONECT    2    3 
-CONECT    3    4 
-CONECT    2    5 
-CONECT    2    6 
-CONECT    3    7 
-CONECT    3    8 
-END
+REMARK   4      COMPLIES WITH FORMAT V. 3.0, 1-DEC-2006
+REMARK 888
+REMARK 888 WRITTEN BY MAESTRO (A PRODUCT OF SCHRODINGER, LLC)
+HETATM    1 BR1  GGG B   1       1.002   1.000   0.000  0.00  0.00          Br  
+HETATM    2  C01 GGG B   1      -0.947   1.000   0.000  0.00  0.00           C  
+HETATM    3  C02 GGG B   1      -1.452   1.000   1.423  0.00  0.00           C  
+HETATM    4 BR2  GGG B   1      -3.401   1.002   1.423  0.00  0.00          Br  
+HETATM    5  H04 GGG B   1      -1.258   0.108  -0.552  0.00  0.00           H  
+HETATM    6  H05 GGG B   1      -1.258   1.892  -0.552  0.00  0.00           H  
+HETATM    7  H06 GGG B   1      -1.139   1.891   1.975  0.00  0.00           H  
+HETATM    8  H07 GGG B   1      -1.141   0.108   1.974  0.00  0.00           H  
+CONECT    1    2
+CONECT    2    1    3    5    6
+CONECT    3    2    4    7    8
+CONECT    4    3
+CONECT    5    2
+CONECT    6    2
+CONECT    7    3
+CONECT    8    3
+END   

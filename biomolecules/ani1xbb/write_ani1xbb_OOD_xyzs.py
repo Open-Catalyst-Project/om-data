@@ -91,8 +91,8 @@ def main(args):
                     )
                     mp_args.append((atomic_numbers, positions, output_path))
 
-            pool = mp.Pool(10)
-            list(tqdm(pool.imap(check_and_write_xyz, mp_args), total=len(mp_args)))
+            with mp.Pool(60) as pool:
+                list(tqdm(pool.imap(check_and_write_xyz, mp_args), total=len(mp_args)))
 
 
 def parse_args():

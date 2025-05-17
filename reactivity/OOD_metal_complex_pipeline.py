@@ -85,6 +85,7 @@ def main(args):
                 assert orig_charge == charge
                 assert orig_uhf != uhf
             else:
+                charge = orig_charge
                 uhf = orig_uhf
             sdf = good_df.sdf_file.iloc[ii]
             metal_complex_pipeline(new_name, sdf, charge, uhf, args.output_path)

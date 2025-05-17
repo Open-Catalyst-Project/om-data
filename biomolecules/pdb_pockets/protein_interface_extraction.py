@@ -113,6 +113,8 @@ def get_interface_neighborhood(
             st_copy.write(f"{pdb_id}_problem.maegz")
             continue
 
+        res_list = [st_copy.findResidue(f'{res_num.chain}:{res_num.resnum}{res_num.inscode.strip()}') for res_num in res_list]
+        gap_res = [st_copy.findResidue(f'{res_num.chain}:{res_num.resnum}{res_num.inscode.strip()}') for res_num in gap_res]
         iface_ats_with_gaps = []
         for res in res_list + gap_res:
             iface_ats_with_gaps.extend(res.getAtomIndices())

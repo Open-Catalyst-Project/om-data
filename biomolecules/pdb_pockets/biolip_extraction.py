@@ -36,7 +36,7 @@ class MutateError(Exception):
 
 
 def get_biolip_db(lig_type: str = "reg", pklpath: str = ".") -> pd.DataFrame:
-    pkl_name = os.path.join(pklpath, "biolip_df.pkl")
+    pkl_name = os.path.join(pklpath, "biolip_df_05_31_2024.pkl")
     if os.path.exists(pkl_name):
         biolip_df = pd.read_pickle(pkl_name)
     else:
@@ -187,7 +187,7 @@ def certain_rows(df):
     return filtered
 
 
-def retreive_ligand_and_env(
+def retrieve_ligand_and_env(
     biolip_df: pd.DataFrame,
     ligand_size_limit: int = 250,
     start_pdb: int = 0,
@@ -267,7 +267,7 @@ def process_prepped_protein(st_list, row, pdb_id, bs_counter):
     pockets = []
     for st in st_list:
         try:
-            lig_ats, res_ats = get_atom_lists(st, row)
+            lig_ats, res_ats, st = get_atom_lists(st, row)
         except MissingAtomsError:
             print(f"Error on {pdb_id}, {bs_counter}: Atoms are missing")
             continue
@@ -594,7 +594,7 @@ def get_atom_lists(st: Structure, row: pd.Series) -> Tuple[List[int], List[int]]
 
     st = make_gaps_gly(st, row, gap_res)
 
-    # Mutating residues can change the atom numbering so let's retreive
+    # Mutating residues can change the atom numbering so let's retrieve
     # all the atom indices in a separate loop
     for res_num in gap_res + res_list:
         res = st.findResidue(f'{row["receptor_chain"]}:{res_num}')
@@ -619,17 +619,17 @@ def get_atom_lists(st: Structure, row: pd.Series) -> Tuple[List[int], List[int]]
     # mark the protein as unused, we will edit the parts we want
     for ch in st.chain:
         ch.name = "X"
+    # mark the receptor chain
+    for at in res_ats:
+        st.atom[at].chain = "A"
     # mark the coord chain
     for at in coord_ats:
         st.atom[at].chain = "c"
     # mark the ligand chain
     for at in lig_ats:
         st.atom[at].chain = "l"
-    # mark the receptor chain
-    for at in res_ats:
-        st.atom[at].chain = "A"
 
-    return lig_ats + coord_ats, res_ats
+    return lig_ats + coord_ats, res_ats, st
 
 
 def get_single_gaps(
@@ -812,7 +812,7 @@ def parse_args():
 def main():
     args = parse_args()
     biolip_df = get_biolip_db(pklpath=args.output_path)
-    retreive_ligand_and_env(
+    retrieve_ligand_and_env(
         biolip_df,
         start_pdb=args.start_idx,
         end_pdb=args.end_idx,

@@ -15,5 +15,8 @@
 
 idx=$((${SLURM_ARRAY_TASK_ID}+0))
 
-echo /private/home/levineds/miniconda3/envs/rpmd/bin/python driver_omm.py $idx
-/private/home/levineds/miniconda3/envs/rpmd/bin/python driver_omm.py $idx
+echo /private/home/levineds/miniconda3/envs/rpmd/bin/python driver_omm.py --row $idx --csv_file rpmd_elytes.csv --rpmd --stepsize 0.0005 --n_beads 32
+/private/home/levineds/miniconda3/envs/rpmd/bin/python driver_omm.py --row $idx --csv_file rpmd_elytes.csv --rpmd --stepsize 0.0005 --n_beads 32
+
+# for non-H2O systems
+#/private/home/levineds/miniconda3/envs/rpmd/bin/python driver_omm.py --row $idx --csv_file rpmd_elytes.csv --rpmd --stepsize 0.001 --n_beads 32

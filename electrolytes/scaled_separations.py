@@ -90,7 +90,6 @@ def main_loop(mae_dir: str, output_path: str, job: str):
         )
         new_name = os.path.join(output_path, new_basename)
         st_copy.write(new_name)
-        break
 
 
 def main(mae_dir, output_path):

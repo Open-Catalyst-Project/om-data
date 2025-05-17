@@ -1,0 +1,4 @@
+formula,charge,in_protic,in_aprotic,in_IL,IL_comp,MS_comp,in_aq
+Ti+3,3,TRUE,TRUE,TRUE,FALSE,TRUE,TRUE
+Ti+4,4,TRUE,TRUE,TRUE,FALSE,TRUE,TRUE
+Mn+4,4,TRUE,TRUE,TRUE,FALSE,TRUE,TRUE

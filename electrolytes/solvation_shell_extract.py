@@ -28,7 +28,7 @@ from solvation_shell_utils import (
 )
 from utils import validate_metadata_file
 
-NCORES=8
+NCORES=40
 
 def neutralize_tempo(st, tempo_res):
     for at in evaluate_asl(st, f'res {tempo_res}'):
@@ -46,6 +46,7 @@ def extract_solvation_shells(
     max_shell_size: int,
     top_n: int,
     rmsd_sampling: bool=True,
+    has_pbc:bool=True,
 ):
     """
     Given a MD trajectory in a PDB file, perform a solvation analysis
@@ -122,6 +123,7 @@ def extract_solvation_shells(
                             spec_type=spec_type,
                             shells_per_frame=shells_per_frame,
                             max_shell_size=max_shell_size,
+                            has_pbc=has_pbc
                         )
                 # extract shells from the structure, centered on the residue type
                 with mp.Pool(NCORES) as pool:
@@ -199,10 +201,10 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--radii",
-        type=float,
+        type=int,
         metavar='F',
         nargs='+',
-        default=3.0,
+        default=3,
         help="List of shell radii to extract around solutes and solvents",
     )
 
@@ -252,6 +254,13 @@ if __name__ == "__main__":
         help="Use RMSD to pick the most dissimilar structures within a topology",
     )
 
+    parser.add_argument(
+        "--no_pbc",
+        action='store_false',
+        dest='has_pbc',
+        help="Structure does not have periodic boundary conditions",
+    )
+
 
     args = parser.parse_args()
 
@@ -269,4 +278,5 @@ if __name__ == "__main__":
         args.max_shell_size,
         args.top_n,
         args.rmsd_sampling,
+        args.has_pbc,
     )

@@ -1,3 +1,4 @@
+import argparse
 import csv
 import glob
 import multiprocessing as mp
@@ -20,8 +21,6 @@ from solvation_shell_utils import get_species_from_res
 #print(cls_elytes.index(lines_with_ood[0]))
 #print(len(cls_elytes + ml_elytes) - 2 )
 
-DATA_DIR = "/checkpoint/levineds/elytes_09_29_2024/results2"
-
 
 def system_has_fragments(st: Structure, frags: Set[str]):
     """
@@ -39,13 +38,13 @@ def system_has_fragments(st: Structure, frags: Set[str]):
     return frag_present
 
 
-def parallel_work(fname, ood_frags):
+def parallel_work(fname, ood_frags, data_dir):
     job_num, species, radius, *rest, charge, spin = os.path.splitext(
         os.path.basename(fname)
     )[0].split("_")
 
     mae_name = os.path.join(
-        DATA_DIR,
+        data_dir,
         job_num,
         species,
         f"radius_{radius}",
@@ -66,19 +65,27 @@ def parallel_work(fname, ood_frags):
         return ""
 
 
-def main():
-    with open("archives_md_elytes_3A.txt", "r") as fh:
-        data = [
-            os.path.dirname(os.path.dirname(f)) for f in fh.readlines() if "step0" in f
-        ]
+def main(sample_path, data_path):
+    #with open("archives_md_elytes_3A.txt", "r") as fh:
+    #    data = [
+    #        os.path.dirname(os.path.dirname(f)) for f in fh.readlines() if "step0" in f
+    #    ]
+    data = [os.path.splitext(os.path.basename(f))[0] for f in glob.glob(f'{sample_path}/*xyz')]
 
-    ood_frags = {"C4F3H6O2-1"}
-    pool = mp.Pool(60)
-    fxn = partial(parallel_work, ood_frags=ood_frags)
-    ood_list = set(tqdm(pool.imap(fxn, data), total=len(data)))
+    ood_frags = {"C4H12N+", "C8H20P+","BC2F2O4-1", "C6H18NSi2-1", "C7H8", "C4H8O2-r1"}
+    fxn = partial(parallel_work, ood_frags=ood_frags, data_dir=data_path)
+    with mp.Pool(60) as pool:
+        ood_list = set(tqdm(pool.imap(fxn, data), total=len(data)))
+    ood_list -= {''}
     with open("ood_systems.txt", "w") as fh:
-        fh.write(str(ood_list))
+        fh.writelines([f+'\n' for f in ood_list])
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--sampled_path", default=".")
+    parser.add_argument("--data_path", default=".")
+    return parser.parse_args()
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(args.sampled_path, args.data_path)
