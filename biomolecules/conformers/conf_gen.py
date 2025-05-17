@@ -30,7 +30,9 @@ from schrodinger.application.matsci import clusterstruct
 from schrodinger.comparison.atom_mapper import ConnectivityAtomMapper
 
 N_CONF = 100
+E_THRESH = 10.0 / 627.5094
 SCHRO = "/private/home/levineds/schrodinger2024-2/"
+E_PROP = 'r_j_Gas_Phase_Energy'
 
 @contextlib.contextmanager
 def chdir(destination):
@@ -75,11 +77,15 @@ def reopt_conformers_with_xtb(st_list):
             carts = read_cartesians(conf_file)
 
     opt_st_list = []
+    energy_good = True
     for old_st, new_cart in zip(st_list, carts):
         new_st = clean_st(new_cart.getStructure())
-        new_st.property['r_j_Gas_Phase_Energy'] = float(new_st.title)
+        try:
+            new_st.property[E_PROP] = float(new_st.title)
+        except ValueError:
+            energy_good = False
         opt_st_list.append(new_st)
-    return opt_st_list
+    return opt_st_list, energy_good
 
 def remove_xyz_newlines(xyz_file):
     with open(xyz_file, 'r') as fh:
@@ -137,13 +143,17 @@ def renumber_molecules_to_match(ref_st, st_list):
         renumbered_mols.append(r_st)
     return renumbered_mols
 
-def main(output_path, job_idx):
-    flist = sorted(glob.glob(os.path.join(output_path, '*_ligand_0.mae')))
-    mae_name = flist[job_idx]
-    print(mae_name, flush=True)
-#    xyz_file  = '/private/home/levineds/7g7l_ABS03_state0_1_ligand_0_conf_0_0_1.xyz'
-#    mol_st = clean_st(read_cartesians(xyz_file)[0].getStructure())
-    mol_st = StructureReader.read(mae_name)
+def main(output_path, job_idx, filetype):
+    if filetype == 'xyz':
+        flist = sorted(glob.glob(os.path.join(output_path, '*.xyz')))
+        fname = flist[job_idx]
+        mol_st = clean_st(read_cartesians(fname)[0].getStructure())
+    elif filetype == 'sdf':
+        flist = sorted(glob.glob(os.path.join(output_path, '*.sdf')))
+        fname = flist[job_idx]
+        mol_st = StructureReader.read(fname)
+    else:
+        raise RuntimeError(f'file type {filetype} not recognized')
     ref_st = mol_st.copy()
     #n_rotatable = analyze.get_num_rotatable_bonds(ref_st) # excludes trivial rotors like methyl groups
     #print(n_rotatable)
@@ -166,14 +176,18 @@ def main(output_path, job_idx):
 
     # RDKit + xTB
     try:
-        xtb_confs = reopt_conformers_with_xtb(rdkit_confs + sdgr_confs)
+        xtb_confs, energy_good = reopt_conformers_with_xtb(rdkit_confs + sdgr_confs)
     except:
         xtb_confs = []
     print('xtb', len(xtb_confs))
 
     with tempfile.TemporaryDirectory() as temp_dir:
         with chdir(temp_dir), FileLogger('csrch', False):
-            final_list = eliminate_duplicate_conformers(xtb_confs)
+            energy_prop = E_PROP if energy_good else None
+            final_list = eliminate_duplicate_conformers(xtb_confs, energy_prop=energy_prop)
+    if energy_good:
+        min_e = min(final_list, key=lambda x: x.property[E_PROP]).property[E_PROP]
+        final_list = [st for st in final_list if st.property[E_PROP] - min_e < E_THRESH]
     print('final', len(final_list))
 
     #with StructureWriter(f'dump.mae') as writer:
@@ -181,14 +195,17 @@ def main(output_path, job_idx):
     dirname = os.path.join(output_path, 'confs')
     os.makedirs(dirname, exist_ok=True)
     for idx, st in enumerate(final_list[:N_CONF]):
-        st.write(os.path.join(dirname, os.path.basename(mae_name).replace('_ligand_0.mae', f'_ligand_0_conf_{idx}.mae')))
+        base, ext = os.path.splitext(os.path.basename(fname))
+        new_fname = os.path.join(dirname, base + f'_conf_{idx}' + ext)
+        st.write(new_fname)
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_path", default=".")
     parser.add_argument("--job_idx", type=int)
+    parser.add_argument("--filetype", type=str, default="xyz")
     return parser.parse_args()
 
 if __name__ == '__main__':
     args = parse_args()
-    main(args.output_path, args.job_idx)
+    main(args.output_path, args.job_idx, args.filetype)
