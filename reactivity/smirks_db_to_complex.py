@@ -105,14 +105,13 @@ def minimal_form_reaction_complex(
 
     rxn_center = reaction_center(reactant, product)
 
-    # add dummy atoms to handle single atom transfers
-    added_dummies = _add_atom_transfer_dummies(reactant_out, product_out)
+    _add_atom_transfer_dummies(reactant_out, product_out)
 
     reactant_out, product_out = minimize_path_distance(
         reactant_out,
         product_out,
         indep_only=True,
-        check_stab=rinp.values.check_alignment_stability,
+        check_stab=False,
     )
 
     translate_close(
