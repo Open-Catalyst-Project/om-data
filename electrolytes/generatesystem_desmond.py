@@ -51,9 +51,9 @@ def generate_system(row_idx, systems, job_dir, rho=None, time=1):
 
     # Extract salt species and their concentrations
     cat = mb.get_species_and_conc(systems, row_idx, index_cat)
-    cat_conc = mb.get_species_and_conc(systems, row_idx, index_cat_conc)#.astype(float)
+    cat_conc = mb.get_species_and_conc(systems, row_idx, index_cat_conc[:len(cat)])#.astype(float)
     an = mb.get_species_and_conc(systems, row_idx, index_an)
-    an_conc = mb.get_species_and_conc(systems, row_idx, index_an_conc)#.astype(float)
+    an_conc = mb.get_species_and_conc(systems, row_idx, index_an_conc[:len(an)])#.astype(float)
 
     salt_molfrac = np.array(cat_conc+an_conc).astype(float)
     salt_molfrac /= np.sum(salt_molfrac)
@@ -61,7 +61,7 @@ def generate_system(row_idx, systems, job_dir, rho=None, time=1):
 
     # Extract solvent species name and their molar ratios
     solv = mb.get_species_and_conc(systems, row_idx, index_solv)
-    solv_ratio = mb.get_species_and_conc(systems, row_idx, index_solv_ratio)
+    solv_ratio = mb.get_species_and_conc(systems, row_idx, index_solv_ratio[:len(solv)])
     solv_molfrac = np.array(solv_ratio).astype(float)
     solv_molfrac /= np.sum(solv_molfrac)
 
@@ -72,8 +72,8 @@ def generate_system(row_idx, systems, job_dir, rho=None, time=1):
 
     # Collect rows corresponding to the first match for each known entry
     #Load the CSV file
-    cations_file = 'cations.csv'
-    anions_file = 'anions.csv'
+    cations_file = 'cations_with_ood.csv'
+    anions_file = 'anions_with_ood.csv'
     cations = load_csv(cations_file)
     anions = load_csv(anions_file)
 

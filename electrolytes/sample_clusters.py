@@ -13,15 +13,19 @@ from tqdm import tqdm
 from schrodinger.structure import StructureReader
 from collections import defaultdict
 
-TOTAL_PER_SYSTEM = 25
-RADIUS_LIST = [5]
+TOTAL_PER_SYSTEM = 2300
+RADIUS_LIST = [3]
 TM_LIST = {*range(21, 31), *range(39, 49), *range(72, 81)}
 MAX_TMS = 3
 # radius 5 seed 4353
 # radius 7 seed 353
 # radius 3 ml-md seed 628
-# radius 5 ml-md seed 9173
-random.seed(9173)
+# radius 5 ml-md seed 9173, TOTAL 25
+# radius 3 rpmd seed 631, TOTAL 10000
+# radius 3 ood seed cation/anion 295, TOTAL 3500, favor_ions
+# radius 3 ood seed solvent 295, TOTAL 2300
+# radius 3 ood all seed 295, TOTAL 1600
+random.seed(295)
 
 def filter_heavy_atoms(species_glob):
     species_list = []
@@ -77,7 +81,7 @@ def sample_clusters(res_dir, favor_ions):
 
 
 def save_samples(path, systems_to_keep):
-    save_dir = 'sampled_electrolytes'
+    save_dir = 'sampled_electrolytes2'
     os.makedirs(os.path.join(path, save_dir), exist_ok=True)
     for fname, name in systems_to_keep.items():
         st = StructureReader.read(fname)
@@ -91,10 +95,10 @@ def parse_args():
 
 
 def main(output_path, favor_ions):
-    pool = mp.Pool(60)
     dir_list = [f for f in glob.glob(os.path.join(output_path, '*')) if os.path.basename(f).isdigit()]
     sample_fxn = partial(sample_clusters, favor_ions=favor_ions)
-    list(tqdm(pool.imap(sample_fxn, dir_list), total=len(dir_list)))
+    with mp.Pool(60) as pool:
+        list(tqdm(pool.imap(sample_fxn, dir_list), total=len(dir_list)))
 
 if __name__ == "__main__":
     args = parse_args()
