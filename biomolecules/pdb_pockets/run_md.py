@@ -15,11 +15,13 @@ def parse_args():
 
 def main():
     args = parse_args()
-    random.seed(23147)
+    random.seed(2316)
     if args.sample_df is None:
-        file_list = glob.glob(os.path.join(args.output_path, "*.maegz"))
+        file_list = glob.glob(os.path.join(args.output_path, "*.mae"))
 #        file_list = [f for f in file_list if 'ZINC' in f or 'CHEMBL' in f]
     else:
+#        with open(args.sample_df, 'r') as fh:
+#            file_list = [f.strip() for f in fh.readlines()]
         sample_df = pd.read_pickle(args.sample_df)
         file_list = [os.path.join(args.output_path, fname) for fname in sample_df.index]
     with open("300K_paths_list.txt", "w") as fh_300, open("400K_paths_list.txt", "w") as fh_400:

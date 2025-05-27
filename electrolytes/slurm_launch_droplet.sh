@@ -17,4 +17,3 @@ idx=$((${SLURM_ARRAY_TASK_ID}+0))
 
 echo /private/home/levineds/miniconda3/envs/rpmd/bin/python driver_omm.py --row $idx --csv_file omm-elytes.csv --droplet --stepsize 0.002
 /private/home/levineds/miniconda3/envs/rpmd/bin/python driver_omm.py --row $idx --csv_file omm-elytes.csv --droplet --stepsize 0.002
-

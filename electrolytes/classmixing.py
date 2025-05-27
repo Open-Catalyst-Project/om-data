@@ -24,6 +24,8 @@ from typing import List, Tuple, Dict, Any
 import csv
 import argparse
 import textwrap
+from math import gcd
+from functools import reduce
 
 class SpeciesSelector:
     """Utility class for selecting chemical species."""
@@ -251,9 +253,29 @@ class Electrolyte(ABC):
             # Solvents
             if i < self.max_solvents:
                 entry[f'solvent{i+1}'] = self.solvents[i] if i < len(self.solvents) else ''
-                entry[f'solvent{i+1}_ratio'] = (self.stoich_solv[i]/min(self.stoich_solv) 
-                                              if i < len(self.stoich_solv) and len(self.stoich_solv) > 0 
-                                              else '')
+                
+                # Special handling for ionic liquid solvents
+                if isinstance(self, IonicLiquidElectrolyte) and len(self.stoich_solv) > 0:
+                    # For ionic liquids, normalize while preserving charge balance relationships
+                    if i < len(self.stoich_solv):
+                        # Find the GCD of all stoich values to maintain integer relationships
+                        def find_gcd(list_of_nums):
+                            # Convert to integers if they're not already
+                            ints = [int(x) for x in list_of_nums]
+                            # Find GCD of the list
+                            return reduce(gcd, ints)
+                        
+                        # Calculate GCD and normalize by dividing all values by it
+                        common_divisor = find_gcd(self.stoich_solv)
+                        normalized_value = self.stoich_solv[i] / common_divisor
+                        entry[f'solvent{i+1}_ratio'] = normalized_value
+                    else:
+                        entry[f'solvent{i+1}_ratio'] = ''
+                else:
+                    # For other solvents, normalize by dividing by minimum as before
+                    entry[f'solvent{i+1}_ratio'] = (self.stoich_solv[i]/min(self.stoich_solv) 
+                                                  if i < len(self.stoich_solv) and len(self.stoich_solv) > 0 
+                                                  else '')
         
         return entry
 
@@ -397,13 +419,52 @@ class IonicLiquidElectrolyte(Electrolyte):
         il_solv_cations = self.original_cations_df[self.original_cations_df['IL_comp']].copy()
         il_solv_anions = self.original_anions_df[self.original_anions_df['IL_comp']].copy()
         
+        # Select ionic liquid components
         solv1, solv_charges1 = self.species_selector.choose_species(
             il_solv_cations, self.max_cations, self.cations + self.anions)
         solv2, solv_charges2 = self.species_selector.choose_species(
             il_solv_anions, self.max_cations, self.cations + self.anions + solv1)
         
-        self.solvents = solv1 + solv2
-        self.stoich_solv = self.charge_solver.solve_single_equation(solv_charges1 + solv_charges2)
+        # Ensure we have at least one cation and one anion
+        if not solv1 and len(il_solv_cations) > 0:
+            idx = 0  # Select first available cation
+            solv1 = [il_solv_cations.iloc[idx]['formula']]
+            solv_charges1 = [il_solv_cations.iloc[idx]['charge']]
+        
+        if not solv2 and len(il_solv_anions) > 0:
+            idx = 0  # Select first available anion
+            solv2 = [il_solv_anions.iloc[idx]['formula']]
+            solv_charges2 = [il_solv_anions.iloc[idx]['charge']]
+        
+        # At this point, we should have both cations and anions
+        # Now use a simple balancing approach to ensure perfect charge neutrality
+        if solv1 and solv2:
+            # Use the charge solver to find the optimal ratio for charge balance
+            cat_charge = solv_charges1[0]
+            an_charge = solv_charges2[0]  # This is already negative
+            
+            # Solve the charge balance equation: cat_charge * x + an_charge * y = 0
+            # We need to find integer values for x and y
+            coefficients = [0, cat_charge, an_charge]  # First 0 is for the objective function
+            solution = self.charge_solver.solve_single_equation(coefficients)
+            
+            # Extract the solution values
+            cat_count = solution[0]
+            an_count = solution[1]
+            
+            # Keep only the first cation and anion with the calculated ratio
+            self.solvents = [solv1[0], solv2[0]]
+            self.stoich_solv = [cat_count, an_count]
+            
+            # Check the charge balance
+            total_charge = cat_charge * cat_count + an_charge * an_count
+            print(f"IL solvent pair: {self.solvents[0]} (charge {cat_charge}, ratio {cat_count}) and "
+                  f"{self.solvents[1]} (charge {an_charge}, ratio {an_count})")
+            print(f"Charge balance check: {total_charge}")
+        else:
+            # If we couldn't find IL components, fall back to the standard behavior
+            # using the regular solvents dataframe
+            super()._generate_solvents(solvents_df)
     
     def _set_temperature_range(self) -> None:
         """Set the temperature range for ionic liquid electrolytes."""
@@ -602,7 +663,8 @@ def generate_electrolytes(is_rpmd: bool = False,
                          max_solvents: int = 4,
                          required_solvent: str = None,
                          required_cation: str = None,
-                         required_anion: str = None) -> pd.DataFrame:
+                         required_anion: str = None,
+                         force_require: bool = False) -> pd.DataFrame:
     """Generate electrolytes with given parameters.
 
     Args:
@@ -617,6 +679,7 @@ def generate_electrolytes(is_rpmd: bool = False,
         required_solvent: Comma-separated string of required solvent species
         required_cation: Comma-separated string of required cation species
         required_anion: Comma-separated string of required anion species
+        force_require: Whether to force at least one required species from each category in every system
 
     Returns:
         pd.DataFrame: Generated electrolytes dataframe.
@@ -659,14 +722,15 @@ def generate_electrolytes(is_rpmd: bool = False,
         max_solvents=max_solvents
     )
     
-    # Process required species if in random-only mode
+    # Process required species if needed
     required_species = {
         'solvents': set(),
         'cations': set(),
         'anions': set()
     }
     
-    if random_only:
+    # For both force_require and random_only we need to process required species
+    if force_require or random_only:
         if required_solvent:
             required_species['solvents'] = {s.strip() for s in required_solvent.split(',')}
             # Verify all required solvents exist in the database
@@ -686,7 +750,7 @@ def generate_electrolytes(is_rpmd: bool = False,
                 if an not in anions_df['formula'].values:
                     raise ValueError(f"Required anion {an} not found in anion database")
 
-    # Track which required species have been included
+    # Track which required species have been included (only needed for non-forced mode)
     included_species = {
         'solvents': set(),
         'cations': set(),
@@ -698,26 +762,129 @@ def generate_electrolytes(is_rpmd: bool = False,
         # Create electrolyte
         electrolyte, elyte_class = factory.create_electrolyte(cations_df, anions_df, solvents_df)
         
-        # If we're in random-only mode and this is one of the last chances to include required species
-        remaining_systems = n_random - i
-        remaining_solvents = required_species['solvents'] - included_species['solvents']
+        # Handle required species based on mode
+        if force_require:
+            # Check if at least one required solvent is already included
+            needs_solvent = required_species['solvents'] and not any(solv in required_species['solvents'] for solv in electrolyte.solvents)
+            needs_cation = required_species['cations'] and not any(cat in required_species['cations'] for cat in electrolyte.cations)
+            needs_anion = required_species['anions'] and not any(anion in required_species['anions'] for anion in electrolyte.anions)
+            
+            # Force include at least one required solvent if needed
+            if needs_solvent:
+                # Randomly select one required solvent
+                solvent_to_include = list(required_species['solvents'])[np.random.randint(0, len(required_species['solvents']))]
+                
+                # If there are existing solvents, replace one with the required one
+                if electrolyte.solvents:
+                    replace_idx = np.random.randint(0, len(electrolyte.solvents))
+                    electrolyte.solvents[replace_idx] = solvent_to_include
+                else:
+                    # If no solvents, add the required one
+                    electrolyte.solvents = [solvent_to_include]
+                    electrolyte.stoich_solv = [1]
+            
+            # Force include at least one required cation if needed
+            if needs_cation:
+                # Randomly select one required cation
+                required_cation_list = list(required_species['cations'])
+                cation_to_include = required_cation_list[np.random.randint(0, len(required_cation_list))]
+                
+                # Get the charge for the required cation
+                cat_idx = cations_df[cations_df['formula'] == cation_to_include].index[0]
+                cat_charge = cations_df.loc[cat_idx, 'charge']
+                
+                # If there are existing cations, replace one with the required one
+                if electrolyte.cations:
+                    replace_idx = np.random.randint(0, len(electrolyte.cations))
+                    electrolyte.cations[replace_idx] = cation_to_include
+                    electrolyte.cat_charges[replace_idx] = cat_charge
+                else:
+                    # If no cations, add the required one
+                    electrolyte.cations = [cation_to_include]
+                    electrolyte.cat_charges = [cat_charge]
+            
+            # Force include at least one required anion if needed
+            if needs_anion:
+                # Randomly select one required anion
+                required_anion_list = list(required_species['anions'])
+                anion_to_include = required_anion_list[np.random.randint(0, len(required_anion_list))]
+                
+                # Get the charge for the required anion
+                an_idx = anions_df[anions_df['formula'] == anion_to_include].index[0]
+                an_charge = anions_df.loc[an_idx, 'charge']
+                
+                # If there are existing anions, replace one with the required one
+                if electrolyte.anions:
+                    replace_idx = np.random.randint(0, len(electrolyte.anions))
+                    electrolyte.anions[replace_idx] = anion_to_include
+                    electrolyte.an_charges[replace_idx] = an_charge
+                else:
+                    # If no anions, add the required one
+                    electrolyte.anions = [anion_to_include]
+                    electrolyte.an_charges = [an_charge]
+            
+            # Recalculate stoichiometry to maintain charge balance if we changed ions
+            if needs_cation or needs_anion:
+                # Solve charge balance with new ions
+                charges = electrolyte.cat_charges + electrolyte.an_charges
+                electrolyte.stoich = electrolyte.charge_solver.solve_single_equation(charges)
         
-        if random_only and remaining_systems <= len(remaining_solvents):
-            # Force include a required solvent that hasn't been used yet
-            if remaining_solvents:
-                solvent_to_include = remaining_solvents.pop()
+        # For non-force mode, continue with the existing logic for tracking required species
+        elif random_only:
+            # Track which required species are included in this system
+            included_species['solvents'].update(set(electrolyte.solvents))
+            included_species['cations'].update(set(electrolyte.cations))
+            included_species['anions'].update(set(electrolyte.anions))
+            
+            # If this is one of the last chances to include required species
+            remaining_systems = n_random - i
+            remaining_solvents = required_species['solvents'] - included_species['solvents']
+            remaining_cations = required_species['cations'] - included_species['cations']
+            remaining_anions = required_species['anions'] - included_species['anions']
+            
+            # Try to include remaining solvents
+            if remaining_solvents and remaining_systems <= len(remaining_solvents):
+                solvent_to_include = list(remaining_solvents)[0]
                 # Modify the electrolyte's solvents to include the required one
-                if len(electrolyte.solvents) > 0:
+                if electrolyte.solvents:
                     electrolyte.solvents[0] = solvent_to_include
                 else:
                     electrolyte.solvents = [solvent_to_include]
                     electrolyte.stoich_solv = [1]
-
-        # Track which required species are included in this system
-        if random_only:
-            included_species['solvents'].update(set(electrolyte.solvents))
-            included_species['cations'].update(set(electrolyte.cations))
-            included_species['anions'].update(set(electrolyte.anions))
+            
+            # Try to include remaining cations
+            if remaining_cations and remaining_systems <= len(remaining_cations):
+                cation_to_include = list(remaining_cations)[0]
+                cat_idx = cations_df[cations_df['formula'] == cation_to_include].index[0]
+                cat_charge = cations_df.loc[cat_idx, 'charge']
+                
+                if electrolyte.cations:
+                    electrolyte.cations[0] = cation_to_include
+                    electrolyte.cat_charges[0] = cat_charge
+                else:
+                    electrolyte.cations = [cation_to_include]
+                    electrolyte.cat_charges = [cat_charge]
+                
+                # Recalculate stoichiometry
+                charges = electrolyte.cat_charges + electrolyte.an_charges
+                electrolyte.stoich = electrolyte.charge_solver.solve_single_equation(charges)
+            
+            # Try to include remaining anions
+            if remaining_anions and remaining_systems <= len(remaining_anions):
+                anion_to_include = list(remaining_anions)[0]
+                an_idx = anions_df[anions_df['formula'] == anion_to_include].index[0]
+                an_charge = anions_df.loc[an_idx, 'charge']
+                
+                if electrolyte.anions:
+                    electrolyte.anions[0] = anion_to_include
+                    electrolyte.an_charges[0] = an_charge
+                else:
+                    electrolyte.anions = [anion_to_include]
+                    electrolyte.an_charges = [an_charge]
+                
+                # Recalculate stoichiometry
+                charges = electrolyte.cat_charges + electrolyte.an_charges
+                electrolyte.stoich = electrolyte.charge_solver.solve_single_equation(charges)
 
         # Generate entries for different conditions
         if elyte_class == 'MS':
@@ -777,8 +944,8 @@ def generate_electrolytes(is_rpmd: bool = False,
                     entry['temperature'] = temperature  # Set the actual temperature
                     elytes = pd.concat([elytes, pd.DataFrame([entry])], ignore_index=True)
     
-    # Verify all required species were included
-    if random_only:
+    # Verify all required species were included (only for non-force mode)
+    if random_only and not force_require:
         missing_species = {
             'solvents': required_species['solvents'] - included_species['solvents'],
             'cations': required_species['cations'] - included_species['cations'],
@@ -834,6 +1001,8 @@ def main():
     parser.add_argument('--required-solvent', type=str, help='Comma-separated list of required solvent species')
     parser.add_argument('--required-cation', type=str, help='Comma-separated list of required cation species')
     parser.add_argument('--required-anion', type=str, help='Comma-separated list of required anion species')
+    parser.add_argument('--force-require', action='store_true', 
+                       help='Force at least one required species from each category in every generated system')
     args = parser.parse_args()
     
     # Prepare input files dictionary
@@ -843,7 +1012,7 @@ def main():
         'solvents': args.solvents
     }
     
-    # Generate electrolytes with new required species parameters
+    # Generate electrolytes with new force_require parameter
     generate_electrolytes(
         is_rpmd=args.rpmd,
         input_files=input_files,
@@ -855,7 +1024,8 @@ def main():
         max_solvents=args.max_solvents,
         required_solvent=args.required_solvent,
         required_cation=args.required_cation,
-        required_anion=args.required_anion
+        required_anion=args.required_anion,
+        force_require=args.force_require
     )
 
 if __name__ == "__main__":

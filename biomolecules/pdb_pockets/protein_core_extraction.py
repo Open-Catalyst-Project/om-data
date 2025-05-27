@@ -160,6 +160,8 @@ def get_core_neighborhood(
                     print(atom.pdbname, atom.index)
             st_copy.write(f"{pdb_id}_problem.maegz")
             raise
+        res_list = [st_copy.findResidue(f'{res_num.chain}:{res_num.resnum}{res_num.inscode.strip()}') for res_num in res_list]
+        gap_res = [st_copy.findResidue(f'{res_num.chain}:{res_num.resnum}{res_num.inscode.strip()}') for res_num in gap_res]
 
         core_ats_with_gaps = []
         for res in res_list + gap_res:
@@ -194,21 +196,24 @@ def prepwizard_core(core: Structure, pdb_id: str, epik_states: int = 0) -> Struc
     """
     maename = f"{pdb_id}.maegz"
     outname = f"{pdb_id}_prepped.maegz"
-    # Remove any dummy atoms, PrepWizard doesn't like them
-    dummy_atoms = [at for at in core.atom if at.atomic_number < 1]
-    core.deleteAtoms(dummy_atoms)
-    core.write(maename)
-    # Run PrepWizard
-    try:
-        blp_ext.run_prepwizard(
-            maename, outname, fill_sidechain=False, epik_states=epik_states
-        )
-    except subprocess.TimeoutExpired:
-        raise RuntimeError("PrepWizard took longer than 2 hours, skipping")
-    if not os.path.exists(outname):
-        raise RuntimeError("PrepWizard failed")
+    if os.path.exists(outname):
+        prepped_core = StructureReader.read(outname)
+    else:
+        # Remove any dummy atoms, PrepWizard doesn't like them
+        dummy_atoms = [at for at in core.atom if at.atomic_number < 1]
+        core.deleteAtoms(dummy_atoms)
+        core.write(maename)
+        # Run PrepWizard
+        try:
+            blp_ext.run_prepwizard(
+                maename, outname, fill_sidechain=False, epik_states=epik_states
+            )
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("PrepWizard took longer than 2 hours, skipping")
+        if not os.path.exists(outname):
+            raise RuntimeError("PrepWizard failed")
 
-    prepped_core = StructureReader.read(outname)
+        prepped_core = StructureReader.read(outname)
     prepped_core = build.remove_alternate_positions(prepped_core)
     prepped_core = build.reorder_protein_atoms_by_sequence(prepped_core)
 

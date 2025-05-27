@@ -29,7 +29,7 @@ def write_monomers(cat, an, solv, charges, directory):
         if sp in {'C9H18NO', 'AsF6-', 'OV+2', 'O2V+'}:
             # Special treatment:
             # TEMPO: Desmond does not like radicals
-            # As-F, OV+2, O2V+: No parameters
+            # AsF6-, OV+2, O2V+: No parameters
             fname = sp + '.mae'
         print(fname)
         st = StructureReader.read(os.path.join('ff', fname))

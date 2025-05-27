@@ -1,4 +1,4 @@
-from mace.calculators import mace_mp
+
 from ase import build
 
 from architector.io_molecule import convert_io_molecule
@@ -241,6 +241,46 @@ def check_isolated_o2(molecule):
     # Check each oxygen pair
     for i in oxygen_indices:
         for j in oxygen_indices:
+            if i < j:  # Avoid checking same pair twice
+                # Check if these oxygens are bonded
+                if molecule.graph[i][j] > 0:
+                    # Count total bonds for each oxygen
+                    bonds_i = sum(molecule.graph[i])
+                    bonds_j = sum(molecule.graph[j])
+                    
+                    # If both oxygens only have one bond (to each other)
+                    if bonds_i == 1 and bonds_j == 1:
+                        return True
+                        
+    return False
+
+
+def check_isolated_s2(molecule):
+    """Check if molecule contains an isolated S2 molecule
+    
+    Parameters
+    ----------
+    molecule : architector.io_molecule.Molecule
+        Input molecule
+        
+    Returns
+    -------
+    bool
+        True if isolated O2 is found, False otherwise
+    """
+    # Ensure molecular graph exists
+    if len(molecule.graph) < 1:
+        molecule.create_mol_graph()
+        
+    # Get atomic symbols and connectivity
+    symbols = molecule.ase_atoms.get_chemical_symbols()
+    
+    # Find sulfur indices
+    sulfur_indices = [i for i, sym in enumerate(symbols) if sym == 'S']
+    
+    # Check each oxygen pair
+    for i in sulfur_indices:
+        for j in sulfur_indices:
             if i < j:  # Avoid checking same pair twice
                 # Check if these oxygens are bonded
                 if molecule.graph[i][j] > 0:

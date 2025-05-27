@@ -78,7 +78,7 @@ def sample_clusters(res_dir, favor_ions):
 
 
 def save_samples(path, systems_to_keep):
-    save_dir = 'sampled_electrolytes'
+    save_dir = 'sampled_electrolytes2'
     os.makedirs(os.path.join(path, save_dir), exist_ok=True)
     for fname, name in systems_to_keep.items():
         st = StructureReader.read(fname)
