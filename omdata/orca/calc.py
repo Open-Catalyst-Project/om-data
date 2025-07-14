@@ -158,8 +158,8 @@ TIGHT_OPT_PARAMETERS = {
 TS_OPT_PARAMETERS = {
     "optimizer": Sella,
     "store_intermediate_results": True,
-    "fmax": 0.01,
-    "max_steps": 100,
+    "fmax": 0.05,
+    "max_steps": 200,
     "optimizer_kwargs": {
         "order": 1,
         "internal": True,
