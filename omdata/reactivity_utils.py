@@ -6,7 +6,7 @@ from architector.io_calc import CalcExecutor
 from architector.io_align_mol import simple_rmsd, align_rmsd
 import architector.io_ptable as io_ptable
 
-from ase.constraints import ExternalForce
+from ase.constraints import ExternalForce, FixAtoms
 from ase.io import read,write # Read in the initial and final molecules.
 from ase.optimize import BFGSLineSearch
 import shutil
@@ -21,6 +21,8 @@ from datetime import datetime
 import numpy as np
 
 import openbabel as ob
+
+from omdata.io_chain import Chain
 
 def min_non_hh_distance(molecule):
     """Find minimum pairwise distance excluding H-H pairs
@@ -113,23 +115,28 @@ def find_min_distance(atoms):
     np.fill_diagonal(distances, np.inf)
     return np.min(distances)
 
-def run_afir(mol1, mol2, calc, logfile):
-    breaking_cutoff=1.5 # When a bond is breaking, what the distance should be
+def run_afir(mol1, mol2, calc, logfile, 
+             bonds_forming=[], bonds_breaking=[],
+             force_step=0.2,
+             maxforce=4.0):
+    breaking_cutoff=5.0 # When a bond is breaking, what the distance should be
     forming_cutoff=1.2 # When a bond is forming, what the distance should be (Angstroms)
     start_force_constant=0.1 # eV/angstrom
-    force_increment=0.2 # How fast to ramp up the force constant
+    force_increment=force_step # How fast to ramp up the force constant
     max_steps=50 # Steps/opimization iteration
     fmax_opt=0.15 # Cutoff for the maximum force.
 
     method='custom'
-    
-    bonds_forming = [(int(x[0]), int(x[1])) for x in zip(*np.where((mol2.graph - mol1.graph) == 1)) if x[0] < x[1]]
-    # Find the broken bonds
-    bonds_breaking = [(int(x[0]), int(x[1])) for x in zip(*np.where((mol2.graph - mol1.graph) == -1)) if x[0] < x[1]]
+
+    if mol2: # if product structure is specified, will override bonds_forming and bonds_breaking
+        # Instead of specifying from reactant to product, get the formed bonds
+        bonds_forming = [(int(x[0]), int(x[1])) for x in zip(*np.where((mol2.graph - mol1.graph) == 1)) if x[0] < x[1]]
+        # Find the broken bonds
+        bonds_breaking = [(int(x[0]), int(x[1])) for x in zip(*np.where((mol2.graph - mol1.graph) == -1)) if x[0] < x[1]]
 
     with open(logfile, 'a') as file1:
-        file1.write(f"Bonds forming: {bonds_forming}\n")
-        file1.write(f"Bonds breaking: {bonds_breaking}\n")
+        if bonds_forming: file1.write(f"Bonds forming: {bonds_forming}\n")
+        if bonds_breaking: file1.write(f"Bonds breaking: {bonds_breaking}\n")
     
     fconst = start_force_constant
     save_trajectory = [] # Full output trajectory
@@ -149,13 +156,19 @@ def run_afir(mol1, mol2, calc, logfile):
         file1.write('Started at: {}\n'.format(str(start)))
 
     
-    while keep_going and fconst < 4.0:
+    while keep_going and fconst < maxforce: 
     
         with open(logfile,'a') as file1:
             file1.write('Running Fconst = {}\n'.format(fconst))
         
         opt_mol.ase_atoms.set_constraint()
         constraints = []
+        for mol in (mol1, mol2):
+            if isinstance(mol, Chain):
+                ends = mol.ends
+                constraint = FixAtoms(ends)
+                constraints.append(constraint)
+        
         for inds in bonds_forming: # Add linear force
             constraint = ExternalForce(inds[0], inds[1], -fconst)
             constraints.append(constraint)
