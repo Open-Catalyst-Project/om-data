@@ -155,6 +155,16 @@ TIGHT_OPT_PARAMETERS = {
         "internal": True,
     },
 }
+TS_OPT_PARAMETERS = {
+    "optimizer": Sella,
+    "store_intermediate_results": True,
+    "fmax": 0.01,
+    "max_steps": 100,
+    "optimizer_kwargs": {
+        "order": 1,
+        "internal": True,
+    },
+}
 
 
 class Vertical(Enum):
