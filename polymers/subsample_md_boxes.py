@@ -2,6 +2,7 @@ import argparse
 import glob
 import os
 import random
+import multiprocessing as mp
 from collections import Counter
 from itertools import cycle
 
@@ -9,10 +10,12 @@ from schrodinger.application.matsci import clusterstruct
 from schrodinger.structure import StructureReader
 from schrodinger.structutils import build
 from schrodinger.structutils.analyze import evaluate_asl
+from schrodinger.structutils.ringspear import check_for_spears
+
 from tqdm import tqdm
 
 CHECK_FOR_MISSING_H = False
-
+MAX_TRIES = 100
 
 def get_cut_ends(st, at_set):
     """
@@ -82,7 +85,7 @@ def get_cylinder(st, chain_name, radius, budget, tail_init):
 
 def remove_lonesome_hydrogens(cluster):
     """
-    Remove any isolated hydrogen atoms
+    rEMOVe any isolated hydrogen atoms
 
     It is possible to end up with isolated H atoms since they are
     common termination groups and we might pull in the termination,
@@ -142,67 +145,58 @@ def parse_args():
     parser.add_argument("--output_path", default=".", type=str)
     return parser.parse_args()
 
+def main_loop(fname):
+    st = StructureReader.read(fname)
+    total_clusters = 10
+    for mol in st.molecule:
+        for at in mol.atom:
+            at.chain = str(mol.number - 1)
+    n_clusters = 0
+    tries = 0
+    chain_iter = iter(cycle(st.chain))
+    used_seeds = set()
+    while n_clusters < total_clusters and tries < MAX_TRIES:
+        tries += 1
+        n_total_atoms = random.choice([150, 200, 300])
+        chain = next(chain_iter)
+        end_init = random.random() < 0.5 # If true, sample from end of polymer chain. Else, sample from middle.
+        cyl_topo = random.random() < 0.5 # If true, sample extract a cylinder around the chain, else sample a sphere around the chain.
+        if cyl_topo:
+            extracted_ats, init_res = get_cylinder(
+                st, chain.name, 2.5, n_total_atoms, end_init
+            )
+        else:
+            extracted_ats, init_res = get_sphere(st, chain.name, n_total_atoms, end_init)
+        if len(extracted_ats) < 70:
+            continue
+        if (chain.name, init_res.resnum) in used_seeds:
+            continue
+        cut_ends = get_cut_ends(st, extracted_ats)
+        cluster, at_map = build.extract_structure(
+            st, extracted_ats, copy_props=True, renumber_map=True
+        )
+        clusterstruct.contract_structure2(cluster)
+        mapped_cut_ends = [at_map[at] for at in cut_ends]
+        build.add_hydrogens(cluster, atom_list=mapped_cut_ends)
+        remove_lonesome_hydrogens(cluster)
+        if check_for_spears(cluster, distorted=True, return_bool=True):
+            continue
+        if CHECK_FOR_MISSING_H:
+            h_check = cluster.copy()
+            build.add_hydrogens(h_check)
+            if h_check.atom_total != cluster.atom_total:
+                print("I felt the need to add more hydrogens!")
+        name_parts = os.path.splitext(fname)[0].split("/")
+        cluster_name = "_".join(name_parts + [chain.name,str(init_res.resnum), "0", "1"]) + ".mae"
+        cluster.write(cluster_name)
+        used_seeds.add((chain.name, init_res.resnum))
+        n_clusters += 1
 
 def main():
     args = parse_args()
     file_list = glob.glob("**/*.pdb", recursive=True)
-    max_tries = 100
-    n_tiny_mol = 0
-    n_collisions = 0
-    makeup=Counter()
-    for fname in tqdm(file_list):
-        st = StructureReader.read(fname)
-        total_clusters = 10
-        for mol in st.molecule:
-            for at in mol.atom:
-                at.chain = str(mol.number - 1)
-        n_clusters = 0
-        tries = 0
-        chain_iter = iter(cycle(st.chain))
-        used_seeds = set()
-        while n_clusters < total_clusters and tries < max_tries:
-            tries += 1
-            n_total_atoms = random.choice([150, 200, 300])
-            chain = next(chain_iter)
-            end_init = random.random() < 0.5 # If true, sample from end of polymer chain. Else, sample from middle.
-            cyl_topo = random.random() < 0.5 # If true, sample extract a cylinder around the chain, else sample a sphere around the chain.
-            if cyl_topo:
-                extracted_ats, init_res = get_cylinder(
-                    st, chain.name, 2.5, n_total_atoms, end_init
-                )
-            else:
-                extracted_ats, init_res = get_sphere(st, chain.name, n_total_atoms, end_init)
-            if len(extracted_ats) > n_total_atoms:
-                print(cyl_topo, end_init, fname, chain.name, init_res.resnum)
-                raise
-            if len(extracted_ats) < 70:
-                n_tiny_mol += 1
-                continue
-            if (chain.name, init_res.resnum) in used_seeds:
-                n_collisions += 1
-                continue
-            cut_ends = get_cut_ends(st, extracted_ats)
-            cluster, at_map = build.extract_structure(
-                st, extracted_ats, copy_props=True, renumber_map=True
-            )
-            clusterstruct.contract_structure2(cluster)
-            mapped_cut_ends = [at_map[at] for at in cut_ends]
-            build.add_hydrogens(cluster, atom_list=mapped_cut_ends)
-            remove_lonesome_hydrogens(cluster)
-            if CHECK_FOR_MISSING_H:
-                h_check = cluster.copy()
-                build.add_hydrogens(h_check)
-                if h_check.atom_total != cluster.atom_total:
-                    print("I felt the need to add more hydrogens!")
-            name_parts = os.path.splitext(fname)[0].split("/")
-            cluster_name = "_".join(name_parts + [chain.name,str(init_res.resnum), "0", "1"]) + ".mae"
-            cluster.write(cluster_name)
-            used_seeds.add((chain.name, init_res.resnum))
-            makeup[(cyl_topo, end_init)] += 1
-            n_clusters += 1
-    print("tiny mol", n_tiny_mol)
-    print("collisions", n_collisions)
-    print('makeup', makeup)
+    with mp.Pool(60) as pool:
+        list(tqdm(pool.imap(main_loop, file_list), total=len(file_list)))
 
 random.seed(42)
 main()
