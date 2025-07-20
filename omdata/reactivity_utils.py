@@ -22,8 +22,6 @@ import numpy as np
 
 import openbabel as ob
 
-from omdata.io_chain import Chain
-
 def min_non_hh_distance(molecule):
     """Find minimum pairwise distance excluding H-H pairs
     
@@ -118,7 +116,8 @@ def find_min_distance(atoms):
 def run_afir(mol1, mol2, calc, logfile, 
              bonds_forming=[], bonds_breaking=[],
              force_step=0.2,
-             maxforce=4.0):
+             maxforce=4.0,
+             is_polymer=False):
     breaking_cutoff=5.0 # When a bond is breaking, what the distance should be
     forming_cutoff=1.2 # When a bond is forming, what the distance should be (Angstroms)
     start_force_constant=0.1 # eV/angstrom
@@ -164,7 +163,7 @@ def run_afir(mol1, mol2, calc, logfile,
         opt_mol.ase_atoms.set_constraint()
         constraints = []
         for mol in (mol1, mol2):
-            if isinstance(mol, Chain):
+            if is_polymer:
                 ends = mol.ends
                 constraint = FixAtoms(ends)
                 constraints.append(constraint)

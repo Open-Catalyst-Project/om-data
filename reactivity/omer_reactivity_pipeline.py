@@ -9,8 +9,8 @@ sys.path.append("/Users/lchua/omer/om-data")
 
 from ase.io import write
 from omdata.reactivity_utils import filter_unique_structures, run_afir
-from omdata.omer_utils import get_chain_path_info, trim_structures, get_bond_smarts, add_h_to_chain, remove_h_from_chain
-from omdata.io_chain import Chain, get_bonds_to_break
+from omer_utils import get_chain_path_info, trim_structures, get_bond_smarts, add_h_to_chain, remove_h_from_chain
+from io_chain import Chain, get_bonds_to_break
 
 import torch
 from torch.serialization import add_safe_globals
@@ -192,7 +192,7 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir):
     chain.ase_atoms.info["charge"] = charge
 
     save_trajectory, _ = run_afir(chain, None, UMA, logfile, # TODO: change back for testing 10
-                                    bonds_breaking=[bond_to_break], maxforce=1.0, force_step=0.75)
+                                    bonds_breaking=[bond_to_break], maxforce=1.0, force_step=0.75, is_polymer=True)
     
     unique_structures = filter_unique_structures(save_trajectory)    
     with open(logfile, 'a') as file1:
