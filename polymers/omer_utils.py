@@ -12,7 +12,7 @@ from rdkit.Chem import EditableMol, Kekulize, BondType, AddHs
 from rdkit.Chem import AdjustQueryParameters, AdjustQueryProperties, ADJUST_IGNOREDUMMIES
 from rdkit.Chem import Atom as RdAtom
 
-from omdata.io_chain import Chain
+from io_chain import Chain
 
 def get_chain_path_info(pdb_path, csv_dir):
     basename = os.path.basename(pdb_path)
