@@ -6,6 +6,9 @@ Initial generation of metal-organics: MAX_N_ATOMS = 250, random_seed = 46139, la
 Lanthanides: MAX_N_ATOMS = 120, random_seed = 46139, non-lanthanides were excluded, ligands with heavy main-group elements were excluded, 255k were generated
 Hydrides: MAX_N_ATOMS = 120, random_seed = 34231, no metals were exluced, no ligands were excluded, hydride was added as a ligand and forced to be included, 91000 were generated
 ML-MD: MAX_N_ATOMS = 120, random_seed = 569, no metals were exluced, no ligands were excluded, hydride was added as a ligand, 1M were generated
+Heavy Main-Group: MAX_N_ATOMS = 120, random_seed 123, heavy_mg dataframe, heavy_mg ligands excluded, hydride added, 200k
+Heavy Main-Group2: MAX_N_ATOMS = 120, random_seed 1234, heavy_mg dataframe, no ligands excluded, hydride added, 100k
+Heavy Main-Group-tiny: MAX_N_ATOMS = 20, random_seed 12345, heavy_mg dataframe, no ligands excluded, hydride added, 50k
 """
 
 import argparse
@@ -17,9 +20,9 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-MAX_N_ATOMS = 120
+MAX_N_ATOMS = 20
 # Set seed
-random_seed = 569
+random_seed = 12345
 np.random.seed(random_seed)
 
 
@@ -57,15 +60,15 @@ def select_metals(metal_df: pd.DataFrame, lanthanides="include") -> pd.DataFrame
             newrows.append(newrow)
     subset_cn_metal_df = pd.DataFrame(newrows)
     # Add Pm with Sm numbers (neighbors of Sm and Nd) - both Sm and Nd have similar values anyway.
-    refrow = subset_cn_metal_df[subset_cn_metal_df.metal == "Sm"].iloc[0]
-    subset_cn_metal_df.loc[len(newrows)] = {
-        "metal": "Pm",
-        "ox": 3,
-        "coreCNs": refrow["coreCNs"],
-        "coreCN_counts_CSD": refrow["coreCN_counts_CSD"],
-        "coreCN_fracts": refrow["coreCN_fracts"],
-        "total_count": refrow["total_count"],
-    }
+#    refrow = subset_cn_metal_df[subset_cn_metal_df.metal == "Sm"].iloc[0]
+#    subset_cn_metal_df.loc[len(newrows)] = {
+#        "metal": "Pm",
+#        "ox": 3,
+#        "coreCNs": refrow["coreCNs"],
+#        "coreCN_counts_CSD": refrow["coreCN_counts_CSD"],
+#        "coreCN_fracts": refrow["coreCN_fracts"],
+#        "total_count": refrow["total_count"],
+#    }
     # Omit the Ln as desired
     if lanthanides == "exclude":
         gen_metal_df = subset_cn_metal_df[
@@ -316,6 +319,12 @@ def parse_args():
         help="Path to file storing previously used samples to avoid duplication",
     )
     parser.add_argument(
+        "--exclude_heavy_mg",
+        dest='include_heavy_mg',
+        action='store_false',
+        help="Include hydride as a possible ligand",
+    )
+    parser.add_argument(
         "--include_hydride",
         action='store_true',
         help="Include hydride as a possible ligand",
@@ -337,7 +346,8 @@ def parse_args():
 def main():
     args = parse_args()
 
-    metal_df = pd.read_pickle("metal_sample_dataframe.pkl")
+    #metal_df = pd.read_pickle("metal_sample_dataframe.pkl")
+    metal_df = pd.read_pickle("new_metal_sample_dataframe.pkl")
     ligands_df = pd.read_pickle("ligand_sample_dataframe.pkl")
     if args.history is not None:
         with open(args.history, "r") as fh:
@@ -345,8 +355,9 @@ def main():
     else:
         history = None
 
-    gen_metal_df = select_metals(metal_df)
-    ligands_df = select_ligands(ligands_df, add_hydride=args.include_hydride)
+    #gen_metal_df = select_metals(metal_df)
+    gen_metal_df = pd.read_pickle('main_group_as_metals.pkl')
+    ligands_df = select_ligands(ligands_df, heavy_maingroup=args.include_heavy_mg, add_hydride=args.include_hydride)
     sdf, history = create_sample(
         metal_df=gen_metal_df,
         ligands_df=ligands_df,
