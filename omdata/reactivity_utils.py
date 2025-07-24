@@ -163,7 +163,7 @@ def run_afir(mol1, mol2, calc, logfile,
         opt_mol.ase_atoms.set_constraint()
         constraints = []
         for mol in (mol1, mol2):
-            if is_polymer:
+            if is_polymer and mol is not None:
                 ends = mol.ends
                 constraint = FixAtoms(ends)
                 constraints.append(constraint)

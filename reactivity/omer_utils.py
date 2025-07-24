@@ -193,8 +193,8 @@ def trim_structure(chain, structure, bonds_breaking, cutoff):
 
 def trim_structures(chain, unique_structures, bonds_breaking, max_atoms=250, delta_cutoff=0.2):
     trimmed_strucutres = []
+    cutoff = random.uniform(4.0, 6.0)
     for structure in unique_structures:
-        cutoff = random.uniform(4.0, 6.0)
         structure.arrays['residuenames'] = np.copy(chain.ase_atoms.arrays['residuenames'])
         new_atoms = trim_structure(chain, structure, bonds_breaking, cutoff)
         skip = False
