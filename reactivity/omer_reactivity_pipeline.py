@@ -190,8 +190,8 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir):
     chain.ase_atoms.info["spin"] = uhf + 1
     chain.ase_atoms.info["charge"] = charge
 
-    save_trajectory, _ = run_afir(chain, None, UMA, logfile, # TODO: change back for testing 10
-                                    bonds_breaking=[bond_to_break], maxforce=1.0, force_step=0.75, is_polymer=True)
+    save_trajectory, _ = run_afir(chain, None, UMA, logfile,
+                                    bonds_breaking=[bond_to_break], maxforce=10.0, force_step=0.75, is_polymer=True)
     
     unique_structures = filter_unique_structures(save_trajectory)    
     with open(logfile, 'a') as file1:
@@ -224,6 +224,7 @@ def main(args):
     chunks_to_process = np.array_split(pdb_files, args.n_chunks)
     chunk = chunks_to_process[args.chunk_idx] 
     print('length of chunk', len(chunk))
+    print(chunk)
     add_list, remove_list, none_list = get_splits_for_protonation(chunk, args.csv_dir, "logfile.txt")
 
     os.makedirs(os.path.join(args.output_path, 'none/'), exist_ok=True)
