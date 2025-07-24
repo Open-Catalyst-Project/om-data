@@ -12,7 +12,7 @@ from rdkit.Chem import EditableMol, Kekulize, BondType, AddHs
 from rdkit.Chem import AdjustQueryParameters, AdjustQueryProperties, ADJUST_IGNOREDUMMIES
 from rdkit.Chem import Atom as RdAtom
 
-from omdata.io_chain import Chain
+from io_chain import Chain
 
 def get_chain_path_info(pdb_path, csv_dir):
     basename = os.path.basename(pdb_path)
@@ -193,8 +193,8 @@ def trim_structure(chain, structure, bonds_breaking, cutoff):
 
 def trim_structures(chain, unique_structures, bonds_breaking, max_atoms=250, delta_cutoff=0.2):
     trimmed_strucutres = []
+    cutoff = random.uniform(4.0, 6.0)
     for structure in unique_structures:
-        cutoff = random.uniform(4.0, 6.0)
         structure.arrays['residuenames'] = np.copy(chain.ase_atoms.arrays['residuenames'])
         new_atoms = trim_structure(chain, structure, bonds_breaking, cutoff)
         skip = False

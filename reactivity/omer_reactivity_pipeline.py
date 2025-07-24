@@ -5,12 +5,11 @@ import numpy as np
 import json
 import argparse
 import signal
-sys.path.append("/Users/lchua/omer/om-data")
 
-from ase.io import write
 from omdata.reactivity_utils import filter_unique_structures, run_afir
-from omdata.omer_utils import get_chain_path_info, trim_structures, get_bond_smarts, add_h_to_chain, remove_h_from_chain
-from omdata.io_chain import Chain, get_bonds_to_break
+from ase.io import write
+from omer_utils import get_chain_path_info, trim_structures, get_bond_smarts, add_h_to_chain, remove_h_from_chain
+from io_chain import Chain, get_bonds_to_break
 
 import torch
 from torch.serialization import add_safe_globals
@@ -191,8 +190,8 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir):
     chain.ase_atoms.info["spin"] = uhf + 1
     chain.ase_atoms.info["charge"] = charge
 
-    save_trajectory, _ = run_afir(chain, None, UMA, logfile, # TODO: change back for testing 10
-                                    bonds_breaking=[bond_to_break], maxforce=1.0, force_step=0.75)
+    save_trajectory, _ = run_afir(chain, None, UMA, logfile,
+                                    bonds_breaking=[bond_to_break], maxforce=10.0, force_step=0.75, is_polymer=True)
     
     unique_structures = filter_unique_structures(save_trajectory)    
     with open(logfile, 'a') as file1:
@@ -211,8 +210,8 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir):
         cutoff = np.round(atoms.info['trim_cutoff'], 2)
         comment = json.dumps(atoms.info)
 
-        print(os.path.join(output_path, name, f"afir_struct_{i}_charge_{charge}_uhf_{uhf}_natoms_{n_atoms}_bondbreak_{react_symbols}_modsmarts_{mod_num}_cutoff_{cutoff}.xyz"))
-        write(os.path.join(output_path, name, f"afir_struc_{i}_charge_{charge}_uhf_{uhf}_natoms{n_atoms}_bondbreak_{react_symbols}_modsmarts_{mod_num}_cuttoff_{cutoff}.xyz"), atoms, format="xyz", comment=comment)
+        print(os.path.join(output_path, name, f"afir_struct_{i}_charge_{charge}_uhf_{uhf}_natoms_{n_atoms}_bondbreak_{react_symbols}_modsmarts_{mod_num}_cutoff_{cutoff}_{charge}_{uhf+1}.xyz"))
+        write(os.path.join(output_path, name, f"afir_struc_{i}_charge_{charge}_uhf_{uhf}_natoms{n_atoms}_bondbreak_{react_symbols}_modsmarts_{mod_num}_cuttoff_{cutoff}_{charge}_{uhf+1}.xyz"), atoms, format="xyz", comment=comment)
 
 def main(args):
     pdb_files = []
@@ -221,8 +220,12 @@ def main(args):
             if filename.endswith(".pdb"):
                 pdb_path = os.path.join(subdir, filename)
                 pdb_files.append(pdb_path)
-    
-    add_list, remove_list, none_list = get_splits_for_protonation(pdb_files, args.csv_dir, "logfile.txt")
+   
+    chunks_to_process = np.array_split(pdb_files, args.n_chunks)
+    chunk = chunks_to_process[args.chunk_idx] 
+    print('length of chunk', len(chunk))
+    print(chunk)
+    add_list, remove_list, none_list = get_splits_for_protonation(chunk, args.csv_dir, "logfile.txt")
 
     os.makedirs(os.path.join(args.output_path, 'none/'), exist_ok=True)
     none_path = os.path.join(args.output_path, 'none/')
@@ -245,6 +248,8 @@ def parse_args():
     parser.add_argument("--all_chains_dir", default=".")
     parser.add_argument("--csv_dir", default=".")
     parser.add_argument("--output_path", default=".")
+    parser.add_argument("--n_chunks", type=int, default=1)
+    parser.add_argument("--chunk_idx", type=int, default=0)
     return parser.parse_args()
 
 if __name__ == "__main__":
