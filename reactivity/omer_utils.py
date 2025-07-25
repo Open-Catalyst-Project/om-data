@@ -38,7 +38,9 @@ def get_chain_path_info(pdb_path, csv_dir):
     else:
         raise ValueError(f"Cannot determine polymer class for {pdb_path}")
 
-    pattern = re.findall(r'([AB]?)(\d+)', basename)
+    # needs copolymer fix
+    pattern = re.findall(r'monomer(\d+)_Hterm', basename)[0]
+    pattern = re.findall(r'([AB]?)(\d+)', pattern)
 
     smiles = []
     for prefix, number_str in pattern:
@@ -382,11 +384,11 @@ def add_h_to_chain(chain, bonds_reacting):
     new_atoms = chain.ase_atoms.copy()
 
     # first atom listed in reactants needs to be the one that's protonated in products
-    smarts_dict = {"reactants": ["[#7D3]","[#7H2]","[#7H1]",
-                                 "[#8D1]", "[#8H1]", "[#6;R0]=[#6;R0]", # avoid hydrogenation of aromatic rings
+    smarts_dict = {"reactants": ["[#7D3]","[#7][#1]",
+                                 "[#8D1]", "[#8][#1]", "[#6;R0]=[#6;R0]", # avoid hydrogenation of aromatic rings
                                  "[#7]#[#6]", "[#7D2]=[#6]"],
-                   "products": ["[#7D3;+1][#1]","[#7H2;+1][#1]","[#7H1;+1][#1]", 
-                                "[#8D1;+1][#1]", "[#8H1;+1][#1]", "[#6;+1]([#1])[#6]",
+                   "products": ["[#7D3;+1][#1]","[#7;+1]([#1])[#1]", 
+                                "[#8D1;+1][#1]", "[#8;+1]([#1])[#1]", "[#6;+1]([#1])[#6]",
                                 "[#7;+1]([#1])#[#6]", "[#7D2;+1]([#1])=[#6]"]}
     reacting_region = []
     for idx in bonds_reacting:
