@@ -4,7 +4,8 @@ import random
 import numpy as np
 
 from architector.io_molecule import Molecule
-from rdkit.Chem import MolFromSmiles, AddHs, RWMol, MolFromMolBlock, MolToXYZBlock
+from rdkit.Chem import MolFromSmiles, AddHs, RWMol, Mol, BondType
+from rdkit.Chem import MolFromMolBlock, MolToXYZBlock
 
 from ase import Atom
 from ase.io import read, write
@@ -126,8 +127,9 @@ class Chain(Molecule):
         list of number of extra molecules in order of self.extra_units
         """
         n_extra = []
-        chain_mol = self.rdkit_mol
+        chain_mol = remove_bond_order(self.rdkit_mol)
         for extra in self.extra_rdkit_mol:
+            extra = remove_bond_order(extra)
             matches = chain_mol.GetSubstructMatches(extra)
             n_extra.append(len(matches))
         
@@ -156,6 +158,15 @@ def get_rdkit_mol(ase_atoms):
 
     assert ase_atoms == rdkit_atoms, "Atom types do not match between ASE and RDKit"
     return mol
+
+def remove_bond_order(query_mol):
+    copy_mol = Mol(query_mol)
+    for bond in copy_mol.GetBonds():
+        bond.SetBondType(BondType.SINGLE)
+        bond.SetIsAromatic(False)
+        # Remove query constraints on bond order if any
+        bond.SetProp('bondType', '')  
+    return copy_mol
 
 # for homolytic and heterolytic dissociation      
 def get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, center_radius=5.0, fraction_ring=0.25):
