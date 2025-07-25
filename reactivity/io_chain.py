@@ -4,7 +4,8 @@ import random
 import numpy as np
 
 from architector.io_molecule import Molecule
-from rdkit.Chem import MolFromSmiles, AddHs, RWMol, MolFromMolBlock, MolToXYZBlock
+from rdkit.Chem import MolFromSmiles, AddHs, RWMol, Mol, BondType, Kekulize
+from rdkit.Chem import MolFromMolBlock, MolToXYZBlock, AdjustQueryParameters, AdjustQueryProperties, ADJUST_IGNOREDUMMIES
 
 from ase import Atom
 from ase.io import read, write
@@ -58,7 +59,26 @@ class Chain(Molecule):
             atom = self.rdkit_mol.GetAtomWithIdx(h_end_idx)
             end_idx = atom.GetNeighbors()[0].GetIdx()
             ends.append(end_idx)
-        
+
+        if not ends:
+            all_smiles = list(relabel_stars(repeat_unit) for repeat_unit in self.repeat_units)
+            all_smiles = [s for pair in all_smiles for s in pair]
+            
+            all_mols = list(process_repeat_unit(smiles) for smiles in all_smiles)
+            all_kekul = list(kekulize_smiles_to_mol(smiles) for smiles in all_smiles)
+
+            chain_mol = remove_bond_order(self.rdkit_mol)
+            matches = list(chain_mol.GetSubstructMatches(mol) for mol in all_mols)
+            for match_mol, match, kekul in zip(all_mols, matches, all_kekul):
+                query_star_atom = [atom for atom in kekul.GetAtoms() if atom.GetAtomMapNum() == 999][0]
+                idx = [neighbor.GetIdx() for neighbor in query_star_atom.GetNeighbors() if neighbor.GetAtomicNum() > 1 ][0]
+                
+                kekul = remove_bond_order(kekul)
+                mapping = match_mol.GetSubstructMatch(kekul)
+                for m in match:
+                    target_idx = m[mapping[idx]]
+                    ends.append(target_idx)
+
         # define end to end distance if a single chain
         if len(h_end_indices) == 2:
             atoms = self.ase_atoms.get_positions()
@@ -126,8 +146,9 @@ class Chain(Molecule):
         list of number of extra molecules in order of self.extra_units
         """
         n_extra = []
-        chain_mol = self.rdkit_mol
+        chain_mol = remove_bond_order(self.rdkit_mol)
         for extra in self.extra_rdkit_mol:
+            extra = remove_bond_order(extra)
             matches = chain_mol.GetSubstructMatches(extra)
             n_extra.append(len(matches))
         
@@ -156,6 +177,41 @@ def get_rdkit_mol(ase_atoms):
 
     assert ase_atoms == rdkit_atoms, "Atom types do not match between ASE and RDKit"
     return mol
+
+def remove_bond_order(query_mol):
+    copy_mol = Mol(query_mol)
+    for bond in copy_mol.GetBonds():
+        bond.SetBondType(BondType.SINGLE)
+        bond.SetIsAromatic(False)
+        # Remove query constraints on bond order if any
+        bond.SetProp('bondType', '')  
+    return copy_mol
+
+def kekulize_smiles_to_mol(smiles):
+    mol = MolFromSmiles(smiles, sanitize=False)
+    if mol is None:
+        raise ValueError("Invalid SMILES")
+
+    Kekulize(mol, clearAromaticFlags=True)
+    return AddHs(mol)
+
+def relabel_stars(smiles):
+    smiles = smiles.replace('[*]', '*')
+    star_indices = [i for i, c in enumerate(smiles) if c == '*']
+    
+    first_star_smiles = smiles[:star_indices[1]] + '[#1:999]' + smiles[star_indices[1]+1:]
+    second_star_smiles = smiles[:star_indices[0]] + '[#1:999]' + smiles[star_indices[0]+1:]
+    return first_star_smiles, second_star_smiles
+
+def process_repeat_unit(smiles):
+    qp = AdjustQueryParameters()
+    qp.makeDummiesQueries=True
+    qp.adjustDegree=True
+    qp.adjustDegreeFlags=ADJUST_IGNOREDUMMIES
+
+    mol = kekulize_smiles_to_mol(smiles)
+    qm = AdjustQueryProperties(mol,qp)
+    return remove_bond_order(qm)
 
 # for homolytic and heterolytic dissociation      
 def get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, center_radius=5.0, fraction_ring=0.25):
