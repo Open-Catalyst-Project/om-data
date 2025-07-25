@@ -16,8 +16,6 @@ from torch.serialization import add_safe_globals
 add_safe_globals([slice])
 
 from fairchem.core import pretrained_mlip, FAIRChemCalculator
-predictor = pretrained_mlip.get_predict_unit("uma-s-1p1", device="cpu")
-UMA = FAIRChemCalculator(predictor, task_name="omol")
 
 smarts_dict = { "none": 0,
                 "[#7D3].[#7D3;+1][#1]": 1,
@@ -190,6 +188,8 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir):
     chain.ase_atoms.info["spin"] = uhf + 1
     chain.ase_atoms.info["charge"] = charge
 
+    predictor = pretrained_mlip.get_predict_unit("uma-s-1p1", device="cuda", inference_settings="turbo")
+    UMA = FAIRChemCalculator(predictor, task_name="omol")
     save_trajectory, _ = run_afir(chain, None, UMA, logfile,
                                     bonds_breaking=[bond_to_break], maxforce=10.0, force_step=0.75, is_polymer=True)
     
