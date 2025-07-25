@@ -39,7 +39,10 @@ def get_chain_path_info(pdb_path, csv_dir):
         raise ValueError(f"Cannot determine polymer class for {pdb_path}")
 
     # needs copolymer fix
-    pattern = re.findall(r'monomer(\d+)_Hterm', basename)[0]
+    if "copolymer" in basename:
+        pattern = re.search(r'copolymer_([^_]+(?:_[^_]+)*)_Hterm', basename)[0]
+    else:
+        pattern = re.findall(r'monomer(\d+)_Hterm', basename)[0]
     pattern = re.findall(r'([AB]?)(\d+)', pattern)
 
     smiles = []
