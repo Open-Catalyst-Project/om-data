@@ -195,6 +195,7 @@ def trim_structures(chain, unique_structures, bonds_breaking, max_atoms=250, del
         cutoff = new_cutoff
         if cutoff < 0:
             break
+    last_trimmed.info['trim_cutoff'] = cutoff
 
     trimmed_pos = last_trimmed.get_positions()
     original_pos = last_structure.get_positions()
