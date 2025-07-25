@@ -7,12 +7,10 @@ import numpy as np
 from ase import Atom
 from ase.data import covalent_radii
 
-from rdkit.Chem import MolFromSmiles, Kekulize, AddHs, MolToSmiles, MolFromSmarts
-from rdkit.Chem import EditableMol, Kekulize, BondType, AddHs
-from rdkit.Chem import AdjustQueryParameters, AdjustQueryProperties, ADJUST_IGNOREDUMMIES
+from rdkit.Chem import EditableMol, BondType, AddHs, MolFromSmarts
 from rdkit.Chem import Atom as RdAtom
 
-from io_chain import Chain
+from io_chain import Chain, remove_bond_order, process_repeat_unit
 
 def get_chain_path_info(pdb_path, csv_dir):
     basename = os.path.basename(pdb_path)
@@ -55,14 +53,6 @@ def get_chain_path_info(pdb_path, csv_dir):
 
     return smiles, polymer_class
 
-def remove_bond_order(query_mol):
-    for bond in query_mol.GetBonds():
-        bond.SetBondType(BondType.SINGLE)
-        bond.SetIsAromatic(False)
-        # Remove query constraints on bond order if any
-        bond.SetProp('bondType', '')  # just in case
-    return query_mol
-
 def trim_structure(chain, structure, bonds_breaking, cutoff):
     reacted_chain = Chain(structure, chain.repeat_units)
     react_mol = reacted_chain.rdkit_mol
@@ -74,11 +64,11 @@ def trim_structure(chain, structure, bonds_breaking, cutoff):
     broken_bonds = [idx for tup in reacted_bonds - initial_bonds for idx in tup]
     reacting_bonds = broken_bonds + formed_bonds
 
-    # if no bonds broken yet, still add bonds_breaking
+    # if no bonds broken yet, add bonds_breaking
     if any(bond not in reacting_bonds for bond in bonds_breaking):
         reacting_bonds += list(bonds_breaking)
 
-    stop_indices = []
+    stop_indices = [] # all indicies that should not be deleted
     for idx in reacting_bonds:
         if idx not in stop_indices: stop_indices.append(idx)
 
@@ -86,26 +76,30 @@ def trim_structure(chain, structure, bonds_breaking, cutoff):
         for s_idx in shielded:
             if s_idx not in stop_indices: stop_indices.append(s_idx)
 
+    # get pattern for substruct matching chain ends and flatten
     all_smiles = list(replace_stars(repeat_unit) for repeat_unit in chain.repeat_units)
     all_smiles = [s for pair in all_smiles for s in pair]
+    all_mols = list(process_repeat_unit(smiles) for smiles in all_smiles)
 
-    reacted_ends = sort_by_bond_distance(reacted_chain.ase_atoms, bonds_breaking, reacted_chain.ends)
+    # get atom mapping for rdkit and ase
     new_atoms = reacted_chain.ase_atoms
     rdkit_to_ase = {i: i for i in range(len(new_atoms))}
     ase_to_rdkit = {i: i for i in range(len(new_atoms))}
-
-    clean_mol = remove_bond_order(AddHs(react_mol))
+    
+    # iterate through chain ends, starting with those farthest from bonds_breaking
+    reacted_ends = sort_by_bond_distance(reacted_chain.ase_atoms, bonds_breaking, reacted_chain.ends)
     for i in range(len(reacted_ends)):
         max_capped = False
-        all_mols = list(remove_bond_order(process_repeat_unit(smiles)) for smiles in all_smiles)
-        current_idx = reacted_ends[i]
-
         stop_positions = [new_atoms[idx].position.copy() for idx in stop_indices]
         end_positions = [new_atoms[idx].position.copy() if idx is not None else None
                             for idx in reacted_ends]
+        
+        current_idx = reacted_ends[i]
         if current_idx is None:
             # print("STOP: Chain end previously deleted")
             continue
+        
+        clean_mol = remove_bond_order(AddHs(react_mol))
         while not max_capped:    
             matches = list(clean_mol.GetSubstructMatches(mol) for mol in all_mols)       
             match = None
@@ -113,7 +107,7 @@ def trim_structure(chain, structure, bonds_breaking, cutoff):
 
             for mol, mol_matches in zip(all_mols, matches):
                 for m in mol_matches:
-                    if current_idx in m:
+                    if current_idx in m: # take first match found
                         match = m
                         match_mol = mol
                         break
@@ -130,17 +124,15 @@ def trim_structure(chain, structure, bonds_breaking, cutoff):
                 max_capped = True
                 break
             
-            # Get star atom
+            # Get star atom from pattern
             query_star_idx = [i for i, atom in enumerate(match_mol.GetAtoms()) if atom.GetAtomicNum() == 0][0]
-            target_star_idx = match[query_star_idx]
-            target_star_atom = clean_mol.GetAtomWithIdx(target_star_idx)
-            atom_to_keep = target_star_idx
+            idx_to_keep = match[query_star_idx]
+            rdkit_atom_to_keep = clean_mol.GetAtomWithIdx(idx_to_keep)
 
-            ase_idx = rdkit_to_ase[atom_to_keep]
-            connecting_pos = new_atoms[ase_idx].position
-            atom_to_keep_pos = connecting_pos.copy()
+            ase_idx_to_keep = rdkit_to_ase[idx_to_keep]
+            pos_to_keep = new_atoms[ase_idx_to_keep].position
 
-            if target_star_atom.GetAtomicNum() == 1: # only one repeat unit
+            if rdkit_atom_to_keep.GetAtomicNum() == 1: # only one repeat unit
                 # print("STOP: whole chain will be deleted")
                 new_atoms = delete_from_ase(new_atoms, match)
                 clean_mol = delete_from_rdkit(clean_mol, match)
@@ -152,38 +144,37 @@ def trim_structure(chain, structure, bonds_breaking, cutoff):
                 break
 
             # Get position of neighbor attached to star atom
-            heavy_neighbors = [ neighbor for neighbor in target_star_atom.GetNeighbors()
-                if neighbor.GetAtomicNum() > 1  and neighbor.GetIdx() in match # exclude H (atomic number 1)
+            heavy_neighbors = [ neighbor for neighbor in rdkit_atom_to_keep.GetNeighbors()
+                if neighbor.GetAtomicNum() > 1  and neighbor.GetIdx() in match
             ]
-            atom_for_pos = heavy_neighbors[0].GetIdx()
-            ase_idx_for_pos = rdkit_to_ase[atom_for_pos]
-            old_position = new_atoms[ase_idx_for_pos].position
+            idx_for_pos = heavy_neighbors[0].GetIdx()
+            ase_idx_for_pos = rdkit_to_ase[idx_for_pos]
+            old_pos = new_atoms[ase_idx_for_pos].position
 
-            direction = old_position - connecting_pos
+            direction = old_pos - pos_to_keep
             direction /= np.linalg.norm(direction)
 
             # Do not delete the atom to keep
             remove_from_match = list(match)
-            remove_from_match.remove(atom_to_keep)
+            remove_from_match.remove(idx_to_keep)
             tuple(remove_from_match)
             
             # Add H then delete others ASE 
             old_Z = new_atoms[ase_idx_for_pos].number
-            bond_length = covalent_radii[old_Z] + covalent_radii[1]
-            new_pos = connecting_pos + direction * bond_length
-            # print("removed:", len(remove_from_match))
+            new_bond_length = covalent_radii[old_Z] + covalent_radii[1]
+            new_pos = pos_to_keep + direction * new_bond_length
 
             new_atoms += Atom('H', position=new_pos) 
 
             new_atoms = delete_from_ase(new_atoms, remove_from_match)
             ase_positions = np.array([atom.position for atom in new_atoms])
     
-            distances = np.linalg.norm(ase_positions - atom_to_keep_pos, axis=1)
-            new_atom_to_keep = int(np.argmin(distances))
+            distances = np.linalg.norm(ase_positions - pos_to_keep, axis=1)
+            new_atom_ase_idx = int(np.argmin(distances)) # get new_ase_index
 
             # Add H then delete others RDkit 
-            clean_mol = add_to_rdkit(clean_mol, ase_to_rdkit, new_atom_to_keep)
-            current_idx = ase_to_rdkit[atom_to_keep]
+            clean_mol = add_to_rdkit(clean_mol, ase_to_rdkit, new_atom_ase_idx)
+            current_idx = rdkit_to_ase[idx_to_keep]
             clean_mol = delete_from_rdkit(clean_mol, remove_from_match)
 
             rdkit_to_ase, ase_to_rdkit = reset_maps(new_atoms, clean_mol)
@@ -192,28 +183,63 @@ def trim_structure(chain, structure, bonds_breaking, cutoff):
     return new_atoms
 
 def trim_structures(chain, unique_structures, bonds_breaking, max_atoms=250, delta_cutoff=0.2):
-    trimmed_strucutres = []
+    trimmed_structures = []
     cutoff = random.uniform(4.0, 6.0)
-    for structure in unique_structures:
-        structure.arrays['residuenames'] = np.copy(chain.ase_atoms.arrays['residuenames'])
-        new_atoms = trim_structure(chain, structure, bonds_breaking, cutoff)
-        skip = False
-        while len(new_atoms) > max_atoms:
-            new_cutoff = cutoff - delta_cutoff
-            new_atoms = trim_structure(chain, structure, bonds_breaking, new_cutoff)
-            cutoff = new_cutoff
-            if cutoff < 0:
-                print("Error in cutoff")
-                skip = True
-                break
-        if skip:
-            continue
 
+    last_structure = unique_structures[-1]
+    last_structure.arrays['residuenames'] = np.copy(chain.ase_atoms.arrays['residuenames'])
+
+    last_trimmed = trim_structure(chain, last_structure, bonds_breaking, cutoff)
+    while len(last_trimmed) > max_atoms:
+        new_cutoff = cutoff - delta_cutoff
+        last_trimmed = trim_structure(chain, last_structure, bonds_breaking, new_cutoff)
+        cutoff = new_cutoff
+        if cutoff < 0:
+            break
+
+    trimmed_pos = last_trimmed.get_positions()
+    original_pos = last_structure.get_positions()
+
+    original_set = set(map(tuple, original_pos))
+    trimmed_set = set(map(tuple, trimmed_pos))
+
+    deleted_pos = original_set - trimmed_set
+    added_pos = trimmed_set - original_set
+
+    deleted_indices = [i for i, pos in enumerate(original_pos) if tuple(pos) in deleted_pos]
+    added_indices = [i for i, pos in enumerate(trimmed_pos) if tuple(pos) in added_pos]
+
+    added_H_info = [] # bring back H caps
+    for i in added_indices:
+        if last_trimmed[i].symbol != 'H':
+            continue  
+
+        pos_H = last_trimmed[i].position
+        dists = np.linalg.norm(trimmed_pos - pos_H, axis=1)
+        nearest_idx = np.argmin([
+            d if last_trimmed[j].symbol != 'H' else np.inf
+            for j, d in enumerate(dists)])
+        
+        nearest_atom = last_trimmed[nearest_idx]
+        offset = pos_H - nearest_atom.position
+        added_H_info.append((nearest_idx, offset))
+
+    for i in range(len(unique_structures) - 1):
+        structure = unique_structures[i]
+        structure.arrays['residuenames'] = np.copy(chain.ase_atoms.arrays['residuenames'])
+        new_atoms = delete_from_ase(structure, deleted_indices)
+        for idx, offset in added_H_info:
+            num_deleted_before = sum(1 for i in deleted_indices if i < idx)
+            shifted_idx = idx - num_deleted_before
+            pos = new_atoms[shifted_idx].position + offset
+            new_atoms.append(Atom('H', position=pos))
 
         new_atoms.info['trim_cutoff'] = cutoff
-        trimmed_strucutres.append(new_atoms)
-
-    return trimmed_strucutres
+        trimmed_structures.append(new_atoms)
+        assert len(new_atoms) == len(last_trimmed)
+    
+    trimmed_structures.append(last_trimmed)
+    return trimmed_structures
 
 def get_bonds(rdkit_mol):
     bonds = set()
@@ -252,28 +278,6 @@ def replace_stars(smiles):
     second_star_smiles = smiles[:star_indices[0]] + '[H]' + smiles[star_indices[0]+1:]
     
     return first_star_smiles, second_star_smiles
-
-def kekulize_smiles(smiles: str) -> str:
-    mol = MolFromSmiles(smiles)
-    if mol is None:
-        raise ValueError("Invalid SMILES")
-
-    Kekulize(mol, clearAromaticFlags=True)
-    mol = AddHs(mol)
-
-    # Write back to SMILES (non-aromatic)
-    return MolToSmiles(mol, kekuleSmiles=True)
-
-def process_repeat_unit(smiles):
-    smiles = kekulize_smiles(smiles)
-    qp = AdjustQueryParameters()
-    qp.makeDummiesQueries=True
-    qp.adjustDegree=True
-    qp.adjustDegreeFlags=ADJUST_IGNOREDUMMIES
-    m = (MolFromSmiles(smiles))
-
-    qm = AdjustQueryProperties(AddHs(m),qp)
-    return qm
 
 def reset_maps(new_atoms, clean_mol):
     rdkit_to_ase = {}  # key: rdkit_idx, value: ase_idx
