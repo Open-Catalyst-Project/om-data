@@ -9,7 +9,6 @@ from ase.data import covalent_radii
 
 from rdkit.Chem import EditableMol, BondType, AddHs, MolFromSmarts
 from rdkit.Chem import Atom as RdAtom
-
 from io_chain import Chain, remove_bond_order, process_repeat_unit
 
 def get_chain_path_info(pdb_path, csv_dir):
@@ -85,7 +84,8 @@ def trim_structure(chain, structure, bonds_breaking, cutoff):
     new_atoms = reacted_chain.ase_atoms
     rdkit_to_ase = {i: i for i in range(len(new_atoms))}
     ase_to_rdkit = {i: i for i in range(len(new_atoms))}
-    
+
+    clean_mol = remove_bond_order(AddHs(react_mol))
     # iterate through chain ends, starting with those farthest from bonds_breaking
     reacted_ends = sort_by_bond_distance(reacted_chain.ase_atoms, bonds_breaking, reacted_chain.ends)
     for i in range(len(reacted_ends)):
@@ -99,7 +99,6 @@ def trim_structure(chain, structure, bonds_breaking, cutoff):
             # print("STOP: Chain end previously deleted")
             continue
         
-        clean_mol = remove_bond_order(AddHs(react_mol))
         while not max_capped:    
             matches = list(clean_mol.GetSubstructMatches(mol) for mol in all_mols)       
             match = None
@@ -174,11 +173,11 @@ def trim_structure(chain, structure, bonds_breaking, cutoff):
 
             # Add H then delete others RDkit 
             clean_mol = add_to_rdkit(clean_mol, ase_to_rdkit, new_atom_ase_idx)
-            current_idx = rdkit_to_ase[idx_to_keep]
             clean_mol = delete_from_rdkit(clean_mol, remove_from_match)
 
             rdkit_to_ase, ase_to_rdkit = reset_maps(new_atoms, clean_mol)
             stop_indices, reacted_ends = reset_indices(new_atoms, stop_positions, end_positions)
+            current_idx = idx_to_keep
 
     return new_atoms
 
@@ -220,9 +219,12 @@ def trim_structures(chain, unique_structures, bonds_breaking, max_atoms=250, del
             d if last_trimmed[j].symbol != 'H' else np.inf
             for j, d in enumerate(dists)])
         
-        nearest_atom = last_trimmed[nearest_idx]
-        offset = pos_H - nearest_atom.position
-        added_H_info.append((nearest_idx, offset))
+        direction = pos_H - last_trimmed[nearest_idx].position
+        old_Z = last_trimmed[nearest_idx].number
+        new_bond_length = covalent_radii[old_Z] + covalent_radii[1]
+
+        direction /= np.linalg.norm(direction)
+        added_H_info.append((nearest_idx, direction * new_bond_length))
 
     for i in range(len(unique_structures) - 1):
         structure = unique_structures[i]
