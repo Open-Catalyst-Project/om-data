@@ -55,7 +55,7 @@ def get_chain_path_info(pdb_path, csv_dir):
 
     return smiles, polymer_class
 
-def trim_structure(chain, structure, bonds_breaking, cutoff):
+def trim_structure(chain, structure, bonds_breaking, cutoff, min_atoms=100):
     reacted_chain = Chain(structure, chain.repeat_units)
     react_mol = reacted_chain.rdkit_mol
 
@@ -100,7 +100,7 @@ def trim_structure(chain, structure, bonds_breaking, cutoff):
             # print("STOP: Chain end previously deleted")
             continue
         
-        while not max_capped:
+        while not max_capped and len(new_atoms) > min_atoms:
             matches = list(clean_mol.GetSubstructMatches(mol) for mol in all_mols)       
             match = None
             match_mol = None
