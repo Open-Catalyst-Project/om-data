@@ -4,7 +4,7 @@ import random
 import numpy as np
 
 from architector.io_molecule import Molecule
-from rdkit.Chem import MolFromSmiles, AddHs, RWMol, Mol, BondType, Kekulize
+from rdkit.Chem import MolFromSmiles, AddHs, RWMol, Mol, BondType, Kekulize, SanitizeMol
 from rdkit.Chem import MolFromMolBlock, MolToXYZBlock, AdjustQueryParameters, AdjustQueryProperties, ADJUST_IGNOREDUMMIES
 
 from ase import Atom
@@ -268,9 +268,15 @@ def get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, center_radius=5.
     selected_h = random.sample(top_h, min(max_H_bonds, len(top_h)))
     selected_other = random.sample(top_other, min(max_other_bonds, len(top_other)))
 
+    # Prevent aromatic rings being added
+    mol_copy = Mol(mol)
+    SanitizeMol(mol_copy)
+    aromatic_bond_indices = [ bond.GetIdx() for bond in mol_copy.GetBonds() if bond.GetIsAromatic() ]
+    aromatic_ring_atoms = set(aromatic_bond_indices)
+
     # Extract just the bond tuples 
     selected_h = [b[1] for b in selected_h]
-    ring_bonds = [b for b in other_bonds if mol.GetBondBetweenAtoms(*b[1]).IsInRing()]
+    ring_bonds = [b for b in other_bonds if mol.GetBondBetweenAtoms(*b[1]).IsInRing() and any(b for b in b[1] if b not in aromatic_ring_atoms)]
     non_ring_bonds = [b for b in other_bonds if not mol.GetBondBetweenAtoms(*b[1]).IsInRing()]
 
     if len(ring_bonds) > max_other_bonds:

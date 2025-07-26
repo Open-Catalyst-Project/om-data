@@ -7,7 +7,8 @@ import numpy as np
 from ase import Atom
 from ase.data import covalent_radii
 
-from rdkit.Chem import EditableMol, BondType, AddHs, MolFromSmarts
+from rdkit.Chem import EditableMol, BondType, AddHs, MolFromSmarts, Conformer
+from rdkit.Geometry import Point3D
 from rdkit.Chem import Atom as RdAtom
 from io_chain import Chain, remove_bond_order, process_repeat_unit
 
@@ -37,7 +38,12 @@ def get_chain_path_info(pdb_path, csv_dir):
     else:
         raise ValueError(f"Cannot determine polymer class for {pdb_path}")
 
-    pattern = re.findall(r'([AB]?)(\d+)', basename)
+    # needs copolymer fix
+    if "copolymer" in basename:
+        pattern = re.search(r'copolymer_([^_]+(?:_[^_]+)*)_Hterm', basename)[0]
+    else:
+        pattern = re.findall(r'monomer(\d+)_Hterm', basename)[0]
+    pattern = re.findall(r'([AB]?)(\d+)', pattern)
 
     smiles = []
     for prefix, number_str in pattern:
@@ -52,7 +58,7 @@ def get_chain_path_info(pdb_path, csv_dir):
 
     return smiles, polymer_class
 
-def trim_structure(chain, structure, bonds_breaking, cutoff):
+def trim_structure(chain, structure, bonds_breaking, cutoff, min_atoms=100):
     reacted_chain = Chain(structure, chain.repeat_units)
     react_mol = reacted_chain.rdkit_mol
 
@@ -82,12 +88,10 @@ def trim_structure(chain, structure, bonds_breaking, cutoff):
 
     # get atom mapping for rdkit and ase
     new_atoms = reacted_chain.ase_atoms
-    rdkit_to_ase = {i: i for i in range(len(new_atoms))}
-    ase_to_rdkit = {i: i for i in range(len(new_atoms))}
 
     clean_mol = remove_bond_order(AddHs(react_mol))
     # iterate through chain ends, starting with those farthest from bonds_breaking
-    reacted_ends = sort_by_bond_distance(reacted_chain.ase_atoms, bonds_breaking, reacted_chain.ends)
+    reacted_ends = sort_by_bond_distance(reacted_chain.ase_atoms, bonds_breaking, reacted_chain.ends)[::-1]
     for i in range(len(reacted_ends)):
         max_capped = False
         stop_positions = [new_atoms[idx].position.copy() for idx in stop_indices]
@@ -99,7 +103,7 @@ def trim_structure(chain, structure, bonds_breaking, cutoff):
             # print("STOP: Chain end previously deleted")
             continue
         
-        while not max_capped:    
+        while not max_capped and len(new_atoms) > min_atoms:
             matches = list(clean_mol.GetSubstructMatches(mol) for mol in all_mols)       
             match = None
             match_mol = None
@@ -128,16 +132,14 @@ def trim_structure(chain, structure, bonds_breaking, cutoff):
             idx_to_keep = match[query_star_idx]
             rdkit_atom_to_keep = clean_mol.GetAtomWithIdx(idx_to_keep)
 
-            ase_idx_to_keep = rdkit_to_ase[idx_to_keep]
-            pos_to_keep = new_atoms[ase_idx_to_keep].position
+            pos_to_keep = new_atoms[idx_to_keep].position
 
             if rdkit_atom_to_keep.GetAtomicNum() == 1: # only one repeat unit
                 # print("STOP: whole chain will be deleted")
                 new_atoms = delete_from_ase(new_atoms, match)
                 clean_mol = delete_from_rdkit(clean_mol, match)
 
-                rdkit_to_ase, ase_to_rdkit = reset_maps(new_atoms, clean_mol) 
-                stop_indices, reacted_ends = reset_indices(new_atoms, stop_positions, end_positions)
+                stop_indices, reacted_ends, _ = reset_indices(new_atoms, stop_positions, end_positions, [0,0,0])
                 
                 max_capped = True
                 break
@@ -147,8 +149,7 @@ def trim_structure(chain, structure, bonds_breaking, cutoff):
                 if neighbor.GetAtomicNum() > 1  and neighbor.GetIdx() in match
             ]
             idx_for_pos = heavy_neighbors[0].GetIdx()
-            ase_idx_for_pos = rdkit_to_ase[idx_for_pos]
-            old_pos = new_atoms[ase_idx_for_pos].position
+            old_pos = new_atoms[idx_for_pos].position
 
             direction = old_pos - pos_to_keep
             direction /= np.linalg.norm(direction)
@@ -159,24 +160,19 @@ def trim_structure(chain, structure, bonds_breaking, cutoff):
             tuple(remove_from_match)
             
             # Add H then delete others ASE 
-            old_Z = new_atoms[ase_idx_for_pos].number
+            old_Z = new_atoms[idx_for_pos].number
             new_bond_length = covalent_radii[old_Z] + covalent_radii[1]
             new_pos = pos_to_keep + direction * new_bond_length
 
             new_atoms += Atom('H', position=new_pos) 
 
             new_atoms = delete_from_ase(new_atoms, remove_from_match)
-            ase_positions = np.array([atom.position for atom in new_atoms])
-    
-            distances = np.linalg.norm(ase_positions - pos_to_keep, axis=1)
-            new_atom_ase_idx = int(np.argmin(distances)) # get new_ase_index
 
             # Add H then delete others RDkit 
-            clean_mol = add_to_rdkit(clean_mol, ase_to_rdkit, new_atom_ase_idx)
+            clean_mol = add_to_rdkit(clean_mol, idx_to_keep, new_pos)
             clean_mol = delete_from_rdkit(clean_mol, remove_from_match)
 
-            rdkit_to_ase, ase_to_rdkit = reset_maps(new_atoms, clean_mol)
-            stop_indices, reacted_ends = reset_indices(new_atoms, stop_positions, end_positions)
+            stop_indices, reacted_ends, idx_to_keep = reset_indices(new_atoms, stop_positions, end_positions, pos_to_keep)
             current_idx = idx_to_keep
 
     return new_atoms
@@ -303,7 +299,7 @@ def reset_maps(new_atoms, clean_mol):
 
     return rdkit_to_ase, ase_to_rdkit
 
-def reset_indices(new_atoms, stop_positions, end_positions):
+def reset_indices(new_atoms, stop_positions, end_positions, pos_to_keep):
     ase_positions = np.array([atom.position for atom in new_atoms])
     remap_stop_indices = []
     for pos in stop_positions:
@@ -323,8 +319,13 @@ def reset_indices(new_atoms, stop_positions, end_positions):
             remap_reacted_indices.append(new_idx)
         else:
             remap_reacted_indices.append(None)
+    remap_to_keep = None
+    distances = np.linalg.norm(ase_positions - pos_to_keep, axis=1)
+    new_idx = int(np.argmin(distances))
+    if distances[new_idx] < 0.1:  # adjust tolerance if needed
+        remap_to_keep = new_idx
 
-    return remap_stop_indices, remap_reacted_indices
+    return remap_stop_indices, remap_reacted_indices, remap_to_keep
 
 def delete_from_ase(atoms, remove_from_match):
     keep_mask = []
@@ -341,15 +342,28 @@ def delete_from_rdkit(clean_mol, remove_from_match):
     clean_mol = emol.GetMol()
     return clean_mol
 
-def add_to_rdkit(clean_mol, ase_to_rdkit, new_atom_to_keep):
+def add_to_rdkit(clean_mol, new_atom_to_keep, position):
     emol = EditableMol(clean_mol)
-    new_rdkit_idx = emol.AddAtom(RdAtom('H'))
-    if new_atom_to_keep not in ase_to_rdkit:
-        # print(f"⚠️ Could not find new_atom_to_keep={new_atom_to_keep} in ase_to_rdkit")
-        return emol.GetMol()
-    emol.AddBond(ase_to_rdkit[new_atom_to_keep], new_rdkit_idx, BondType.SINGLE)
+    new_h = RdAtom('H')
+    new_h.SetNoImplicit(True)
 
-    return emol.GetMol()
+    new_rdkit_idx = emol.AddAtom(new_h)
+    emol.AddBond(new_atom_to_keep, new_rdkit_idx, BondType.SINGLE)
+
+    mol = emol.GetMol()
+    conf = Conformer(mol.GetNumAtoms())
+
+    orig_conf = clean_mol.GetConformer()
+    for i in range(clean_mol.GetNumAtoms()):
+        pos = orig_conf.GetAtomPosition(i)
+        conf.SetAtomPosition(i, pos)
+
+    conf.SetAtomPosition(new_rdkit_idx, Point3D(*position))
+        
+    mol.RemoveAllConformers()
+    mol.AddConformer(conf, assignId=True)
+
+    return mol
 
 def get_bond_smarts(mol, idx1, idx2):
     atom1 = mol.GetAtomWithIdx(idx1)
@@ -373,11 +387,11 @@ def add_h_to_chain(chain, bonds_reacting):
     new_atoms = chain.ase_atoms.copy()
 
     # first atom listed in reactants needs to be the one that's protonated in products
-    smarts_dict = {"reactants": ["[#7D3]","[#7H2]","[#7H1]",
-                                 "[#8D1]", "[#8H1]", "[#6;R0]=[#6;R0]", # avoid hydrogenation of aromatic rings
+    smarts_dict = {"reactants": ["[#7D3]","[#7][#1]",
+                                 "[#8D1]", "[#8][#1]", "[#6;R0]=[#6;R0]", # avoid hydrogenation of aromatic rings
                                  "[#7]#[#6]", "[#7D2]=[#6]"],
-                   "products": ["[#7D3;+1][#1]","[#7H2;+1][#1]","[#7H1;+1][#1]", 
-                                "[#8D1;+1][#1]", "[#8H1;+1][#1]", "[#6;+1]([#1])[#6]",
+                   "products": ["[#7D3;+1][#1]","[#7;+1]([#1])[#1]", 
+                                "[#8D1;+1][#1]", "[#8;+1]([#1])[#1]", "[#6;+1]([#1])[#6]",
                                 "[#7;+1]([#1])#[#6]", "[#7D2;+1]([#1])=[#6]"]}
     reacting_region = []
     for idx in bonds_reacting:
