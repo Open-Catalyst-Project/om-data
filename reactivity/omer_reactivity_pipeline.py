@@ -121,7 +121,7 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
             if i in used_both:
                 continue
             else:
-                remove_list.append({"chain": remove_dict["remove_chain"],"bond_to_break": remove_dict["r_bond_to_break"], "path": remove_dict["path"]})
+                remove_list.append({"chain": both_dict["remove_chain"],"bond_to_break": both_dict["r_bond_to_break"], "path": both_dict["path"]})
                 remove_goal -= 1
                 used_remove.add(i)
             if remove_goal <=0:
