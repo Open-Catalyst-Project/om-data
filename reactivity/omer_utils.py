@@ -88,8 +88,6 @@ def trim_structure(chain, structure, bonds_breaking, cutoff, min_atoms=100):
 
     # get atom mapping for rdkit and ase
     new_atoms = reacted_chain.ase_atoms
-    # added_H_info = []
-    # idx_map = {i: i for i in range(len(new_atoms))}
 
     clean_mol = remove_bond_order(AddHs(react_mol))
     # iterate through chain ends, starting with those farthest from bonds_breaking
@@ -167,16 +165,6 @@ def trim_structure(chain, structure, bonds_breaking, cutoff, min_atoms=100):
             new_pos = pos_to_keep + direction * new_bond_length
 
             new_atoms += Atom('H', position=new_pos) 
-            # added_H_info.append((len(new_atoms)-1, new_pos.copy()))
-
-            # deleted_set = set(remove_from_match)
-            # new_idx = 0
-            # idx_map = {}
-            # for old_idx in range(len(new_atoms)):
-            #     if old_idx not in deleted_set:
-            #         idx_map[old_idx] = new_idx
-            #         new_idx += 1
-            # added_H_info = [(idx_map[i], pos) for i, pos in added_H_info if i in idx_map]
 
             new_atoms = delete_from_ase(new_atoms, remove_from_match)
 
@@ -204,7 +192,6 @@ def trim_structures(chain, unique_structures, bonds_breaking, max_atoms=250, del
         if cutoff < 0:
             break
     last_trimmed.info['trim_cutoff'] = cutoff
-    print(len(last_trimmed))
 
     trimmed_pos = last_trimmed.get_positions().copy()
     original_pos = last_structure.get_positions().copy()
@@ -217,8 +204,6 @@ def trim_structures(chain, unique_structures, bonds_breaking, max_atoms=250, del
 
     deleted_indices = [i for i, pos in enumerate(original_pos) if tuple(pos) in deleted_pos]
     added_indices = [i for i, pos in enumerate(trimmed_pos) if tuple(pos) in added_pos]
-    print(deleted_indices, added_indices)
-    print(len(deleted_indices), len(last_structure)-len(last_trimmed))
 
     added_H_info = [] # bring back H caps
     for i in added_indices:
@@ -241,17 +226,12 @@ def trim_structures(chain, unique_structures, bonds_breaking, max_atoms=250, del
     for i in range(len(unique_structures) - 1):
         structure = unique_structures[i]
         new_atoms = delete_from_ase(structure, deleted_indices)
-        print(len(new_atoms))
         for idx, offset in added_H_info:
-            # num_deleted_before = sum(1 for i in deleted_indices if i < idx)
-            # shifted_idx = idx - num_deleted_before
-            print(idx)
             pos = new_atoms[idx].position.copy() + offset
             new_atoms.append(Atom('H', position=pos))
 
         new_atoms.info['trim_cutoff'] = cutoff
         trimmed_structures.append(new_atoms)
-        print(len(new_atoms), len(last_trimmed))
         assert len(new_atoms) == len(last_trimmed)
     
     trimmed_structures.append(last_trimmed)
