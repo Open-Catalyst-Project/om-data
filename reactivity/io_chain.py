@@ -48,17 +48,18 @@ class Chain(Molecule):
     def assign_chain_ends(self):
         ends = []
         end_to_end = None
-        res_labels = self.ase_atoms.arrays["residuenames"] 
-        
-        # dependent on LLNL implementation
-        tu0_indices = np.where(res_labels == "TU0")[0]
-        tu1_indices = np.where(res_labels == "TU1")[0]
-        h_end_indices = np.concatenate([tu0_indices, tu1_indices]).tolist()
-        
-        for h_end_idx in h_end_indices:
-            atom = self.rdkit_mol.GetAtomWithIdx(h_end_idx)
-            end_idx = atom.GetNeighbors()[0].GetIdx()
-            ends.append(end_idx)
+        if "residuenames" in self.ase_atoms.arrays:
+            res_labels = self.ase_atoms.arrays["residuenames"] 
+            
+            # dependent on LLNL implementation
+            tu0_indices = np.where(res_labels == "TU0")[0]
+            tu1_indices = np.where(res_labels == "TU1")[0]
+            h_end_indices = np.concatenate([tu0_indices, tu1_indices]).tolist()
+            
+            for h_end_idx in h_end_indices:
+                atom = self.rdkit_mol.GetAtomWithIdx(h_end_idx)
+                end_idx = atom.GetNeighbors()[0].GetIdx()
+                ends.append(end_idx)
 
         if not ends:
             all_smiles = list(relabel_stars(repeat_unit) for repeat_unit in self.repeat_units)
@@ -80,7 +81,7 @@ class Chain(Molecule):
                     ends.append(target_idx)
 
         # define end to end distance if a single chain
-        if len(h_end_indices) == 2:
+        if len(ends) == 2:
             atoms = self.ase_atoms.get_positions()
             start = atoms[ends[0]]
             end = atoms[ends[-1]]
