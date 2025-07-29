@@ -10,6 +10,7 @@ from omdata.reactivity_utils import filter_unique_structures, run_afir
 from ase.io import write
 from omer_utils import get_chain_path_info, trim_structures, get_bond_smarts, add_h_to_chain, remove_h_from_chain
 from io_chain import Chain, get_bonds_to_break
+from rdkit.Chem import AtomValenceException
 
 import torch
 from torch.serialization import add_safe_globals
@@ -67,6 +68,8 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
                 too_far += 1
             else: # Error processing pdb to Chain
                 time_out += 1
+            continue
+        except AtomValenceException:
             continue
         finally:
             signal.alarm(0)
@@ -224,22 +227,35 @@ def main(args):
     chunk = chunks_to_process[args.chunk_idx] 
     print('length of chunk', len(chunk))
     print(chunk)
+    random.seed(args.chunk_idx) # fine for now
     add_list, remove_list, none_list = get_splits_for_protonation(chunk, args.csv_dir, "logfile.txt")
 
     os.makedirs(os.path.join(args.output_path, 'none/'), exist_ok=True)
     none_path = os.path.join(args.output_path, 'none/')
     for none_chain_dict in none_list:
-        omer_react_pipeline(none_chain_dict, none_path, args.csv_dir)
+        try:
+            omer_react_pipeline(none_chain_dict, none_path, args.csv_dir)
+        except:
+            print('none', none_chain_dict)
+            continue
     
     os.makedirs(os.path.join(args.output_path, 'remove_H/'), exist_ok=True)
     remove_path = os.path.join(args.output_path, 'remove_H/')
     for remove_chain_dict in remove_list:
-        omer_react_pipeline(remove_chain_dict, remove_path, args.csv_dir)
+        try:
+            omer_react_pipeline(remove_chain_dict, remove_path, args.csv_dir)
+        except:
+            print('remove', remove_chain_dict)
+            continue
 
     os.makedirs(os.path.join(args.output_path, 'add_H/'), exist_ok=True)
     add_path = os.path.join(args.output_path, 'add_H/')
     for add_chain_dict in add_list:
-        omer_react_pipeline(add_chain_dict, add_path, args.csv_dir)
+        try:
+            omer_react_pipeline(add_chain_dict, add_path, args.csv_dir)
+        except:
+            print('add', add_chain_dict)
+            continue
 
 
 def parse_args():

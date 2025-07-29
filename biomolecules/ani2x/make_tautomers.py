@@ -47,6 +47,8 @@ def deprotonate_carbons(st):
             break
         else:
             rejects.add(patt)
+    if not deprot_site:
+        return
     site = random.choice(deprot_site)
     st_copy = st.copy()
     at = st_copy.atom[site[0]]
@@ -180,7 +182,9 @@ def main(fname, output_path):
     for patt in prot_patt:
         addl_sts.extend(protonate_sts(pos_st_list + neut_st_list + [st], patt))
     if random.random() < 0.15:
-        addl_sts.append(deprotonate_carbons(st))
+        deprot_st = deprotonate_carbons(st)
+        if deprot_st is not None:
+            addl_sts.append(deprot_st)
     new_st_list = neg_st_list + pos_st_list + neut_st_list + addl_sts
     new_st_list = uniquify_with_comparison(new_st_list, are_conformers, use_stereo=True)
     print('n_st', len(new_st_list))
@@ -223,4 +227,7 @@ if __name__ == "__main__":
     with tempfile.TemporaryDirectory() as temp_dir:
         with chdir(temp_dir):
             for fname in tqdm(chunk):
-                main(fname, args.output_path)
+                try:
+                    main(fname, args.output_path)
+                except:
+                    continue
