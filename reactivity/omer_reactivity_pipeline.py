@@ -41,6 +41,22 @@ class TimeoutException(Exception):
 def handler(signum, frame):
     raise TimeoutException()
 
+def update_splits(pdb_path, csv_dir, all_add_remove, all_add, all_remove, all_none, cutoff):
+    parent_chain, add_chain, remove_chain, bonds, updated_bonds = process_one_pdb(pdb_path, csv_dir, center_cutoff=cutoff)
+    if add_chain != parent_chain:
+        if remove_chain != parent_chain:
+            all_add_remove.append({"parent_chain": parent_chain, "add_chain": add_chain, "remove_chain": remove_chain,
+                                    "a_bond_to_break": bonds, "r_bond_to_break": updated_bonds, "path": pdb_path})
+        else:
+            all_add.append({"parent_chain": parent_chain, "add_chain": add_chain, "remove_chain": None,
+                                    "a_bond_to_break": bonds, "r_bond_to_break": None, "path": pdb_path})
+    elif remove_chain != parent_chain:
+        all_remove.append({"parent_chain": parent_chain, "add_chain": None, "remove_chain": remove_chain,
+                                    "a_bond_to_break": bonds, "r_bond_to_break": updated_bonds, "path": pdb_path})
+    else:
+        all_none.append({"parent_chain": parent_chain, "add_chain": None, "remove_chain": None,
+                                    "a_bond_to_break": bonds, "r_bond_to_break": None, "path": pdb_path})
+
 def get_splits_for_protonation(pdb_files, csv_dir, logfile):
     all_add_remove, all_add, all_remove, all_none = [], [], [], []
     too_far, time_out = 0, 0
@@ -49,36 +65,10 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
         signal.alarm(3)
         try: 
             # get all valid H mutations of chain
-            parent_chain, add_chain, remove_chain, bonds, updated_bonds = process_one_pdb(pdb_path, csv_dir)
-            if add_chain != parent_chain:
-                if remove_chain != parent_chain:
-                    all_add_remove.append({"parent_chain": parent_chain, "add_chain": add_chain, "remove_chain": remove_chain,
-                                            "a_bond_to_break": bonds, "r_bond_to_break": updated_bonds, "path": pdb_path})
-                else:
-                    all_add.append({"parent_chain": parent_chain, "add_chain": add_chain, "remove_chain": None,
-                                            "a_bond_to_break": bonds, "r_bond_to_break": None, "path": pdb_path})
-            elif remove_chain != parent_chain:
-                all_remove.append({"parent_chain": parent_chain, "add_chain": None, "remove_chain": remove_chain,
-                                            "a_bond_to_break": bonds, "r_bond_to_break": updated_bonds, "path": pdb_path})
-            else:
-                all_none.append({"parent_chain": parent_chain, "add_chain": None, "remove_chain": None,
-                                            "a_bond_to_break": bonds, "r_bond_to_break": None, "path": pdb_path})
+            update_splits(pdb_path, csv_dir, all_add_remove, all_add, all_remove, all_none, cutoff=5.0)
         except (TimeoutException, IndexError) as e:
             if type(e) == IndexError: # No bonds near center of mass
-                parent_chain, add_chain, remove_chain, bonds, updated_bonds = process_one_pdb(pdb_path, csv_dir, center_cutoff=10.0)
-                if add_chain != parent_chain:
-                    if remove_chain != parent_chain:
-                        all_add_remove.append({"parent_chain": parent_chain, "add_chain": add_chain, "remove_chain": remove_chain,
-                                                "a_bond_to_break": bonds, "r_bond_to_break": updated_bonds, "path": pdb_path})
-                    else:
-                        all_add.append({"parent_chain": parent_chain, "add_chain": add_chain, "remove_chain": None,
-                                                "a_bond_to_break": bonds, "r_bond_to_break": None, "path": pdb_path})
-                elif remove_chain != parent_chain:
-                    all_remove.append({"parent_chain": parent_chain, "add_chain": None, "remove_chain": remove_chain,
-                                                "a_bond_to_break": bonds, "r_bond_to_break": updated_bonds, "path": pdb_path})
-                else:
-                    all_none.append({"parent_chain": parent_chain, "add_chain": None, "remove_chain": None,
-                                                "a_bond_to_break": bonds, "r_bond_to_break": None, "path": pdb_path})
+                update_splits(pdb_path, csv_dir, all_add_remove, all_add, all_remove, all_none, cutoff=10.0)
             else: # Error processing pdb to Chain
                 time_out += 1
             continue
