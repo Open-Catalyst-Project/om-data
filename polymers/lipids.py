@@ -109,18 +109,46 @@ def get_chain_dups(st):
     for res_name, chain_dict in chain_dups.items():
         for chain_name, counter in chain_dict.items():
             dup_dict[res_name][frozenset(counter.items())].append(chain_name)
+
+    # Repackage into easily addressed form
     dups_by_res = {res_name:list(counter_dict.values()) for res_name, counter_dict in dup_dict.items()}
     dups_by_res_chain = defaultdict(dict)
     for res_name, partitioning in dups_by_res.items():
-        for chain_name in partitioning:
-            dups_by_res_chain[res_name][chain_name] = len(partitioning)
+        for group in partitioning:
+            for chain_name in group:
+                dups_by_res_chain[res_name][chain_name] = 1 / len(group)
+    return dups_by_res_chain
 
 def weighted_random_shuffle(items, weights):
     """
     Shuffle items so that higher-weighted items are more likely to appear earlier.
     Each item appears exactly once.
-    """
 
+    Separate by chain name, randomize each chain name, randomly select which pool to draw from based on weighted random choice, repeat until all groups are exhausted
+    """
+    grouped_chains = defaultdict(list)
+    for res in items:
+        grouped_chains[res[1]].append(res)
+    for val in grouped_chains.values():
+        random.shuffle(val)
+
+    reweighted_combo = []
+    chains = list(grouped_chains.keys())
+    indices = {k: 0 for k in chains}  # indices for each chain
+    exhausted_chains = set()
+    chain_idx = 0  # which chain we are on
+
+    while len(exhausted_chains) < len(chains):
+        curr_chain = random.choices(chains, weights=weights)[0]
+        if curr_chain in exhausted_chains:
+            continue
+        idx = indices[curr_chain]
+        reweighted_combo.append(grouped_chains[curr_chain][idx])
+        indices[curr_chain] += 1
+        if indices[curr_chain] >= len(grouped_chains[curr_chain]):
+            exhausted_chains.add(curr_chain)
+    items.clear()
+    items.extend(reweighted_combo)
 
 def get_cluster_centers(st):
     res_dict = defaultdict(list)
@@ -130,8 +158,10 @@ def get_cluster_centers(st):
             continue
         for res in mol.residue:
             res_dict[res.pdbres].append((res.resnum, res.chain))
-    for val in res_dict.values():
-        random.shuffle(val)
+    chain_dups = get_chain_dups(st)
+    for res_name, val in res_dict.items():
+        weights = [chain_dups[res_name][ch] for ch in sorted(chain_dups[res_name])]
+        weighted_random_shuffle(val, weights)
     return res_dict
 
 
@@ -197,12 +227,12 @@ def center_iterator(data):
 
 
 def main(fname):
-    fname = "3_0.0ps.pdb"
-    #    st = StructureReader.read(fname)
-    #    print('assigning lew')
-    #    assign_lewis_structure(st)
-    #    print('getting cluster')
-    st = StructureReader.read("assigned.mae")
+    #fname = "3_0.0ps.pdb"
+    #st = StructureReader.read("assigned.mae")
+    st = StructureReader.read(fname)
+    print('assigning lew')
+    assign_lewis_structure(st)
+    print('getting cluster')
     cluster_centers = get_cluster_centers(st)
     counter = 0
     n_structs = 10
@@ -229,6 +259,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--all_chains_dir", default=".")
     parser.add_argument("--csv_dir", default=".")
+    parser.add_argument("--input_dir", default=".")
     parser.add_argument("--output_path", default=".")
     parser.add_argument("--n_chunks", type=int, default=1)
     parser.add_argument("--chunk_idx", type=int, default=0)
