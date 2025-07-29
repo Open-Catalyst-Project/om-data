@@ -12,9 +12,6 @@ Grabbing:
 2) fillres if water
 3) fillres if number of atoms 
 3) capping of phoshpate with OMe like we did for nucleic acids
-
-
-
 """
 import argparse
 import glob
@@ -30,6 +27,9 @@ from schrodinger.structutils.analyze import evaluate_asl
 from tqdm import tqdm
 
 from subsample_md_boxes import extract_cluster, get_cut_ends
+
+MAX_ATOMS = 300
+N_STRUCTS = 30
 
 
 def get_residue_charges(st):
@@ -92,6 +92,7 @@ def append_phosphate_O(st, at_list):
                 at_list.append(b_at.index)
                 at_list.sort()
 
+
 def get_chain_dups(st):
     chain_dups = defaultdict(dict)
     for mol in st.molecule:
@@ -111,13 +112,17 @@ def get_chain_dups(st):
             dup_dict[res_name][frozenset(counter.items())].append(chain_name)
 
     # Repackage into easily addressed form
-    dups_by_res = {res_name:list(counter_dict.values()) for res_name, counter_dict in dup_dict.items()}
+    dups_by_res = {
+        res_name: list(counter_dict.values())
+        for res_name, counter_dict in dup_dict.items()
+    }
     dups_by_res_chain = defaultdict(dict)
     for res_name, partitioning in dups_by_res.items():
         for group in partitioning:
             for chain_name in group:
                 dups_by_res_chain[res_name][chain_name] = 1 / len(group)
     return dups_by_res_chain
+
 
 def weighted_random_shuffle(items, weights):
     """
@@ -136,7 +141,6 @@ def weighted_random_shuffle(items, weights):
     chains = list(grouped_chains.keys())
     indices = {k: 0 for k in chains}  # indices for each chain
     exhausted_chains = set()
-    chain_idx = 0  # which chain we are on
 
     while len(exhausted_chains) < len(chains):
         curr_chain = random.choices(chains, weights=weights)[0]
@@ -149,6 +153,7 @@ def weighted_random_shuffle(items, weights):
             exhausted_chains.add(curr_chain)
     items.clear()
     items.extend(reweighted_combo)
+
 
 def get_cluster_centers(st):
     res_dict = defaultdict(list)
@@ -227,21 +232,20 @@ def center_iterator(data):
 
 
 def main(fname):
-    #fname = "3_0.0ps.pdb"
-    #st = StructureReader.read("assigned.mae")
+    # fname = "3_0.0ps.pdb"
+    # st = StructureReader.read("assigned.mae")
     st = StructureReader.read(fname)
-    print('assigning lew')
+    print("assigning lew")
     assign_lewis_structure(st)
-    print('getting cluster')
+    print("getting cluster")
     cluster_centers = get_cluster_centers(st)
     counter = 0
-    n_structs = 10
     print("beginning loop")
     gen = center_iterator(cluster_centers)
     center = next(gen)
     # Try centers for a given species until it works
-    while center is not None and counter < n_structs:
-        cluster = get_cluster(st, center, 300)
+    while center is not None and counter < N_STRUCTS:
+        cluster = get_cluster(st, center, MAX_ATOMS)
         if cluster is None:
             print(center)
             center = gen.send("try_again")
@@ -257,8 +261,6 @@ def main(fname):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--all_chains_dir", default=".")
-    parser.add_argument("--csv_dir", default=".")
     parser.add_argument("--input_dir", default=".")
     parser.add_argument("--output_path", default=".")
     parser.add_argument("--n_chunks", type=int, default=1)
