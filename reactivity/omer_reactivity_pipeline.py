@@ -65,7 +65,20 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
                                             "a_bond_to_break": bonds, "r_bond_to_break": None, "path": pdb_path})
         except (TimeoutException, IndexError) as e:
             if type(e) == IndexError: # No bonds near center of mass
-                too_far += 1
+                parent_chain, add_chain, remove_chain, bonds, updated_bonds = process_one_pdb(pdb_path, csv_dir, center_cutoff=10.0)
+                if add_chain != parent_chain:
+                    if remove_chain != parent_chain:
+                        all_add_remove.append({"parent_chain": parent_chain, "add_chain": add_chain, "remove_chain": remove_chain,
+                                                "a_bond_to_break": bonds, "r_bond_to_break": updated_bonds, "path": pdb_path})
+                    else:
+                        all_add.append({"parent_chain": parent_chain, "add_chain": add_chain, "remove_chain": None,
+                                                "a_bond_to_break": bonds, "r_bond_to_break": None, "path": pdb_path})
+                elif remove_chain != parent_chain:
+                    all_remove.append({"parent_chain": parent_chain, "add_chain": None, "remove_chain": remove_chain,
+                                                "a_bond_to_break": bonds, "r_bond_to_break": updated_bonds, "path": pdb_path})
+                else:
+                    all_none.append({"parent_chain": parent_chain, "add_chain": None, "remove_chain": None,
+                                                "a_bond_to_break": bonds, "r_bond_to_break": None, "path": pdb_path})
             else: # Error processing pdb to Chain
                 time_out += 1
             continue
@@ -153,10 +166,10 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
 
     return add_list, remove_list, none_list
 
-def process_one_pdb(pdb_path, csv_dir):
+def process_one_pdb(pdb_path, csv_dir, center_cutoff=5.0):
     repeat_smiles, _ = get_chain_path_info(pdb_path, csv_dir)
     chain = Chain(pdb_path, repeat_smiles)
-    all_bonds_to_break = get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4)
+    all_bonds_to_break = get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, center_radius=center_cutoff)
     bond_to_break = random.choice(all_bonds_to_break)
 
     try:
