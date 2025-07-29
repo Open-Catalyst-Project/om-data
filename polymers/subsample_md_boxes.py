@@ -85,7 +85,7 @@ def get_cylinder(st, chain_name, radius, budget, tail_init):
 
 def remove_lonesome_hydrogens(cluster):
     """
-    rEMOVe any isolated hydrogen atoms
+    Remove any isolated hydrogen atoms
 
     It is possible to end up with isolated H atoms since they are
     common termination groups and we might pull in the termination,
@@ -145,6 +145,24 @@ def parse_args():
     parser.add_argument("--output_path", default=".", type=str)
     return parser.parse_args()
 
+def extract_cluster(st, extracted_ats):
+    cut_ends = get_cut_ends(st, extracted_ats)
+    cluster, at_map = build.extract_structure(
+        st, extracted_ats, copy_props=True, renumber_map=True
+    )
+    clusterstruct.contract_structure2(cluster)
+    mapped_cut_ends = [at_map[at] for at in cut_ends]
+    build.add_hydrogens(cluster, atom_list=mapped_cut_ends)
+    remove_lonesome_hydrogens(cluster)
+    if check_for_spears(cluster, distorted=True, return_bool=True):
+        return
+    if CHECK_FOR_MISSING_H:
+        h_check = cluster.copy()
+        build.add_hydrogens(h_check)
+        if h_check.atom_total != cluster.atom_total:
+            print("I felt the need to add more hydrogens!")
+    return cluster
+
 def main_loop(fname):
     st = StructureReader.read(fname)
     total_clusters = 10
@@ -171,21 +189,9 @@ def main_loop(fname):
             continue
         if (chain.name, init_res.resnum) in used_seeds:
             continue
-        cut_ends = get_cut_ends(st, extracted_ats)
-        cluster, at_map = build.extract_structure(
-            st, extracted_ats, copy_props=True, renumber_map=True
-        )
-        clusterstruct.contract_structure2(cluster)
-        mapped_cut_ends = [at_map[at] for at in cut_ends]
-        build.add_hydrogens(cluster, atom_list=mapped_cut_ends)
-        remove_lonesome_hydrogens(cluster)
-        if check_for_spears(cluster, distorted=True, return_bool=True):
+        cluster = extract_cluster(st, extracted_ats)
+        if cluster is None:
             continue
-        if CHECK_FOR_MISSING_H:
-            h_check = cluster.copy()
-            build.add_hydrogens(h_check)
-            if h_check.atom_total != cluster.atom_total:
-                print("I felt the need to add more hydrogens!")
         name_parts = os.path.splitext(fname)[0].split("/")
         cluster_name = "_".join(name_parts + [chain.name,str(init_res.resnum), "0", "1"]) + ".mae"
         cluster.write(cluster_name)
@@ -198,5 +204,6 @@ def main():
     with mp.Pool(60) as pool:
         list(tqdm(pool.imap(main_loop, file_list), total=len(file_list)))
 
-random.seed(42)
-main()
+if __name__ == '__main__':
+    random.seed(42)
+    main()
