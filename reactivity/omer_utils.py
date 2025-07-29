@@ -193,8 +193,8 @@ def trim_structures(chain, unique_structures, bonds_breaking, max_atoms=250, del
             break
     last_trimmed.info['trim_cutoff'] = cutoff
 
-    trimmed_pos = last_trimmed.get_positions()
-    original_pos = last_structure.get_positions()
+    trimmed_pos = last_trimmed.get_positions().copy()
+    original_pos = last_structure.get_positions().copy()
 
     original_set = set(map(tuple, original_pos))
     trimmed_set = set(map(tuple, trimmed_pos))
@@ -210,13 +210,13 @@ def trim_structures(chain, unique_structures, bonds_breaking, max_atoms=250, del
         if last_trimmed[i].symbol != 'H':
             continue  
 
-        pos_H = last_trimmed[i].position
+        pos_H = last_trimmed[i].position.copy()
         dists = np.linalg.norm(trimmed_pos - pos_H, axis=1)
         nearest_idx = np.argmin([
             d if last_trimmed[j].symbol != 'H' else np.inf
             for j, d in enumerate(dists)])
         
-        direction = pos_H - last_trimmed[nearest_idx].position
+        direction = pos_H - last_trimmed[nearest_idx].position.copy()
         old_Z = last_trimmed[nearest_idx].number
         new_bond_length = covalent_radii[old_Z] + covalent_radii[1]
 
@@ -225,12 +225,9 @@ def trim_structures(chain, unique_structures, bonds_breaking, max_atoms=250, del
 
     for i in range(len(unique_structures) - 1):
         structure = unique_structures[i]
-        structure.arrays['residuenames'] = np.copy(chain.ase_atoms.arrays['residuenames'])
         new_atoms = delete_from_ase(structure, deleted_indices)
         for idx, offset in added_H_info:
-            num_deleted_before = sum(1 for i in deleted_indices if i < idx)
-            shifted_idx = idx - num_deleted_before
-            pos = new_atoms[shifted_idx].position + offset
+            pos = new_atoms[idx].position.copy() + offset
             new_atoms.append(Atom('H', position=pos))
 
         new_atoms.info['trim_cutoff'] = cutoff
