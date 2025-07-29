@@ -4,7 +4,7 @@ import random
 import numpy as np
 
 from architector.io_molecule import Molecule
-from rdkit.Chem import MolFromSmiles, AddHs, RWMol, Mol, BondType, Kekulize, SanitizeMol
+from rdkit.Chem import MolFromSmiles, AddHs, RWMol, Mol, BondType, Kekulize, SanitizeMol, SANITIZE_SETAROMATICITY
 from rdkit.Chem import MolFromMolBlock, MolToXYZBlock, AdjustQueryParameters, AdjustQueryProperties, ADJUST_IGNOREDUMMIES
 
 from ase import Atom
@@ -263,22 +263,36 @@ def get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, center_radius=5.
         
     h_bonds.sort(reverse=True)
     other_bonds.sort(reverse=True)
+
+    # Prevent aromatic rings being added
+    mol_copy = Mol(mol)
+    SanitizeMol(mol_copy, SANITIZE_SETAROMATICITY)
+
+    aromatic_idx = []
+    for bond in mol_copy.GetBonds():
+        a1, a2 = bond.GetBeginAtom(), bond.GetEndAtom()
+        if a1.GetIsAromatic() or a2.GetIsAromatic():
+            aromatic_idx.append(a1.GetIdx())
+            aromatic_idx.append(a2.GetIdx())
+
+    ring_bonds = []
+    non_ring_bonds = []
+    for b in other_bonds:
+        bond = mol_copy.GetBondBetweenAtoms(*b[1])
+        if bond.IsInRing():
+            a1, a2 = bond.GetBeginAtom(), bond.GetEndAtom()
+            if a1.GetIdx() in aromatic_idx or a2.GetIdx() in aromatic_idx:
+                continue
+            else:
+                ring_bonds.append(b)
+        else:
+            non_ring_bonds.append(b)
+    other_bonds = ring_bonds + non_ring_bonds
     top_h = h_bonds[:10]  
     top_other = other_bonds[:10]
 
     selected_h = random.sample(top_h, min(max_H_bonds, len(top_h)))
     selected_other = random.sample(top_other, min(max_other_bonds, len(top_other)))
-
-    # Prevent aromatic rings being added
-    mol_copy = Mol(mol)
-    SanitizeMol(mol_copy)
-    aromatic_bond_indices = [ bond.GetIdx() for bond in mol_copy.GetBonds() if bond.GetIsAromatic() ]
-    aromatic_ring_atoms = set(aromatic_bond_indices)
-
-    # Extract just the bond tuples 
-    selected_h = [b[1] for b in selected_h]
-    ring_bonds = [b for b in other_bonds if mol.GetBondBetweenAtoms(*b[1]).IsInRing() and any(b for b in b[1] if b not in aromatic_ring_atoms)]
-    non_ring_bonds = [b for b in other_bonds if not mol.GetBondBetweenAtoms(*b[1]).IsInRing()]
 
     if len(ring_bonds) > max_other_bonds:
         # Prevent over-representation of ring bonds
@@ -286,6 +300,7 @@ def get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, center_radius=5.
         max_non_ring = max_other_bonds - max_ring
         selected_other = non_ring_bonds[:max_non_ring] + ring_bonds[:max_ring]
 
+    selected_h = [b[1] for b in selected_h]
     selected_other = [b[1] for b in selected_other]
     
     return selected_h + selected_other
