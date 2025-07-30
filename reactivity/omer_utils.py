@@ -49,9 +49,9 @@ def get_chain_path_info(pdb_path, csv_dir):
 
     # needs copolymer fix
     if "copolymer" in basename:
-        pattern = re.search(r'copolymer_([^_]+(?:_[^_]+)*)_Hterm', basename)[0]
+        pattern = re.search(r'copolymer_([^_]+(?:_[^_]+)*?)_(Hterm|plus)', basename)[0]
     else:
-        pattern = re.findall(r'monomer(\d+)_Hterm', basename)[0]
+        pattern = re.findall(r'monomer(\d+)_(Hterm|plus)', basename)[0]
     pattern = re.findall(r'([AB]?)(\d+)', pattern)
 
     repeat_smiles = []
