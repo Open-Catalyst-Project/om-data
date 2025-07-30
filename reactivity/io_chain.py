@@ -290,7 +290,9 @@ def process_repeat_unit(smiles):
     return remove_bond_order(qm)
 
 # for homolytic and heterolytic dissociation      
-def get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, center_radius=5.0, fraction_ring=0.25):
+def get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, 
+                       center_radius=5.0, fraction_ring=0.25, 
+                       penalize_ends=False):
     clean_chain = chain.remove_extra()
     mol = clean_chain.rdkit_mol
 
@@ -307,12 +309,18 @@ def get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, center_radius=5.
         mask = np.ones(len(positions), dtype=bool)
         mask[[a1, a2]] = False
         return np.count_nonzero((distances < radius) & mask)
+
+    def get_end_proximity_score(a1, a2):
+        midpoint = 0.5 * (positions[a1] + positions[a2])
+        end_positions = positions[list(chain.ends)]
+        distances = np.linalg.norm(end_positions - midpoint, axis=1)
+        return np.sum(distances)
         
     h_bonds = []
     other_bonds = []
     for bond in mol.GetBonds():
         a1, a2 = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
-        if not (within_radius(a1) or within_radius(a2)):
+        if not (within_radius(a1) or within_radius(a2)) and not penalize_ends:
             continue
 
         z1, z2 = mol.GetAtomWithIdx(a1).GetAtomicNum(), mol.GetAtomWithIdx(a2).GetAtomicNum()
@@ -327,15 +335,19 @@ def get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, center_radius=5.
                     skip = True # avoid making triplet oxygen
         if skip:
             continue
-        density_score = get_local_density_score(a1, a2)
-        bond_data = (density_score, bond_tuple)
+
+        if penalize_ends:
+            score = get_end_proximity_score(a1, a2)
+        else:
+            score = get_local_density_score(a1, a2)
+        bond_data = (score, bond_tuple)
 
         atomic_nums = {z1, z2}
         if 1 in atomic_nums:  # H bond
             h_bonds.append(bond_data)
         else:
             other_bonds.append(bond_data)
-        
+
     h_bonds.sort(reverse=True)
     other_bonds.sort(reverse=True)
 
