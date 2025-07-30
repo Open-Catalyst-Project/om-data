@@ -406,6 +406,12 @@ def does_not_overlap(pos, atoms, threshold=0.5):
     dists = np.linalg.norm(positions - pos, axis=1)
     return np.all(dists > threshold)
 
+def reset_idx(new_atoms, old_atoms, idx_list):
+    old_positions = np.array([atom.position for atom in old_atoms])
+    new_positions = np.array([atom.position for atom in new_atoms])
+    new_idx_list = tuple(int(np.argmin(np.linalg.norm(new_positions - old_positions[idx], axis=1))) for idx in idx_list)
+    return new_idx_list
+
 def add_h_to_chain(chain, bonds_reacting, attempts=5):
     new_atoms = chain.ase_atoms.copy()
 
@@ -604,7 +610,7 @@ def surround_chain_with_extra(chain, bond=None, remove=False, max_atoms=250):
         flat_extra_list = sorted(flat_extra_list, reverse=True)
         near_chain_list = []
         for idx in chain_list:
-            near_chain_list += get_shielded_zone(ase_atoms, idx, cutoff=5.0)
+            near_chain_list += get_shielded_zone(ase_atoms, idx, cutoff=8.0)
         sorted_near_chain = sort_by_bond_distance(ase_atoms, bond, near_chain_list)
 
         keep_set = set(chain_list)
