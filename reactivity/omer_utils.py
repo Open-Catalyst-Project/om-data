@@ -51,7 +51,7 @@ def get_chain_path_info(pdb_path, csv_dir):
     if "copolymer" in basename:
         pattern = re.search(r'copolymer_([^_]+(?:_[^_]+)*?)_(Hterm|plus)', basename)[0]
     else:
-        pattern = re.findall(r'monomer(\d+)_(Hterm|plus)', basename)[0]
+        pattern = re.search(r'monomer(\d+)_(Hterm|plus)', basename)[0]
     pattern = re.findall(r'([AB]?)(\d+)', pattern)
 
     repeat_smiles = []
@@ -399,7 +399,14 @@ def get_bond_smarts(mol, idx1, idx2):
 
     return f"{frag1}-{frag2}"
 
-def add_h_to_chain(chain, bonds_reacting):
+def does_not_overlap(pos, atoms, threshold=0.5):
+    positions = atoms.get_positions()
+    if len(positions) == 0:
+        return True
+    dists = np.linalg.norm(positions - pos, axis=1)
+    return np.all(dists > threshold)
+
+def add_h_to_chain(chain, bonds_reacting, attempts=5):
     new_atoms = chain.ase_atoms.copy()
 
     # first atom listed in reactants needs to be the one that's protonated in products
@@ -430,20 +437,25 @@ def add_h_to_chain(chain, bonds_reacting):
     if not all_valid_matches:
         return chain 
     
-    i = random.randrange(len(all_valid_matches))
-    valid_match = all_valid_matches[i]
-    match_smarts = all_smarts[i]
-    match = random.choice(valid_match)
+    for attempt in range(attempts):
+        i = random.randrange(len(all_valid_matches))
+        valid_match = all_valid_matches[i]
+        match_smarts = all_smarts[i]
+        match = random.choice(valid_match)
 
-    conf = chain_mol.GetConformer()
-    new_pos = get_idealized_H_position(match, chain_mol, conf)
+        conf = chain_mol.GetConformer()
+        new_pos = get_idealized_H_position(match, chain_mol, conf)
 
-    new_atoms.append(Atom('H', new_pos))
-    new_atoms.info["charge"] = +1
-    new_atoms.info["mod_smarts"] = match_smarts 
-    new_chain = Chain(new_atoms, chain.repeat_units, extra_smiles=chain.extra_units)
+        if does_not_overlap(new_pos, new_atoms):
+            new_atoms.append(Atom('H', new_pos))
+            new_atoms.info["charge"] = +1
+            new_atoms.info["mod_smarts"] = match_smarts 
+            new_chain = Chain(new_atoms, chain.repeat_units, extra_smiles=chain.extra_units)
 
-    return new_chain 
+            return new_chain 
+        else:
+            continue
+    return chain
 
 def remove_h_from_chain(chain, bonds_reacting):
     new_atoms = chain.ase_atoms.copy()
