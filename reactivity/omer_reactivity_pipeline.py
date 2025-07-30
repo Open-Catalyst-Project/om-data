@@ -1,4 +1,3 @@
-import sys
 import os
 import random
 import numpy as np
@@ -185,7 +184,7 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir):
     chain_path = chain_dict['path']
     chain = chain_dict['chain']
     bond_to_break = chain_dict['bond_to_break']
-    _, polymer_class = get_chain_path_info(chain_path, csv_dir)
+    _, _, polymer_class = get_chain_path_info(chain_path, csv_dir)
 
     name = polymer_class + "_" + chain_path.split("/")[-1][:-4]
 
