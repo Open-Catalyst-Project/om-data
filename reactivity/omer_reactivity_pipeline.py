@@ -8,6 +8,7 @@ import signal
 from omdata.reactivity_utils import filter_unique_structures, run_afir
 from ase.io import write
 from omer_utils import get_chain_path_info, trim_structures, get_bond_smarts, add_h_to_chain, remove_h_from_chain
+from omer_utils import surround_chain_with_extra, trim_structure, reset_idx
 from io_chain import Chain, get_bonds_to_break
 
 import torch
@@ -44,14 +45,16 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
     error = 0
     for pdb_path in pdb_files:
         signal.signal(signal.SIGALRM, handler)
-        signal.alarm(20) # large (>500 atom) pdbs can take time
+        signal.alarm(15) # large (>500 atom) pdbs can take time
         try: 
             # get all valid H mutations of chain
             all_add_remove, all_add, all_remove, all_none = get_chains_and_bonds(pdb_path, csv_dir, 
                                                                                  all_add_remove, all_add, 
                                                                                  all_remove, all_none)
         except (TimeoutException, IndexError) as e:
+            signal.alarm(0)
             if type(e) == IndexError: # No bonds near center of mass
+                signal.alarm(15)
                 try:
                     all_add_remove, all_add, all_remove, all_none = get_chains_and_bonds(pdb_path, csv_dir, 
                                                                                      all_add_remove, all_add, 
@@ -60,6 +63,8 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
                 except (TimeoutException, IndexError) as e:
                     print(e)
                     error += 1
+                finally:
+                    signal.alarm(0)
             else: # Error processing pdb to Chain
                 print(e)
                 error += 1
@@ -85,27 +90,28 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
     def extract_entry(d, key, bond_key):
         return {"chain": d[key], "bond_to_break": d[bond_key], "path": d["path"]}
 
-    for none_dict in all_none: # fill with chaings where nothing can happen
+    for none_dict in all_none: # fill none with chains where nothing can happen
         if none_goal <= 0:
             break
         none_list.append(extract_entry(none_dict, "parent_chain", "a_bond_to_break"))
         none_goal -= 1
-    for add_dict in all_add:   # fill with chaings where +H is only option
+    for add_dict in all_add:   # fill add with chains where +H is only option
         if add_goal <= 0:
             break
         add_list.append(extract_entry(add_dict, "add_chain", "a_bond_to_break"))
         add_goal -= 1
     for i, both_dict in enumerate(all_add_remove):
-        if add_goal > 0:       # fill with chains where +H is possible
+        if add_goal > 0:       # fill add with chains where +H is possible
             add_list.append(extract_entry(both_dict, "add_chain", "a_bond_to_break"))
             add_goal -= 1
             used_both.add(i)
-        elif remove_goal > 0 and both_dict["remove_chain"].ase_atoms.info["mod_smarts"] != "[#1][#6;R0][!#1].[#6;+1][!#1]": # fill with chains where -H is possible
+        elif remove_goal > 0 and both_dict["remove_chain"].ase_atoms.info["mod_smarts"] != "[#1][#6;R0][!#1].[#6;+1][!#1]": 
+            # fill remove with chains where -H is possible and it's not a carbocation
             remove_list.append(extract_entry(both_dict, "remove_chain", "r_bond_to_break"))
             remove_goal -= 1
             used_both.add(i)
 
-    for i, remove_dict in enumerate(all_remove): # fill where -H is possible, except carbocations
+    for i, remove_dict in enumerate(all_remove): # fill remove where -H is only option, except carbocations
         if remove_dict["remove_chain"].ase_atoms.info["mod_smarts"] == "[#1][#6;R0][!#1].[#6;+1][!#1]":
             continue
         if remove_goal <= 0:
@@ -165,12 +171,36 @@ def get_chains_and_bonds(pdb_path, csv_dir, all_add_remove, all_add, all_remove,
 
     return all_add_remove, all_add, all_remove, all_none
 
-def process_one_pdb(pdb_path, csv_dir, center_cutoff=5.0):
+def process_one_pdb(pdb_path, csv_dir, center_cutoff=5.0, n_attempts=5):
     repeat_smiles, extra_smiles, _ = get_chain_path_info(pdb_path, csv_dir)
     chain = Chain(pdb_path, repeat_smiles, extra_smiles=extra_smiles)
-    
-    all_bonds_to_break = get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, center_radius=center_cutoff)
-    bond_to_break = random.choice(all_bonds_to_break)
+    if extra_smiles:
+        trim_cutoff= 8.0
+        max_atoms = 800 if len(chain.remove_extra().ase_atoms) > 150 else 250
+        for attempt in range(n_attempts): # try to trim down the solvated structure
+            all_bonds_to_break = get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, center_radius=center_cutoff, penalize_ends=True)
+            bond_to_break = random.choice(all_bonds_to_break)
+
+            # surround with more atoms than you need. number of chain atoms counts against max_atoms
+            reduced_chain = surround_chain_with_extra(chain, bond_to_break, remove=True, max_atoms=max_atoms)
+            bond_to_break = reset_idx(reduced_chain.ase_atoms, chain.ase_atoms, bond_to_break)
+
+            # trim down the structure from the chain ends 
+            new_ase_atoms = trim_structure(reduced_chain, reduced_chain.ase_atoms, bond_to_break, trim_cutoff, min_atoms=250)
+            if len(new_ase_atoms) > 300: 
+                # if it's bigger than ideal, try again
+                trim_cutoff -= 0.75
+                max_atoms -= 50
+                if attempt == (n_attempts - 1): # regardless, keep the last one
+                    bond_to_break = reset_idx(new_ase_atoms, reduced_chain.ase_atoms, bond_to_break)
+                    chain = Chain(new_ase_atoms, repeat_smiles, extra_smiles=extra_smiles)
+            else: 
+                bond_to_break = reset_idx(new_ase_atoms, reduced_chain.ase_atoms, bond_to_break)
+                chain = Chain(new_ase_atoms, repeat_smiles, extra_smiles=extra_smiles)
+                break
+    else:  
+        all_bonds_to_break = get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, center_radius=center_cutoff)
+        bond_to_break = random.choice(all_bonds_to_break)
 
     try:
         new_h_chain = add_h_to_chain(chain, bond_to_break)
@@ -188,7 +218,8 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir, debug=False, return_as
     chain_path = chain_dict['path']
     chain = chain_dict['chain']
     bond_to_break = chain_dict['bond_to_break']
-    _, _, polymer_class = get_chain_path_info(chain_path, csv_dir)
+    _, extra_smiles, polymer_class = get_chain_path_info(chain_path, csv_dir)
+    skip_first = True if extra_smiles else False
 
     name = polymer_class + "_" + chain_path.split("/")[-1][:-4]
 
@@ -208,7 +239,8 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir, debug=False, return_as
     predictor = pretrained_mlip.get_predict_unit("uma-s-1p1", device="cuda", inference_settings="turbo")
     UMA = FAIRChemCalculator(predictor, task_name="omol")
     save_trajectory, _ = run_afir(chain, None, UMA, logfile,
-                                    bonds_breaking=[bond_to_break], maxforce=maxforce, force_step=0.75, is_polymer=True)
+                                    bonds_breaking=[bond_to_break], maxforce=maxforce, force_step=0.75, 
+                                    is_polymer=True, skip_first=skip_first)
     
     unique_structures = filter_unique_structures(save_trajectory)    
     with open(logfile, 'a') as file1:
