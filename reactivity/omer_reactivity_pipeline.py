@@ -41,51 +41,35 @@ def handler(signum, frame):
 
 def get_splits_for_protonation(pdb_files, csv_dir, logfile):
     all_add_remove, all_add, all_remove, all_none = [], [], [], []
-    too_far, time_out = 0, 0
+    error = 0
     for pdb_path in pdb_files:
         signal.signal(signal.SIGALRM, handler)
-        signal.alarm(3)
+        signal.alarm(20) # large (>500 atom) pdbs can take time
         try: 
             # get all valid H mutations of chain
-            parent_chain, add_chain, remove_chain, bonds, updated_bonds = process_one_pdb(pdb_path, csv_dir)
-            if add_chain != parent_chain:
-                if remove_chain != parent_chain:
-                    all_add_remove.append({"parent_chain": parent_chain, "add_chain": add_chain, "remove_chain": remove_chain,
-                                            "a_bond_to_break": bonds, "r_bond_to_break": updated_bonds, "path": pdb_path})
-                else:
-                    all_add.append({"parent_chain": parent_chain, "add_chain": add_chain, "remove_chain": None,
-                                            "a_bond_to_break": bonds, "r_bond_to_break": None, "path": pdb_path})
-            elif remove_chain != parent_chain:
-                all_remove.append({"parent_chain": parent_chain, "add_chain": None, "remove_chain": remove_chain,
-                                            "a_bond_to_break": bonds, "r_bond_to_break": updated_bonds, "path": pdb_path})
-            else:
-                all_none.append({"parent_chain": parent_chain, "add_chain": None, "remove_chain": None,
-                                            "a_bond_to_break": bonds, "r_bond_to_break": None, "path": pdb_path})
+            all_add_remove, all_add, all_remove, all_none = get_chains_and_bonds(pdb_path, csv_dir, 
+                                                                                 all_add_remove, all_add, 
+                                                                                 all_remove, all_none)
         except (TimeoutException, IndexError) as e:
             if type(e) == IndexError: # No bonds near center of mass
-                parent_chain, add_chain, remove_chain, bonds, updated_bonds = process_one_pdb(pdb_path, csv_dir, center_cutoff=10.0)
-                if add_chain != parent_chain:
-                    if remove_chain != parent_chain:
-                        all_add_remove.append({"parent_chain": parent_chain, "add_chain": add_chain, "remove_chain": remove_chain,
-                                                "a_bond_to_break": bonds, "r_bond_to_break": updated_bonds, "path": pdb_path})
-                    else:
-                        all_add.append({"parent_chain": parent_chain, "add_chain": add_chain, "remove_chain": None,
-                                                "a_bond_to_break": bonds, "r_bond_to_break": None, "path": pdb_path})
-                elif remove_chain != parent_chain:
-                    all_remove.append({"parent_chain": parent_chain, "add_chain": None, "remove_chain": remove_chain,
-                                                "a_bond_to_break": bonds, "r_bond_to_break": updated_bonds, "path": pdb_path})
-                else:
-                    all_none.append({"parent_chain": parent_chain, "add_chain": None, "remove_chain": None,
-                                                "a_bond_to_break": bonds, "r_bond_to_break": None, "path": pdb_path})
+                try:
+                    all_add_remove, all_add, all_remove, all_none = get_chains_and_bonds(pdb_path, csv_dir, 
+                                                                                     all_add_remove, all_add, 
+                                                                                     all_remove, all_none, 
+                                                                                     center_cutoff=10.0)
+                except (TimeoutException, IndexError) as e:
+                    print(e)
+                    error += 1
             else: # Error processing pdb to Chain
-                time_out += 1
+                print(e)
+                error += 1
             continue
         finally:
             signal.alarm(0)
 
     with open(logfile, 'a') as file:
         file.write(f"Both: {len(all_add_remove)}, Added: {len(all_add)}, Removed: {len(all_remove)}, None: {len(all_none)}\n")
-        file.write(f"Total failed: {too_far + time_out}, No bond breaking: {too_far}, Timeout: {time_out}\n")
+        file.write(f"Total failed: {error}\n")
 
     total = len(all_add_remove) + len(all_add) + len(all_remove) + len(all_none)
     add_goal = round(1/3 * total)
@@ -98,25 +82,26 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
     add_list, remove_list, none_list = [], [], []
     used_remove, used_both = set(), set()
 
+    def extract_entry(d, key, bond_key):
+        return {"chain": d[key], "bond_to_break": d[bond_key], "path": d["path"]}
+
     for none_dict in all_none: # fill with chaings where nothing can happen
         if none_goal <= 0:
             break
-        none_list.append({"chain": none_dict["parent_chain"], "bond_to_break": none_dict["a_bond_to_break"], "path": none_dict["path"]})
+        none_list.append(extract_entry(none_dict, "parent_chain", "a_bond_to_break"))
         none_goal -= 1
     for add_dict in all_add:   # fill with chaings where +H is only option
         if add_goal <= 0:
             break
-        add_list.append({"chain": add_dict["add_chain"], "bond_to_break": add_dict["a_bond_to_break"], "path": add_dict["path"]})
+        add_list.append(extract_entry(add_dict, "add_chain", "a_bond_to_break"))
         add_goal -= 1
     for i, both_dict in enumerate(all_add_remove):
         if add_goal > 0:       # fill with chains where +H is possible
-            add_list.append({"chain": both_dict["add_chain"], "bond_to_break": both_dict["a_bond_to_break"], "path": both_dict["path"]})
+            add_list.append(extract_entry(both_dict, "add_chain", "a_bond_to_break"))
             add_goal -= 1
             used_both.add(i)
-        elif remove_goal > 0:  # fill with chaings where -H is possible
-            if both_dict["remove_chain"].ase_atoms.info["mod_smarts"] == "[#1][#6;R0][!#1].[#6;+1][!#1]":
-                continue       # fill with everything but carbocations
-            remove_list.append({"chain": both_dict["remove_chain"],"bond_to_break": both_dict["r_bond_to_break"], "path": both_dict["path"]})
+        elif remove_goal > 0 and both_dict["remove_chain"].ase_atoms.info["mod_smarts"] != "[#1][#6;R0][!#1].[#6;+1][!#1]": # fill with chains where -H is possible
+            remove_list.append(extract_entry(both_dict, "remove_chain", "r_bond_to_break"))
             remove_goal -= 1
             used_both.add(i)
 
@@ -125,7 +110,7 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
             continue
         if remove_goal <= 0:
             break
-        remove_list.append({"chain": remove_dict["remove_chain"],"bond_to_break": remove_dict["r_bond_to_break"], "path": remove_dict["path"]})
+        remove_list.append(extract_entry(remove_dict, "remove_chain", "r_bond_to_break"))
         remove_goal -= 1
         used_remove.add(i)
     if remove_goal > 0:
@@ -133,7 +118,7 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
             if i in used_both:
                 continue
             else:
-                remove_list.append({"chain": both_dict["remove_chain"],"bond_to_break": both_dict["r_bond_to_break"], "path": both_dict["path"]})
+                remove_list.append(extract_entry(both_dict, "remove_chain", "r_bond_to_break"))
                 remove_goal -= 1
                 used_remove.add(i)
             if remove_goal <=0:
@@ -143,7 +128,7 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
             break
         if i in used_remove:
             continue
-        none_list.append({ "chain": remove_dict["parent_chain"],"bond_to_break": remove_dict["a_bond_to_break"], "path": remove_dict["path"]})
+        none_list.append(extract_entry(remove_dict, "parent_chain", "a_bond_to_break"))
         used_remove.add(i)
         none_goal -= 1
 
@@ -152,7 +137,7 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
             break
         if i in used_both:
             continue
-        none_list.append({"chain": both_dict["parent_chain"], "bond_to_break": both_dict["a_bond_to_break"], "path": both_dict["path"]})
+        none_list.append(extract_entry(both_dict, "parent_chain", "a_bond_to_break"))
         used_both.add(i)
         none_goal -= 1
     
@@ -162,9 +147,28 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
 
     return add_list, remove_list, none_list
 
+def get_chains_and_bonds(pdb_path, csv_dir, all_add_remove, all_add, all_remove, all_none, center_cutoff=5.0):
+    parent_chain, add_chain, remove_chain, bonds, updated_bonds = process_one_pdb(pdb_path, csv_dir, center_cutoff=center_cutoff)
+    if add_chain != parent_chain:
+        if remove_chain != parent_chain:
+            all_add_remove.append({"parent_chain": parent_chain, "add_chain": add_chain, "remove_chain": remove_chain,
+                                    "a_bond_to_break": bonds, "r_bond_to_break": updated_bonds, "path": pdb_path})
+        else:
+            all_add.append({"parent_chain": parent_chain, "add_chain": add_chain, "remove_chain": None,
+                                    "a_bond_to_break": bonds, "r_bond_to_break": None, "path": pdb_path})
+    elif remove_chain != parent_chain:
+        all_remove.append({"parent_chain": parent_chain, "add_chain": None, "remove_chain": remove_chain,
+                                    "a_bond_to_break": bonds, "r_bond_to_break": updated_bonds, "path": pdb_path})
+    else:
+        all_none.append({"parent_chain": parent_chain, "add_chain": None, "remove_chain": None,
+                                    "a_bond_to_break": bonds, "r_bond_to_break": None, "path": pdb_path})
+
+    return all_add_remove, all_add, all_remove, all_none
+
 def process_one_pdb(pdb_path, csv_dir, center_cutoff=5.0):
-    repeat_smiles, _ = get_chain_path_info(pdb_path, csv_dir)
-    chain = Chain(pdb_path, repeat_smiles)
+    repeat_smiles, extra_smiles, _ = get_chain_path_info(pdb_path, csv_dir)
+    chain = Chain(pdb_path, repeat_smiles, extra_smiles=extra_smiles)
+    
     all_bonds_to_break = get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, center_radius=center_cutoff)
     bond_to_break = random.choice(all_bonds_to_break)
 
@@ -180,7 +184,7 @@ def process_one_pdb(pdb_path, csv_dir, center_cutoff=5.0):
 
     return chain, new_h_chain, new_r_chain, bond_to_break, new_bonds
 
-def omer_react_pipeline(chain_dict, output_path, csv_dir):
+def omer_react_pipeline(chain_dict, output_path, csv_dir, debug=False, return_ase=False):
     chain_path = chain_dict['path']
     chain = chain_dict['chain']
     bond_to_break = chain_dict['bond_to_break']
@@ -199,17 +203,19 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir):
     chain.ase_atoms.info["spin"] = uhf + 1
     chain.ase_atoms.info["charge"] = charge
 
+    maxforce = 1.0 if debug else 10.0
+
     predictor = pretrained_mlip.get_predict_unit("uma-s-1p1", device="cuda", inference_settings="turbo")
     UMA = FAIRChemCalculator(predictor, task_name="omol")
     save_trajectory, _ = run_afir(chain, None, UMA, logfile,
-                                    bonds_breaking=[bond_to_break], maxforce=10.0, force_step=0.75, is_polymer=True)
+                                    bonds_breaking=[bond_to_break], maxforce=maxforce, force_step=0.75, is_polymer=True)
     
     unique_structures = filter_unique_structures(save_trajectory)    
     with open(logfile, 'a') as file1:
         file1.write(f"Found {len(unique_structures)} unique structures\n")
 
     trimmed_structures = trim_structures(chain, unique_structures, bond_to_break)
-    
+
     for i, atoms in enumerate(trimmed_structures):
         react_symbols = get_bond_smarts(chain.rdkit_mol, bond_to_break[0], bond_to_break[1]).replace("[", "br").replace("]", "").replace("(", "p").replace(")", "").replace("-","_to_")
         n_atoms = len(atoms)
@@ -223,35 +229,49 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir):
 
         print(os.path.join(output_path, name, f"afir_struct_{i}_charge_{charge}_uhf_{uhf}_natoms_{n_atoms}_bondbreak_{react_symbols}_modsmarts_{mod_num}_cutoff_{cutoff}_{charge}_{uhf+1}.xyz"))
         write(os.path.join(output_path, name, f"afir_struc_{i}_charge_{charge}_uhf_{uhf}_natoms{n_atoms}_bondbreak_{react_symbols}_modsmarts_{mod_num}_cuttoff_{cutoff}_{charge}_{uhf+1}.xyz"), atoms, format="xyz", comment=comment)
+    
+    if return_ase:
+        return trimmed_structures, unique_structures, save_trajectory
 
-def main(args):
+def main(all_chains_dir, csv_dir, output_path, n_chunks=1, chunk_idx=0, debug=False):
     pdb_files = []
-    for subdir, _, files in os.walk(args.all_chains_dir):
+    for subdir, _, files in os.walk(all_chains_dir):
         for filename in files:
             if filename.endswith(".pdb"):
                 pdb_path = os.path.join(subdir, filename)
                 pdb_files.append(pdb_path)
    
-    chunks_to_process = np.array_split(pdb_files, args.n_chunks)
-    chunk = chunks_to_process[args.chunk_idx] 
+    if debug: random.seed(17)
+    random.shuffle(pdb_files)
+    chunks_to_process = np.array_split(pdb_files, n_chunks)
+    chunk = chunks_to_process[chunk_idx] 
     print('length of chunk', len(chunk))
     print(chunk)
-    add_list, remove_list, none_list = get_splits_for_protonation(chunk, args.csv_dir, "logfile.txt")
+    add_list, remove_list, none_list = get_splits_for_protonation(chunk, csv_dir, "logfile.txt")
 
-    os.makedirs(os.path.join(args.output_path, 'none/'), exist_ok=True)
-    none_path = os.path.join(args.output_path, 'none/')
+    os.makedirs(os.path.join(output_path, 'none/'), exist_ok=True)
+    none_path = os.path.join(output_path, 'none/')
     for none_chain_dict in none_list:
-        omer_react_pipeline(none_chain_dict, none_path, args.csv_dir)
+        try:
+            omer_react_pipeline(none_chain_dict, none_path, csv_dir, debug=debug)
+        except Exception as e:
+            print(e)
     
-    os.makedirs(os.path.join(args.output_path, 'remove_H/'), exist_ok=True)
-    remove_path = os.path.join(args.output_path, 'remove_H/')
+    os.makedirs(os.path.join(output_path, 'remove_H/'), exist_ok=True)
+    remove_path = os.path.join(output_path, 'remove_H/')
     for remove_chain_dict in remove_list:
-        omer_react_pipeline(remove_chain_dict, remove_path, args.csv_dir)
+        try:
+            omer_react_pipeline(remove_chain_dict, remove_path, csv_dir, debug=debug)
+        except Exception as e:
+            print(e)
 
-    os.makedirs(os.path.join(args.output_path, 'add_H/'), exist_ok=True)
-    add_path = os.path.join(args.output_path, 'add_H/')
+    os.makedirs(os.path.join(output_path, 'add_H/'), exist_ok=True)
+    add_path = os.path.join(output_path, 'add_H/')
     for add_chain_dict in add_list:
-        omer_react_pipeline(add_chain_dict, add_path, args.csv_dir)
+        try:
+            omer_react_pipeline(add_chain_dict, add_path, csv_dir, debug=debug)
+        except Exception as e:
+            print(e)
 
 
 def parse_args():
@@ -261,8 +281,9 @@ def parse_args():
     parser.add_argument("--output_path", default=".")
     parser.add_argument("--n_chunks", type=int, default=1)
     parser.add_argument("--chunk_idx", type=int, default=0)
+    parser.add_argument("--debug", type=bool, default=False)
     return parser.parse_args()
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args)
+    main(args.all_chains_dir, args.csv_dir, args.output_path, args.n_chunks, args.chunk_idx, args.debug)
