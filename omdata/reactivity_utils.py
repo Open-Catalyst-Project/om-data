@@ -117,7 +117,8 @@ def run_afir(mol1, mol2, calc, logfile,
              bonds_forming=[], bonds_breaking=[],
              force_step=0.2,
              maxforce=4.0,
-             is_polymer=False):
+             is_polymer=False, 
+             skip_first=False):
     breaking_cutoff=5.0 # When a bond is breaking, what the distance should be
     forming_cutoff=1.2 # When a bond is forming, what the distance should be (Angstroms)
     start_force_constant=0.1 # eV/angstrom
@@ -206,6 +207,15 @@ def run_afir(mol1, mol2, calc, logfile,
                 with open(logfile, 'a') as file1:
                     file1.write(f"Min distance {min_distance} < 0.7. Stopping optimization.\n")
                 break
+            if skip_first:
+                with open(logfile, 'a') as file1:
+                    file1.write(f"Skipping first trajectory at Fconst = {fconst}\n")
+                fconst += force_increment
+                nstep += 1
+                opt_mol = tmpopt.mol
+                skip_first=False
+                
+                continue
             failure_number = 10 # Reset failures tracking.
             save_trajectory += tmpopt.trajectory
             traj_list.append(tmpopt.trajectory)

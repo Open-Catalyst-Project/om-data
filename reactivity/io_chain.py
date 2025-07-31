@@ -4,12 +4,14 @@ import random
 import numpy as np
 
 from architector.io_molecule import Molecule
-from rdkit.Chem import MolFromSmiles, AddHs, RWMol, Mol, BondType, Kekulize, SanitizeMol, SANITIZE_SETAROMATICITY
+from rdkit.Chem import MolFromSmiles, AddHs, RWMol, Mol, BondType, Kekulize, SanitizeMol, SANITIZE_SETAROMATICITY, GetMolFrags
 from rdkit.Chem import MolFromMolBlock, MolToXYZBlock, AdjustQueryParameters, AdjustQueryProperties, ADJUST_IGNOREDUMMIES
 
 from ase import Atom
 from ase.io import read, write
-from openbabel import pybel
+from ase.data import covalent_radii
+from ase.geometry import find_mic
+from openbabel import pybel, OBMol, OBConversion, OBMolBondIter
 from tempfile import NamedTemporaryFile
 
 class Chain(Molecule):
@@ -28,7 +30,36 @@ class Chain(Molecule):
     '''
     def __init__(self, structure, repeat_smiles, extra_smiles=[]):
         if ".pdb" in structure:
-            structure = read(structure)
+            ase_atoms = read(structure)
+            if "Solvent" in structure:
+                cell = ase_atoms.get_cell()
+                positions = ase_atoms.get_positions()
+
+                # load connectivity from PDB
+                obmol = OBMol()
+                conv = OBConversion()
+                conv.SetInFormat("pdb")
+                conv.ReadFile(obmol, structure)
+                for bond in OBMolBondIter(obmol):
+                    idx_1 = bond.GetBeginAtomIdx() - 1  # OpenBabel is 1-indexed
+                    idx_2 = bond.GetEndAtomIdx() - 1
+
+                    pos1 = positions[idx_1]
+                    pos2 = positions[idx_2]
+                    dr = pos2 - pos1
+                    dr_wrapped = find_mic(dr[np.newaxis, :], cell)[0]
+
+                    r1 = covalent_radii[ase_atoms[idx_1].number]
+                    r2 = covalent_radii[ase_atoms[idx_2].number]
+                    ideal_bond = r1 + r2
+
+                    if np.linalg.norm(dr) > 1.5 * ideal_bond:
+                        delta = np.squeeze(dr_wrapped) - dr
+                        positions[idx_2] += delta
+
+                ase_atoms.set_positions(positions)
+
+            structure = ase_atoms
         super().__init__(structure)
         
         self.repeat_units = repeat_smiles
@@ -36,8 +67,11 @@ class Chain(Molecule):
 
         self.rdkit_mol = get_rdkit_mol(self.ase_atoms)
         self.extra_rdkit_mol = self.get_extra_rdkit_mol()
+
+        chain_list, _ = self.get_idx_lists()
+        self.repair_broken_chains(chain_list)
+
         self.n_extra = self.get_nextra()
-        
         self.ends, self.end_to_end = self.assign_chain_ends()
         self.n_repeats = self.get_nrepeats()
 
@@ -78,7 +112,7 @@ class Chain(Molecule):
                 mapping = match_mol.GetSubstructMatch(kekul)
                 for m in match:
                     target_idx = m[mapping[idx]]
-                    ends.append(target_idx)
+                    if target_idx not in ends: ends.append(target_idx)
 
         # define end to end distance if a single chain
         if len(ends) == 2:
@@ -103,18 +137,33 @@ class Chain(Molecule):
             n_repeats.append(round(natoms_chain / natoms_repeat)) # round for small defects (+/- H)
         return n_repeats
     
+    def get_idx_lists(self):
+        chain_mol = self.rdkit_mol
+        chain_mol = remove_bond_order(chain_mol)
+        
+        extra_atoms = set()
+        for extra in self.extra_rdkit_mol:
+            extra_mol = extra
+            extra_mol = remove_bond_order(extra)
+            matches = chain_mol.GetSubstructMatches(extra_mol, maxMatches=1000000)
+            extra_atoms.update(matches)
+
+        all_atoms = set(range(chain_mol.GetNumAtoms()))
+        flat_extra_atoms= set(match for matches in extra_atoms for match in matches)
+        chain_atoms = all_atoms - flat_extra_atoms
+
+        extra_atoms = sorted(extra_atoms, reverse=True)
+        chain_atoms = sorted(chain_atoms, reverse=True)
+        return chain_atoms, extra_atoms
+    
     def remove_extra(self):
         """
         remove the extra molecules (i.e., solvent) to yield a clean chain
         """
         chain_mol = RWMol(self.rdkit_mol)
-        
-        atoms_to_remove = set()
-        for extra in self.extra_rdkit_mol:
-            matches = chain_mol.GetSubstructMatches(extra)
-            for match in matches:
-                atoms_to_remove.update(match)
+        _, atoms_to_remove = self.get_idx_lists()
 
+        atoms_to_remove = list(match for matches in atoms_to_remove for match in matches)
         atoms_to_remove = sorted(atoms_to_remove, reverse=True)
 
         # Map old atom indices to new after deletion
@@ -129,7 +178,7 @@ class Chain(Molecule):
         xyz_block = MolToXYZBlock(chain_mol)
         new_ase_atoms = read(io.StringIO(xyz_block), format='xyz')
 
-        #  Add back residue names, needed for chain_ends
+        #  Add back residue names, good for chain_ends
         if "residuenames" in self.ase_atoms.arrays:
             original_residues = self.ase_atoms.arrays["residuenames"]
             kept_residues = original_residues[keep_mask]
@@ -138,7 +187,7 @@ class Chain(Molecule):
         new_chain = Chain(new_ase_atoms, self.repeat_units)
 
         assert new_chain.n_repeats == self.n_repeats
-        assert new_chain.ends == self.ends
+        # assert new_chain.ends == self.ends # there are some symmetric monomers where this is not true and that's okay
 
         return new_chain
     
@@ -150,7 +199,7 @@ class Chain(Molecule):
         chain_mol = remove_bond_order(self.rdkit_mol)
         for extra in self.extra_rdkit_mol:
             extra = remove_bond_order(extra)
-            matches = chain_mol.GetSubstructMatches(extra)
+            matches = chain_mol.GetSubstructMatches(extra, maxMatches=1000000)
             n_extra.append(len(matches))
         
         return n_extra
@@ -160,6 +209,32 @@ class Chain(Molecule):
         for extra in self.extra_units:
             rdkit_mols.append(AddHs(MolFromSmiles(extra)))
         return rdkit_mols
+    
+    def repair_broken_chains(self, chain_list):
+        from ase.geometry import find_mic
+        ase_atoms = self.ase_atoms
+        positions, cell = ase_atoms.get_positions(), ase_atoms.get_cell()
+        fragments = GetMolFrags(self.rdkit_mol, asMols=False, sanitizeFrags=False)
+        fragments = [fragment for fragment in fragments if any(atom in chain_list for atom in fragment)]
+        ref_pos = positions[list(fragments[0])]
+        ref_com = np.mean(ref_pos, axis=0)
+        for idx_group in fragments:
+            mol_pos = positions[list(idx_group)]
+            mol_com = np.mean(mol_pos, axis=0)
+
+            dr = mol_com - ref_com
+            dr_wrapped = find_mic(dr[np.newaxis, :], cell)[0]
+
+            dist_raw = np.linalg.norm(dr)
+            if dist_raw > 10.0:
+                translation = np.squeeze(dr_wrapped) - dr
+                for idx in idx_group:
+                    positions[idx] += translation
+
+        ase_atoms.set_positions(positions)
+
+        self.ase_atoms = ase_atoms
+        self.rdkit_mol = get_rdkit_mol(self.ase_atoms)
     
 def get_rdkit_mol(ase_atoms):
     
@@ -215,7 +290,9 @@ def process_repeat_unit(smiles):
     return remove_bond_order(qm)
 
 # for homolytic and heterolytic dissociation      
-def get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, center_radius=5.0, fraction_ring=0.25):
+def get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, 
+                       center_radius=5.0, fraction_ring=0.25, 
+                       penalize_ends=False):
     clean_chain = chain.remove_extra()
     mol = clean_chain.rdkit_mol
 
@@ -232,12 +309,18 @@ def get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, center_radius=5.
         mask = np.ones(len(positions), dtype=bool)
         mask[[a1, a2]] = False
         return np.count_nonzero((distances < radius) & mask)
+
+    def get_end_proximity_score(a1, a2):
+        midpoint = 0.5 * (positions[a1] + positions[a2])
+        end_positions = positions[list(chain.ends)]
+        distances = np.linalg.norm(end_positions - midpoint, axis=1)
+        return np.sum(distances)
         
     h_bonds = []
     other_bonds = []
     for bond in mol.GetBonds():
         a1, a2 = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
-        if not (within_radius(a1) or within_radius(a2)):
+        if not (within_radius(a1) or within_radius(a2)) and not penalize_ends:
             continue
 
         z1, z2 = mol.GetAtomWithIdx(a1).GetAtomicNum(), mol.GetAtomWithIdx(a2).GetAtomicNum()
@@ -252,15 +335,19 @@ def get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, center_radius=5.
                     skip = True # avoid making triplet oxygen
         if skip:
             continue
-        density_score = get_local_density_score(a1, a2)
-        bond_data = (density_score, bond_tuple)
+
+        if penalize_ends:
+            score = get_end_proximity_score(a1, a2)
+        else:
+            score = get_local_density_score(a1, a2)
+        bond_data = (score, bond_tuple)
 
         atomic_nums = {z1, z2}
         if 1 in atomic_nums:  # H bond
             h_bonds.append(bond_data)
         else:
             other_bonds.append(bond_data)
-        
+
     h_bonds.sort(reverse=True)
     other_bonds.sort(reverse=True)
 
