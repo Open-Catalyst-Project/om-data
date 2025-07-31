@@ -45,7 +45,7 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
     error = 0
     for pdb_path in pdb_files:
         signal.signal(signal.SIGALRM, handler)
-        signal.alarm(15) # large (>500 atom) pdbs can take time
+        signal.alarm(20) # large (>500 atom) pdbs can take time
         try: 
             # get all valid H mutations of chain
             all_add_remove, all_add, all_remove, all_none = get_chains_and_bonds(pdb_path, csv_dir, 
@@ -54,7 +54,7 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
         except (TimeoutException, IndexError) as e:
             signal.alarm(0)
             if type(e) == IndexError: # No bonds near center of mass
-                signal.alarm(15)
+                signal.alarm(20)
                 try:
                     all_add_remove, all_add, all_remove, all_none = get_chains_and_bonds(pdb_path, csv_dir, 
                                                                                      all_add_remove, all_add, 
