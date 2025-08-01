@@ -65,6 +65,9 @@ def select_clusters(st, budget):
     #core = [at_map[at.index] for at in st.molecule[mol_num].atom]
     #clusterstruct.contract_structure(cluster, contract_on_atoms=core)
     clusterstruct.contract_structure(cluster, contract_on_atoms=[at_map[at_num]])
+    if cluster.mol_total < 3:
+        print("Need at least a trimer")
+        return None
     return cluster
 
 def get_molecules(st, get_conformers=True):
