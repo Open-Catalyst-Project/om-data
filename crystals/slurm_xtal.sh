@@ -10,8 +10,9 @@
 #SBATCH --mem=500m
 #SBATCH --time=72:00:00
 
-#SBATCH --array=291,297,298,314,796,829,831,867,894,900,907
+#SBATCH --array=0-999
 
 idx=$((${SLURM_ARRAY_TASK_ID}+0))
 
-$SCHRODINGER/run extract_clusters.py --output_path /checkpoint/levineds/omc_extracts/ --n_chunks 1000 --chunk_idx $idx --n_workers 41
+#$SCHRODINGER/run extract_clusters.py --output_path /checkpoint/levineds/omc_extracts/ --n_chunks 1000 --chunk_idx $idx --n_workers 41
+$SCHRODINGER/run extract_clusters.py --output_path /checkpoint/levineds/omc_extracts/200_atoms --n_chunks 1000 --chunk_idx $idx --n_workers 41 --skip_molecules --max_atom 200

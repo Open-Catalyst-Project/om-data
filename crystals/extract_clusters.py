@@ -38,10 +38,9 @@ def get_frame_indices(traj, n_atoms):
     indices = [round(i * stride) for i in range(n_atoms)]
     return indices
 
-def select_clusters(st):
+def select_clusters(st, budget):
     max_radius = 20.0
     min_radius = 2.0
-    budget = 280
     best_atoms = set()
     mol_num = random.choice(range(1, st.mol_total + 1))
     at_num = random.choice(range(1, st.atom_total + 1))
@@ -56,7 +55,7 @@ def select_clusters(st):
         else:
             best_atoms = sphere
             min_radius = mid
-    if not best_atoms and len(sphere) < 350:
+    if not best_atoms and len(sphere) < budget + 50:
         best_atoms = sphere
     if not best_atoms:
         print("This system is just too big")
@@ -118,7 +117,7 @@ def get_split(csd_code):
     else:
         return None
 
-def parallel_work(traj_file, output_path):
+def parallel_work(traj_file, output_path, do_molecules, max_atoms):
     traj = Trajectory(traj_file)
     selected_indices = get_frame_indices(traj, 10)
     basename = os.path.splitext(os.path.basename(traj_file))[0]
@@ -142,7 +141,7 @@ def parallel_work(traj_file, output_path):
             return
 
         # Clusters
-        cluster = select_clusters(st)
+        cluster = select_clusters(st, max_atoms)
         if cluster is None:
             return
         dir_name = os.path.join(output_path, 'clusters', split) 
@@ -150,16 +149,17 @@ def parallel_work(traj_file, output_path):
         cluster.write(os.path.join(dir_name, f'{basename}_{frame_idx}_0_1.mae'))
 
         # Molecules
-        dir_name = os.path.join(output_path, 'molecules', split) 
-        os.makedirs(dir_name, exist_ok=True)
-        if frame_idx == 0:
-            mols = get_molecules(st, get_conformers=True)
-            for mol_idx, mol in enumerate(mols):
-                mol.write(os.path.join(output_path, 'molecules', split, f'{basename}_{frame_idx}_{mol_idx}.cif'))
-        elif frame_idx == selected_indices[-1]:
-            mols = get_molecules(st, get_conformers=False)
-            # Always call the last frame 9, regardless of the number of conformers
-            mols[0].write(os.path.join(output_path, 'molecules', split, f'{basename}_{frame_idx}_9.cif'))
+        if do_molecules:
+            dir_name = os.path.join(output_path, 'molecules', split) 
+            os.makedirs(dir_name, exist_ok=True)
+            if frame_idx == 0:
+                mols = get_molecules(st, get_conformers=True)
+                for mol_idx, mol in enumerate(mols):
+                    mol.write(os.path.join(output_path, 'molecules', split, f'{basename}_{frame_idx}_{mol_idx}.cif'))
+            elif frame_idx == selected_indices[-1]:
+                mols = get_molecules(st, get_conformers=False)
+                # Always call the last frame 9, regardless of the number of conformers
+                mols[0].write(os.path.join(output_path, 'molecules', split, f'{basename}_{frame_idx}_9.cif'))
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -167,18 +167,20 @@ def parse_args():
     parser.add_argument("--n_chunks", type=int, default=1)
     parser.add_argument("--chunk_idx", type=int, default=0)
     parser.add_argument("--n_workers", type=int, default=1)
+    parser.add_argument("--max_atoms", type=int, default=280)
+    parser.add_argument("--skip_molecules", action='store_false', dest='do_molecules')
     return parser.parse_args()
 
 
-def main(output_path, n_chunks, chunk_idx, n_workers):
+def main(output_path, n_chunks, chunk_idx, n_workers, do_molecules, max_atoms):
     traj_list = glob.glob('/large_experiments/ondr_fair/vaheg/osc_data/traj/finished_relaxations/batch*/sampled_traj_new_clean/*.traj')
     chunks_to_process = np.array_split(traj_list, n_chunks)
     chunk = chunks_to_process[chunk_idx]
-    fxn = partial(parallel_work, output_path=output_path)
+    fxn = partial(parallel_work, output_path=output_path, do_molecules=do_molecules, max_atoms=max_atoms)
     with mp.Pool(n_workers) as pool:
         list(tqdm(pool.imap(fxn, chunk), total=len(chunk)))
     #for traj_file in glob.glob('/large_experiments/ondr_fair/vaheg/osc_data/traj/finished_relaxations/batch1/sampled_traj_new_clean/ABAFEQ_2_gener_4da4f9f3c6da5d7.traj'):
 
 if __name__ == '__main__':
     args= parse_args()
-    main(args.output_path, args.n_chunks, args.chunk_idx, args.n_workers)
+    main(args.output_path, args.n_chunks, args.chunk_idx, args.n_workers, args.do_molecules, args.max_atoms)
