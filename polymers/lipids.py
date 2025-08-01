@@ -19,6 +19,7 @@ import multiprocessing as mp
 import os
 import random
 from collections import Counter, defaultdict
+from functools import partial
 
 import numpy as np
 from schrodinger.application.jaguar.utils import mmjag_update_lewis
@@ -43,7 +44,7 @@ def get_residue_charges(st):
         res = next(iter(mol.residue))
         if res.pdbres in charges:
             continue
-        charges[res.pdbres] = round(sum(at.temperature_factor for at in mol.atom))
+        charges[res.pdbres] = round(sum(at.temperature_factor for at in mol.atom if at.temperature_factor is not None))
 
     return charges
 
@@ -231,28 +232,24 @@ def center_iterator(data):
     yield None  # Sentinel to indicate completion
 
 
-def main(fname):
+def main(fname, output_path):
     # fname = "3_0.0ps.pdb"
     # st = StructureReader.read("assigned.mae")
     st = StructureReader.read(fname)
-    print("assigning lew")
     assign_lewis_structure(st)
-    print("getting cluster")
     cluster_centers = get_cluster_centers(st)
     counter = 0
-    print("beginning loop")
     gen = center_iterator(cluster_centers)
     center = next(gen)
     # Try centers for a given species until it works
     while center is not None and counter < N_STRUCTS:
         cluster = get_cluster(st, center, MAX_ATOMS)
         if cluster is None:
-            print(center)
             center = gen.send("try_again")
         else:
             counter += 1
-            new_fname = (
-                os.path.splitext(fname)[0]
+            new_fname = os.path.join(output_path,
+                os.path.splitext(os.path.basename(fname))[0]
                 + f"_{center[0]}_{center[1]}_{cluster.formal_charge}_1.mae"
             )
             cluster.write(new_fname)
@@ -275,5 +272,6 @@ if __name__ == "__main__":
     pdb_list = glob.glob(os.path.join(args.input_dir, "*/*.pdb"))
     chunks_to_process = np.array_split(pdb_list, args.n_chunks)
     chunk = chunks_to_process[args.chunk_idx]
+    fxn = partial(main, output_path=args.output_path)
     with mp.Pool(args.n_workers) as pool:
-        list(tqdm(pool.imap(main, chunk), total=len(chunk)))
+        list(tqdm(pool.imap(fxn, chunk), total=len(chunk)))
