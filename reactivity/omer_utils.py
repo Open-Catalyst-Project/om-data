@@ -3,6 +3,7 @@ import os
 import re
 import random
 import numpy as np
+import pandas as pd
 
 from ase import Atom
 from ase.data import covalent_radii
@@ -17,12 +18,20 @@ def get_chain_path_info(pdb_path, csv_dir):
     smiles_lists = {}
     
     # Load all necessary SMILES lists once
-    smiles_lists['Traditional'] = np.loadtxt(os.path.join(csv_dir, 'Traditional_polymers.csv'), dtype=str, comments=None)
-    smiles_lists['Fluoro'] = np.loadtxt(os.path.join(csv_dir, 'Fluoropolymers.csv'), dtype=str, comments=None)
-    smiles_lists['Electrolyte'] = np.loadtxt(os.path.join(csv_dir, 'Electrolytes.csv'), dtype=str, comments=None)
-    smiles_lists['A'] = np.loadtxt(os.path.join(csv_dir, 'A_optical_copolymers.csv'), dtype=str, comments=None)
-    smiles_lists['B'] = np.loadtxt(os.path.join(csv_dir, 'B_optical_copolymers.csv'), dtype=str, comments=None)
-    # smiles_lists['Chaos'] = np.loadtxt(os.path.join(csv_dir, 'Chaos_polymers.csv'), dtype=str, comments=None)
+    smiles_lists['Traditional'] = pd.read_csv(os.path.join(csv_dir, 'Traditional_polymers.csv'), header=None)[0]
+    smiles_lists['Fluoro'] = pd.read_csv(os.path.join(csv_dir, 'Fluoropolymers.csv'), header=None)[0]
+    smiles_lists['Electrolyte'] = pd.read_csv(os.path.join(csv_dir, 'Electrolytes.csv'), header=None)[0]
+    smiles_lists['A'] = pd.read_csv(os.path.join(csv_dir, 'A_optical_copolymers.csv'), header=None)[0]
+    smiles_lists['B'] = pd.read_csv(os.path.join(csv_dir, 'B_optical_copolymers.csv'), header=None)[0]
+    # smiles_lists['Chaos'] = pd.read_csv(os.path.join(csv_dir, 'all_monomers.csv'), header=None)[0]
+    
+    extra_smiles = []
+    if 'Solvent' in basename:
+        # no_other_numbers_Solvent_0000_MD_monomer000_no_other_numbers.pdb
+        solv_idx = int(re.search(r'Solvent_(\d+)', basename).group(1)) - 1 # 0-based indexing, assumes one solvent species
+        smiles_lists['extra'] = pd.read_csv(os.path.join(csv_dir, 'solvents.csv'))['smiles'].tolist()
+        extra_smiles.append(smiles_lists['extra'][solv_idx])
+        basename = re.sub(r'Solvent_\d+_', '', basename) # remove solvent number from name
 
     # Determine polymer class
     if 'Traditional' in pdb_path:
@@ -40,26 +49,26 @@ def get_chain_path_info(pdb_path, csv_dir):
 
     # needs copolymer fix
     if "copolymer" in basename:
-        pattern = re.search(r'copolymer_([^_]+(?:_[^_]+)*)_Hterm', basename)[0]
+        pattern = re.search(r'copolymer_([^_]+(?:_[^_]+)*?)_(Hterm|plus)', basename)[0]
     else:
-        pattern = re.findall(r'monomer(\d+)_Hterm', basename)[0]
+        pattern = re.search(r'monomer(\d+)_(Hterm|plus)', basename)[0]
     pattern = re.findall(r'([AB]?)(\d+)', pattern)
 
-    smiles = []
+    repeat_smiles = []
     for prefix, number_str in pattern:
         idx = int(number_str) - 1  # 0-based indexing
         if prefix == 'A' or "atom_A" in pdb_path:
-            smiles.append(smiles_lists['A'][idx])
+            repeat_smiles.append(smiles_lists['A'][idx])
         elif prefix == 'B' or "atom_B" in pdb_path:
-            smiles.append(smiles_lists['B'][idx])
+            repeat_smiles.append(smiles_lists['B'][idx])
         else:
             # No prefix: use the current polymer class
-            smiles.append(smiles_lists[polymer_class][idx])
+            repeat_smiles.append(smiles_lists[polymer_class][idx])
 
-    return smiles, polymer_class
+    return repeat_smiles, extra_smiles, polymer_class
 
 def trim_structure(chain, structure, bonds_breaking, cutoff, min_atoms=100):
-    reacted_chain = Chain(structure, chain.repeat_units)
+    reacted_chain = Chain(structure, chain.repeat_units, extra_smiles=chain.extra_units)
     react_mol = reacted_chain.rdkit_mol
 
     initial_bonds = get_bonds(chain.rdkit_mol)
@@ -154,8 +163,18 @@ def trim_structure(chain, structure, bonds_breaking, cutoff, min_atoms=100):
             direction = old_pos - pos_to_keep
             direction /= np.linalg.norm(direction)
 
+            # add solvent matches for removal
+            extra_to_delete = []
+            for extra in chain.extra_rdkit_mol:
+                extra = remove_bond_order(extra)
+                extra_matches = clean_mol.GetSubstructMatches(extra)
+                for extra_match in extra_matches:
+                    if any(idx in stop_indices for idx in extra_match):
+                        continue
+                    extra_to_delete += extra_match
+
             # Do not delete the atom to keep
-            remove_from_match = list(match)
+            remove_from_match = list(match) + extra_to_delete
             remove_from_match.remove(idx_to_keep)
             tuple(remove_from_match)
             
@@ -380,7 +399,20 @@ def get_bond_smarts(mol, idx1, idx2):
 
     return f"{frag1}-{frag2}"
 
-def add_h_to_chain(chain, bonds_reacting):
+def does_not_overlap(pos, atoms, threshold=0.5):
+    positions = atoms.get_positions()
+    if len(positions) == 0:
+        return True
+    dists = np.linalg.norm(positions - pos, axis=1)
+    return np.all(dists > threshold)
+
+def reset_idx(new_atoms, old_atoms, idx_list):
+    old_positions = np.array([atom.position for atom in old_atoms])
+    new_positions = np.array([atom.position for atom in new_atoms])
+    new_idx_list = tuple(int(np.argmin(np.linalg.norm(new_positions - old_positions[idx], axis=1))) for idx in idx_list)
+    return new_idx_list
+
+def add_h_to_chain(chain, bonds_reacting, attempts=5):
     new_atoms = chain.ase_atoms.copy()
 
     # first atom listed in reactants needs to be the one that's protonated in products
@@ -411,20 +443,25 @@ def add_h_to_chain(chain, bonds_reacting):
     if not all_valid_matches:
         return chain 
     
-    i = random.randrange(len(all_valid_matches))
-    valid_match = all_valid_matches[i]
-    match_smarts = all_smarts[i]
-    match = random.choice(valid_match)
+    for attempt in range(attempts):
+        i = random.randrange(len(all_valid_matches))
+        valid_match = all_valid_matches[i]
+        match_smarts = all_smarts[i]
+        match = random.choice(valid_match)
 
-    conf = chain_mol.GetConformer()
-    new_pos = get_idealized_H_position(match, chain_mol, conf)
+        conf = chain_mol.GetConformer()
+        new_pos = get_idealized_H_position(match, chain_mol, conf)
 
-    new_atoms.append(Atom('H', new_pos))
-    new_atoms.info["charge"] = +1
-    new_atoms.info["mod_smarts"] = match_smarts 
-    new_chain = Chain(new_atoms, chain.repeat_units)
+        if does_not_overlap(new_pos, new_atoms):
+            new_atoms.append(Atom('H', new_pos))
+            new_atoms.info["charge"] = +1
+            new_atoms.info["mod_smarts"] = match_smarts 
+            new_chain = Chain(new_atoms, chain.repeat_units, extra_smiles=chain.extra_units)
 
-    return new_chain 
+            return new_chain 
+        else:
+            continue
+    return chain
 
 def remove_h_from_chain(chain, bonds_reacting):
     new_atoms = chain.ase_atoms.copy()
@@ -495,7 +532,7 @@ def remove_h_from_chain(chain, bonds_reacting):
             index_map[old_idx] = new_idx
             new_idx += 1
 
-    new_chain = Chain(new_atoms, chain.repeat_units)
+    new_chain = Chain(new_atoms, chain.repeat_units, extra_smiles=chain.extra_units)
     new_bonds_reacting = [index_map[idx] for idx in bonds_reacting if index_map[idx] is not None]
     highlight_idx = [index_map[idx] for idx in [highlight_idx] if index_map[idx] is not None]
     
@@ -545,3 +582,47 @@ def get_idealized_H_position(n_idx, chain_mol, conf, bond_length=1.01):
         unit_dir = direction / np.linalg.norm(direction)
         return atom_pos + bond_length * unit_dir
 
+def surround_chain_with_extra(chain, bond=None, remove=False, max_atoms=250):
+    from ase.geometry import find_mic
+    ase_atoms = chain.ase_atoms.copy()
+    positions, cell = ase_atoms.get_positions(), ase_atoms.get_cell()
+    chain_list, extra_list = chain.get_idx_lists()
+
+    ref_pos = positions[chain_list]
+    ref_com = np.mean(ref_pos, axis=0)
+    for idx_group in extra_list:
+        mol_pos = positions[list(idx_group)]
+        mol_com = np.mean(mol_pos, axis=0)
+
+        dr = mol_com - ref_com
+        dr_wrapped = find_mic(dr[np.newaxis, :], cell)[0]
+
+        dist_raw = np.linalg.norm(dr)
+        if dist_raw > 5.0:
+            translation = np.squeeze(dr_wrapped) - dr
+            for idx in idx_group:
+                positions[idx] += translation
+
+    ase_atoms.set_positions(positions)
+
+    if remove:
+        flat_extra_list = list(match for matches in extra_list for match in matches)
+        flat_extra_list = sorted(flat_extra_list, reverse=True)
+        near_chain_list = []
+        for idx in chain_list:
+            near_chain_list += get_shielded_zone(ase_atoms, idx, cutoff=8.0)
+        sorted_near_chain = sort_by_bond_distance(ase_atoms, bond, near_chain_list)
+
+        keep_set = set(chain_list)
+        for idx in sorted_near_chain:
+            if len(keep_set) >= max_atoms:
+                break
+            matching_groups = [group for group in extra_list if idx in group]
+
+            for group in matching_groups:
+                keep_set.update(group) 
+
+        kept_indices = sorted(keep_set)
+        ase_atoms = ase_atoms[kept_indices]
+    
+    return Chain(ase_atoms, chain.repeat_units, extra_smiles=chain.extra_units)
