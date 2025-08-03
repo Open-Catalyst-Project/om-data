@@ -1,0 +1,18 @@
+smiles,density,ispolar,protic,name
+O,1.00,polar,protic,water
+CC(=O)C,0.791,polar,aprotic,acetone
+CC#N,0.786,polar,aprotic,acetonitrile
+C1=CC=CC=C1,0.876,nonpolar,aprotic,benzene
+C1CCCCC1,0.779,nonpolar,aprotic,cyclohexane
+CCCCCC,0.661,nonpolar,aprotic,hexane
+CCCCCCCC,0.703,nonpolar,aprotic,octane
+CCCO,0.803,polar,protic,propanol
+C1=CC(=C(C=C1Cl)Cl)Cl,1.46,nonpolar,aprotic,124-trichlorobenzene
+CN(C)C=O,0.95,polar,aprotic,dimethyl formamide
+C1CCOC1,0.888,polar,aprotic,tetrahydrofuran
+C(Cl)(Cl)Cl,1.49,nonpolar,aprotic,chloroform
+C1=CC=C(C=C1)O,1.07,polar,protic,phenol
+C(Cl)Cl,1.33,polar,aprotic,Dichloromethane
+CC1=CC=CC=C1,0.867,nonpolar,aprotic,toluene
+CO,0.792,polar,protic,methanol
+CCCCCCC,0.684,nonpolar,aprotic,heptane
