@@ -40,4 +40,4 @@ We extract additional structures from COD to use as evaluations (and, in the cas
 
 ## Extract complexes from COD
 
-Run the `cod_extract.py` script at scale with the `slurm_cod.sh` SLURM sbatch script. Select reasonable examples with `cod_select.py`. The results of these are checked for common issues (incorrectly labeled disordered groups for example) with `cod_flag.py`
+Run the `cod_extract.py` script at scale with the `slurm_cod.sh` SLURM sbatch script. Select reasonable examples with `cod_select.py`. The results of these are checked for common issues (incorrectly labeled disordered groups for example) with `cod_flag.py > flagged`. If any molecule from a given crystal was flagged, it likely caused an issue with the other molecules in the same crystal structure. As such, we will delete all structures that come from a flagged COD structure. We located these files with `get_all_flagged_cod_codes.py`.
