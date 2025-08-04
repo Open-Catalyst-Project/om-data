@@ -18,12 +18,18 @@ def get_chain_path_info(pdb_path, csv_dir):
     smiles_lists = {}
     
     # Load all necessary SMILES lists once
-    smiles_lists['Traditional'] = pd.read_csv(os.path.join(csv_dir, 'Traditional_polymers.csv'), header=None)[0]
-    smiles_lists['Fluoro'] = pd.read_csv(os.path.join(csv_dir, 'Fluoropolymers.csv'), header=None)[0]
-    smiles_lists['Electrolyte'] = pd.read_csv(os.path.join(csv_dir, 'Electrolytes.csv'), header=None)[0]
-    smiles_lists['A'] = pd.read_csv(os.path.join(csv_dir, 'A_optical_copolymers.csv'), header=None)[0]
-    smiles_lists['B'] = pd.read_csv(os.path.join(csv_dir, 'B_optical_copolymers.csv'), header=None)[0]
-    # smiles_lists['Chaos'] = pd.read_csv(os.path.join(csv_dir, 'all_monomers.csv'), header=None)[0]
+    if "copolymer" and "Solvent" in pdb_path:
+        smiles_lists['Traditional'] = pd.read_csv(os.path.join(csv_dir, 'copolymer_plus_solvent/Traditional_smiles.txt'), header=None)[0]
+        smiles_lists['Fluoro'] = pd.read_csv(os.path.join(csv_dir, 'copolymer_plus_solvent/Fluoro_smiles.txt'), header=None)[0]
+        smiles_lists['Electrolyte'] = pd.read_csv(os.path.join(csv_dir, 'copolymer_plus_solvent/Electro_smiles.txt'), header=None)[0]
+        smiles_lists['Optical'] = pd.read_csv(os.path.join(csv_dir, 'copolymer_plus_solvent/Optical_smiles.txt'), header=None)[0]
+    else:
+        smiles_lists['Traditional'] = pd.read_csv(os.path.join(csv_dir, 'Traditional_polymers.csv'), header=None)[0]
+        smiles_lists['Fluoro'] = pd.read_csv(os.path.join(csv_dir, 'Fluoropolymers.csv'), header=None)[0]
+        smiles_lists['Electrolyte'] = pd.read_csv(os.path.join(csv_dir, 'Electrolytes.csv'), header=None)[0]
+        smiles_lists['A'] = pd.read_csv(os.path.join(csv_dir, 'A_optical_copolymers.csv'), header=None)[0]
+        smiles_lists['B'] = pd.read_csv(os.path.join(csv_dir, 'B_optical_copolymers.csv'), header=None)[0]
+        smiles_lists['Chaos'] = pd.read_csv(os.path.join(csv_dir, 'CHAOS_smiles.txt'), header=None)[0]
     
     extra_smiles = []
     if 'Solvent' in basename:
@@ -42,8 +48,8 @@ def get_chain_path_info(pdb_path, csv_dir):
         polymer_class = 'Electrolyte'
     elif 'Optical' in pdb_path:
         polymer_class = 'Optical'
-    # elif 'Chaos' in pdb_path:
-    #     polymer_class = 'Chaos'
+    elif 'CHAOS' in pdb_path:
+        polymer_class = 'Chaos'
     else:
         raise ValueError(f"Cannot determine polymer class for {pdb_path}")
 
