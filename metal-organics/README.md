@@ -34,6 +34,10 @@ python analyze_outputs.py outputs
 
 This will create a subdirectory named "xyzs" which will contain an xyz file for each input. The files will be named in the format `a_b_c_d.xyz`, where `a` is the line number of the sample in the pickle generated in step 1, `b` is a counter of the conformers of the given line (i.e. will range from 0 to `n` for `n` conformers), `c` is the charge of the complex, and `d` is the spin multiplicity of the complex.
 
+## Get Low-spin version of 2nd and 3rd row metals
+
+Since 2nd and 3rd row TMs are usually low-spin, we specifically want to ensure that we also run these as low-spin. The `make_low_spin_cplx.py` script will extract the high-spin 2nd and 3rd row TMs and these can be launched with the `--lowspin` feje flag (this flag takes care of appropriate spin-flipping). 
+
 # Running Crystallographic Open Database (COD) for metal-complex generation
 
 We extract additional structures from COD to use as evaluations (and, in the case of boron and heavy-main group clusters, training data. Note that such complexes are excluded from evaluation datasets).
