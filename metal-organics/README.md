@@ -1,6 +1,6 @@
 # Running Architector scripts for metal-organics generation
 
-We use the Architector package to generate structurally diverse metal-organic coordination complexes and organometallics. The process of generating these complexes is split up in to three phases: generation of Architector inputs, generation of complexes by Architector, and, finally, conversion of the Architector output to an xyz file. The metals, along with their coordination numbers, and oxidation states are taken from Architector. The ligands were selected by the script "Sampling\_ligands\_downselect\_step1". The pickled DataFrames of these two databases are
+We use the Architector package to generate structurally diverse metal-organic coordination complexes and organometallics. The process of generating these complexes is split up in to three phases: generation of Architector inputs, generation of complexes by Architector, and, finally, conversion of the Architector output to an xyz file. The metals, along with their coordination numbers, and oxidation states are taken from Architector. The ligands were selected by the script "Sampling\_ligands\_downselect\_step1". The pickled DataFrames of these two databases are at `https://github.com/lanl/coordcomplexsampling/tree/main/ligands_metal_curate` and included here.
 
 ## Generating Architector Inputs
 
@@ -46,6 +46,6 @@ We extract additional structures from COD to use as evaluations (and, in the cas
 
 Run the `cod_extract.py` script at scale with the `slurm_cod.sh` SLURM sbatch script. Select reasonable examples with `cod_select.py`. The results of these are checked for common issues (incorrectly labeled disordered groups for example) with `cod_flag.py > flagged`. If any molecule from a given crystal was flagged, it likely caused an issue with the other molecules in the same crystal structure. As such, we will delete all structures that come from a flagged COD structure. We located these files with `get_all_flagged_cod_codes.py`.
 
-# Main-group clusters
+# Main-group clusters and complexes
 
-Clusters of heavy-main group complexes were taken from `only_name_charge_mult_xyz.csv` from `https://github.com/lanl/coordcomplexsampling/tree/main/main_group_clusters`
+Clusters of heavy-main group complexes were taken from `only_name_charge_mult_xyz.csv` from `https://github.com/lanl/coordcomplexsampling/tree/main/main_group_clusters`. "Metal" dataframe for Architector was taken from `https://github.com/lanl/coordcomplexsampling/blob/main/ligands_metal_curate/main_group_as_metals.pkl`.

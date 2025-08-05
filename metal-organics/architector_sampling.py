@@ -1,6 +1,6 @@
 """ Adapted from Architector/development/lig_sampling/Sampling_script_forMeta_step2.ipynb
 
-Settings used were as follows"
+Settings used were as follows:
 Initial generation of metal-organics: MAX_N_ATOMS = 250, random_seed = 46139, lanthanides were excluded, no ligands were excluded, 1m were generated
 "Small" metal-organics: MAX_N_ATOMS = 120, random_seed = 98745, lanthandies were excluded, no ligands were excluded, 1m were generated
 Lanthanides: MAX_N_ATOMS = 120, random_seed = 46139, non-lanthanides were excluded, ligands with heavy main-group elements were excluded, 255k were generated
@@ -60,15 +60,16 @@ def select_metals(metal_df: pd.DataFrame, lanthanides="include") -> pd.DataFrame
             newrows.append(newrow)
     subset_cn_metal_df = pd.DataFrame(newrows)
     # Add Pm with Sm numbers (neighbors of Sm and Nd) - both Sm and Nd have similar values anyway.
-#    refrow = subset_cn_metal_df[subset_cn_metal_df.metal == "Sm"].iloc[0]
-#    subset_cn_metal_df.loc[len(newrows)] = {
-#        "metal": "Pm",
-#        "ox": 3,
-#        "coreCNs": refrow["coreCNs"],
-#        "coreCN_counts_CSD": refrow["coreCN_counts_CSD"],
-#        "coreCN_fracts": refrow["coreCN_fracts"],
-#        "total_count": refrow["total_count"],
-#    }
+    if lanthanides != 'exclude':
+        refrow = subset_cn_metal_df[subset_cn_metal_df.metal == "Sm"].iloc[0]
+        subset_cn_metal_df.loc[len(newrows)] = {
+            "metal": "Pm",
+            "ox": 3,
+            "coreCNs": refrow["coreCNs"],
+            "coreCN_counts_CSD": refrow["coreCN_counts_CSD"],
+            "coreCN_fracts": refrow["coreCN_fracts"],
+            "total_count": refrow["total_count"],
+        }
     # Omit the Ln as desired
     if lanthanides == "exclude":
         gen_metal_df = subset_cn_metal_df[
@@ -346,8 +347,8 @@ def parse_args():
 def main():
     args = parse_args()
 
-    #metal_df = pd.read_pickle("metal_sample_dataframe.pkl")
-    metal_df = pd.read_pickle("new_metal_sample_dataframe.pkl")
+    #metal_df = pd.read_pickle("metal_sample_dataframe.pkl") # Main oxidation state TM/Ln for release
+    metal_df = pd.read_pickle("new_metal_sample_dataframe.pkl") # New oxidation states post-release
     ligands_df = pd.read_pickle("ligand_sample_dataframe.pkl")
     if args.history is not None:
         with open(args.history, "r") as fh:
@@ -355,8 +356,8 @@ def main():
     else:
         history = None
 
-    #gen_metal_df = select_metals(metal_df)
-    gen_metal_df = pd.read_pickle('main_group_as_metals.pkl')
+    #gen_metal_df = select_metals(metal_df) # Comment out for heavy main-group
+    gen_metal_df = pd.read_pickle('main_group_as_metals.pkl') # Heavy-main group as metal centers
     ligands_df = select_ligands(ligands_df, heavy_maingroup=args.include_heavy_mg, add_hydride=args.include_hydride)
     sdf, history = create_sample(
         metal_df=gen_metal_df,
