@@ -246,6 +246,11 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir, debug=False, return_as
     with open(logfile, 'a') as file1:
         file1.write(f"Found {len(unique_structures)} unique structures\n")
 
+    for unique_structure in unique_structures:
+        unique_structure.set_positions(unique_structure.get_positions(wrap=False))
+        unique_structure.pbc = False
+        unique_structure.cell = None
+    
     trimmed_structures = trim_structures(chain, unique_structures, bond_to_break)
 
     for i, atoms in enumerate(trimmed_structures):
