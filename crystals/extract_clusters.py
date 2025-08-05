@@ -14,8 +14,7 @@ from schrodinger.adapter import to_rdkit
 from schrodinger.application.jaguar.utils import mmjag_update_lewis
 from schrodinger.application.matsci import clusterstruct
 from schrodinger.application.matsci.aseutils import get_structure
-from schrodinger.application.matsci.nano.xtal import (Crystal,
-                                                      SuperCellBuilder,
+from schrodinger.application.matsci.nano.xtal import (SuperCellBuilder,
                                                       connect_atoms)
 from schrodinger.structure import Structure
 from schrodinger.structutils import build
@@ -42,12 +41,10 @@ def select_clusters(st, budget):
     max_radius = 20.0
     min_radius = 2.0
     best_atoms = set()
-    mol_num = random.choice(range(1, st.mol_total + 1))
     at_num = random.choice(range(1, st.atom_total + 1))
     while max_radius - min_radius > 0.02:
         mid = (min_radius + max_radius) / 2
         sphere = set(
-            #evaluate_asl(st, f"fillmol within {mid} mol.num {mol_num}")
             evaluate_asl(st, f"fillmol within {mid} at.num {at_num}")
         )
         if len(sphere) > budget:
@@ -62,8 +59,6 @@ def select_clusters(st, budget):
         return None
     selected_ats = best_atoms
     cluster, at_map = build.extract_structure(st, selected_ats, copy_props=True, renumber_map=True)
-    #core = [at_map[at.index] for at in st.molecule[mol_num].atom]
-    #clusterstruct.contract_structure(cluster, contract_on_atoms=core)
     clusterstruct.contract_structure(cluster, contract_on_atoms=[at_map[at_num]])
     if cluster.mol_total < 3:
         print("Need at least a trimer")
