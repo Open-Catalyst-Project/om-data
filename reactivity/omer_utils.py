@@ -18,7 +18,7 @@ def get_chain_path_info(pdb_path, csv_dir):
     smiles_lists = {}
     
     # Load all necessary SMILES lists once
-    if "copolymer" and "Solvent" in pdb_path:
+    if "copolymer" in pdb_path and "Solvent" in pdb_path:
         smiles_lists['Traditional'] = pd.read_csv(os.path.join(csv_dir, 'copolymer_plus_solvent/Traditional_smiles.txt'), header=None)[0]
         smiles_lists['Fluoro'] = pd.read_csv(os.path.join(csv_dir, 'copolymer_plus_solvent/Fluoro_smiles.txt'), header=None)[0]
         smiles_lists['Electrolyte'] = pd.read_csv(os.path.join(csv_dir, 'copolymer_plus_solvent/Electro_smiles.txt'), header=None)[0]
@@ -212,10 +212,10 @@ def trim_structures(chain, unique_structures, bonds_breaking, max_atoms=250, del
     last_trimmed = trim_structure(chain, last_structure, bonds_breaking, cutoff)
     while len(last_trimmed) > max_atoms:
         new_cutoff = cutoff - delta_cutoff
-        last_trimmed = trim_structure(chain, last_structure, bonds_breaking, new_cutoff)
-        cutoff = new_cutoff
-        if cutoff < 0:
+        if new_cutoff < 0:
             break
+        cutoff = new_cutoff
+        last_trimmed = trim_structure(chain, last_structure, bonds_breaking, cutoff)
     last_trimmed.info['trim_cutoff'] = cutoff
 
     trimmed_pos = last_trimmed.get_positions().copy()
