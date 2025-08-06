@@ -10,6 +10,7 @@ from ase.io import write
 from omer_utils import get_chain_path_info, trim_structures, get_bond_smarts, add_h_to_chain, remove_h_from_chain
 from omer_utils import surround_chain_with_extra, trim_structure, reset_idx
 from io_chain import Chain, get_bonds_to_break
+from rdkit.Chem import AtomValenceException
 
 import torch
 from torch.serialization import add_safe_globals
@@ -40,6 +41,7 @@ class TimeoutException(Exception):
 def handler(signum, frame):
     raise TimeoutException()
 
+
 def get_splits_for_protonation(pdb_files, csv_dir, logfile):
     all_add_remove, all_add, all_remove, all_none = [], [], [], []
     error = 0
@@ -68,6 +70,8 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
             else: # Error processing pdb to Chain
                 print(e)
                 error += 1
+            continue
+        except AtomValenceException:
             continue
         finally:
             signal.alarm(0)
@@ -266,6 +270,7 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir, debug=False, return_as
         return trimmed_structures, unique_structures, save_trajectory
 
 def main(all_chains_dir, csv_dir, output_path, n_chunks=1, chunk_idx=0, debug=False):
+    random.seed(chunk_idx) # fine for now
     pdb_files = []
     for subdir, _, files in os.walk(all_chains_dir):
         for filename in files:

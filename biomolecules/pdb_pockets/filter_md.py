@@ -17,9 +17,6 @@ Break structure up by molecule and find the closest CA to the ligand in each mol
 If those distances exceed 5A from the initial structure, discard it.
 """
 
-N_FRAMES = 10
-
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output_path", default=".")
@@ -27,6 +24,7 @@ def parse_args():
     parser.add_argument("--batch", type=int)
     parser.add_argument("--ignore_lig", action='store_true')
     parser.add_argument("--discard_far_water", action='store_true')
+    parser.add_argument("--n_frames", type=int, default=10)
     return parser.parse_args()
 
 
@@ -48,16 +46,20 @@ def remove_similar_frames(frame_list):
 
 
 def subsample_frames(st_list, n_frames):
-    frame_list = []
-    frame_interval = len(st_list) // n_frames
-    if frame_interval < 1:
+    if n_frames == 0:
         frame_list = st_list
     else:
-        frame_list = st_list[::frame_interval][:n_frames]
+        frame_list = []
+        frame_interval = len(st_list) // n_frames
+        if frame_interval < 1:
+            frame_list = st_list
+        else:
+            frame_list = st_list[::frame_interval][:n_frames]
     return frame_list
 
-def extract_frames(dirname, multi=True, retain_lig=True, disc_far_water=False):
+def extract_frames(dirname, n_frames=10, multi=True, retain_lig=True, disc_far_water=False):
     fname = os.path.join(dirname, os.path.basename(dirname) + "-out.cms")
+    print(fname)
     try:
         msys_model, cms_model, tr = traj_util.read_cms_and_traj(fname)
     except:
@@ -85,7 +87,7 @@ def extract_frames(dirname, multi=True, retain_lig=True, disc_far_water=False):
             keep_list.append(fsys_st.copy())
     keep_list = remove_similar_frames(keep_list)
     if multi:
-        frames = subsample_frames(keep_list, N_FRAMES)
+        frames = subsample_frames(keep_list, n_frames)
     else:
         frames = keep_list[-1:]
     if disc_far_water:
@@ -93,8 +95,8 @@ def extract_frames(dirname, multi=True, retain_lig=True, disc_far_water=False):
             discard_far_water(frame)
     return frames
 
-def process_md(dirname, output_path, retain_lig=True, discard_far_water=False):
-    frames = extract_frames(dirname, retain_lig=retain_lig, disc_far_water=discard_far_water)
+def process_md(dirname, output_path, n_frames=10, retain_lig=True, discard_far_water=False):
+    frames = extract_frames(dirname, n_frames=n_frames, retain_lig=retain_lig, disc_far_water=discard_far_water)
     if frames is None:
         return
     for idx, frame in enumerate(frames):
@@ -118,7 +120,7 @@ def main():
         dir_list = dir_list[1000 * args.batch : 1000 * (args.batch + 1)]
     processed_traj = []
 
-    proc_md = partial(process_md, output_path=args.output_path, retain_lig=not args.ignore_lig, discard_far_water=args.discard_far_water)
+    proc_md = partial(process_md, output_path=args.output_path, n_frames=args.n_frames, retain_lig=not args.ignore_lig, discard_far_water=args.discard_far_water)
     with mp.Pool(60) as pool:
         processed_traj = set(tqdm(pool.imap(proc_md, dir_list), total=len(dir_list)))
     processed_traj -= {None}

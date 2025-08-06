@@ -1,0 +1,3 @@
+#python architector_sampling.py --outname heavy_mg_200k --include_hydride --n_samples 200000 --exclude_heavy_mg
+#python architector_sampling.py --outname heavy_mg_100k --include_hydride --n_samples 100000 --history heavy_mg_200k_uids
+python architector_sampling.py --outname heavy_mg_50k --include_hydride --n_samples 50000 --history heavy_mg_100k_uids
