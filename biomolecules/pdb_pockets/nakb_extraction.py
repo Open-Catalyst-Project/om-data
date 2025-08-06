@@ -54,7 +54,7 @@ def main(output_path, start_pdb=0, end_pdb=1):
         5) including res+1 or -1, within 3A and different chain and not protein (==)
         6) within 2.5A and not protein (E-)
     """
-    with open('random_residues.txt', 'r') as fh:
+    with open('random_nakb_residues.txt', 'r') as fh:
         data = [f.strip().split(',') for f in fh.readlines()]
     grouped_data = defaultdict(list)
     for pdb_id, res_name in data:
