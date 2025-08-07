@@ -87,15 +87,15 @@ def interaction_energy_and_forces(results, supersystem):
             ixn_energy[system_name] -= component_data["energy"]
             component_atoms = MSONAtoms.from_dict(component_data["atoms"])
             for at in component_atoms:
-                component_atom_key = (at.symbol, tuple(at.position))
-                supersystem_atom_idx = supersys_map.get(component_atom_key)
-                if supersystem_atom_idx is None:
+                component_at_key = (at.symbol, tuple(at.position))
+                supersystem_at_idx = supersys_map.get(component_at_key)
+                if supersystem_at_idx is None:
                     raise ValueError(
-                        f"Atom {at.symbol} at position {at.position} "
-                        f"in component {component_name} not found in supersystem."
+                        f"Atom {at.symbol} at position {at.position} in "
+                        f"component {component_name} not found in supersystem."
                     )
-                indices_found.add(supersystem_atom_idx)
-                ixn_forces[system_name][supersystem_atom_idx] -= np.array(
+                indices_found.add(supersystem_at_idx)
+                ixn_forces[system_name][supersystem_at_idx] -= np.array(
                     component_data["forces"]
                 )[at.index]
         assert len(indices_found) == len(supersystem_atoms)
@@ -362,13 +362,14 @@ def geom_conformers(orca_results, mlip_results):
             "energy"
         ]
         for conformer_identifier, orca_struct in orca_structs.items():
-            if conformer_identifier != orca_min_energy_id:
-                orca_deltaE = orca_struct["final"]["energy"] - orca_min_energy
-                mlip_deltaE = (
-                    mlip_structs[mapping[conformer_identifier]]["final"]["energy"]
-                    - mlip_energy_of_orca_min
-                )
-                deltaE_mae += abs(orca_deltaE - mlip_deltaE) / (len(orca_structs) - 1)
+            if conformer_identifier == orca_min_energy_id:
+                continue
+            orca_deltaE = orca_struct["final"]["energy"] - orca_min_energy
+            mlip_deltaE = (
+                mlip_structs[mapping[conformer_identifier]]["final"]["energy"]
+                - mlip_energy_of_orca_min
+            )
+            deltaE_mae += abs(orca_deltaE - mlip_deltaE) / (len(orca_structs) - 1)
 
     results = {
         "ensemble_rmsd": ensemble_rmsd / len(orca_results),
