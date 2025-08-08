@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+import argparse
 import itertools
+import json
 from collections import defaultdict
 
 import numpy as np
 from ase.build import minimize_rotation_and_translation
 from pymatgen.io.ase import MSONAtoms
 from scipy.optimize import linear_sum_assignment
-
-# Helper/processing functions
 
 
 def rmsd(orca_atoms, mlip_atoms):
@@ -681,3 +681,39 @@ def singlepoint(orca_results, mlip_results):
     }
 
     return metrics
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--eval",
+        choices=[
+            "ligand_pocket",
+            "ligand_strain",
+            "geom_conformers",
+            "protonation_energies",
+            "unoptimized_ie_ea",
+            "distance_scaling",
+            "unoptimized_spin_gap",
+        ],
+        help="Evaluation task to run",
+        required=True,
+    )
+    args = parser.parse_args()
+
+    sample_paths = {
+        "ligand_pocket": "/checkpoint/mshuaibi/benchmark/202505-1303-3354-ec40/results/pdb_pocket_results.json",
+        "ligand_strain": "/checkpoint/mshuaibi/benchmark/202505-1303-3928-63ee/results/ligand_strain_results.json",
+        "geom_conformers": "/checkpoint/mshuaibi/benchmark/202505-1303-3940-209e/results/geom_conformers_type1_results.json",
+        "protonation_energies": "/checkpoint/mshuaibi/benchmark/202505-1303-4511-1e40/results/protonation_energies_type1_results.json",
+        "unoptimized_ie_ea": "/checkpoint/mshuaibi/benchmark/202505-1303-3403-2f0f/results/unoptimized_ie_ea_results.json",
+        "distance_scaling": "/checkpoint/mshuaibi/benchmark/202505-1319-5841-3bfc/results/distance_scaling_results.json",
+        "unoptimized_spin_gap": "/checkpoint/mshuaibi/benchmark/202505-1303-3412-9eb3/results/unoptimized_spin_gap_results.json",
+    }
+
+    with open(sample_paths[args.eval]) as f:
+        results = json.load(f)
+    target = {x: results[x]["target"] for x in results}
+    prediction = {x: results[x]["prediction"] for x in results}
+    metrics = eval(args.eval)(target, prediction)
+    print(metrics)
