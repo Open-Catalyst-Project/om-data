@@ -663,29 +663,25 @@ def unoptimized_spin_gap(orca_results, mlip_results):
 
 
 def singlepoint(orca_results, mlip_results):
-    target_energies = []
-    target_forces = []
-    energies = []
-    forces = []
-    natoms = []
+    energy_mae = 0
+    energy_per_atom_mae = 0
+    forces_mae = 0
+    natoms = 0
     for identifier, orca_data in orca_results.items():
         mlip_data = mlip_results[identifier]
-        target_energies.append(orca_data["energy"])
-        target_forces.append(orca_data["forces"])
-        energies.append(mlip_data["energy"])
-        forces.append(mlip_data["forces"])
-        natoms.append(len(orca_data["forces"]))
-
-    target_energies = np.array(target_energies)
-    target_forces = np.concatenate(target_forces)
-    energies = np.array(energies)
-    forces = np.concatenate(forces)
-    natoms = np.array(natoms)
+        _energy_mae = np.abs(orca_data["energy"] - mlip_data["energy"])
+        _natoms = len(orca_data["forces"])
+        forces_mae += np.sum(
+            np.abs(np.array(orca_data["forces"]) - np.array(mlip_data["forces"]))
+        )
+        natoms += _natoms
+        energy_mae += _energy_mae
+        energy_per_atom_mae += _energy_mae / _natoms
 
     metrics = {
-        "energy_mae": np.mean(np.abs(energies - target_energies)),
-        "energy_per_atom_mae": np.mean(np.abs(energies - target_energies) / natoms),
-        "forces_mae": np.mean(np.abs(forces - target_forces)),
+        "energy_mae": energy_mae / len(orca_results),
+        "energy_per_atom_mae": energy_per_atom_mae / len(orca_results),
+        "forces_mae": forces_mae / (3 * natoms),
     }
 
     return metrics
@@ -703,6 +699,7 @@ if __name__ == "__main__":
             "unoptimized_ie_ea",
             "distance_scaling",
             "unoptimized_spin_gap",
+            "singlepoint",
         ],
         help="Evaluation task to run",
         required=True,
@@ -717,6 +714,7 @@ if __name__ == "__main__":
         "unoptimized_ie_ea": "/checkpoint/mshuaibi/benchmark/202505-1303-3403-2f0f/results/unoptimized_ie_ea_results.json",
         "distance_scaling": "/checkpoint/mshuaibi/benchmark/202505-1319-5841-3bfc/results/distance_scaling_results.json",
         "unoptimized_spin_gap": "/checkpoint/mshuaibi/benchmark/202505-1303-3412-9eb3/results/unoptimized_spin_gap_results.json",
+        "singlepoint": "/checkpoint/mshuaibi/benchmark/202505-1303-3840-180e/results/s2ef_pdb_tm_results.json",
     }
 
     with open(sample_paths[args.eval]) as f:
