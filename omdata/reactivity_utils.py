@@ -118,8 +118,9 @@ def run_afir(mol1, mol2, calc, logfile,
              force_step=0.2,
              maxforce=4.0,
              is_polymer=False, 
+             is_crystal=False,
              skip_first=False):
-    breaking_cutoff=5.0 # When a bond is breaking, what the distance should be
+    breaking_cutoff=1.5 # When a bond is breaking, what the distance should be
     forming_cutoff=1.2 # When a bond is forming, what the distance should be (Angstroms)
     start_force_constant=0.1 # eV/angstrom
     force_increment=force_step # How fast to ramp up the force constant
@@ -161,8 +162,12 @@ def run_afir(mol1, mol2, calc, logfile,
         with open(logfile,'a') as file1:
             file1.write('Running Fconst = {}\n'.format(fconst))
         
-        opt_mol.ase_atoms.set_constraint()
-        constraints = []
+        if is_crystal: 
+            constraints = opt_mol.ase_atoms.constraints
+        else:
+            opt_mol.ase_atoms.set_constraint()
+            constraints = []
+
         for mol in (mol1, mol2):
             if is_polymer and mol is not None:
                 ends = mol.ends
@@ -203,9 +208,9 @@ def run_afir(mol1, mol2, calc, logfile,
 
         if tmpopt.successful:
             min_distance=np.min([find_min_distance(atoms) for atoms in tmpopt.trajectory])
-            if min_distance < 0.7:
+            if min_distance < 0.5:
                 with open(logfile, 'a') as file1:
-                    file1.write(f"Min distance {min_distance} < 0.7. Stopping optimization.\n")
+                    file1.write(f"Min distance {min_distance} < 0.5. Stopping optimization.\n")
                 break
             if skip_first:
                 with open(logfile, 'a') as file1:
