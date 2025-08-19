@@ -17,6 +17,7 @@ from torch.serialization import add_safe_globals
 add_safe_globals([slice])
 
 from fairchem.core import pretrained_mlip, FAIRChemCalculator
+import traceback
 
 smarts_dict = { "none": 0,
                 "[#7D3].[#7D3;+1][#1]": 1,
@@ -238,6 +239,9 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir, debug=False, return_as
     chain.ase_atoms.info["spin"] = uhf + 1
     chain.ase_atoms.info["charge"] = charge
 
+    chain.charge = charge 
+    chain.uhf = uhf
+
     maxforce = 1.0 if debug else 10.0
 
     predictor = pretrained_mlip.get_predict_unit("uma-s-1p1", device="cuda", inference_settings="turbo")
@@ -287,8 +291,11 @@ def main(all_chains_dir, csv_dir, output_path, n_chunks=1, chunk_idx=0, debug=Fa
     random.shuffle(pdb_files)
     chunks_to_process = np.array_split(pdb_files, n_chunks)
     chunk = chunks_to_process[chunk_idx] 
-    print('length of chunk', len(chunk))
-    print(chunk)
+    logfile = os.path.join(output_path, "logfile.txt")
+    with open(logfile, 'a') as file1:
+        file1.write(f"length of chunk: {len(chunk)}\n")
+        file1.write(f"chunk: {chunk}\n")
+
     add_list, remove_list, none_list = get_splits_for_protonation(chunk, csv_dir, "logfile.txt")
 
     os.makedirs(os.path.join(output_path, 'none/'), exist_ok=True)
@@ -297,7 +304,9 @@ def main(all_chains_dir, csv_dir, output_path, n_chunks=1, chunk_idx=0, debug=Fa
         try:
             omer_react_pipeline(none_chain_dict, none_path, csv_dir, debug=debug)
         except Exception as e:
-            print(e)
+            with open(logfile, 'a') as file1:
+                file1.write(f"######## ERROR processing {none_path}:\n")
+                file1.write(traceback.format_exc() + "\n")
     
     os.makedirs(os.path.join(output_path, 'remove_H/'), exist_ok=True)
     remove_path = os.path.join(output_path, 'remove_H/')
@@ -305,7 +314,9 @@ def main(all_chains_dir, csv_dir, output_path, n_chunks=1, chunk_idx=0, debug=Fa
         try:
             omer_react_pipeline(remove_chain_dict, remove_path, csv_dir, debug=debug)
         except Exception as e:
-            print(e)
+            with open(logfile, 'a') as file1:
+                file1.write(f"######## ERROR processing {remove_path}:\n")
+                file1.write(traceback.format_exc() + "\n")
 
     os.makedirs(os.path.join(output_path, 'add_H/'), exist_ok=True)
     add_path = os.path.join(output_path, 'add_H/')
@@ -313,7 +324,9 @@ def main(all_chains_dir, csv_dir, output_path, n_chunks=1, chunk_idx=0, debug=Fa
         try:
             omer_react_pipeline(add_chain_dict, add_path, csv_dir, debug=debug)
         except Exception as e:
-            print(e)
+            with open(logfile, 'a') as file1:
+                file1.write(f"######## ERROR processing {add_path}:\n")
+                file1.write(traceback.format_exc() + "\n")
 
 
 def parse_args():
