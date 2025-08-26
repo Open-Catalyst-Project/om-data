@@ -159,7 +159,7 @@ TIGHT_OPT_PARAMETERS = {
 EVAL_OPT_PARAMETERS = {
     "optimizer": LBFGS,
     "fmax": 0.01,
-    "max_steps": 100,
+    "max_steps": 300,
     "optimizer_kwargs": {},
 }
 
