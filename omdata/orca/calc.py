@@ -1,10 +1,11 @@
+import re
 from enum import Enum
 from shutil import which
 
 from ase import Atoms
 from ase.calculators.orca import ORCA, OrcaProfile
+from ase.optimize import LBFGS
 from sella import Sella
-import re
 
 # ECP sizes taken from Table 6.5 in the Orca 5.0.3 manual
 ECP_SIZE = {
@@ -155,6 +156,13 @@ TIGHT_OPT_PARAMETERS = {
         "internal": True,
     },
 }
+EVAL_OPT_PARAMETERS = {
+    "optimizer": LBFGS,
+    "fmax": 0.01,
+    "max_steps": 100,
+    "optimizer_kwargs": {},
+}
+
 TS_OPT_PARAMETERS = {
     "optimizer": Sella,
     "store_intermediate_results": True,
