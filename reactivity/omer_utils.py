@@ -633,3 +633,9 @@ def surround_chain_with_extra(chain, bond=None, remove=False, max_atoms=250):
         ase_atoms = ase_atoms[kept_indices]
     
     return Chain(ase_atoms, chain.repeat_units, extra_smiles=chain.extra_units)
+
+def is_bonded(ase_atoms, bonded_atoms_list, scale=1.2):
+    i, j = bonded_atoms_list
+    d = ase_atoms.get_distance(i, j, mic=True)
+    cutoff = scale * (covalent_radii[ase_atoms[i].number] + covalent_radii[ase_atoms[j].number])
+    return bool(d < cutoff)

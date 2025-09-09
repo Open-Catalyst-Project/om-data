@@ -8,7 +8,7 @@ import signal
 from omdata.reactivity_utils import filter_unique_structures, run_afir
 from ase.io import write
 from omer_utils import get_chain_path_info, trim_structures, get_bond_smarts, add_h_to_chain, remove_h_from_chain
-from omer_utils import surround_chain_with_extra, reset_idx
+from omer_utils import surround_chain_with_extra, reset_idx, is_bonded
 from io_chain import Chain, get_bonds_to_break
 from rdkit.Chem import AtomValenceException
 
@@ -225,6 +225,17 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir, return_ase=False, debu
     chain_path = chain_dict['path']
     chain = chain_dict['chain']
     bond_to_break = chain_dict['bond_to_break']
+    if not is_bonded(chain.ase_atoms, bond_to_break):
+        with open(logfile, 'a') as file1:
+            file1.write(f"WARNING: bonded pair being reassigned from {bond_to_break}\n")
+        try:
+            bond_to_break = random.choice(get_bonds_to_break(chain))
+            assert is_bonded(chain.ase_atoms, bond_to_break)
+        except:
+            with open(logfile, 'a') as file1:
+                file1.write(f"######## ERROR: failed to reassign bond\n")
+                file1.write(traceback.format_exc() + "\n")
+    
     _, extra_smiles, polymer_class = get_chain_path_info(chain_path, csv_dir)
     skip_first = True if extra_smiles else False
 
@@ -254,7 +265,7 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir, return_ase=False, debu
                                     bonds_breaking=[bond_to_break], maxforce=maxforce, force_step=0.75, 
                                     is_polymer=True, break_cutoff=5.0, skip_first=skip_first)
     
-    unique_structures = filter_unique_structures(save_trajectory)
+    unique_structures = filter_unique_structures(save_trajectory) 
     with open(logfile, 'a') as file1:
         file1.write(f"Found {len(unique_structures)} unique structures\n")
 
