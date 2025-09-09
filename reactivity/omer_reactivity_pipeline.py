@@ -258,12 +258,11 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir, return_ase=False, debu
     with open(logfile, 'a') as file1:
         file1.write(f"Found {len(unique_structures)} unique structures\n")
 
-    if debug:
-        for i, unique_structure in enumerate(unique_structures):
-            unique_structure.set_positions(unique_structure.get_positions(wrap=False))
-            unique_structure.pbc = False
-            unique_structure.cell = None
-            write(os.path.join(output_path, name, f"unique_struc_{i}.xyz"), unique_structure, format="xyz")
+    for i, unique_structure in enumerate(unique_structures):
+        unique_structure.set_positions(unique_structure.get_positions(wrap=False))
+        unique_structure.pbc = False
+        unique_structure.cell = None
+        if debug: write(os.path.join(output_path, name, f"unique_struc_{i}.xyz"), unique_structure, format="xyz")
     
     trimmed_structures = trim_structures(chain, unique_structures, bond_to_break)
 
@@ -285,7 +284,7 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir, return_ase=False, debu
         return trimmed_structures, unique_structures, save_trajectory
 
 def main(all_chains_dir, csv_dir, output_path, n_chunks=1, chunk_idx=0, debug=False):
-    random.seed(17) # CHANGED
+    random.seed(17) # don't have seed change with chunk_idx due to shuffle
     pdb_files = []
     for subdir, _, files in os.walk(all_chains_dir):
         for filename in files:
