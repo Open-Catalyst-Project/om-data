@@ -48,7 +48,7 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
     error = 0
     for pdb_path in pdb_files:
         signal.signal(signal.SIGALRM, handler)
-        signal.alarm(30) # large (>500 atom) pdbs can take time
+        signal.alarm(60) # large (>500 atom) pdbs can take time
         try: 
             # get all valid H mutations of chain
             all_add_remove, all_add, all_remove, all_none = get_chains_and_bonds(pdb_path, csv_dir, 
@@ -57,22 +57,30 @@ def get_splits_for_protonation(pdb_files, csv_dir, logfile):
         except (TimeoutException, IndexError) as e:
             signal.alarm(0)
             if type(e) == IndexError: # No bonds near center of mass
-                signal.alarm(30)
+                signal.alarm(60)
                 try:
                     all_add_remove, all_add, all_remove, all_none = get_chains_and_bonds(pdb_path, csv_dir, 
                                                                                      all_add_remove, all_add, 
                                                                                      all_remove, all_none, 
                                                                                      center_cutoff=10.0)
                 except (TimeoutException, IndexError) as e:
-                    print(e)
+                    with open(logfile, 'a') as file1:
+                        file1.write(f"######## ERROR processing {pdb_path}:\n")
+                        file1.write(traceback.format_exc() + "\n")
                     error += 1
                 finally:
                     signal.alarm(0)
             else: # Error processing pdb to Chain
-                print(e)
+                with open(logfile, 'a') as file1:
+                    file1.write(f"######## ERROR processing {pdb_path}:\n")
+                    file1.write(traceback.format_exc() + "\n")
                 error += 1
             continue
         except AtomValenceException:
+            with open(logfile, 'a') as file1:
+                file1.write(f"######## ERROR processing {pdb_path}:\n")
+                file1.write(traceback.format_exc() + "\n")
+            error += 1
             continue
         finally:
             signal.alarm(0)
@@ -179,6 +187,13 @@ def get_chains_and_bonds(pdb_path, csv_dir, all_add_remove, all_add, all_remove,
 def process_one_pdb(pdb_path, csv_dir, center_cutoff=5.0, n_attempts=5):
     repeat_smiles, extra_smiles, _ = get_chain_path_info(pdb_path, csv_dir)
     chain = Chain(pdb_path, repeat_smiles, extra_smiles=extra_smiles)
+    
+    # new_ase = chain.ase_atoms.copy()
+    # new_ase.set_positions(new_ase.get_positions(wrap=False))
+    # new_ase.pbc = False
+    # new_ase.cell = None
+    # chain = Chain(new_ase, repeat_smiles, extra_smiles=extra_smiles)
+
     if extra_smiles:
         trim_cutoff= 8.0
         max_atoms = 800 if len(chain.remove_extra().ase_atoms) > 150 else 250
@@ -206,7 +221,12 @@ def process_one_pdb(pdb_path, csv_dir, center_cutoff=5.0, n_attempts=5):
     else:  
         all_bonds_to_break = get_bonds_to_break(chain, max_H_bonds=1, max_other_bonds=4, center_radius=center_cutoff)
         bond_to_break = random.choice(all_bonds_to_break)
-
+        if len(chain.ase_atoms) > 800:
+            trim_original = trim_structures(chain, [chain.ase_atoms], bond_to_break, max_atoms=300)
+            new_ase_atoms = trim_original[0]
+            # new_ase_atoms = trim_structure(chain, chain.ase_atoms, bond_to_break, 5.0, min_atoms=250)
+            bond_to_break = reset_idx(new_ase_atoms, chain.ase_atoms, bond_to_break)
+            chain = Chain(new_ase_atoms, repeat_smiles, extra_smiles=extra_smiles)
     try:
         new_h_chain = add_h_to_chain(chain, bond_to_break)
     except Exception:
@@ -219,7 +239,7 @@ def process_one_pdb(pdb_path, csv_dir, center_cutoff=5.0, n_attempts=5):
 
     return chain, new_h_chain, new_r_chain, bond_to_break, new_bonds
 
-def omer_react_pipeline(chain_dict, output_path, csv_dir, debug=False, return_ase=False):
+def omer_react_pipeline(chain_dict, output_path, csv_dir, return_ase=False):
     chain_path = chain_dict['path']
     chain = chain_dict['chain']
     bond_to_break = chain_dict['bond_to_break']
@@ -242,9 +262,12 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir, debug=False, return_as
     chain.charge = charge 
     chain.uhf = uhf
 
-    maxforce = 1.0 if debug else 10.0
+    maxforce = 10.0
 
-    predictor = pretrained_mlip.get_predict_unit("uma-s-1p1", device="cuda", inference_settings="turbo")
+    predictor = pretrained_mlip.get_predict_unit("uma-s-1p1", device="cuda", 
+                                                 inference_settings="turbo", 
+                                                 cache_dir="/pscratch/sd/c/chualm/fairchem",
+                                                 )
     UMA = FAIRChemCalculator(predictor, task_name="omol")
     save_trajectory, _ = run_afir(chain, None, UMA, logfile,
                                     bonds_breaking=[bond_to_break], maxforce=maxforce, force_step=0.75, 
@@ -258,6 +281,7 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir, debug=False, return_as
         unique_structure.set_positions(unique_structure.get_positions(wrap=False))
         unique_structure.pbc = False
         unique_structure.cell = None
+        write(os.path.join(output_path, name, f"unique_struc_{i}.xyz"), unique_structure, format="xyz")
     
     trimmed_structures = trim_structures(chain, unique_structures, bond_to_break)
 
@@ -278,8 +302,8 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir, debug=False, return_as
     if return_ase:
         return trimmed_structures, unique_structures, save_trajectory
 
-def main(all_chains_dir, csv_dir, output_path, n_chunks=1, chunk_idx=0, debug=False):
-    random.seed(chunk_idx) # fine for now
+def main(all_chains_dir, csv_dir, output_path, n_chunks=1, chunk_idx=0):
+    random.seed(17) # CHANGED
     pdb_files = []
     for subdir, _, files in os.walk(all_chains_dir):
         for filename in files:
@@ -287,45 +311,44 @@ def main(all_chains_dir, csv_dir, output_path, n_chunks=1, chunk_idx=0, debug=Fa
                 pdb_path = os.path.join(subdir, filename)
                 pdb_files.append(pdb_path)
    
-    if debug: random.seed(17)
     random.shuffle(pdb_files)
     chunks_to_process = np.array_split(pdb_files, n_chunks)
     chunk = chunks_to_process[chunk_idx] 
-    logfile = os.path.join(output_path, "logfile.txt")
+    logfile = os.path.join(output_path, f"logfile_{chunk_idx}.txt")
     with open(logfile, 'a') as file1:
         file1.write(f"length of chunk: {len(chunk)}\n")
         file1.write(f"chunk: {chunk}\n")
 
-    add_list, remove_list, none_list = get_splits_for_protonation(chunk, csv_dir, "logfile.txt")
+    add_list, remove_list, none_list = get_splits_for_protonation(chunk, csv_dir, f"logfile_{chunk_idx}.txt")
 
     os.makedirs(os.path.join(output_path, 'none/'), exist_ok=True)
     none_path = os.path.join(output_path, 'none/')
     for none_chain_dict in none_list:
         try:
-            omer_react_pipeline(none_chain_dict, none_path, csv_dir, debug=debug)
+            omer_react_pipeline(none_chain_dict, none_path, csv_dir)
         except Exception as e:
             with open(logfile, 'a') as file1:
-                file1.write(f"######## ERROR processing {none_path}:\n")
+                file1.write(f"######## ERROR processing {none_chain_dict['path']}:\n")
                 file1.write(traceback.format_exc() + "\n")
     
     os.makedirs(os.path.join(output_path, 'remove_H/'), exist_ok=True)
     remove_path = os.path.join(output_path, 'remove_H/')
     for remove_chain_dict in remove_list:
         try:
-            omer_react_pipeline(remove_chain_dict, remove_path, csv_dir, debug=debug)
+            omer_react_pipeline(remove_chain_dict, remove_path, csv_dir)
         except Exception as e:
             with open(logfile, 'a') as file1:
-                file1.write(f"######## ERROR processing {remove_path}:\n")
+                file1.write(f"######## ERROR processing {remove_chain_dict['path']}:\n")
                 file1.write(traceback.format_exc() + "\n")
 
     os.makedirs(os.path.join(output_path, 'add_H/'), exist_ok=True)
     add_path = os.path.join(output_path, 'add_H/')
     for add_chain_dict in add_list:
         try:
-            omer_react_pipeline(add_chain_dict, add_path, csv_dir, debug=debug)
+            omer_react_pipeline(add_chain_dict, add_path, csv_dir)
         except Exception as e:
             with open(logfile, 'a') as file1:
-                file1.write(f"######## ERROR processing {add_path}:\n")
+                file1.write(f"######## ERROR processing {add_chain_dict['path']}:\n")
                 file1.write(traceback.format_exc() + "\n")
 
 
@@ -336,9 +359,8 @@ def parse_args():
     parser.add_argument("--output_path", default=".")
     parser.add_argument("--n_chunks", type=int, default=1)
     parser.add_argument("--chunk_idx", type=int, default=0)
-    parser.add_argument("--debug", type=bool, default=False)
     return parser.parse_args()
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args.all_chains_dir, args.csv_dir, args.output_path, args.n_chunks, args.chunk_idx, args.debug)
+    main(args.all_chains_dir, args.csv_dir, args.output_path, args.n_chunks, args.chunk_idx)
