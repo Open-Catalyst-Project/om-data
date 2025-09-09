@@ -119,8 +119,9 @@ def run_afir(mol1, mol2, calc, logfile,
              maxforce=4.0,
              is_polymer=False, 
              is_crystal=False,
-             skip_first=False):
-    breaking_cutoff=1.5 # When a bond is breaking, what the distance should be
+             skip_first=False,
+             break_cutoff=1.5):
+    breaking_cutoff=break_cutoff # When a bond is breaking, what the distance should be
     forming_cutoff=1.2 # When a bond is forming, what the distance should be (Angstroms)
     start_force_constant=0.1 # eV/angstrom
     force_increment=force_step # How fast to ramp up the force constant
