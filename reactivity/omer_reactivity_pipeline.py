@@ -225,7 +225,12 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir, return_ase=False, debu
     chain_path = chain_dict['path']
     chain = chain_dict['chain']
     bond_to_break = chain_dict['bond_to_break']
-    if not is_bonded(chain.ase_atoms, bond_to_break):
+    name = polymer_class + "_" + chain_path.split("/")[-1][:-4]
+
+    os.makedirs(os.path.join(output_path, name), exist_ok=True)
+    logfile = os.path.join(output_path, name, "logfile.txt")
+    
+    if not bond_to_break or not is_bonded(chain.ase_atoms, bond_to_break):
         with open(logfile, 'a') as file1:
             file1.write(f"WARNING: bonded pair being reassigned from {bond_to_break}\n")
         try:
@@ -238,11 +243,6 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir, return_ase=False, debu
     
     _, extra_smiles, polymer_class = get_chain_path_info(chain_path, csv_dir)
     skip_first = True if extra_smiles else False
-
-    name = polymer_class + "_" + chain_path.split("/")[-1][:-4]
-
-    os.makedirs(os.path.join(output_path, name), exist_ok=True)
-    logfile = os.path.join(output_path, name, "logfile.txt")
 
     add_electron = random.choices([-1, 0, 1], weights=[0.1, 0.8, 0.1], k=1)[0]
     charge = chain.ase_atoms.info.get("charge", 0) + add_electron
