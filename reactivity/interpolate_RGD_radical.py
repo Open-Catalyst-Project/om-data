@@ -20,12 +20,12 @@ for _ in data.keys():
     for image_idx, image in enumerate(path):
         if image_idx < 4 or image_idx >= len(path) - 4:
             continue
+        write(f'{ind}_{image_idx}_0_2.xyz', image)
         if random.random() < 0.1:
-            write(f'{ind}_{image_idx}_1_1.xyz', image)
+            write(f'{ind}_{image_idx}_1_3.xyz', image)
         elif random.random() < 0.2:
-            write(f'{ind}_{image_idx}_-1_1.xyz', image)
-        else:
-            write(f'{ind}_{image_idx}_0_2.xyz', image)
+            write(f'{ind}_{image_idx}_-1_3.xyz', image)
+            
     ind += 1
     if ind > 3:
         break
