@@ -4,6 +4,7 @@ import numpy as np
 import json
 import argparse
 import signal
+import glob
 
 from omdata.reactivity_utils import filter_unique_structures, run_afir
 from ase.io import write
@@ -225,10 +226,21 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir, return_ase=False, debu
     chain_path = chain_dict['path']
     chain = chain_dict['chain']
     bond_to_break = chain_dict['bond_to_break']
+    _, extra_smiles, polymer_class = get_chain_path_info(chain_path, csv_dir)
+    skip_first = True if extra_smiles else False
     name = polymer_class + "_" + chain_path.split("/")[-1][:-4]
 
-    os.makedirs(os.path.join(output_path, name), exist_ok=True)
-    logfile = os.path.join(output_path, name, "logfile.txt")
+    outdir = os.path.join(output_path, name)
+    if os.path.isdir(outdir):
+        xyz_files = glob.glob(os.path.join(outdir, "afir_struc_*.xyz"))
+        if xyz_files:
+            if debug:
+                print(f"Skipping {name}: found {len(xyz_files)} afir_struc files")
+            return None
+    
+    os.makedirs(outdir, exist_ok=True)
+    logfile = os.path.join(outdir, "logfile.txt")
+    
     
     if not bond_to_break or not is_bonded(chain.ase_atoms, bond_to_break):
         with open(logfile, 'a') as file1:
@@ -240,9 +252,6 @@ def omer_react_pipeline(chain_dict, output_path, csv_dir, return_ase=False, debu
             with open(logfile, 'a') as file1:
                 file1.write(f"######## ERROR: failed to reassign bond\n")
                 file1.write(traceback.format_exc() + "\n")
-    
-    _, extra_smiles, polymer_class = get_chain_path_info(chain_path, csv_dir)
-    skip_first = True if extra_smiles else False
 
     add_electron = random.choices([-1, 0, 1], weights=[0.1, 0.8, 0.1], k=1)[0]
     charge = chain.ase_atoms.info.get("charge", 0) + add_electron
