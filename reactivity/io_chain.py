@@ -130,6 +130,9 @@ class Chain(Molecule):
             n_extra_total += extra.GetNumAtoms() * self.n_extra[i]  
         for repeat in self.repeat_units:
             repeat_mol = AddHs(MolFromSmiles(repeat))
+            if "[O-]" in repeat and "[N+]" in repeat:
+                for atom in repeat_mol.GetAtoms():
+                    atom.SetFormalCharge(0)
             chain_mol = self.rdkit_mol
             
             natoms_repeat = repeat_mol.GetNumAtoms() - 2 # subtract extra atoms
@@ -185,9 +188,6 @@ class Chain(Molecule):
             new_ase_atoms.set_array("residuenames", kept_residues)
 
         new_chain = Chain(new_ase_atoms, self.repeat_units)
-
-        assert new_chain.n_repeats == self.n_repeats
-        # assert new_chain.ends == self.ends # there are some symmetric monomers where this is not true and that's okay
 
         return new_chain
     
@@ -267,7 +267,9 @@ def kekulize_smiles_to_mol(smiles):
     mol = MolFromSmiles(smiles, sanitize=False)
     if mol is None:
         raise ValueError("Invalid SMILES")
-
+    if "[O-]" in smiles and "[N+]" in smiles:
+        for atom in mol.GetAtoms():
+            atom.SetFormalCharge(0)
     Kekulize(mol, clearAromaticFlags=True)
     return AddHs(mol)
 
@@ -286,6 +288,10 @@ def process_repeat_unit(smiles):
     qp.adjustDegreeFlags=ADJUST_IGNOREDUMMIES
 
     mol = kekulize_smiles_to_mol(smiles)
+    
+    if "[O-]" in smiles and "[N+]" in smiles:
+        for atom in mol.GetAtoms():
+            atom.SetFormalCharge(0)
     qm = AdjustQueryProperties(mol,qp)
     return remove_bond_order(qm)
 

@@ -8,7 +8,7 @@ import pandas as pd
 from ase import Atom
 from ase.data import covalent_radii
 
-from rdkit.Chem import EditableMol, BondType, AddHs, MolFromSmarts, Conformer
+from rdkit.Chem import EditableMol, BondType, MolFromSmarts, Conformer
 from rdkit.Geometry import Point3D
 from rdkit.Chem import Atom as RdAtom
 from io_chain import Chain, remove_bond_order, process_repeat_unit
@@ -34,7 +34,7 @@ def get_chain_path_info(pdb_path, csv_dir):
     extra_smiles = []
     if 'Solvent' in basename:
         # no_other_numbers_Solvent_0000_MD_monomer000_no_other_numbers.pdb
-        solv_idx = int(re.search(r'Solvent_(\d+)', basename).group(1)) - 1 # 0-based indexing, assumes one solvent species
+        solv_idx = int(re.search(r'Solvent_(\d+)_MD', basename).group(1)) - 1 # 0-based indexing, assumes one solvent species
         smiles_lists['extra'] = pd.read_csv(os.path.join(csv_dir, 'solvents.csv'))['smiles'].tolist()
         extra_smiles.append(smiles_lists['extra'][solv_idx])
         basename = re.sub(r'Solvent_\d+_', '', basename) # remove solvent number from name
@@ -104,7 +104,7 @@ def trim_structure(chain, structure, bonds_breaking, cutoff, min_atoms=100):
     # get atom mapping for rdkit and ase
     new_atoms = reacted_chain.ase_atoms
 
-    clean_mol = remove_bond_order(AddHs(react_mol))
+    clean_mol = remove_bond_order(react_mol)
     # iterate through chain ends, starting with those farthest from bonds_breaking
     reacted_ends = sort_by_bond_distance(reacted_chain.ase_atoms, bonds_breaking, reacted_chain.ends)[::-1]
     for i in range(len(reacted_ends)):
@@ -119,6 +119,7 @@ def trim_structure(chain, structure, bonds_breaking, cutoff, min_atoms=100):
             continue
         
         while not max_capped and len(new_atoms) > min_atoms:
+            new_atoms = new_atoms.copy()
             matches = list(clean_mol.GetSubstructMatches(mol) for mol in all_mols)       
             match = None
             match_mol = None
@@ -632,3 +633,9 @@ def surround_chain_with_extra(chain, bond=None, remove=False, max_atoms=250):
         ase_atoms = ase_atoms[kept_indices]
     
     return Chain(ase_atoms, chain.repeat_units, extra_smiles=chain.extra_units)
+
+def is_bonded(ase_atoms, bonded_atoms_list, scale=1.2):
+    i, j = bonded_atoms_list
+    d = ase_atoms.get_distance(i, j, mic=True)
+    cutoff = scale * (covalent_radii[ase_atoms[i].number] + covalent_radii[ase_atoms[j].number])
+    return bool(d < cutoff)
