@@ -53,7 +53,7 @@ def get_chain_path_info(pdb_path, csv_dir):
         polymer_class = 'Electrolyte'
     elif 'Optical' in pdb_path:
         polymer_class = 'Optical'
-    elif 'CHAOS' in pdb_path:
+    elif 'CHAOS' in pdb_path and 'Peptoid' not in pdb_path:
         polymer_class = 'Chaos'
     else:
         polymer_class = 'Peptoid'
