@@ -1,0 +1,424 @@
+import re
+import os
+import sys
+import random
+import subprocess
+import argparse
+import pandas as pd
+import numpy as np
+
+from rdkit import Chem
+from rdkit.Chem import AllChem
+from tempfile import NamedTemporaryFile
+from ase import Atoms
+from ase.io import write
+from openbabel import pybel
+
+from architector.io_calc import simple_rmsd
+from xtb.ase.calculator import XTB
+from ase.optimize import BFGSLineSearch
+
+def make_branched(smiles_bank=None, working_dir=".",
+                  copolymer=False, max_atoms=200, n_branches=3):
+    """
+    Returns a SMILES of a star polymer with n_branches arms and less than 200 atoms
+            and a list of monomer units employed for construction
+    """
+    all_smiles = pd.read_csv(os.path.join(working_dir, smiles_bank), header=None)[0]
+    smiles_list = [random.choice(all_smiles)]
+    mol = Chem.MolFromSmiles(smiles_list[0])
+    charged = is_charged(mol)
+    while charged:
+        smiles_list = [random.choice(all_smiles)]
+        mol = Chem.MolFromSmiles(smiles_list[0])
+        charged = is_charged(mol)
+    
+    limit_charge = 0
+    if copolymer:
+        n_copoly = random.randint(1, 5)
+        while len(smiles_list) < n_copoly:
+            smiles = random.choice(all_smiles)
+            co_mol = Chem.MolFromSmiles(smiles)
+            if is_charged(co_mol):
+                if limit_charge < 2:
+                    if smiles not in smiles_list:
+                        smiles_list.append(smiles)
+                        limit_charge += 1
+                else: 
+                    continue
+            else:
+                if smiles not in smiles_list:
+                    smiles_list.append(smiles)
+                
+    # select a SMILES for the branch construction
+    branch_smiles = random.choice(smiles_list)
+    all_units = [branch_smiles]
+
+    growing_smiles = make_branching_point(branch_smiles, n_stars=n_branches)
+    growing_smiles = relabel_stars(growing_smiles)
+
+    def grow_chain(smiles_list, growing_smiles, all_smiles):
+        growing_mol = Chem.AddHs(Chem.MolFromSmiles(growing_smiles))
+        growing_smarts = "[Au:1][*:2].[*:3][Au:4]>>[*:2][*:3].[Au:1][Au:4]"
+
+        while growing_mol.GetNumAtoms() < (max_atoms - n_branches):
+            smiles = random.choice(smiles_list)
+            add_mol = Chem.AddHs(Chem.MolFromSmiles(relabel_stars(smiles)))
+            growing_mol = Chem.AddHs(Chem.MolFromSmiles(Chem.MolToSmiles(growing_mol)))
+            
+            if add_mol is None:
+                continue
+            if smiles not in all_smiles:
+                all_smiles.append(smiles)
+                    
+            grow_rxn = AllChem.ReactionFromSmarts(growing_smarts)
+            products = grow_rxn.RunReactants([growing_mol, add_mol])
+            growing_mol = random.choice(products)[0]
+        return growing_mol, all_smiles
+    
+    growing_mol, full_smiles = grow_chain(smiles_list, growing_smiles, all_units)
+    total_charge = sum(atom.GetFormalCharge() != 0 for atom in growing_mol.GetAtoms())
+    n_break = 0
+    while total_charge > 4:
+        # re-grow chain if too much charge
+        growing_mol, full_smiles = grow_chain(smiles_list, growing_smiles, all_units)
+        total_charge = sum(atom.GetFormalCharge() != 0 for atom in growing_mol.GetAtoms())
+        n_break += 1
+        if n_break > 50:
+            print("WARNING: too many attempts at adding charge")
+            break
+
+    # cap with hydrogen
+    capping_smarts = "[Au:1][*:2].[H:3]>>[H:3][*:2].[Au:1]"
+    h_mol = Chem.MolFromSmiles("[H]")
+    
+    cap_rxn = AllChem.ReactionFromSmarts(capping_smarts)
+    products = cap_rxn.RunReactants([growing_mol, h_mol])
+    while products:
+        growing_mol = random.choice(products)[0]
+        products = cap_rxn.RunReactants([growing_mol, h_mol])
+        
+    return Chem.MolToSmiles(growing_mol), full_smiles
+   
+def make_branching_point(smiles, n_stars=3):
+    """
+    Returns a repeat unit with n_stars connection points for branching
+    """
+    smiles = smiles.replace('[*]', '*').replace('/', '').replace('\\', '')
+    if smiles[0] == "*":
+        smiles = smiles[1] + "(*)" + smiles[2:]
+    
+    n_to_start = len([i for i, c in enumerate(smiles) if c == '*'])
+    h_smiles = Chem.MolToSmiles(Chem.AddHs(Chem.MolFromSmiles(smiles)))
+
+    while n_to_start < n_stars:
+        try:
+            H_idx_to_replace = random.choice([i for i, c in enumerate(h_smiles) if c == 'H'])
+        except IndexError: # necessary for fluoropolymers
+            H_idx_to_replace = random.choice([i for i, c in enumerate(h_smiles) if c == 'F'])
+            
+        smiles = h_smiles[:H_idx_to_replace] + '*' + h_smiles[H_idx_to_replace+1:]
+        smiles = smiles.replace('[*]', '*')
+        
+        n_to_start = len([i for i, c in enumerate(smiles) if c == '*'])
+        h_smiles = Chem.MolToSmiles(Chem.AddHs(Chem.MolFromSmiles(smiles)))
+
+    return smiles
+
+def run_loqi(chunk, working_dir, loqi_path, n_confs=100, batch_size=32):
+    """
+    Returns path to sdf generated by LoQI conformer program
+    """
+    sdf_list = []
+    key_dict = {}
+    for smiles in chunk:
+        key = Chem.MolToInchiKey(Chem.MolFromSmiles(smiles))
+        
+        sdf_out = os.path.join(working_dir, "sdfs/", f"run_{key}.sdf")
+
+        try:
+            subprocess.run([
+                            sys.executable, 
+                            f"{loqi_path}/scripts/sample_conformers.py",
+                            "--config", f"{loqi_path}/scripts/conf/loqi/loqi.yaml",
+                            "--ckpt", f"{loqi_path}/LoQI_data/loqi.ckpt",
+                            "--input", smiles,
+                            "--output", sdf_out,
+                            "--n_confs", f"{n_confs}",
+                            "--batch_size", f"{batch_size}",
+                            "--skip_eval",
+                        ], check=True,)
+        except subprocess.CalledProcessError as e:
+            print(f"Failed for {smiles}")
+            continue
+
+        sdf_list.append(sdf_out)
+        key_dict[str(key)] = smiles
+    
+    return sdf_list, key_dict
+
+def prune_confs(sdf_file, smiles, output_path, logfile, n_samples=10):
+    """
+    Saves connected n_samples conformers from LoQI output
+    """
+    basename = os.path.splitext(os.path.basename(sdf_file))[0]
+    supplier = Chem.SDMolSupplier(sdf_file, sanitize=False)
+    with open(logfile, 'a') as file1:
+        file1.write(f"{basename} : {smiles}\n")
+
+    mol = Chem.Mol(supplier[0])
+    for s in list(supplier)[1:]:
+        mol.AddConformer(s.GetConformer(), assignId=True)
+    
+    rmslist = []
+    AllChem.AlignMolConformers(mol, RMSlist=rmslist)
+    
+    atoms_list = []
+    og_mol = Chem.MolFromSmiles(smiles)
+    charge = Chem.GetFormalCharge(og_mol)
+    charge_flag = "_charged" if is_charged(og_mol) else ""
+    for i, conf in enumerate(mol.GetConformers()):
+        symbols = [atom.GetSymbol() for atom in mol.GetAtoms()]
+        positions = [[conf.GetAtomPosition(i).x,
+                      conf.GetAtomPosition(i).y,
+                      conf.GetAtomPosition(i).z] for i in range(mol.GetNumAtoms())]
+        
+        atoms = Atoms(symbols=symbols, positions=positions)
+        if has_right_connectivity(atoms, og_mol):
+            atoms_list.append(atoms)
+
+    if not atoms_list:
+        raise IndexError("No conformers with correct connectivity")
+    
+    n_min = min(n_samples, len(atoms_list))
+    saved = []
+    k = 0
+    n_cycles= 0
+    while k < n_min:
+        if n_cycles > 50:
+            raise IndexError("No conformers with correct connectivity after opt")
+    
+        atoms = random.choice(atoms_list)
+        if atoms not in saved:  
+            new_atoms = atoms.copy()
+            new_atoms = relax_geom(new_atoms, charge) 
+            if has_right_connectivity(new_atoms, og_mol): 
+                write(os.path.join(output_path, f"{basename}_conf_{k}{charge_flag}_{charge}_1.xyz"), new_atoms, format="xyz")
+                saved.append(atoms)
+                k += 1
+            n_cycles += 1
+    with open(logfile, 'a') as file1:
+        file1.write(f"for smiles: {smiles}...\nvalid geoms: {len(atoms_list)}, n_min: {n_min}, n_kept: {k}\n")
+
+    return k
+
+def relax_geom(geom, charge):
+    atoms = geom.copy()
+    atoms.set_calculator(XTB(method="gfn-ff", logfile=None, charge=charge, uhf=0))
+    opt = BFGSLineSearch(atoms, logfile=None)
+    opt.run(fmax=0.05, steps=20)
+
+    rmsd = simple_rmsd(geom, atoms)
+    if rmsd < 0.5:
+        return atoms
+    else:
+        raise IndexError(f"Not successful: {rmsd} Angstroms")
+
+"""
+Helper functions
+"""
+def remove_charge(mol):
+    for atom in mol.GetAtoms():
+        if atom.GetFormalCharge() != 0:
+            atom.SetFormalCharge(0)           
+    return mol
+
+def relabel_stars(smiles):
+    smiles = smiles.replace('[*]', '*')
+    return smiles.replace("*", "[Au]")
+
+def is_charged(mol):
+    return any(atom.GetFormalCharge() != 0 for atom in mol.GetAtoms())
+
+def get_rdkit_mol(ase_atoms):
+    with NamedTemporaryFile(suffix=".xyz") as tmp:
+        write(tmp.name, ase_atoms, format="xyz")
+        obmol = next(pybel.readfile("xyz", tmp.name))
+        
+    obmol.OBMol.ConnectTheDots()
+    obmol.OBMol.PerceiveBondOrders()
+    molblock = obmol.write("mol")
+
+    mol = Chem.MolFromMolBlock(molblock, sanitize=False)
+    
+    ase_atoms = [atom.number for atom in ase_atoms]
+    rdkit_atoms = [atom.GetAtomicNum() for atom in mol.GetAtoms()]
+
+    assert ase_atoms == rdkit_atoms, "Atom types do not match between ASE and RDKit"
+    return mol
+
+def remove_bond_orders(mol):
+    mol = Chem.RWMol(mol)
+    for bond in mol.GetBonds():
+        bond.SetBondType(Chem.BondType.SINGLE)
+        bond.SetIsAromatic(False)
+    for atom in mol.GetAtoms():
+        atom.SetIsAromatic(False)
+    
+    return mol.GetMol()
+
+def has_right_connectivity(conf, og_mol):
+    conf_mol = get_rdkit_mol(conf)
+
+    conf_mol = Chem.AddHs(conf_mol)
+    og_mol = Chem.AddHs(og_mol)
+
+    s1 = Chem.MolToSmiles(og_mol, isomericSmiles=False)
+    s2 = Chem.MolToSmiles(conf_mol, isomericSmiles=False)
+    if not s1 == s2:
+        mol1 = remove_charge(remove_bond_orders(og_mol))
+        mol2 = remove_charge(remove_bond_orders(conf_mol))
+
+        s1 = Chem.MolToSmiles(mol1, isomericSmiles=False)
+        s2 = Chem.MolToSmiles(mol2, isomericSmiles=False)
+
+    return s1 == s2
+    
+"""
+Main
+"""
+def main(smiles_bank, smiles_dir, working_dir, loqi_path, 
+         n_samples=10, n_chunks=1, chunk_idx=0, 
+         gen_smiles=False, make_conf=False, eval_charges=False):
+
+    log_smiles = os.path.join(working_dir, "all_smiles.csv")
+    log_success_smiles = os.path.join(working_dir, f"success_smiles_{chunk_idx}.csv")
+    logfile = os.path.join(working_dir, f"logfile_{chunk_idx}.txt")
+    alldicts = []
+    
+    if gen_smiles: 
+        i = 0
+        n_loops = 0
+        charges = 0
+        while i < n_samples:
+            if n_loops > (n_samples * 2): 
+                break
+
+            try:
+                is_copolymer = random.choice([True, False])
+                smiles, unit_smiles = make_branched(smiles_bank=smiles_bank,
+                                copolymer=is_copolymer,
+                                working_dir=smiles_dir,
+                                max_atoms=150)
+            except Exception as e:
+                n_loops += 1
+                print(e)
+                continue
+            
+            if os.path.isfile(log_smiles):
+                current_smiles = pd.read_csv(log_smiles, header=None)[0]
+                if smiles in current_smiles:
+                    # don't keep if already added
+                    n_loops += 1
+                    continue
+            
+            mol = Chem.MolFromSmiles(smiles)
+            if eval_charges:
+                if is_charged(mol):
+                    charges += 1
+            
+            sample_dict = {'inchikey': Chem.MolToInchiKey(Chem.MolFromSmiles(smiles)),
+                           'smiles': smiles,
+                           'unit_smiles': unit_smiles,
+                           'is_copolymer': is_copolymer,
+                           'is_charged': is_charged(mol)
+                           }
+            alldicts.append(sample_dict)
+
+            with open(log_smiles, 'a') as file:
+                file.write(f"{smiles}\n")
+            
+            i += 1
+            n_loops += 1
+
+        data = pd.DataFrame(alldicts)   
+        data.to_csv(os.path.join(working_dir, "info_all_smiles.csv")) 
+        print(f"Total branches generated: {i}")
+
+        if eval_charges: 
+            charge_file = os.path.join(working_dir, "charge.txt")
+            with open(charge_file, 'a') as file:
+                file.write(f"Total: {i}, Number charged: {charges}, Percentage: {charges / i * 100}\n")
+    
+    if make_conf:
+        success = 0
+        alldicts = []
+
+        all_smiles = pd.read_csv(log_smiles, header=None)[0]
+        chunks_to_process = np.array_split(all_smiles, n_chunks)
+        chunk = chunks_to_process[chunk_idx] 
+        with open(logfile, 'a') as file1:
+            file1.write(f"Length of chunk: {len(chunk)}\n")
+            file1.write(f"Chunk: {chunk}\n")
+
+        sdf_list, key_list = run_loqi(chunk, working_dir, loqi_path)
+        
+        for sdf in sdf_list:
+            output_path = os.path.join(working_dir, "xyzs/")
+            key = re.search(r"run_(.*?)\.sdf$", sdf).group(1)
+            smiles = key_list[key]
+            sample_dict = {'inchikey': key}
+            
+            try:
+                n = prune_confs(sdf, smiles, output_path, logfile, n_samples=10)
+            except IndexError:
+                sample_dict['success'] = False
+                sample_dict['n_conf'] = 0
+                alldicts.append(sample_dict)
+                with open(logfile, 'a') as file1:
+                    file1.write(f"NO VALID CONFORMERS for {smiles}\n")
+                continue
+
+            sample_dict['success'] = True
+            sample_dict['n_conf'] = n
+            alldicts.append(sample_dict)
+            with open(logfile, 'a') as file1:
+                file1.write(f"Saved {n} conformers for {smiles}\n")
+            
+            with open(log_success_smiles, 'a') as file:
+                file.write(f"{smiles}\n")
+            success += 1
+            
+        
+        data = pd.DataFrame(alldicts)   
+        data.to_csv(os.path.join(working_dir, f"info_all_confs_{chunk_idx}.csv")) 
+        print(f"Total branches with conformers: {success}")
+    
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--generate_smiles_list", default=False)
+    parser.add_argument("--eval_charges", default=False)
+    parser.add_argument("--make_conformers", default=False)
+    parser.add_argument("--smiles_bank", default=None)
+    parser.add_argument("--smiles_dir", default="")
+    parser.add_argument("--working_dir", default=".")
+    parser.add_argument("--loqi_path", default=".")
+    parser.add_argument("--n_samples", type=int, default=10)
+    parser.add_argument("--n_chunks", type=int, default=1)
+    parser.add_argument("--chunk_idx", type=int, default=0)
+    
+    return parser.parse_args()
+
+if __name__ == "__main__":
+    args = parse_args()
+    main(args.smiles_bank, 
+         args.smiles_dir, 
+         args.working_dir, 
+         args.loqi_path, 
+         n_samples=args.n_samples, 
+         n_chunks=args.n_chunks, 
+         chunk_idx=args.chunk_idx,
+         gen_smiles=args.generate_smiles_list, 
+         make_conf=args.make_conformers, 
+         eval_charges=args.eval_charges,
+        )
